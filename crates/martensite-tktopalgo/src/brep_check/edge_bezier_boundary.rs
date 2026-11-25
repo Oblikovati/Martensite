@@ -1,11 +1,12 @@
 //! Identity of a full parameterized edge with one literal Bézier patch boundary.
+use martensite_tkbrep::brep::BRepCurveRepresentation;
 use martensite_tkernel::ncollection::Array2;
 use martensite_tkernel::standard::Handle;
 use martensite_tkg2d::geom2d::{Geom2dBezierCurve, Geom2dCurve};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkg3d::geom::{GeomBezierCurve, GeomBezierSurface, GeomSurface};
 use martensite_tkg3d::geom_adaptor::GeomAdaptorCurve;
-use martensite_tkmath::gp::{Point3, resolution};
+use martensite_tkmath::gp::{Point3, Transform3, resolution};
 
 #[derive(Clone, Copy)]
 enum Boundary {
@@ -55,28 +56,77 @@ pub(super) fn identical_boundary(
     surface: &Handle<dyn GeomSurface>,
     trace: &Handle<dyn Geom2dCurve>,
 ) -> bool {
-    let surface = surface.downcast::<GeomBezierSurface>();
     let trace = trace.downcast::<Geom2dBezierCurve>();
-    let reference = reference.downcast::<GeomAdaptorCurve>();
-    let (Some(surface), Some(trace), Some(reference)) =
-        (surface.get(), trace.get(), reference.get())
-    else {
+    let Some(boundary) = trace.get().and_then(Boundary::from_trace) else {
         return false;
     };
-    let reference = reference.curve().downcast::<GeomBezierCurve>();
-    matches_boundary(surface, trace, &reference).unwrap_or(false)
+    matches_loaded_boundary(reference, surface, boundary).unwrap_or(false)
+}
+
+fn matches_loaded_boundary(
+    reference: &Handle<dyn Adaptor3dCurve>,
+    surface: &Handle<dyn GeomSurface>,
+    boundary: Boundary,
+) -> Option<bool> {
+    let surface = surface.downcast::<GeomBezierSurface>();
+    let reference = reference.downcast::<GeomAdaptorCurve>();
+    let reference = reference.get()?.curve().downcast::<GeomBezierCurve>();
+    matches_boundary(surface.get()?, boundary, reference.get()?)
+}
+
+pub(super) fn identical_located_boundary(
+    reference: &Handle<dyn Adaptor3dCurve>,
+    surface: &Handle<dyn GeomSurface>,
+    trace: &Handle<dyn Geom2dCurve>,
+    raw_reference: &dyn BRepCurveRepresentation,
+    raw_surface: &Handle<dyn GeomSurface>,
+    placement: Transform3,
+) -> bool {
+    let trace = trace.downcast::<Geom2dBezierCurve>();
+    let Some(boundary) = trace.get().and_then(Boundary::from_trace) else {
+        return false;
+    };
+    if !literal_translation(placement)
+        || matches_loaded_boundary(reference, surface, boundary) != Some(true)
+    {
+        return false;
+    }
+    // Translating binary coordinates can round distinct poles to the same point.
+    // Check the actual local coefficients as well as the loaded geometry.
+    matches_raw_boundary(raw_reference, raw_surface, boundary).unwrap_or(false)
+}
+
+fn literal_translation(placement: Transform3) -> bool {
+    placement.scale_factor() == 1.
+        && placement.matrix().coefficients() == &[[1., 0., 0.], [0., 1., 0.], [0., 0., 1.]]
+        && placement
+            .translation_part()
+            .coordinates()
+            .iter()
+            .all(|v| v.is_finite())
+}
+
+fn matches_raw_boundary(
+    reference: &dyn BRepCurveRepresentation,
+    surface: &Handle<dyn GeomSurface>,
+    boundary: Boundary,
+) -> Option<bool> {
+    let reference = reference.curve3d().ok()?.downcast::<GeomBezierCurve>();
+    let surface = surface.downcast::<GeomBezierSurface>();
+    // The native checker works from copies. Take coherent source snapshots here too.
+    let reference = GeomBezierCurve::copy_of(reference.get()?).ok()?;
+    let surface = GeomBezierSurface::copy_of(surface.get()?).ok()?;
+    matches_boundary(&surface, boundary, &reference)
 }
 
 fn matches_boundary(
     surface: &GeomBezierSurface,
-    trace: &Geom2dBezierCurve,
-    reference: &Handle<GeomBezierCurve>,
+    boundary: Boundary,
+    reference: &GeomBezierCurve,
 ) -> Option<bool> {
-    let reference = reference.get()?;
     if surface.has_eval_representation() || reference.has_eval_representation() {
         return None;
     }
-    let boundary = Boundary::from_trace(trace)?;
     let net = surface.poles();
     let weights = surface.weights();
     let (poles, edge_weights) = reference.poles_weights_snapshot();

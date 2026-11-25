@@ -1,7 +1,7 @@
 //! `BRepCheck_Edge::InContext`: the edge in a face (its curves on the face surface
 //! against its reference curve) and in a solid (shared by two faces).
 use super::edge::{BRepCheckEdge, pcurve_range_fits};
-use super::edge_bezier_boundary::identical_boundary;
+use super::edge_bezier_boundary::{identical_boundary, identical_located_boundary};
 use super::errors::null_object;
 use super::explore::{holds_same, sub_shapes};
 use super::result::{BRepCheckResult, SharedStatusList, add_status, close_status_list};
@@ -13,6 +13,7 @@ use martensite_tkbrep::topods::{Face, Shape, face};
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
+use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg2d::geom2d_adaptor::{Geom2dAdaptorCurve, make_curve};
 use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dCurveOnSurface, Adaptor3dSurface};
 use martensite_tkg3d::geom::{
@@ -131,7 +132,7 @@ impl FaceCheck<'_> {
         let pcurve = r.pcurve()?;
         let closed = r.is_curve_on_closed_surface();
         if self.literal_boundary_candidate(unit_parameter, closed)
-            && identical_boundary(&self.hcurve, &sb, &pcurve)
+            && self.identical_boundary(&sb, &pcurve)
         {
             return Ok(());
         }
@@ -169,10 +170,30 @@ impl FaceCheck<'_> {
             && self.same_parameter
             && unit_parameter
             && !closed
-            && self.reference_location.is_identity()
-            && self.face_location.is_identity()
+            && self.reference_location.is_equal(&self.face_location)
             && self.tol.is_finite()
             && self.tol > 0.
+    }
+
+    fn identical_boundary(
+        &self,
+        surface: &Handle<dyn GeomSurface>,
+        pcurve: &Handle<dyn Geom2dCurve>,
+    ) -> bool {
+        if self.reference_location.is_identity() {
+            return identical_boundary(&self.hcurve, surface, pcurve);
+        }
+        let Some(reference) = self.cref.get().filter(|r| r.is_curve3d()) else {
+            return false;
+        };
+        identical_located_boundary(
+            &self.hcurve,
+            surface,
+            pcurve,
+            reference,
+            &self.surface,
+            self.reference_location.transformation(),
+        )
     }
 
     /// No curve on the face surface: `NoCurveOnSurface` unless the surface is a plane,

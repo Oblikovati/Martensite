@@ -1,6 +1,9 @@
 use super::*;
+use martensite_tkbrep::brep::BRepCurve3D;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkmath::gp::Point2;
+use martensite_tkg3d::geom::{GeomCurve, GeomGeometry};
+use martensite_tkmath::gp::{Point2, Vector3};
+use martensite_tkmath::toploc::Location;
 
 fn point(u: f64, v: f64) -> Point3 {
     Point3::new(u, v, u * v)
@@ -15,13 +18,22 @@ fn patch() -> Handle<GeomBezierSurface> {
 }
 
 fn rail(poles: [Point3; 2], weights: [f64; 2]) -> Handle<dyn Adaptor3dCurve> {
-    let curve = GeomBezierCurve::with_weights(
-        &Array1::from_shared(&poles, 1),
-        &Array1::from_shared(&weights, 1),
+    adaptor(&literal_rail(poles, weights))
+}
+
+fn literal_rail(poles: [Point3; 2], weights: [f64; 2]) -> Handle<dyn GeomCurve> {
+    Handle::new(
+        GeomBezierCurve::with_weights(
+            &Array1::from_shared(&poles, 1),
+            &Array1::from_shared(&weights, 1),
+        )
+        .unwrap(),
     )
-    .unwrap();
-    let adaptor = GeomAdaptorCurve::with_curve(&Handle::new(curve).into_upcast()).unwrap();
-    Handle::new(adaptor).into_upcast()
+    .into_upcast()
+}
+
+fn adaptor(curve: &Handle<dyn GeomCurve>) -> Handle<dyn Adaptor3dCurve> {
+    Handle::new(GeomAdaptorCurve::with_curve(curve).unwrap()).into_upcast()
 }
 
 fn uv(poles: [Point2; 2]) -> Handle<dyn Geom2dCurve> {
@@ -60,4 +72,26 @@ fn defers_changed_controls_weights_and_trace_direction() {
     assert!(!identical_boundary(&edge, &world, &reversed));
     surface.set_pole(2, 1, Point3::new(1., 0., 0.001)).unwrap();
     assert!(!identical_boundary(&edge, &world, &trace));
+}
+
+#[test]
+fn common_translation_cannot_hide_mutated_raw_control() {
+    let mut placement = Transform3::default();
+    placement.set_translation(Vector3::new(0., 0., 2_f64.powi(50)));
+    let location = Location::new(placement);
+    let patch = patch();
+    let raw_surface = patch.clone().into_upcast();
+    let world = patch.transformed(placement).unwrap().cast();
+    let trace = uv([Point2::new(0., 0.), Point2::new(1., 0.)]);
+    for (z, identical) in [(0., true), (0.001, false)] {
+        let source = literal_rail([point(0., 0.), Point3::new(1., 0., z)], [1., 0.5]);
+        let moved = source.get().unwrap().transformed(placement).unwrap().cast();
+        let loaded = adaptor(&moved);
+        let stored = BRepCurve3D::new(&source, &location);
+        assert!(identical_boundary(&loaded, &world, &trace));
+        assert_eq!(
+            identical_located_boundary(&loaded, &world, &trace, &stored, &raw_surface, placement),
+            identical
+        );
+    }
 }
