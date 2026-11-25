@@ -332,3 +332,9 @@ pub use conical_profile::{
 ///
 /// See [`conical_separation::certify_separation`] for admitted frames and caller obligations.
 pub mod conical_separation;
+
+mod segment_plane;
+pub use segment_plane::{
+    SegmentPlaneCut, SegmentPlaneFailure, SegmentPlaneIntersection, SegmentWorkPlane,
+    intersect_segment_plane,
+};

@@ -12,5 +12,6 @@ mod line_relations;
 mod line_seed;
 mod motion;
 mod restore;
+mod split_plane;
 mod values;
 mod wire;

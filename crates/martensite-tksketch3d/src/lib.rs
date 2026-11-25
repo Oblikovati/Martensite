@@ -7,6 +7,7 @@ mod control_spline;
 mod edit;
 mod failure;
 mod source;
+pub mod split_plane;
 pub mod wire;
 
 pub use arc::{ArcDefinition, ArcFailure, ArcFitTolerance, ArcGeometry, ArcId, SketchArc};
