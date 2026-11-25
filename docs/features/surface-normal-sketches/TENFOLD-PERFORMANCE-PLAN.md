@@ -20,9 +20,13 @@ tool, Boolean and final validation. The kernel benchmarks below cover
 extrusion; the application trace will establish the interaction baseline.
 
 The public certified conical-frustum entry met the kernel commit target on
-the cold boss, cold pocket and warm depth edit. The application trace
-still needs the wrapped authoring workflow.
+the cold boss, cold pocket and warm depth edit. Desktop traces met the
+drag, preview and commit targets for a cylindrical rectangle, including
+creation, re-edit, a seam-crossing boss and an inward pocket. Native
+conical authoring, text gestures and connected constraint groups still
+need end-to-end measurements.
 [Measured kernel results](PERFORMANCE-REASSESSMENT-2026-11-24.md#public-certified-attachment).
+[Measured desktop results](PERFORMANCE-REASSESSMENT-2026-11-24.md#2026-11-25-desktop-cylindrical-rectangle).
 
 
 ### Keep mouse movement on the frame path
