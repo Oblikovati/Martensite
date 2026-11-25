@@ -69,5 +69,11 @@ fn spec(relation: Relation) -> RelationSpec {
         Relation::Coincident(points) => RelationSpec::Coincident(points),
         Relation::Parallel(lines, direction) => RelationSpec::Parallel(lines, direction),
         Relation::Length(line, length) => RelationSpec::Length(line, length),
+        Relation::ParallelToAxis(line, axis, direction) => {
+            RelationSpec::ParallelToAxis(line, axis, direction)
+        }
+        Relation::ParallelToPlane(line, normal) => RelationSpec::ParallelToPlane(line, normal),
+        Relation::Perpendicular(lines) => RelationSpec::Perpendicular(lines),
+        Relation::EqualLength(lines) => RelationSpec::EqualLength(lines),
     }
 }

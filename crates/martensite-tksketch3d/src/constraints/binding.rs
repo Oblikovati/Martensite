@@ -2,7 +2,7 @@
 //! Bind authored relations to solver columns and exact fixed coordinates.
 use super::{
     ConstraintFailure as Failure, ConstraintPolicy, Relation, RelationId, RelationSpec,
-    residual::Equation,
+    residual::{Equation, axis_branch},
 };
 use crate::{EntityId, LineGeometry, LineId, PointId, Snapshot};
 use martensite_tkmath::gp::Point3;
@@ -90,22 +90,44 @@ impl Layout<'_> {
                 )
             }
             Relation::Parallel(lines, direction) => {
-                let [a, b] = [
-                    line_of(self.geometry, id, lines[0])?,
-                    line_of(self.geometry, id, lines[1])?,
-                ];
-                let [a0, a1] = a.line.endpoints;
-                let [b0, b1] = b.line.endpoints;
-                self.equation(
+                let [a, b] = pair_of(self.geometry, id, lines)?;
+                self.pair_equation(
                     id,
-                    &[a0, a1, b0, b1],
+                    [a, b],
                     Equation::Parallel {
                         direction,
                         reference: reference_axis(a),
                     },
                 )
             }
+            Relation::ParallelToAxis(line, axis, direction) => {
+                let endpoints = line_of(self.geometry, id, line)?.line.endpoints;
+                self.equation(id, &endpoints, Equation::Axis(axis, direction))
+            }
+            Relation::ParallelToPlane(line, normal) => {
+                let endpoints = line_of(self.geometry, id, line)?.line.endpoints;
+                self.equation(id, &endpoints, Equation::Plane(*normal.coordinates()))
+            }
+            Relation::Perpendicular(lines) => {
+                let lines = pair_of(self.geometry, id, lines)?;
+                self.pair_equation(id, lines, Equation::Perpendicular)
+            }
+            Relation::EqualLength(lines) => {
+                let lines = pair_of(self.geometry, id, lines)?;
+                self.pair_equation(id, lines, Equation::EqualLength { scale: self.scale })
+            }
         }
+    }
+
+    fn pair_equation(
+        &mut self,
+        id: RelationId,
+        [a, b]: [LineGeometry; 2],
+        source: Equation,
+    ) -> Result<(), Failure> {
+        let [a0, a1] = a.line.endpoints;
+        let [b0, b1] = b.line.endpoints;
+        self.equation(id, &[a0, a1, b0, b1], source)
     }
 
     fn fix(&mut self, id: RelationId, point: PointId, position: Point3) -> Result<(), Failure> {
@@ -182,11 +204,9 @@ pub(super) fn capture(
             point(b)?;
             Ok(Relation::Coincident([a, b]))
         }
-        RelationSpec::Parallel([a, b], direction) => {
-            distinct(id, EntityId::Line(a), EntityId::Line(b))?;
-            line(a)?;
-            line(b)?;
-            Ok(Relation::Parallel([a, b], direction))
+        RelationSpec::Parallel(lines, direction) => {
+            pair_of(geometry, id, lines)?;
+            Ok(Relation::Parallel(lines, direction))
         }
         RelationSpec::Length(key, target) => {
             line(key)?;
@@ -195,6 +215,30 @@ pub(super) fn capture(
             }
             Ok(Relation::Length(key, target))
         }
+        RelationSpec::ParallelToAxis(key, axis, direction) => {
+            let [start, end] = line(key)?.points;
+            let component = end.coordinates()[axis.index()] - start.coordinates()[axis.index()];
+            if !axis_branch(direction, component) {
+                return Err(Failure::AxisSeedBranch(id, key, axis, direction));
+            }
+            Ok(Relation::ParallelToAxis(key, axis, direction))
+        }
+        RelationSpec::ParallelToPlane(key, normal) => {
+            line(key)?;
+            let coordinates = *normal.coordinates();
+            if coordinates.iter().any(|value| !value.is_finite()) || coordinates == [0.; 3] {
+                return Err(Failure::InvalidPlaneNormal(id, coordinates));
+            }
+            Ok(Relation::ParallelToPlane(key, normal))
+        }
+        RelationSpec::Perpendicular(lines) => {
+            pair_of(geometry, id, lines)?;
+            Ok(Relation::Perpendicular(lines))
+        }
+        RelationSpec::EqualLength(lines) => {
+            pair_of(geometry, id, lines)?;
+            Ok(Relation::EqualLength(lines))
+        }
     }
 }
 
@@ -202,6 +246,18 @@ fn line_of(geometry: &Snapshot, id: RelationId, line: LineId) -> Result<LineGeom
     geometry
         .line(line)
         .ok_or(Failure::MissingOperand(id, EntityId::Line(line)))
+}
+
+fn pair_of(
+    geometry: &Snapshot,
+    id: RelationId,
+    [first, second]: [LineId; 2],
+) -> Result<[LineGeometry; 2], Failure> {
+    distinct(id, EntityId::Line(first), EntityId::Line(second))?;
+    Ok([
+        line_of(geometry, id, first)?,
+        line_of(geometry, id, second)?,
+    ])
 }
 
 fn distinct(id: RelationId, a: EntityId, b: EntityId) -> Result<(), Failure> {

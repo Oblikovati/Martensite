@@ -6,6 +6,7 @@ mod constraints;
 mod construction;
 mod fixture;
 mod frozen_point;
+mod line_relations;
 mod motion;
 mod restore;
 mod values;

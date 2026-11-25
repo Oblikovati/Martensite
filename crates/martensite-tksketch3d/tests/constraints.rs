@@ -10,10 +10,10 @@ use martensite_tksketch3d::{
 };
 use std::{num::NonZeroU64, time::Instant};
 
-fn rid(id: u64) -> RelationId {
+pub(super) fn rid(id: u64) -> RelationId {
     RelationId::new(NonZeroU64::new(id).unwrap())
 }
-fn length(value: f64) -> MinimumLength {
+pub(super) fn length(value: f64) -> MinimumLength {
     MinimumLength::new(value).unwrap()
 }
 

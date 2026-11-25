@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Independent physical admission from the accepted endpoint coordinates.
-use super::{ConstraintPolicy, ParallelDirection, Relation};
-use crate::{LineGeometry, Snapshot};
-use martensite_tkmath::{gp::Point3, predicates::compare_squared_length_3d};
+use super::{AxisDirection, ConstraintPolicy, ParallelDirection, Relation};
+use crate::{LineGeometry, LineId, Snapshot};
+use martensite_tkmath::{
+    gp::Point3,
+    predicates::{compare_length_difference_3d, compare_squared_length_3d},
+};
 use std::cmp::Ordering;
 
 pub(super) fn feasible(snapshot: &Snapshot, relation: Relation, policy: ConstraintPolicy) -> bool {
@@ -25,13 +28,68 @@ pub(super) fn feasible(snapshot: &Snapshot, relation: Relation, policy: Constrai
         Relation::Length(line, target) => snapshot.line(line).is_some_and(|line| {
             length_band(line.points, target.value(), policy.length_tolerance.value())
         }),
-        Relation::Parallel([first, second], direction) => {
-            let (Some(a), Some(b)) = (snapshot.line(first), snapshot.line(second)) else {
-                return false;
-            };
-            parallel(a, b, direction, policy.parallel_sine_tolerance).unwrap_or(false)
-        }
+        Relation::Parallel(lines, direction) => pair(snapshot, lines)
+            .and_then(|[a, b]| {
+                parallel(
+                    scaled_direction(a.points)?,
+                    scaled_direction(b.points)?,
+                    direction,
+                    policy.parallel_sine_tolerance,
+                )
+            })
+            .unwrap_or(false),
+        Relation::ParallelToAxis(line, axis, direction) => snapshot
+            .line(line)
+            .and_then(|line| {
+                let axes = std::array::from_fn(|i| Interval::point(f64::from(i == axis.index())));
+                let branch = match direction {
+                    AxisDirection::Positive => ParallelDirection::Same,
+                    AxisDirection::Negative => ParallelDirection::Opposite,
+                };
+                parallel(
+                    scaled_direction(line.points)?,
+                    axes,
+                    branch,
+                    policy.parallel_sine_tolerance,
+                )
+            })
+            .unwrap_or(false),
+        Relation::ParallelToPlane(line, normal) => snapshot
+            .line(line)
+            .and_then(|line| {
+                let normal = scaled_vector(*normal.coordinates())?;
+                perpendicular(
+                    scaled_direction(line.points)?,
+                    normal,
+                    policy.parallel_sine_tolerance,
+                )
+            })
+            .unwrap_or(false),
+        Relation::Perpendicular(lines) => pair(snapshot, lines)
+            .and_then(|[a, b]| {
+                perpendicular(
+                    scaled_direction(a.points)?,
+                    scaled_direction(b.points)?,
+                    policy.parallel_sine_tolerance,
+                )
+            })
+            .unwrap_or(false),
+        Relation::EqualLength(lines) => pair(snapshot, lines).is_some_and(|[a, b]| {
+            let endpoints = |line: LineGeometry| line.points.map(|point| *point.coordinates());
+            matches!(
+                compare_length_difference_3d(
+                    endpoints(a),
+                    endpoints(b),
+                    policy.length_tolerance.value()
+                ),
+                Ok(Ordering::Less | Ordering::Equal)
+            )
+        }),
     }
+}
+
+fn pair(snapshot: &Snapshot, [first, second]: [LineId; 2]) -> Option<[LineGeometry; 2]> {
+    Some([snapshot.line(first)?, snapshot.line(second)?])
 }
 
 fn same_bits(left: Point3, right: Point3) -> bool {
@@ -56,13 +114,11 @@ fn length_band([a, b]: [Point3; 2], target: f64, tolerance: f64) -> bool {
 }
 
 fn parallel(
-    a: LineGeometry,
-    b: LineGeometry,
+    a: [Interval; 3],
+    b: [Interval; 3],
     direction: ParallelDirection,
     tolerance: f64,
 ) -> Option<bool> {
-    let a = scaled_direction(a.points)?;
-    let b = scaled_direction(b.points)?;
     let sign = dot(a, b)?;
     let correct_branch = match direction {
         ParallelDirection::Same => sign.lo > 0.,
@@ -73,9 +129,32 @@ fn parallel(
     }
     let cross = cross(a, b)?;
     let lhs = dot(cross, cross)?;
+    within_angular_limit(a, b, lhs, tolerance)
+}
+
+fn perpendicular(a: [Interval; 3], b: [Interval; 3], tolerance: f64) -> Option<bool> {
+    let projection = dot(a, b)?;
+    within_angular_limit(a, b, projection.mul(projection)?, tolerance)
+}
+
+fn within_angular_limit(
+    a: [Interval; 3],
+    b: [Interval; 3],
+    squared_numerator: Interval,
+    tolerance: f64,
+) -> Option<bool> {
     let sine = Interval::point(tolerance);
     let rhs = sine.mul(sine)?.mul(dot(a, a)?)?.mul(dot(b, b)?)?;
-    Some(lhs.hi <= rhs.lo)
+    Some(squared_numerator.hi <= rhs.lo)
+}
+
+fn scaled_vector(values: [f64; 3]) -> Option<[Interval; 3]> {
+    let scale = values.into_iter().map(f64::abs).fold(0., f64::max);
+    if scale <= 0. || !scale.is_finite() {
+        return None;
+    }
+    let value = |i: usize| Interval::rounded(values[i] / scale, values[i] / scale);
+    Some([value(0)?, value(1)?, value(2)?])
 }
 
 fn scaled_direction([a, b]: [Point3; 2]) -> Option<[Interval; 3]> {

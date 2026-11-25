@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
-use super::{Relation, RelationId};
-use crate::{EditFailure, EntityId, FrozenPointSource, PointId};
+use super::{AxisDirection, CoordinateAxis, Relation, RelationId};
+use crate::{EditFailure, EntityId, FrozenPointSource, LineId, PointId};
 use martensite_tksolve::{
     nonlinear::{SolveError, SolveTermination},
     preview::PreviewError,
@@ -54,6 +54,10 @@ pub enum ConstraintFailure {
     InvalidTarget(PointId, [f64; 3]),
     /// A driving length lies below the sketch's minimum constructible length.
     LengthBelowMinimum(RelationId, f64),
+    /// The authored line has a zero or opposite signed component along the requested axis.
+    AxisSeedBranch(RelationId, LineId, CoordinateAxis, AxisDirection),
+    /// The supplied plane normal is nonfinite or vanishes.
+    InvalidPlaneNormal(RelationId, [f64; 3]),
     /// A numeric relation trial or preview did not complete.
     Preview(Option<RelationId>, PreviewError),
     /// The noninteractive solve encountered a typed numerical refusal.

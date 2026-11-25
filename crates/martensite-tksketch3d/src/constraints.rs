@@ -10,7 +10,7 @@ mod residual;
 mod restore;
 
 use crate::{LineId, MinimumLength, PointId, Snapshot};
-use martensite_tkmath::gp::Point3;
+use martensite_tkmath::gp::{Direction3, Point3};
 use std::{
     collections::{BTreeMap, BTreeSet},
     num::NonZeroU64,
@@ -46,6 +46,36 @@ pub enum ParallelDirection {
     Opposite,
 }
 
+/// One coordinate axis of the sketch's model-space frame.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CoordinateAxis {
+    /// Model X axis.
+    X,
+    /// Model Y axis.
+    Y,
+    /// Model Z axis.
+    Z,
+}
+
+impl CoordinateAxis {
+    fn index(self) -> usize {
+        match self {
+            Self::X => 0,
+            Self::Y => 1,
+            Self::Z => 2,
+        }
+    }
+}
+
+/// Sign of a directed line's component along a coordinate axis.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AxisDirection {
+    /// The authored end lies in the positive direction from its start.
+    Positive,
+    /// The authored end lies in the negative direction from its start.
+    Negative,
+}
+
 /// Intent for a newly authored relation. Fix captures positions from the accepted snapshot.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum RelationSpec {
@@ -59,6 +89,14 @@ pub enum RelationSpec {
     Parallel([LineId; 2], ParallelDirection),
     /// Drive the length of one line in model-space units.
     Length(LineId, MinimumLength),
+    /// Constrain a line to the chosen coordinate axis and direction sign.
+    ParallelToAxis(LineId, CoordinateAxis, AxisDirection),
+    /// Keep a line parallel to every plane with this normal, leaving its offset free.
+    ParallelToPlane(LineId, Direction3),
+    /// Constrain the direction angle of two lines to a right angle. Their positions stay free.
+    Perpendicular([LineId; 2]),
+    /// Constrain two lines to equal physical lengths.
+    EqualLength([LineId; 2]),
 }
 
 /// The persisted relation value, with the anchors captured for Fix relations.
@@ -74,6 +112,14 @@ pub enum Relation {
     Parallel([LineId; 2], ParallelDirection),
     /// A line identity and its target model-space length.
     Length(LineId, MinimumLength),
+    /// Line identity, coordinate axis, and stored direction sign.
+    ParallelToAxis(LineId, CoordinateAxis, AxisDirection),
+    /// Line identity and the model-space plane normal.
+    ParallelToPlane(LineId, Direction3),
+    /// Two line identities whose directions form a right angle.
+    Perpendicular([LineId; 2]),
+    /// Two line identities whose physical lengths agree.
+    EqualLength([LineId; 2]),
 }
 
 /// A relation edit in an atomic authoring batch.
@@ -90,9 +136,9 @@ pub enum RelationEdit {
 pub struct ConstraintPolicy {
     /// Scale for model length residuals and spatial variable steps, in model units.
     pub length_scale: MinimumLength,
-    /// Inclusive tolerance in model units for coincidence, driving length and rigid placement.
+    /// Inclusive tolerance in model units for coincidence, length relations and rigid placement.
     pub length_tolerance: MinimumLength,
-    /// Maximum sine of the deviation from the parallel or antiparallel branch, in (0, 1).
+    /// Maximum sine of the deviation from the required angular condition, in (0, 1).
     pub parallel_sine_tolerance: f64,
     /// The solver's dimensionless tolerances and iteration limits.
     pub solve: SolveOptions,
