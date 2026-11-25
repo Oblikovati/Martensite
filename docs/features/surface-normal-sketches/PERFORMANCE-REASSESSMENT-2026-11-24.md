@@ -842,7 +842,7 @@ volume. The actual side rails certified a signed squared-radius slope of
 at least `4.9999999999999645` per normalized depth. Separate bounds on
 regular and adjacent side derivatives remained positive for all 1,332
 directions exercised. These checks establish parts of the direct proof.
-Final contact coverage and a repeatable release timing series remain open.
+Full contact coverage and repeatable timing were pending in this prototype.
 
 The desktop's 265-curve frozen Liberation Sans source is a separate
 fixture. CarrierV2 exhausted 8,192 planar pair bisections. On the same
@@ -860,8 +860,8 @@ stock history, 270 sewn pcurves in the reflected native chart,
 18 far caps and 270 side domains. The independent full native check
 passed. Preparation took 2.17 s in the debug build and the complete
 test took 50.22 s. This run exercises the actual desktop source. The
-final exact contact proof still needs the trimmed stock and side checks
-inside the contact collar.
+prototype still lacked exact contact checks on trimmed stock and inside
+the side contact collar.
 
 App revision `c0e96d753` batched identical display segments into one indexed
 draw and retained byte-identical RGBA for the layout and extrusion previews.
@@ -887,3 +887,30 @@ per rate, 30 first previews per sense, and 120 depth inputs per rate.
 
 The private Xwayland output ran at 59.94 Hz. The 120 Hz series times
 injected inputs through completed native frames.
+
+### Integrated selected-cylinder measurement
+
+At `f39a270a`, the same 265-curve desktop capture passed the exact ordered
+checks, including the stock and side contact proof. A separate native body
+check accepted both emboss and engrave and agreed with the topology census.
+The native volume changes were estimated at `0.031060248425` and
+`-0.024157970994` cubic model units. The independently bounded authored
+sweeps were `[0.031060237547131397, 0.031060237547131530]` and
+`[-0.024157962536657855, -0.024157962536657755]`, respectively.
+
+Release-profile calls measured on eight physical cores (Linux x86-64,
+Ryzen AI Max+ 395, CPUs 0–7) include kernel certification and archive
+publication. The harness performs a new exact operation each time and
+checks its archive, then separately replays a permuted request and compares
+history and validation. Peak process RSS was 62,776 KiB for the complete
+`f39a270a` run.
+
+| Revision | Emboss p95, 20 runs | Engrave p95, 20 runs |
+| --- | ---: | ---: |
+| `9f512cd5` | 996.3 ms | 1,050.3 ms |
+| `f39a270a` | 742.7 ms | 749.1 ms |
+
+Background CPU pressure was lower during the `f39a270a` run. The two p95
+rows describe their own environments. Matched runs of native membership
+reuse and cost-prioritized storage separately reproduced the BRep, history,
+validation, and achieved-error records with reduced stage times.
