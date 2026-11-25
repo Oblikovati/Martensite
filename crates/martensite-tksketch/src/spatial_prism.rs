@@ -2,9 +2,9 @@
 //! Bind exact authored spatial lines to the ordinary planar-extrusion pipeline.
 mod binding;
 mod failure;
-mod plane;
+pub(crate) mod plane;
 mod result;
-mod volume;
+pub(crate) mod volume;
 
 pub use failure::{SpatialPrismFailure, SpatialPrismStage};
 pub use result::{

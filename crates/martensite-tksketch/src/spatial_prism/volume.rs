@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Bind and integrate the actual planar faces of the retained native sweep.
+mod affine_curve;
+mod bilinear;
 mod face;
 mod interval;
 
@@ -10,7 +12,7 @@ use martensite_tkbo::profile_extrusion::{
 };
 use martensite_tkbrep::{
     brep::{BRepTool, access::vertex_tshape},
-    topods::Vertex,
+    topods::{Face, Vertex},
 };
 use martensite_tksketch3d::wire::WireRecipe;
 use std::collections::BTreeMap;
@@ -31,11 +33,35 @@ pub(super) fn certify(
         return Err(unbound(None, "a finite reference vertex"));
     }
     let vertex_trace = bind_authored_vertices(result, wire, origin, direction, limit, cancelled)?;
+    certify_affine_flux(
+        result.faces().iter(),
+        origin,
+        vertex_trace,
+        limit,
+        FluxMode::Prism,
+        cancelled,
+    )
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum FluxMode {
+    Prism,
+    Ruled,
+}
+
+pub(crate) fn certify_affine_flux<'a>(
+    faces: impl IntoIterator<Item = &'a Face>,
+    origin: [f64; 3],
+    vertex_trace: f64,
+    limit: f64,
+    mode: FluxMode,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<(Measured, f64), Failure> {
     let mut face_trace = 0.0_f64;
     let mut numerator = Span::ZERO;
-    for (index, face) in result.faces().iter().enumerate() {
+    for (index, face) in faces.into_iter().enumerate() {
         poll(cancelled, Stage::Sweep)?;
-        let (volume, trace) = face::contribution(face, index, origin, limit, cancelled)?;
+        let (volume, trace) = face::contribution(face, index, origin, limit, mode, cancelled)?;
         let bound = (Span::at(vertex_trace) + Span::at(trace)).hi;
         if !bound.is_finite() || bound > limit {
             return Err(Failure::SweepFaceTrace {

@@ -1114,6 +1114,7 @@ dependencies = [
  "martensite-tkgeomalgo",
  "martensite-tkgeombase",
  "martensite-tkmath",
+ "martensite-tkoffset",
  "martensite-tkprim",
  "martensite-tksketch3d",
  "martensite-tktopalgo",

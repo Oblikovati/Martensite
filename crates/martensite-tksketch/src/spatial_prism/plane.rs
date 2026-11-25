@@ -13,7 +13,22 @@ use martensite_tksketch3d::{
 };
 use std::cmp::Ordering;
 
-type Vertex = (PointId, [f64; 3]);
+pub(crate) type Vertex = (PointId, [f64; 3]);
+
+pub(crate) struct AuthoredPlane {
+    pub points: Vec<Vertex>,
+    pub anchors: [Vertex; 3],
+}
+
+pub(crate) fn certify_authored_plane(
+    wire: &WireRecipe,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<AuthoredPlane, Failure> {
+    let points = vertices(wire, cancelled)?;
+    let anchors = find_anchors(&points, cancelled)?;
+    prove_points(anchors, &points, cancelled)?;
+    Ok(AuthoredPlane { points, anchors })
+}
 
 pub(super) struct Lowered {
     pub profile: SketchProfile,
@@ -26,9 +41,7 @@ pub(super) fn lower(
     direction: [f64; 3],
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<Lowered, Failure> {
-    let points = vertices(wire, cancelled)?;
-    let anchors = find_anchors(&points, cancelled)?;
-    prove_points(anchors, &points, cancelled)?;
+    let AuthoredPlane { points, anchors } = certify_authored_plane(wire, cancelled)?;
     let sweep_sign = direction_sign(anchors, direction)?;
     let profile = profile(wire, &points, anchors, cancelled)?;
     Ok(Lowered {

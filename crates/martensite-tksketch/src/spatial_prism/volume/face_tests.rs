@@ -37,12 +37,12 @@ fn a_moved_native_cap_plane_breaks_the_trim_trace_before_measuring() {
         panic!("end cap must be a face")
     };
     let cap = &result.faces()[index];
-    assert!(contribution(cap, index, [0.; 3], 1e-8, &mut || false).is_ok());
+    assert!(contribution(cap, index, [0.; 3], 1e-8, FluxMode::Prism, &mut || false).is_ok());
 
     let (stored, _) = BRepTool::surface_with_location(cap).unwrap();
     let plane = stored.downcast_ref::<GeomPlane>().unwrap();
     plane.translate(Vector3::new(0., 0., 5e-7)).unwrap();
-    let retained = contribution(cap, index, [0.; 3], 1e-8, &mut || false);
+    let retained = contribution(cap, index, [0.; 3], 1e-8, FluxMode::Prism, &mut || false);
     assert!(
         matches!(
             retained,

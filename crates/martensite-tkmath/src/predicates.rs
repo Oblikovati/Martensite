@@ -6,6 +6,7 @@ mod affine_point;
 /// Exact injectivity certificates for supported bilinear patches.
 pub mod bilinear_patch;
 mod compare;
+mod homothety;
 mod line_trace;
 mod plane_sign;
 mod reflected_point;
@@ -19,6 +20,7 @@ pub use compare::{
     compare_length_difference_3d, compare_line_projections_2d, compare_squared_distances_2d,
     compare_squared_length_3d,
 };
+pub use homothety::{Homothety3dFailure, positive_homothety_3d};
 pub use line_trace::{
     affine_line_trace_bound, placed_affine_line_trace_bound, placed_point_distance_upper_bound,
     point_distance_upper_bound,

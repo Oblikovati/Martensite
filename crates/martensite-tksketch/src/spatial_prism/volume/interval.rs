@@ -24,6 +24,28 @@ impl Span {
         }
     }
 
+    pub fn normalized(t: f64, [first, last]: [f64; 2]) -> Self {
+        if t == first {
+            return Self::ZERO;
+        }
+        if t == last {
+            return Self::ONE;
+        }
+        let numerator = Self::at(t) - Self::at(first);
+        let denominator = Self::at(last) - Self::at(first);
+        numerator.divide_positive(denominator)
+    }
+
+    fn divide_positive(self, divisor: Self) -> Self {
+        if !self.finite() || !divisor.finite() || divisor.lo <= 0.0 {
+            return Self::UNKNOWN;
+        }
+        self * Self {
+            lo: (1.0 / divisor.hi).next_down(),
+            hi: (1.0 / divisor.lo).next_up(),
+        }
+    }
+
     pub fn hull(self, other: Self) -> Self {
         if !self.finite() || !other.finite() {
             return Self::UNKNOWN;
@@ -102,6 +124,12 @@ impl Mul for Span {
         }
         if self == Self::ONE {
             return other;
+        }
+        if self == Self::at(-1.) {
+            return -other;
+        }
+        if other == Self::at(-1.) {
+            return -self;
         }
         if other == Self::ONE {
             return self;

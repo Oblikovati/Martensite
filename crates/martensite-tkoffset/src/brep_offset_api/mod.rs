@@ -27,4 +27,7 @@ pub use make_pipe::BRepOffsetAPIMakePipe;
 pub use make_pipe_shell::BRepOffsetAPIMakePipeShell;
 pub use middle_path::BRepOffsetAPIMiddlePath;
 pub use normal_projection::BRepOffsetAPINormalProjection;
-pub use thru_sections::BRepOffsetAPIThruSections;
+pub use thru_sections::{
+    BRepOffsetAPIThruSections, CorrespondingRuledPair, CorrespondingRuledPairFailure,
+    CorrespondingRuledSection,
+};

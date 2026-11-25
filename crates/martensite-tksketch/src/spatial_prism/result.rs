@@ -1,20 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Compose TKBO result history with the original wire and detach through exact copy images.
-use super::{
-    SpatialPrismFailure as Failure, SpatialPrismStage as Stage, failure::native, plane::Lowered,
-    poll,
-};
+use super::{SpatialPrismFailure as Failure, SpatialPrismStage as Stage, plane::Lowered, poll};
+use crate::native_shape_copy::{CopyFailure, ShapeCopy};
 use martensite_tkbo::profile_extrusion::{
     AchievedTolerance, Finding, HistoryRecord, HistoryRelation, HistoryRole, HistorySource,
     Measured, OperationResult, PlanarProofWorkReceipt, RegionId, Resolution, ResultEntity,
     SelfIntersectionEvidence, ValidationReport,
 };
-use martensite_tkbrep::{topexp, topods::Shape, toptools::IndexedMapOfShape};
+use martensite_tkbrep::topods::Shape;
 use martensite_tksketch3d::{
     LineId, PointId,
     wire::{LineDirection, WireRecipe},
 };
-use martensite_tktopalgo::brep_builder_api::{BRepBuilderAPICopy, BRepBuilderAPIMakeShape};
 use std::{
     cmp::Ordering,
     collections::{BTreeMap, BTreeSet},
@@ -145,17 +142,13 @@ impl SpatialPrismResult {
         mut cancelled: impl FnMut() -> bool,
     ) -> Result<DetachedSpatialPrism, Failure> {
         poll(&mut cancelled, Stage::Export)?;
-        let mut copier = native(
-            BRepBuilderAPICopy::with_shape(self.swept.solid(), true, false),
-            Stage::Export,
-        )?;
-        let solid = native(copier.shape(), Stage::Export)?.clone();
-        if solid.is_same(self.swept.solid()) {
-            return Err(Failure::History("fresh copied root identity"));
-        }
-        let images = copied_images(&solid, &copier, &self.swept, &self.bindings, &mut cancelled)?;
+        let mut copy = ShapeCopy::new(self.swept.solid()).map_err(copy_failure)?;
+        let images = copied_images(&mut copy, &self.swept, &self.bindings, &mut cancelled)?;
         poll(&mut cancelled, Stage::Export)?;
-        Ok(DetachedSpatialPrism { solid, images })
+        Ok(DetachedSpatialPrism {
+            solid: copy.into_root(),
+            images,
+        })
     }
 }
 
@@ -279,32 +272,36 @@ fn source_record(
 }
 
 fn copied_images(
-    solid: &Shape,
-    copier: &BRepBuilderAPICopy,
+    copy: &mut ShapeCopy,
     result: &OperationResult,
     bindings: &[Binding],
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<Vec<SpatialPrismImage>, Failure> {
-    let mut members = IndexedMapOfShape::default();
-    topexp::map_shapes(solid, &mut members, true, true);
-    let mut visited = IndexedMapOfShape::default();
-    let mut images = Vec::with_capacity(bindings.len());
-    for binding in bindings {
-        poll(cancelled, Stage::Export)?;
-        let original = original_shape(result, binding.result)?;
-        let shape = native(copier.modified_shape(original), Stage::Export)?;
-        if shape.is_same(original) || !members.contains(&shape) || visited.contains(&shape) {
-            return Err(Failure::History(
-                "one independent copied member for each original image",
-            ));
+    bindings
+        .iter()
+        .map(|binding| {
+            poll(cancelled, Stage::Export)?;
+            let original = original_shape(result, binding.result)?;
+            let shape = copy.bind(original).map_err(copy_failure)?;
+            Ok(SpatialPrismImage {
+                history: binding.history,
+                shape,
+            })
+        })
+        .collect()
+}
+
+fn copy_failure(failure: CopyFailure) -> Failure {
+    match failure {
+        CopyFailure::SharedRoot => Failure::History("fresh copied root identity"),
+        CopyFailure::MissingMember => {
+            Failure::History("one independent copied member for each original image")
         }
-        visited.add(shape.clone());
-        images.push(SpatialPrismImage {
-            history: binding.history,
-            shape,
-        });
+        CopyFailure::Native(source) => Failure::Native {
+            stage: Stage::Export,
+            source: Box::new(source),
+        },
     }
-    Ok(images)
 }
 
 fn original_shape(result: &OperationResult, image: ResultEntity) -> Result<&Shape, Failure> {

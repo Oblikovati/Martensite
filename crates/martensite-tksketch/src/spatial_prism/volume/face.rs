@@ -1,18 +1,21 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::interval::{Point, Span, determinant, l1_difference, mapped_vector, placed};
-use super::{unbound, vertex_point};
+use super::{
+    FluxMode, affine_curve,
+    bilinear::{Bilinear, oriented_flux},
+    unbound, vertex_point,
+};
 use crate::spatial_prism::{
     SpatialPrismFailure as Failure, SpatialPrismStage as Stage, failure::native, poll,
 };
 use martensite_tkbrep::{
-    brep::{BRepTool, EdgePCurve},
+    brep::BRepTool,
     topexp::{self, Explorer},
     topods::{self, Edge, Face, Vertex},
     toptools::IndexedMapOfShape,
 };
-use martensite_tkg2d::geom2d::Geom2dLine;
 use martensite_tkg3d::{
-    geom::{GeomLine, GeomPlane},
+    geom::{GeomBSplineSurface, GeomPlane},
     top_abs::{Orientation, ShapeEnum},
 };
 use martensite_tkmath::gp::{Axis3, Transform3};
@@ -22,6 +25,7 @@ pub(super) fn contribution(
     index: usize,
     reference: [f64; 3],
     limit: f64,
+    mode: FluxMode,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<(Span, f64), Failure> {
     let incomplete = |expected| unbound(Some(index), expected);
@@ -46,7 +50,7 @@ pub(super) fn contribution(
     if wires.more() {
         return Err(incomplete("one trimmed outer wire"));
     }
-    let plane = plane_map(&forward, reference, index)?;
+    let carrier = carrier(&forward, reference, mode, index)?;
     let edges = native(
         Explorer::new(&outer, ShapeEnum::Edge, ShapeEnum::Shape),
         Stage::Sweep,
@@ -55,11 +59,26 @@ pub(super) fn contribution(
         .map(|edge| {
             poll(cancelled, Stage::Sweep)?;
             let edge = native(topods::edge(&edge), Stage::Sweep)?;
-            decode_trim(&edge, &forward, plane, limit, index)
+            decode_trim(
+                &edge,
+                &forward,
+                TrimContext {
+                    carrier,
+                    reference,
+                    limit,
+                    mode,
+                    index,
+                },
+            )
         })
         .collect::<Result<Vec<_>, _>>()?;
     let trace = trims.iter().map(|trim| trim.trace).fold(0., f64::max);
-    Ok((sign * flux(&trims, index)?, trace))
+    let cycle = ordered_trims(&trims, index)?;
+    let flux = match carrier {
+        Carrier::Plane(_) => planar_flux(&cycle),
+        Carrier::Bilinear(patch) => bilinear_flux(patch, &cycle, index)?,
+    };
+    Ok((sign * flux, trace))
 }
 
 #[derive(Clone, Copy)]
@@ -69,16 +88,62 @@ struct PlaneMap {
     reference: [f64; 3],
 }
 
-fn plane_map(face: &Face, reference: [f64; 3], index: usize) -> Result<PlaneMap, Failure> {
+#[derive(Clone, Copy)]
+enum Carrier {
+    Plane(PlaneMap),
+    Bilinear(Bilinear),
+}
+
+fn carrier(
+    face: &Face,
+    reference: [f64; 3],
+    mode: FluxMode,
+    index: usize,
+) -> Result<Carrier, Failure> {
     let (stored, location) = native(BRepTool::surface_with_location(face), Stage::Sweep)?;
-    let plane = stored
-        .downcast_ref::<GeomPlane>()
-        .ok_or_else(|| unbound(Some(index), "a decoded planar face"))?;
-    Ok(PlaneMap {
-        basis: plane.pln().position(),
-        placement: location.transformation(),
-        reference,
-    })
+    let placement = location.transformation();
+    if let Some(plane) = stored.downcast_ref::<GeomPlane>() {
+        return Ok(Carrier::Plane(PlaneMap {
+            basis: plane.pln().position(),
+            placement,
+            reference,
+        }));
+    }
+    if mode == FluxMode::Ruled
+        && let Some(patch) = stored.downcast_ref::<GeomBSplineSurface>()
+        && let Some(parsed) = Bilinear::decode(patch, placement, reference)
+    {
+        return Ok(Carrier::Bilinear(parsed));
+    }
+    Err(unbound(
+        Some(index),
+        "a decoded planar or admitted literal ruled face",
+    ))
+}
+
+type TrimPoints = ([Point; 2], Option<[usize; 2]>);
+
+impl Carrier {
+    fn trim(self, uv: [[Span; 2]; 2], index: usize) -> Result<TrimPoints, Failure> {
+        match self {
+            Self::Plane(plane) => Ok((uv.map(|point| plane.uv(point)), None)),
+            Self::Bilinear(patch) => {
+                let [Some(first), Some(last)] = uv.map(|point| patch.corner(point)) else {
+                    return Err(unbound(
+                        Some(index),
+                        "literal UV corner endpoints of the ruled cell",
+                    ));
+                };
+                if (first + 1) % 4 != last && (last + 1) % 4 != first {
+                    return Err(unbound(
+                        Some(index),
+                        "a full directed iso side of the ruled cell",
+                    ));
+                }
+                Ok(([patch.poles[first], patch.poles[last]], Some([first, last])))
+            }
+        }
+    }
 }
 
 impl PlaneMap {
@@ -105,15 +170,25 @@ struct Trim {
     end: Point,
     vertices: [Vertex; 2],
     trace: f64,
+    corners: Option<[usize; 2]>,
 }
 
-fn decode_trim(
-    edge: &Edge,
-    face: &Face,
-    plane: PlaneMap,
+struct TrimContext {
+    carrier: Carrier,
+    reference: [f64; 3],
     limit: f64,
+    mode: FluxMode,
     index: usize,
-) -> Result<Trim, Failure> {
+}
+
+fn decode_trim(edge: &Edge, face: &Face, context: TrimContext) -> Result<Trim, Failure> {
+    let TrimContext {
+        carrier,
+        reference,
+        limit,
+        mode,
+        index,
+    } = context;
     let incomplete = |expected| unbound(Some(index), expected);
     let reverse = match edge.orientation() {
         Orientation::Forward => false,
@@ -121,16 +196,19 @@ fn decode_trim(
         _ => return Err(incomplete("an oriented trim occurrence")),
     };
     let pcurve = native(BRepTool::curve_on_face(edge, face), Stage::Sweep)?;
-    let uv =
-        pcurve_points(&pcurve, reverse).ok_or_else(|| incomplete("a finite affine pcurve trim"))?;
-    let mapped = uv.map(|point| plane.uv(point));
-    let line = line_points(edge, reverse, plane.reference, index)?;
+    let degree_one = mode == FluxMode::Ruled;
+    let uv = affine_curve::planar(&pcurve, reverse, degree_one)
+        .ok_or_else(|| incomplete("a finite affine pcurve trim"))?;
+    let (mapped, corners) = carrier.trim(uv, index)?;
+    let curve = native(BRepTool::curve_with_location(edge), Stage::Sweep)?;
+    let line = affine_curve::spatial(&curve, reverse, degree_one, reference)
+        .ok_or_else(|| incomplete("a finite affine 3D trim"))?;
     let (start, end) = topexp::vertices(edge, true);
     let vertices = [start, end];
     let mut joined = mapped;
     let mut trace = 0.0_f64;
     for (i, vertex) in vertices.iter().enumerate() {
-        let point = vertex_point(vertex, plane.reference)?;
+        let point = vertex_point(vertex, reference)?;
         let bound = (Span::at(l1_difference(mapped[i], line[i]))
             + Span::at(l1_difference(line[i], point)))
         .hi;
@@ -150,57 +228,14 @@ fn decode_trim(
         end: joined[1],
         vertices,
         trace,
+        corners,
     })
 }
 
-fn pcurve_points(pcurve: &EdgePCurve, reverse: bool) -> Option<[[Span; 2]; 2]> {
-    let line = pcurve.pcurve.downcast_ref::<Geom2dLine>()?;
-    let parameters = ordered_parameters(pcurve.first, pcurve.last, reverse)?;
-    let origin = [line.location().x(), line.location().y()];
-    let direction = [line.direction().x(), line.direction().y()];
-    Some(parameters.map(|t| {
-        std::array::from_fn(|axis| Span::at(origin[axis]) + Span::at(t) * Span::at(direction[axis]))
-    }))
-}
-
-fn line_points(
-    edge: &Edge,
-    reverse: bool,
-    reference: [f64; 3],
-    index: usize,
-) -> Result<[Point; 2], Failure> {
-    let stored = native(BRepTool::curve_with_location(edge), Stage::Sweep)?;
-    let parameters = ordered_parameters(stored.first, stored.last, reverse);
-    let (Some(line), Some(parameters)) = (stored.curve.downcast_ref::<GeomLine>(), parameters)
-    else {
-        return Err(unbound(Some(index), "a finite affine 3D trim"));
-    };
-    let line = line.lin();
-    let transform = stored.location.transformation();
-    let origin = placed(
-        line.location().coordinates().map(Span::at),
-        transform,
-        reference,
-    );
-    let direction = mapped_vector(line.direction().coordinates().map(Span::at), transform);
-    Ok(
-        parameters
-            .map(|t| std::array::from_fn(|axis| origin[axis] + Span::at(t) * direction[axis])),
-    )
-}
-
-fn ordered_parameters(first: f64, last: f64, reverse: bool) -> Option<[f64; 2]> {
-    (first.is_finite() && last.is_finite() && first < last).then_some(if reverse {
-        [last, first]
-    } else {
-        [first, last]
-    })
-}
-
-fn flux(trims: &[Trim], index: usize) -> Result<Span, Failure> {
-    let [first, _, _, ..] = trims else {
+fn ordered_trims(trims: &[Trim], index: usize) -> Result<Vec<&Trim>, Failure> {
+    if trims.len() < 3 {
         return Err(unbound(Some(index), "at least three affine trims per face"));
-    };
+    }
     let outgoing = unique_outgoing(trims, index)?;
     let incomplete = || {
         unbound(
@@ -208,7 +243,7 @@ fn flux(trims: &[Trim], index: usize) -> Result<Span, Failure> {
             "a single closed directed vertex incidence cycle",
         )
     };
-    let mut total = Span::ZERO;
+    let mut result = Vec::with_capacity(trims.len());
     let mut current = 0;
     for visited in 1..=trims.len() {
         let trim = &trims[current];
@@ -219,14 +254,43 @@ fn flux(trims: &[Trim], index: usize) -> Result<Span, Failure> {
         if (successor == 0) != (visited == trims.len()) {
             return Err(incomplete());
         }
-        let next = &trims[successor];
-        // The pcurve endpoints and shared topological vertices are inside the trace
-        // envelopes. Include the possible closure connector between the two.
-        total = total + determinant(first.start, trim.start, trim.end);
-        total = total + determinant(first.start, trim.end, next.start).hull(Span::ZERO);
+        result.push(trim);
         current = successor;
     }
-    Ok(total)
+    Ok(result)
+}
+
+fn planar_flux(trims: &[&Trim]) -> Span {
+    let first = trims[0].start;
+    let mut total = Span::ZERO;
+    for (trim, next) in trims.iter().zip(trims.iter().cycle().skip(1)) {
+        // Include the potential closing segment at every shared native vertex.
+        total = total + determinant(first, trim.start, trim.end);
+        total = total + determinant(first, trim.end, next.start).hull(Span::ZERO);
+    }
+    total
+}
+
+fn bilinear_flux(patch: Bilinear, trims: &[&Trim], index: usize) -> Result<Span, Failure> {
+    let incomplete = || unbound(Some(index), "one consistently oriented exact UV rectangle");
+    if trims.len() != 4 {
+        return Err(incomplete());
+    }
+    let [first, last] = trims[0].corners.ok_or_else(incomplete)?;
+    let forward = (first + 1) % 4 == last;
+    let mut corner = first;
+    let mut poles = patch.poles;
+    for trim in trims {
+        let next = (corner + if forward { 1 } else { 3 }) % 4;
+        if trim.corners != Some([corner, next]) {
+            return Err(incomplete());
+        }
+        for (index, endpoint) in [(corner, trim.start), (next, trim.end)] {
+            poles[index] = std::array::from_fn(|axis| poles[index][axis].hull(endpoint[axis]));
+        }
+        corner = next;
+    }
+    Ok(oriented_flux(poles, forward))
 }
 
 fn unique_outgoing(trims: &[Trim], index: usize) -> Result<IndexedMapOfShape, Failure> {
