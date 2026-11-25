@@ -10,6 +10,9 @@ use martensite_tkmath::elclib;
 use martensite_tkmath::gp::{Axis2d, Axis22d, Circle2, Point2, Transform2, Vector2};
 use std::io;
 
+mod input_lease;
+pub use input_lease::PlanarCircleInputLease;
+
 #[derive(Clone, Copy)]
 struct CircleState {
     pos: Axis22d,

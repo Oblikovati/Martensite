@@ -338,6 +338,8 @@ pub use conical_profile::{
 /// See [`conical_separation::certify_separation`] for admitted frames and caller obligations.
 pub mod conical_separation;
 
+/// Exact directed segment contacts against a full-period finite cylinder.
+pub mod segment_cylinder;
 mod segment_plane;
 pub use segment_plane::{
     SegmentPlaneCut, SegmentPlaneFailure, SegmentPlaneIntersection, SegmentWorkPlane,

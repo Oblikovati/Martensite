@@ -19,7 +19,7 @@ use std::collections::BTreeMap;
 
 type Checked<T> = Result<T, Error>;
 
-struct Captured<'a>(BTreeMap<usize, Vec<&'a Cell>>);
+pub(in crate::brep) struct Captured<'a>(BTreeMap<usize, Vec<&'a Cell>>);
 
 struct DirectedEdge {
     topology: [usize; 2],
@@ -64,7 +64,7 @@ pub(super) fn prove(
 }
 
 impl<'a> Captured<'a> {
-    fn index(snapshot: &'a FaceInputSnapshot) -> Self {
+    pub(in crate::brep) fn index(snapshot: &'a FaceInputSnapshot) -> Self {
         let mut entries = BTreeMap::<_, Vec<_>>::new();
         for (owner, cell) in snapshot.cells() {
             entries.entry(*owner).or_default().push(cell);
@@ -72,7 +72,7 @@ impl<'a> Captured<'a> {
         Self(entries)
     }
 
-    fn cells(&self, owner: usize) -> Checked<&[&'a Cell]> {
+    pub(in crate::brep) fn cells(&self, owner: usize) -> Checked<&[&'a Cell]> {
         self.0
             .get(&owner)
             .map(Vec::as_slice)
@@ -80,6 +80,14 @@ impl<'a> Captured<'a> {
     }
 
     fn support(&self, owner: usize) -> Checked<(usize, Axis3)> {
+        let surface = self.surface(owner)?;
+        let [Cell::Plane(frame)] = self.cells(surface)? else {
+            return Err(Error::Representation(surface));
+        };
+        Ok((surface, *frame))
+    }
+
+    pub(in crate::brep) fn surface(&self, owner: usize) -> Checked<usize> {
         let (surface, location, tolerance) = self
             .cells(owner)?
             .iter()
@@ -96,13 +104,14 @@ impl<'a> Captured<'a> {
         if !location.steps().is_empty() || tolerance < 0. {
             return Err(Error::Representation(owner));
         }
-        let [Cell::Plane(frame)] = self.cells(surface)? else {
-            return Err(Error::Representation(surface));
-        };
-        Ok((surface, *frame))
+        Ok(surface)
     }
 
-    fn children(&self, owner: usize, kind: ShapeEnum) -> Checked<&'a [CapturedOccurrence]> {
+    pub(in crate::brep) fn children(
+        &self,
+        owner: usize,
+        kind: ShapeEnum,
+    ) -> Checked<&'a [CapturedOccurrence]> {
         for cell in self.cells(owner)? {
             if let Cell::Topology { state, children } = cell {
                 let valid_kind = usize::from(*state & BITS_SHAPE_TYPE_MASK) == kind as usize;
@@ -170,13 +179,25 @@ impl<'a> Captured<'a> {
     }
 
     fn endpoints(&self, edge: usize, reverse: bool) -> Checked<[usize; 2]> {
+        let [a, b] = self.directed_vertices(edge, reverse)?;
+        if a == b {
+            return Err(Error::Topology(edge));
+        }
+        Ok([a, b])
+    }
+
+    pub(in crate::brep) fn directed_vertices(
+        &self,
+        edge: usize,
+        reverse: bool,
+    ) -> Checked<[usize; 2]> {
         let [a, b] = self.children(edge, ShapeEnum::Edge)? else {
             return Err(Error::Topology(edge));
         };
         let [ar, br] = [reversed(a)?, reversed(b)?];
         local(a)?;
         local(b)?;
-        if a.owner == b.owner || ar == br {
+        if ar == br {
             return Err(Error::Topology(edge));
         }
         Ok(if ar ^ reverse {
@@ -186,7 +207,7 @@ impl<'a> Captured<'a> {
         })
     }
 
-    fn vertex(&self, owner: usize) -> Checked<[f64; 3]> {
+    pub(in crate::brep) fn vertex(&self, owner: usize) -> Checked<[f64; 3]> {
         if !self.children(owner, ShapeEnum::Vertex)?.is_empty() {
             return Err(Error::Topology(owner));
         }
@@ -199,7 +220,7 @@ impl<'a> Captured<'a> {
             .ok_or(Error::Representation(owner))
     }
 
-    fn edge_representations(&self, owner: usize) -> Checked<&'a [usize]> {
+    pub(in crate::brep) fn edge_representations(&self, owner: usize) -> Checked<&'a [usize]> {
         self.cells(owner)?
             .iter()
             .find_map(|cell| match cell {
@@ -256,14 +277,18 @@ impl<'a> Captured<'a> {
         Ok((Line3::from_axis(*axis), self.range(instance)?))
     }
 
-    fn parametric(&self, curve: usize, instance: usize) -> Checked<(Axis2d, [f64; 2])> {
+    pub(in crate::brep) fn parametric(
+        &self,
+        curve: usize,
+        instance: usize,
+    ) -> Checked<(Axis2d, [f64; 2])> {
         let [Cell::PlanarLine(axis)] = self.cells(curve)? else {
             return Err(Error::Representation(curve));
         };
         Ok((*axis, self.range(instance)?))
     }
 
-    fn range(&self, representation: usize) -> Checked<[f64; 2]> {
+    pub(in crate::brep) fn range(&self, representation: usize) -> Checked<[f64; 2]> {
         let cells = self.cells(representation)?;
         let allowed = cells
             .iter()
@@ -321,7 +346,7 @@ fn unique_successor(pending: &[DirectedEdge], vertex: usize) -> Option<usize> {
     matches.next().is_none().then_some(index)
 }
 
-fn reversed(occurrence: &CapturedOccurrence) -> Checked<bool> {
+pub(in crate::brep) fn reversed(occurrence: &CapturedOccurrence) -> Checked<bool> {
     match occurrence.orientation {
         Orientation::Forward => Ok(false),
         Orientation::Reversed => Ok(true),
@@ -329,7 +354,7 @@ fn reversed(occurrence: &CapturedOccurrence) -> Checked<bool> {
     }
 }
 
-fn local(occurrence: &CapturedOccurrence) -> Checked<()> {
+pub(in crate::brep) fn local(occurrence: &CapturedOccurrence) -> Checked<()> {
     occurrence
         .location
         .steps()

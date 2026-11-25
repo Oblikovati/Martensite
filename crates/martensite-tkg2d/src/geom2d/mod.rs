@@ -40,7 +40,7 @@ pub use transformation::Geom2dTransformation;
 mod line;
 pub use line::{Geom2dLine, PlanarLineInputLease};
 mod circle;
-pub use circle::Geom2dCircle;
+pub use circle::{Geom2dCircle, PlanarCircleInputLease};
 mod ellipse;
 pub use ellipse::Geom2dEllipse;
 mod hyperbola;

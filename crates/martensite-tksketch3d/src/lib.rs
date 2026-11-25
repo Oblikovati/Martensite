@@ -12,6 +12,7 @@ pub mod import;
 pub mod line_edit;
 mod mirror;
 mod source;
+pub mod split_cylinder;
 pub mod split_face;
 pub mod split_plane;
 pub mod wire;

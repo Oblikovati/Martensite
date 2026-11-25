@@ -1,8 +1,9 @@
 //! Discovery retains owners; complete reference closure is checked under every final lease.
 use super::{
+    analytic::CaptureMode,
     cells::{Cell, Lease, owner_cells},
     owners::{self, Owner},
-    types::{FaceCaptureBehavior, FaceCaptureIncomplete as Incomplete, FaceCaptureLimits},
+    types::{FaceCaptureIncomplete as Incomplete, FaceCaptureLimits},
 };
 use crate::topods::Face;
 use std::collections::BTreeMap;
@@ -10,14 +11,15 @@ use std::collections::BTreeMap;
 pub(super) struct Inventory {
     pub owners: Vec<Owner>,
     links: Vec<Vec<usize>>,
-    pub behavior: FaceCaptureBehavior,
+    pub behavior: CaptureMode,
 }
 impl Inventory {
     pub(super) fn gather(
         face: &Face,
         limits: FaceCaptureLimits,
-        behavior: FaceCaptureBehavior,
+        behavior: impl Into<CaptureMode>,
     ) -> Result<Self, Incomplete> {
+        let behavior = behavior.into();
         let mut result = Self {
             owners: vec![Owner::Topology(face.tshape().clone())],
             links: Vec::new(),
@@ -97,7 +99,7 @@ pub(super) fn check_limit(
 fn owner_references(
     owner: &Owner,
     limits: FaceCaptureLimits,
-    behavior: FaceCaptureBehavior,
+    behavior: CaptureMode,
 ) -> Result<Vec<Owner>, Incomplete> {
     let mut cells = owner_cells(owner)?;
     cells.sort_by_key(Cell::key);
@@ -116,7 +118,7 @@ fn references_for_owner(
     index: usize,
     leases: &[(usize, Lease<'_>)],
     limits: FaceCaptureLimits,
-    behavior: FaceCaptureBehavior,
+    behavior: CaptureMode,
 ) -> Result<Vec<Owner>, Incomplete> {
     let mut selected: Vec<_> = leases
         .iter()
@@ -136,7 +138,7 @@ fn append_references(
     lease: &Lease<'_>,
     result: &mut Vec<Owner>,
     limits: FaceCaptureLimits,
-    behavior: FaceCaptureBehavior,
+    behavior: CaptureMode,
 ) -> Result<(), Incomplete> {
     match lease {
         Lease::Topology(fields) => topology_references(&fields.shapes, result, limits)?,
@@ -163,7 +165,7 @@ fn edge_references(
     curves: &[martensite_tkernel::standard::Handle<dyn crate::brep::BRepCurveRepresentation>],
     result: &mut Vec<Owner>,
     limits: FaceCaptureLimits,
-    behavior: FaceCaptureBehavior,
+    behavior: CaptureMode,
 ) -> Result<(), Incomplete> {
     check_limit(curves.len(), limits.owners, "representations")?;
     for curve in curves {
@@ -175,15 +177,15 @@ fn edge_references(
 fn append_geometry_references(
     lease: &Lease<'_>,
     result: &mut Vec<Owner>,
-    behavior: FaceCaptureBehavior,
+    behavior: CaptureMode,
 ) -> Result<(), Incomplete> {
     match lease {
         Lease::PCurve(fields) => pcurve_references(fields, result, behavior)?,
-        Lease::Seam(fields) => result.push(owners::planar_owner(&fields.pcurve2)?),
+        Lease::Seam(fields) => result.push(owners::planar_owner(&fields.pcurve2, behavior)?),
         Lease::Regularity(fields) => regularity_references(fields, result, behavior)?,
         Lease::Spatial(curve) => spatial_reference(curve, result, behavior)?,
-        Lease::Extrusion(surface) => extrusion_reference(surface, result)?,
-        Lease::Vertex(fields) if !fields.points.is_empty() => {
+        Lease::Extrusion(surface) => extrusion_reference(surface, result, behavior)?,
+        Lease::Vertex(fields) if !behavior.analytic() && !fields.points.is_empty() => {
             return Err(unsupported("nonempty vertex point representations"));
         }
         _ => {}
@@ -193,11 +195,12 @@ fn append_geometry_references(
 fn extrusion_reference(
     surface: &martensite_tkg3d::geom::ExtrusionInputLease<'_>,
     result: &mut Vec<Owner>,
+    behavior: CaptureMode,
 ) -> Result<(), Incomplete> {
     if surface.has_evaluation_override() {
         return Err(unsupported("surface evaluation override"));
     }
-    result.push(owners::spatial_owner(&surface.basis())?);
+    result.push(owners::spatial_owner(&surface.basis(), behavior)?);
     Ok(())
 }
 
@@ -212,7 +215,7 @@ fn unsupported(actual: &str) -> Incomplete {
 fn regularity_references(
     fields: &crate::brep::curve_on_2_surfaces::TwoSurfacesFields,
     result: &mut Vec<Owner>,
-    behavior: FaceCaptureBehavior,
+    behavior: CaptureMode,
 ) -> Result<(), Incomplete> {
     result.push(owners::surface_owner(&fields.surface, behavior)?);
     result.push(owners::surface_owner(&fields.surface2, behavior)?);
@@ -222,9 +225,9 @@ fn regularity_references(
 fn pcurve_references(
     fields: &crate::brep::curve_on_surface::CurveOnSurfaceFields,
     result: &mut Vec<Owner>,
-    behavior: FaceCaptureBehavior,
+    behavior: CaptureMode,
 ) -> Result<(), Incomplete> {
-    result.push(owners::planar_owner(&fields.pcurve)?);
+    result.push(owners::planar_owner(&fields.pcurve, behavior)?);
     result.push(owners::surface_owner(&fields.surface, behavior)?);
     Ok(())
 }
@@ -232,11 +235,11 @@ fn pcurve_references(
 fn spatial_reference(
     curve: &martensite_tkernel::standard::Handle<dyn martensite_tkg3d::geom::GeomCurve>,
     result: &mut Vec<Owner>,
-    behavior: FaceCaptureBehavior,
+    behavior: CaptureMode,
 ) -> Result<(), Incomplete> {
-    if behavior == FaceCaptureBehavior::StoredSurfaceQueriesV2 && curve.is_null() {
+    if behavior.extended() && curve.is_null() {
         return Ok(());
     }
-    result.push(owners::spatial_owner(curve)?);
+    result.push(owners::spatial_owner(curve, behavior)?);
     Ok(())
 }

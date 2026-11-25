@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Freeze the actual planar attachment domain of one selected native face.
-mod capture;
+pub(super) mod capture;
 mod curve;
 
 use curve::PlanarSupport;
@@ -292,7 +292,7 @@ fn capture_domain(
     })
 }
 
-fn member(
+pub(super) fn member(
     body: &Solid,
     face: &Face,
     limit: usize,
@@ -368,7 +368,7 @@ fn numeric_failure(cause: PlanarAttachmentError) -> FaceAttachmentError {
     }
 }
 
-fn capture_failure(cause: FaceCaptureIncomplete) -> FaceAttachmentError {
+pub(super) fn capture_failure(cause: FaceCaptureIncomplete) -> FaceAttachmentError {
     match cause {
         FaceCaptureIncomplete::Cancelled => FaceAttachmentError::Cancelled,
         cause => FaceAttachmentError::Capture(cause),

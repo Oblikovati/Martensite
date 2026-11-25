@@ -12,6 +12,9 @@ use martensite_tkmath::elclib;
 use martensite_tkmath::gp::{Axis2, Circle3, Point3, Transform3, Vector3};
 use std::io;
 
+mod input_lease;
+pub use input_lease::CircleInputLease;
+
 #[derive(Clone, Copy)]
 struct CircleState {
     pos: Axis2,

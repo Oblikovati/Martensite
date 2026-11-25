@@ -1,5 +1,6 @@
 //! Numeric copies use held guards and immutable value objects only.
 use super::{
+    analytic::{AnalyticCell, CaptureMode},
     cells::Lease,
     inventory::{Inventory, check_limit},
     types::*,
@@ -14,7 +15,7 @@ pub(super) struct CopyContext {
     datums: BTreeMap<usize, usize>,
     used: usize,
     maximum: usize,
-    behavior: FaceCaptureBehavior,
+    behavior: CaptureMode,
 }
 impl CopyContext {
     pub(super) fn new(inventory: &Inventory, maximum: usize) -> Self {
@@ -96,6 +97,31 @@ impl CopyContext {
             _ => self.representation(lease),
         }
     }
+    pub(super) fn analytic_cell(
+        &mut self,
+        lease: &Lease<'_>,
+    ) -> Result<Option<AnalyticCell>, FaceCaptureIncomplete> {
+        let cell = match lease {
+            Lease::Cylinder(l) => {
+                let (frame, radius) = l.coefficients();
+                AnalyticCell::Cylinder(frame, finite(radius, "cylinder radius")?)
+            }
+            Lease::SpatialCircle(l) => {
+                let (frame, radius) = l.coefficients();
+                AnalyticCell::SpatialCircle(frame, finite(radius, "spatial circle radius")?)
+            }
+            Lease::PlanarCircle(l) => {
+                // Circular cap pcurves belong to the shared rim edge. The selected wall
+                // has its own literal affine rims, so no cap chart values enter its proof.
+                finite(l.coefficients().1, "unselected planar circle radius")?;
+                AnalyticCell::UnselectedPlanarCircle
+            }
+            _ => return Ok(None),
+        };
+        self.charge(1)?;
+        Ok(Some(cell))
+    }
+
     fn face_fields(
         &mut self,
         fields: &crate::brep::tface::TFaceFields,
@@ -157,7 +183,7 @@ impl CopyContext {
         &self,
         curve: &Handle<dyn martensite_tkg3d::geom::GeomCurve>,
     ) -> Result<CapturedFaceCell, FaceCaptureIncomplete> {
-        if self.behavior == FaceCaptureBehavior::StoredSurfaceQueriesV2 && curve.is_null() {
+        if self.behavior.extended() && curve.is_null() {
             return Ok(CapturedFaceCell::AbsentSpatial);
         }
         Ok(CapturedFaceCell::Spatial {
@@ -213,7 +239,7 @@ impl CopyContext {
             self.charge(count)?;
         }
         let input = lease.stored_input();
-        if self.behavior == FaceCaptureBehavior::StoredRepresentationsV1 {
+        if !self.behavior.extended() {
             super::numeric::validate_spline(&input)?;
         } else {
             super::numeric::validate_stored_spline(&input)?;

@@ -12,6 +12,7 @@ mod curve_on_2_surfaces;
 mod curve_on_closed_surface;
 mod curve_on_surface;
 mod curve_representation;
+pub mod cylindrical_split;
 mod dump;
 pub mod errors;
 pub mod face_input_capture;

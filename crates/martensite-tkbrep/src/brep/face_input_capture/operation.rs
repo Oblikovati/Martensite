@@ -1,5 +1,11 @@
 //! No user code or numerical certificate executes during simultaneous read leases.
-use super::{cells::Lease, copy::CopyContext, inventory::Inventory, types::*};
+use super::{
+    analytic::{AnalyticFaceInput, CaptureMode},
+    cells::Lease,
+    copy::CopyContext,
+    inventory::Inventory,
+    types::*,
+};
 use crate::topods::Face;
 
 /// Copy finite admitted face input without validating geometry; `capture_face_input(&face, FaceCaptureLimits::bounded(), ||false)`.
@@ -27,7 +33,7 @@ pub fn capture_face_input_with_behavior(
     if cancelled() {
         return Err(FaceCaptureIncomplete::Cancelled);
     }
-    let result = captured(face, limits, behavior);
+    let result = captured(face, limits, behavior.into()).map(|capture| capture.common);
     if cancelled() {
         return Err(FaceCaptureIncomplete::Cancelled);
     }
@@ -46,8 +52,8 @@ pub fn capture_closed_extrusion_face(
 fn captured(
     face: &Face,
     limits: FaceCaptureLimits,
-    behavior: FaceCaptureBehavior,
-) -> Result<FaceInputSnapshot, FaceCaptureIncomplete> {
+    behavior: CaptureMode,
+) -> Result<AnalyticFaceInput, FaceCaptureIncomplete> {
     let inventory = Inventory::gather(face, limits, behavior)?;
     let cells = inventory.cells(limits)?;
     let leases = cells
@@ -62,26 +68,41 @@ fn copy_snapshot(
     inventory: &Inventory,
     leases: &[(usize, Lease<'_>)],
     limits: FaceCaptureLimits,
-) -> Result<FaceInputSnapshot, FaceCaptureIncomplete> {
+) -> Result<AnalyticFaceInput, FaceCaptureIncomplete> {
     let mut copier = CopyContext::new(inventory, limits.entries);
     let root = copier.occurrence(face).map_err(|error| error.at_owner(0))?;
     let mut ordered: Vec<_> = leases.iter().collect();
     ordered.sort_by_key(|(owner, lease)| (*owner, super::cells::lease_order(lease)));
-    let cells = copied_cells(&mut copier, ordered)?;
-    Ok(FaceInputSnapshot { root, cells })
+    let mut cells = Vec::new();
+    let mut carriers = Vec::new();
+    for (owner, lease) in ordered {
+        let measured = copier
+            .analytic_cell(lease)
+            .map_err(|error| error.at_owner(*owner))?;
+        if let Some(carrier) = measured {
+            carriers.push((*owner, carrier));
+        } else {
+            let cell = copier.cell(lease).map_err(|error| error.at_owner(*owner))?;
+            cells.push((*owner, cell));
+        }
+    }
+    Ok(AnalyticFaceInput {
+        common: FaceInputSnapshot { root, cells },
+        carriers,
+    })
 }
 
-fn copied_cells(
-    copier: &mut CopyContext,
-    ordered: Vec<&(usize, Lease<'_>)>,
-) -> Result<Vec<(usize, CapturedFaceCell)>, FaceCaptureIncomplete> {
-    ordered
-        .into_iter()
-        .map(|(owner, lease)| {
-            copier
-                .cell(lease)
-                .map(|cell| (*owner, cell))
-                .map_err(|error| error.at_owner(*owner))
-        })
-        .collect()
+pub(crate) fn capture_cylindrical_input(
+    face: &Face,
+    limits: FaceCaptureLimits,
+    mut cancelled: impl FnMut() -> bool,
+) -> Result<AnalyticFaceInput, FaceCaptureIncomplete> {
+    if cancelled() {
+        return Err(FaceCaptureIncomplete::Cancelled);
+    }
+    let result = captured(face, limits, CaptureMode::CylinderWall);
+    if cancelled() {
+        return Err(FaceCaptureIncomplete::Cancelled);
+    }
+    result
 }

@@ -21,6 +21,7 @@ mod motion;
 mod on_face;
 mod preferred_drag;
 mod restore;
+mod split_cylinder;
 mod split_face;
 mod split_plane;
 mod values;

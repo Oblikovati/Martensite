@@ -227,7 +227,7 @@ fn unchanged_endpoint(point: PointId) -> SplitLineOutcome {
     SplitLineOutcome::Unchanged(UnchangedLine::Endpoint(point))
 }
 
-fn edit_failure(cause: EditFailure) -> SplitLineFailure {
+pub(super) fn edit_failure(cause: EditFailure) -> SplitLineFailure {
     if matches!(cause, EditFailure::Cancelled(_)) {
         return SplitLineFailure::Cancelled;
     }
@@ -238,14 +238,22 @@ fn fragments(source: SketchLine, ids: SplitLineIds, parameter: [f64; 2]) -> [Spl
     let [start, end] = source.endpoints;
     let endpoints = [[start, ids.cut], [ids.cut, end]];
     let intervals = [[[0.; 2], parameter], [parameter, [1.; 2]]];
-    std::array::from_fn(|index| SplitLineFragment {
-        source: source.id,
-        line: SketchLine {
-            id: ids.fragments[index],
-            endpoints: endpoints[index],
-        },
-        source_parameters: intervals[index],
+    std::array::from_fn(|i| {
+        directed_fragment(source.id, ids.fragments[i], endpoints[i], intervals[i])
     })
+}
+
+pub(super) fn directed_fragment(
+    source: LineId,
+    id: LineId,
+    endpoints: [PointId; 2],
+    source_parameters: [[f64; 2]; 2],
+) -> SplitLineFragment {
+    SplitLineFragment {
+        source,
+        line: SketchLine { id, endpoints },
+        source_parameters,
+    }
 }
 
 fn split_batch(
