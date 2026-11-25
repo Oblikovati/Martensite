@@ -15,20 +15,14 @@ impl RecutStock {
         index: &body::Index,
         band: &Face,
     ) -> FeatureChecked<FrozenRecut<'_>> {
-        let bind = |entity: &Shape| {
-            index
-                .reference(entity, attempt)?
-                .ok_or_else(|| mismatch(attempt))
-        };
-        let new_seam = self.new_seam(attempt)?;
-        Ok(FrozenRecut {
-            receipt: &self.receipt,
-            band: bind(band)?,
-            seam: bind(new_seam)?,
-            parts: non_band_images(&self.band, &self.images)
-                .map(bind)
-                .collect::<FeatureChecked<_>>()?,
-        })
+        bind_stock(
+            attempt,
+            index,
+            band,
+            self.new_seam(attempt)?,
+            non_band_images(&self.band, &self.images),
+            &self.receipt,
+        )
     }
 
     fn new_seam(&self, attempt: Attempt) -> FeatureChecked<&Shape> {
@@ -44,6 +38,27 @@ impl RecutStock {
     }
 }
 
+pub(super) fn bind_stock<'a>(
+    attempt: Attempt,
+    index: &body::Index,
+    band: &Face,
+    seam: &Shape,
+    parts: impl IntoIterator<Item = &'a Shape>,
+    receipt: &'a [u8],
+) -> FeatureChecked<FrozenRecut<'a>> {
+    let bind = |entity: &Shape| {
+        index
+            .reference(entity, attempt)?
+            .ok_or_else(|| mismatch(attempt))
+    };
+    Ok(FrozenRecut {
+        receipt,
+        band: bind(band)?,
+        seam: bind(seam)?,
+        parts: parts.into_iter().map(bind).collect::<FeatureChecked<_>>()?,
+    })
+}
+
 impl FrozenRecut<'_> {
     pub(in super::super) fn rebind(
         &self,
@@ -53,7 +68,7 @@ impl FrozenRecut<'_> {
         let reference = |key| decoded.entities.get(key).ok_or_else(|| mismatch(attempt));
         let band = attempt.native(
             STAGE,
-            "decoded re-cut stock cylinder",
+            "decoded original stock cylinder",
             topods::face(reference(&self.band)?),
         )?;
         let seam = reference(&self.seam)?;

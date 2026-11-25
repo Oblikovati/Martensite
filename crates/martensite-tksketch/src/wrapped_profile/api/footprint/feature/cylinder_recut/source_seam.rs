@@ -4,6 +4,7 @@ use super::*;
 pub(super) struct Seam {
     pub(super) edge: Edge,
     pub(super) tolerance: f64,
+    pub(super) error: f64,
     pub(super) order: [usize; 2],
     pub(super) base: usize,
 }
@@ -33,10 +34,10 @@ impl Seam {
             "forward generator",
             topods::edge(&a.oriented(Orientation::Forward)),
         )?;
-        let order = seam_order(attempt, side, &forward, carrier.height)?;
+        let order = seam_order(attempt, side, &forward, carrier)?;
         let stored = curve(attempt, &forward)?;
         let base = seam_ends(attempt, &forward, ends)?;
-        check_generator(attempt, &stored, carrier)?;
+        let error = check_generator(attempt, &stored, carrier)?;
         let tolerance = attempt
             .native(
                 "original seam tolerance",
@@ -46,6 +47,7 @@ impl Seam {
         Ok(Self {
             edge: forward,
             tolerance,
+            error,
             order,
             base,
         })
@@ -56,7 +58,7 @@ fn seam_order(
     attempt: RecutCheck,
     side: &Face,
     edge: &Edge,
-    height: f64,
+    carrier: &Carrier,
 ) -> FeatureChecked<[usize; 2]> {
     let native = attempt.native(
         "forward native band query",
@@ -67,12 +69,15 @@ fn seam_order(
         trim(attempt, edge, &native)?,
         trim(attempt, &back, &native)?,
     ];
-    if trims.iter().any(|t| [t.first, t.last] != [0., height]) {
+    if trims
+        .iter()
+        .any(|t| [t.first, t.last] != [0., carrier.height])
+    {
         return Err(attempt.refusal("same 3D and UV range for the original paired generator"));
     }
     match [
-        line(attempt, &trims[0], [0., -1.])?,
-        line(attempt, &trims[1], [0., -1.])?,
+        line(attempt, &trims[0], [0., carrier.axial_sign])?,
+        line(attempt, &trims[1], [0., carrier.axial_sign])?,
     ] {
         [a, b] if a == [0., 0.] && b == [TAU, 0.] => Ok([0, 1]),
         [a, b] if a == [TAU, 0.] && b == [0., 0.] => Ok([1, 0]),
@@ -97,19 +102,21 @@ fn check_generator(
     attempt: RecutCheck,
     stored: &EdgeCurve3D,
     carrier: &Carrier,
-) -> FeatureChecked<()> {
+) -> FeatureChecked<f64> {
     let line = stored
         .curve
         .downcast_ref::<GeomLine>()
         .ok_or_else(|| attempt.refusal("spatial generator is a stored straight line"))?;
     let line = line.lin();
     let [ox, oy, oz] = carrier.origin;
-    let (x, _) = sum_with_residual(ox, carrier.radius);
+    let (x, roundoff) = sum_with_residual(ox, carrier.radius);
+    let nominal = [x, oy, oz];
+    let start = world_point(attempt, *line.location().coordinates(), &stored.location)?;
     if [stored.first, stored.last] != [0., carrier.height]
         || *line.direction().coordinates() != UP
-        || world_point(attempt, *line.location().coordinates(), &stored.location)? != [x, oy, oz]
+        || (carrier.axial_sign < 0. && start != nominal)
     {
         return Err(attempt.refusal("stock generator matches the original band's zero-angle line"));
     }
-    Ok(())
+    Ok(anchor_upper(start, nominal, roundoff))
 }

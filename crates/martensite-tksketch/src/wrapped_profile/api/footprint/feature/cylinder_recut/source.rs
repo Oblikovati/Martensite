@@ -1,4 +1,4 @@
-//! Capture exactly the native side, two disks and their shared Circle→Extrude trims.
+//! Capture the native side, two disks and shared trims of a completed cylinder stock.
 use super::*;
 use crate::surface_sketch::wrapped_profile::api::footprint::band;
 use martensite_tkbrep::brep::EdgePCurve;
@@ -15,6 +15,7 @@ pub(super) struct Stock<'a> {
     pub(super) ends: [Rim; 2],
     pub(super) seam: Edge,
     pub(super) seam_tol: f64,
+    pub(super) seam_error: f64,
     pub(super) seam_order: [usize; 2],
     pub(super) base: usize,
     pub(super) origin: [f64; 3],
@@ -35,6 +36,7 @@ pub(super) struct Rim {
     pub(super) edge_tol: f64,
     pub(super) vertex_tol: f64,
     pub(super) disk_tol: f64,
+    pub(super) anchor_error: f64,
 }
 
 struct Carrier {
@@ -42,10 +44,23 @@ struct Carrier {
     radius: f64,
     height: f64,
     tolerance: f64,
+    axial_sign: f64,
 }
 
 impl<'a> Stock<'a> {
     pub(super) fn capture(
+        attempt: RecutCheck,
+        solid: &Shape,
+        side: &'a Face,
+    ) -> FeatureChecked<Self> {
+        let stock = Self::capture_inherited(attempt, solid, side)?;
+        if side.orientation() != Orientation::Reversed {
+            return Err(attempt.refusal("indirect cardinal cylinder stock for the re-cut"));
+        }
+        Ok(stock)
+    }
+
+    pub(super) fn capture_inherited(
         attempt: RecutCheck,
         solid: &Shape,
         side: &'a Face,
@@ -71,6 +86,7 @@ impl<'a> Stock<'a> {
             ends,
             seam: seam.edge,
             seam_tol: seam.tolerance,
+            seam_error: seam.error,
             seam_order: seam.order,
             base: seam.base,
             origin: carrier.origin,
@@ -141,29 +157,30 @@ impl Carrier {
         let frame = cylinder.position();
         let origin = world_point(attempt, *frame.location().coordinates(), &location)?;
         let native = band::capture(side).map_err(|cause| attempt.0.footprint(cause.into()))?;
-        if side.orientation() != Orientation::Reversed
-            || *frame.x_direction().coordinates() != X
+        let axial = *frame.direction().coordinates();
+        let height = valid_height(side.orientation(), axial, native.axial);
+        if *frame.x_direction().coordinates() != X
             || *frame.y_direction().coordinates() != Y
-            || *frame.direction().coordinates() != [0., 0., -1.]
             || native.angular.is_some()
             || native.outer.is_some()
             || !native.holes.is_empty()
-            || native.axial[1] != 0.
             || !cylinder.radius().is_finite()
             || cylinder.radius() <= 0.
         {
-            return Err(
-                attempt.refusal("indirect cardinal full-cylinder stock without extra trims")
-            );
+            return Err(attempt.refusal("outward cardinal full-cylinder stock without extra trims"));
         }
+        let height = height.ok_or_else(|| {
+            attempt.refusal("finite full-cylinder axial range in the directed stock chart")
+        })?;
         let tolerance = attempt
             .native("stock side tolerance", face_tshape(side, "cylinder recut"))?
             .tolerance();
         Ok(Self {
             origin,
             radius: cylinder.radius(),
-            height: -native.axial[0],
+            height,
             tolerance,
+            axial_sign: axial[2],
         })
     }
 
@@ -173,23 +190,57 @@ impl Carrier {
         anchor: &Vertex,
         [x, y, z]: [f64; 3],
         tolerance: f64,
-    ) -> FeatureChecked<()> {
-        let (x, error) = sum_with_residual(x, self.radius);
-        let point = attempt.native("native original seam anchor", BRepTool::pnt(anchor))?;
-        if *point.coordinates() != [x, y, z] || !tolerance.is_finite() || error >= tolerance {
+    ) -> FeatureChecked<f64> {
+        let (x, origin_error) = sum_with_residual(x, self.radius);
+        let raw = attempt.native(
+            "native original seam anchor",
+            vertex_tshape(anchor, "cylinder recut"),
+        )?;
+        let actual = world_point(attempt, *raw.pnt().coordinates(), anchor.location())?;
+        let nominal = [x, y, z];
+        // The forward primitive can retain the rounded end-of-turn vertex.
+        // Preserve its literal location and charge every coordinate discrepancy.
+        let error = anchor_upper(actual, nominal, origin_error);
+        if !error.is_finite()
+            || !tolerance.is_finite()
+            || error >= tolerance
+            || (self.axial_sign < 0. && actual != nominal)
+        {
             return Err(attempt.refusal("original seam anchor on the matched circular rim"));
         }
-        Ok(())
+        Ok(error)
     }
 
     fn center_at(&self, attempt: RecutCheck, v: f64) -> FeatureChecked<[f64; 3]> {
         let [x, y, z] = self.origin;
-        let (height, residual) = sum_with_residual(z, -v);
+        let (height, residual) = sum_with_residual(z, self.axial_sign * v);
         if !height.is_finite() || residual != 0. {
             return Err(attempt.refusal("exact axial position of the stock circle"));
         }
         Ok([x, y, height])
     }
+}
+
+fn anchor_upper(actual: [f64; 3], nominal: [f64; 3], origin_error: f64) -> f64 {
+    actual
+        .into_iter()
+        .zip(nominal)
+        .fold(origin_error, |sum, (a, b)| {
+            if a == b {
+                sum
+            } else {
+                (sum + (a - b).abs().next_up()).next_up()
+            }
+        })
+}
+
+fn valid_height(orientation: Orientation, axial: [f64; 3], range: [f64; 2]) -> Option<f64> {
+    let height = match (orientation, axial, range) {
+        (Orientation::Forward, [0., 0., 1.], [0., height]) => height,
+        (Orientation::Reversed, [0., 0., -1.], [lower, 0.]) => -lower,
+        _ => return None,
+    };
+    (height.is_finite() && height > 0.).then_some(height)
 }
 
 fn only_wire(attempt: RecutCheck, face: &Face) -> FeatureChecked<Shape> {
@@ -230,12 +281,20 @@ impl Rim {
         let center = carrier.center_at(attempt, v)?;
         if [lateral.first, lateral.last] != [0., TAU]
             || u != 0.
-            || (v != 0. && v != -carrier.height)
+            || (v != 0. && v != carrier.axial_sign * carrier.height)
         {
             return Err(attempt.refusal("native rim over one exact stored turn at a band endpoint"));
         }
         let curve = rim_curve(attempt, &edge, center, carrier.radius)?;
         let cap_pcurve = disk_circle(attempt, &face, &edge, center, carrier.radius)?;
+        let outward = if v == 0. {
+            Orientation::Reversed
+        } else {
+            Orientation::Forward
+        };
+        if face.orientation() != outward {
+            return Err(attempt.refusal("outward orientation of the original planar disk"));
+        }
         let anchor = topexp::first_vertex(&edge, false);
         if anchor.is_null() || !anchor.is_same(&topexp::last_vertex(&edge, false)) {
             return Err(attempt.refusal("both ends of the rim own one exact native anchor"));
@@ -255,7 +314,7 @@ impl Rim {
                 face_tshape(&face, "cylinder recut"),
             )?
             .tolerance();
-        carrier.check_anchor(attempt, &anchor, center, vertex_tol)?;
+        let anchor_error = carrier.check_anchor(attempt, &anchor, center, vertex_tol)?;
         Ok(Self {
             face,
             wire,
@@ -268,6 +327,7 @@ impl Rim {
             edge_tol,
             vertex_tol,
             disk_tol,
+            anchor_error,
         })
     }
 }

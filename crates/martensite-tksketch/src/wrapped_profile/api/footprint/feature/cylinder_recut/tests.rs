@@ -284,3 +284,51 @@ fn check_paired_trim(attempt: Attempt, band: &Face, sheet: [f64; 2]) {
     assert!(a.is_same(b) && a.orientation() != b.orientation());
     assert_eq!([ua.min(*ub), ua.max(*ub)], sheet);
 }
+
+#[test]
+fn inherited_forward_cylinder_preserves_the_translated_239_stock_boundary() {
+    use super::super::super::tests::freeze;
+    use martensite_tkmath::gp::Axis2;
+    use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeCylinder;
+
+    let axes = Axis2::with_standard_frame(
+        Point3::new(0., 0., -4.),
+        StandardDirection3::Z,
+        StandardDirection3::X,
+    );
+    let mut maker = BRepPrimAPIMakeCylinder::with_axes(axes, 10., 8.);
+    let attachment = freeze(maker.shape().unwrap());
+    let native = attachment.export_native(REVISION).unwrap();
+    let attempt = attempt(&attachment);
+    let sew = attachment.record().resolution.sew;
+    let receipt: UnchangedStock =
+        certify_unchanged(attempt, &native.body, &native.face, sew).unwrap();
+    assert!(receipt.spatial_upper() > 0. && receipt.spatial_upper() < 1e-13);
+    assert!(
+        certify_unchanged(attempt, &native.body, &native.face, receipt.spatial_upper(),).is_err()
+    );
+    verify_inherited_replay(attempt, &native.body, &native.face, &receipt);
+}
+
+#[test]
+fn inherited_indirect_cylinder_preserves_the_original_circle_extrude_seam() {
+    let attachment = indirect_extruded_circle();
+    let native = attachment.export_native(REVISION).unwrap();
+    let attempt = attempt(&attachment);
+    let receipt = certify_unchanged(
+        attempt,
+        &native.body,
+        &native.face,
+        attachment.record().resolution.sew,
+    )
+    .unwrap();
+    verify_inherited_replay(attempt, &native.body, &native.face, &receipt);
+}
+
+fn verify_inherited_replay(attempt: Attempt, solid: &Shape, band: &Face, receipt: &UnchangedStock) {
+    let index = body::Index::new(attempt, solid, STAGE).unwrap();
+    let binding = receipt.bind_final(attempt, &index, band).unwrap();
+    let (before, decoded) = archive(attempt, solid);
+    binding.rebind(attempt, &decoded).unwrap();
+    assert_eq!(archive(attempt, solid).0, before);
+}

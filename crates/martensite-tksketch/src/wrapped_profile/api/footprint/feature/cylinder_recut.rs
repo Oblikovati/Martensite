@@ -17,6 +17,8 @@ use martensite_tkmath::gp::{
 use std::f64::consts::TAU;
 
 mod frozen;
+mod inherited;
+pub(super) use inherited::{UnchangedStock, certify_unchanged};
 mod lift;
 mod source;
 #[cfg(test)]
