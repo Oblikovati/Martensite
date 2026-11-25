@@ -18,10 +18,11 @@ pub(crate) enum Control {
     WrappedFamily,
     WrappedCone,
     CertifiedConeAttachment,
+    CertifiedCylinderAttachment,
     SharedContext,
 }
 
-pub(crate) const CONTROLS: [Control; 15] = [
+pub(crate) const CONTROLS: [Control; 16] = [
     Control::Cache2d,
     Control::Cache3d,
     Control::Capture,
@@ -36,6 +37,7 @@ pub(crate) const CONTROLS: [Control; 15] = [
     Control::WrappedFamily,
     Control::WrappedCone,
     Control::CertifiedConeAttachment,
+    Control::CertifiedCylinderAttachment,
     Control::SharedContext,
 ];
 
@@ -56,6 +58,7 @@ impl Control {
             Self::WrappedFamily => "wrapped-family",
             Self::WrappedCone => "wrapped-cone",
             Self::CertifiedConeAttachment => "certified-cone-attachment",
+            Self::CertifiedCylinderAttachment => "certified-cylinder-attachment",
             Self::SharedContext => "shared-context",
         }
     }
@@ -69,7 +72,10 @@ impl Control {
             Self::FaceCertificate => "martensite-tktopalgo",
             Self::OpenExtrusion | Self::VertexNeighborhood => "martensite-tkmath",
             Self::DocumentTransactions => "martensite-tklcaf",
-            Self::SurfaceSketch | Self::WrappedFamily | Self::WrappedCone => "martensite-tksketch",
+            Self::SurfaceSketch
+            | Self::WrappedFamily
+            | Self::WrappedCone
+            | Self::CertifiedCylinderAttachment => "martensite-tksketch",
             Self::FontTextCapture | Self::CertifiedConeAttachment => "martensite-tkv3d",
             Self::SharedContext => "martensite-tkbo",
         }
@@ -206,6 +212,7 @@ mod tests {
                 "wrapped-family",
                 "wrapped-cone",
                 "certified-cone-attachment",
+                "certified-cylinder-attachment",
                 "shared-context"
             ]
         );
@@ -219,7 +226,8 @@ mod tests {
             [
                 Control::SurfaceSketch,
                 Control::WrappedFamily,
-                Control::WrappedCone
+                Control::WrappedCone,
+                Control::CertifiedCylinderAttachment
             ]
         );
         assert!(select(&BTreeSet::from(["martensite-tkdeobj".into()]), &[]).is_empty());

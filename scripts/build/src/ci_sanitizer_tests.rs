@@ -196,6 +196,7 @@ fn viewer_sanitizer_controls_follow_affected_dependencies() {
                 WrappedFamily,
                 WrappedCone,
                 CertifiedConeAttachment,
+                CertifiedCylinderAttachment,
             ],
         ),
     ] {

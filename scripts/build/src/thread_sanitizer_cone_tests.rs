@@ -45,7 +45,8 @@ fn cone_selection_keeps_existing_sketch_controls_and_stable_identity() {
         [
             Control::SurfaceSketch,
             Control::WrappedFamily,
-            Control::WrappedCone
+            Control::WrappedCone,
+            Control::CertifiedCylinderAttachment
         ]
     );
 }

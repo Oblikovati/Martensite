@@ -12,7 +12,7 @@ fn sketch_selection() -> Vec<Control> {
 }
 
 #[test]
-fn affected_sketch_selection_runs_both_replay_controls_after_startup() {
+fn affected_sketch_selection_runs_all_replay_controls_after_startup() {
     let runner = runner();
     let context = context_at(&runner, Path::new("/repo"));
     run_selected(&context, &sketch_selection()).unwrap();
@@ -25,7 +25,11 @@ fn affected_sketch_selection_runs_both_replay_controls_after_startup() {
             .any(|command| command.contains(WRAPPED_STRESS_TEST)),
         "affected sketch commands omit ignored wrapped-family stress: {commands:?}"
     );
-    assert_eq!(commands.len(), 6);
+    assert_eq!(
+        commands[6],
+        certified_cylinder_attachment_controls(Path::new("/repo")).display()
+    );
+    assert_eq!(commands.len(), 7);
 }
 
 #[test]
@@ -71,7 +75,7 @@ fn selected_wrapped_family_failure_cannot_pass_the_sanitizer_gate() {
 }
 
 #[test]
-fn startup_failure_prevents_both_selected_sketch_controls() {
+fn startup_failure_prevents_selected_sketch_controls() {
     let command = startup(Path::new("/repo")).display();
     let runner = runner().with_exit_code(&command, 101);
     let context = context_at(&runner, Path::new("/repo"));
@@ -91,4 +95,24 @@ fn unrelated_affected_leaf_does_not_schedule_sketch_stress() {
     assert_eq!(runner.commands(), before);
     assert!(!selected.contains(&Control::WrappedFamily));
     assert!(!selected.contains(&Control::WrappedCone));
+    assert!(!selected.contains(&Control::CertifiedCylinderAttachment));
+}
+
+#[test]
+fn certified_cylinder_selector_names_an_existing_nonignored_control() {
+    let feature = include_str!(
+        "../../../crates/martensite-tksketch/src/wrapped_profile/api/footprint/feature/mod.rs"
+    );
+    let module = include_str!(
+        "../../../crates/martensite-tksketch/src/wrapped_profile/api/footprint/feature/cylinder_certified.rs"
+    );
+    let tests = include_str!(
+        "../../../crates/martensite-tksketch/src/wrapped_profile/api/footprint/feature/cylinder_certified/tests.rs"
+    );
+    assert!(feature.contains("mod cylinder_certified;"));
+    assert!(module.contains("mod tests;"));
+    let (_, name) = CERTIFIED_CYLINDER_ATTACHMENT_TEST
+        .rsplit_once("::")
+        .unwrap();
+    assert!(tests.contains(&format!("#[test]\nfn {name}()")));
 }
