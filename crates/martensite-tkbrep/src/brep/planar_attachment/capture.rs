@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Decode only the coherent source values, with no second reads of live geometry.
-use super::{FaceAttachmentError as Error, PlanarSupport, numeric_failure, poll};
+use super::{FaceAttachmentError as Error, PlanarSupport, TrimScope, numeric_failure, poll};
 use crate::{
     brep::{
         face_input_capture::{CapturedFaceCell as Cell, CapturedOccurrence, FaceInputSnapshot},
@@ -28,17 +28,23 @@ struct DirectedEdge {
 
 pub(super) fn prove(
     snapshot: &FaceInputSnapshot,
+    scope: TrimScope,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Checked<(CertifiedPlanarAttachment, PlanarSupport)> {
     let root = snapshot.root();
     reversed(root)?;
     let values = Captured::index(snapshot);
     let (surface, frame) = values.support(root.owner)?;
-    let [a, b] = values.children(root.owner, ShapeEnum::Face)? else {
-        return Err(Error::Topology(root.owner));
+    let wires = values.children(root.owner, ShapeEnum::Face)?;
+    let (outer, hole) = match (scope, wires) {
+        (TrimScope::OptionalHole, [outer]) => (outer, None),
+        (_, [a, b]) => (a, Some(b)),
+        _ => return Err(Error::Topology(root.owner)),
     };
-    let a = values.wire(a, surface, cancelled)?;
-    let b = values.wire(b, surface, cancelled)?;
+    let a = values.wire(outer, surface, cancelled)?;
+    let b = hole
+        .map(|hole| values.wire(hole, surface, cancelled))
+        .transpose()?;
     for (_, _, datum) in root.location.steps() {
         poll(cancelled)?;
         datum
@@ -49,8 +55,11 @@ pub(super) fn prove(
     let placement = position
         .checked_unit_placement_rows()
         .map_err(Error::Placement)?;
-    let proof = CertifiedPlanarAttachment::capture(frame, placement, [&a, &b], cancelled)
-        .map_err(numeric_failure)?;
+    let proof = match b {
+        Some(b) => CertifiedPlanarAttachment::capture(frame, placement, [&a, &b], cancelled),
+        None => CertifiedPlanarAttachment::capture_outer(frame, placement, &a, cancelled),
+    }
+    .map_err(numeric_failure)?;
     Ok((proof, PlanarSupport { frame, position }))
 }
 

@@ -11,6 +11,7 @@ mod fit_spline;
 pub mod line_edit;
 mod mirror;
 mod source;
+pub mod split_face;
 pub mod split_plane;
 pub mod wire;
 

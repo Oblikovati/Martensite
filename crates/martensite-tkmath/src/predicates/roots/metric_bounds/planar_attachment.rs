@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0-only
-//! A located affine chart with a strictly convex outer trim and one convex hole.
+//! Exact queries on a located affine chart with a strictly convex outer trim.
 mod chart;
 mod curve;
+mod segment;
 pub use curve::{PlanarCurveCertificate, PlanarCurvePath, PlanarCurveProofFailure};
 mod trim;
 
 use self::{chart::Chart, trim::Loop};
 use super::super::certificate_arithmetic::{ExactRatio, rounding::outward_sqrt};
+use super::segment_plane::SegmentPlaneFailure;
 use crate::gp::{Axis2d, Axis3, Line3};
 use crate::predicates::NonFiniteCoordinate;
+pub use segment::PlanarSegmentContact;
 use std::{cmp::Ordering, error::Error, fmt};
 
 /// Maximum number of edge uses in each of the two admitted loops.
@@ -74,6 +77,8 @@ pub struct PlanarAttachmentChart {
 pub enum PlanarAttachmentError {
     /// An input coordinate must be finite.
     Coordinate(NonFiniteCoordinate),
+    /// Exact segment admission or cut rounding did not complete.
+    Segment(SegmentPlaneFailure),
     /// The original stored frame is inconsistent.
     Frame,
     /// The affine chart tangents lack a positive Gram determinant.
@@ -105,6 +110,7 @@ impl fmt::Display for PlanarAttachmentError {
     fn fmt(&self, output: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Coordinate(cause) => write!(output, "{cause}"),
+            Self::Segment(cause) => cause.fmt(output),
             Self::Frame => output.write_str("attachment requires a consistent stored planar frame"),
             Self::DegenerateChart => {
                 output.write_str("planar attachment requires independent chart tangents")
@@ -143,6 +149,7 @@ impl Error for PlanarAttachmentError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::Coordinate(cause) => Some(cause),
+            Self::Segment(cause) => Some(cause),
             _ => None,
         }
     }
@@ -159,7 +166,7 @@ impl From<NonFiniteCoordinate> for PlanarAttachmentError {
 pub struct CertifiedPlanarAttachment {
     world: Chart,
     outer: Loop,
-    hole: Loop,
+    hole: Option<Loop>,
 }
 
 impl CertifiedPlanarAttachment {
@@ -183,7 +190,34 @@ impl CertifiedPlanarAttachment {
             _ => return Err(PlanarAttachmentError::Hole),
         };
         hole.require_inside(&outer, &mut cancelled)?;
-        Ok(Self { world, outer, hole })
+        Ok(Self {
+            world,
+            outer,
+            hole: Some(hole),
+        })
+    }
+
+    /// Prove a single positively wound finite outer trim.
+    /// Example: `CertifiedPlanarAttachment::capture_outer(frame, map, &edges, || false)?`.
+    pub fn capture_outer(
+        frame: Axis3,
+        placement: [[f64; 4]; 3],
+        edges: &[PlanarAttachmentEdge],
+        mut cancelled: impl FnMut() -> bool,
+    ) -> Result<Self, PlanarAttachmentError> {
+        poll(&mut cancelled)?;
+        let frame = chart::retained_frame(frame)?;
+        let local = Chart::local(frame)?;
+        let world = Chart::placed(frame, placement)?;
+        let outer = Loop::capture(&local, edges, &mut cancelled)?;
+        if outer.sense != Ordering::Greater {
+            return Err(PlanarAttachmentError::Loop);
+        }
+        Ok(Self {
+            world,
+            outer,
+            hole: None,
+        })
     }
 
     /// Classify the exact projection if the point is within the model distance.
@@ -247,7 +281,7 @@ impl CertifiedPlanarAttachment {
                 limit,
             });
         }
-        let location = trim::locate(&self.outer, &self.hole, &projection.uv, cancelled)?;
+        let location = trim::locate(&self.outer, self.hole.as_ref(), &projection.uv, cancelled)?;
         let uv = chart::enclose(&projection.uv)?;
         let projected = chart::enclose(&projection.world)?;
         poll(cancelled)?;

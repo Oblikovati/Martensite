@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Validate complete directed trim cycles before accepting any winding query.
-mod segment;
 
 use super::{
     ExactRatio as R, PLANAR_ATTACHMENT_MAX_LOOP_EDGES, PlanarAttachmentEdge,
@@ -71,7 +70,53 @@ impl Loop {
         poll(cancelled)
     }
 
-    fn position(&self, point: &Uv, cancelled: &mut impl FnMut() -> bool) -> Result<Side, Error> {
+    pub(super) fn clip(
+        &self,
+        source: [&Uv; 2],
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<Option<[R; 2]>, Error> {
+        self.clip_span(source, Boundary::Closed, cancelled)
+    }
+
+    pub(super) fn intersects_open_interior(
+        &self,
+        source: [&Uv; 2],
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<bool, Error> {
+        Ok(self.clip_span(source, Boundary::Open, cancelled)?.is_some())
+    }
+
+    fn clip_span(
+        &self,
+        source: [&Uv; 2],
+        boundary: Boundary,
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<Option<[R; 2]>, Error> {
+        let mut domain = [R::from_finite(0.), R::from_finite(1.)];
+        for (a, b) in segments(&self.points) {
+            poll(cancelled)?;
+            let sides = source.map(|point| self.inside_measure(a, b, point));
+            if !clip_halfspace(&mut domain, sides, boundary) {
+                return Ok(None);
+            }
+        }
+        Ok(Some(domain))
+    }
+
+    fn inside_measure(&self, a: &Uv, b: &Uv, point: &Uv) -> R {
+        let determinant = measure(a, b, point);
+        if self.sense == Ordering::Greater {
+            determinant
+        } else {
+            determinant.negated()
+        }
+    }
+
+    pub(super) fn position(
+        &self,
+        point: &Uv,
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<Side, Error> {
         let mut side = Side::Inside;
         for (a, b) in segments(&self.points) {
             poll(cancelled)?;
@@ -87,7 +132,7 @@ impl Loop {
 
 pub(super) fn locate(
     outer: &Loop,
-    hole: &Loop,
+    hole: Option<&Loop>,
     uv: &Uv,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<Location, Error> {
@@ -96,6 +141,9 @@ pub(super) fn locate(
         Side::Boundary => return Ok(Location::OuterBoundary),
         Side::Inside => {}
     }
+    let Some(hole) = hole else {
+        return Ok(Location::Material);
+    };
     Ok(match hole.position(uv, cancelled)? {
         Side::Outside => Location::Material,
         Side::Inside => Location::HoleInterior,
@@ -161,17 +209,46 @@ fn segments(points: &[Uv]) -> impl Iterator<Item = (&Uv, &Uv)> {
 }
 
 fn turn(a: &Uv, b: &Uv, c: &Uv) -> Ordering {
-    determinant(a, b, c).sign()
+    measure(a, b, c).sign()
 }
 
-fn determinant(a: &Uv, b: &Uv, c: &Uv) -> R {
+fn measure(a: &Uv, b: &Uv, c: &Uv) -> R {
     let [x, y] = std::array::from_fn(|i| b[i].subtract(&a[i]));
     let [u, v] = std::array::from_fn(|i| c[i].subtract(&a[i]));
     x.multiply(&v).subtract(&y.multiply(&u))
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Boundary {
+    Closed,
+    Open,
+}
+
+impl Boundary {
+    fn excludes(self, sign: Ordering) -> bool {
+        sign == Ordering::Less || (self == Self::Open && sign == Ordering::Equal)
+    }
+}
+
+fn clip_halfspace(domain: &mut [R; 2], [a, b]: [R; 2], boundary: Boundary) -> bool {
+    match (boundary.excludes(a.sign()), boundary.excludes(b.sign())) {
+        (true, true) => return false,
+        (true, false) => {
+            let root = a.divide(&a.subtract(&b));
+            domain[0] = root.max(domain[0].clone());
+        }
+        (false, true) => {
+            let root = a.divide(&a.subtract(&b));
+            domain[1] = root.min(domain[1].clone());
+        }
+        (false, false) => {}
+    }
+    // A single rim point has no open interior. Closed clipping retains that touch.
+    !boundary.excludes(domain[1].cmp(&domain[0]))
+}
+
 #[derive(PartialEq, Eq)]
-enum Side {
+pub(super) enum Side {
     Inside,
     Boundary,
     Outside,

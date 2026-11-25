@@ -252,3 +252,33 @@ fn affine_curve_uses_both_actual_paths_and_bounds_the_whole_distance() {
         })
     );
 }
+
+#[test]
+fn directed_segment_uses_cross_product_of_actual_placed_tangents() {
+    use martensite_tkmath::predicates::roots::metric_bounds::planar_attachment::PlanarSegmentContact;
+
+    let map = [[1., 0., 0., 0.], [0., 1., 0., 0.], [1., 0., 1., 0.]];
+    let outer = square(4., false, 0.);
+    let proof =
+        CertifiedPlanarAttachment::capture_outer(Axis3::default(), map, &outer, || false).unwrap();
+    let PlanarSegmentContact::Crossing { cut, location } = proof
+        .classify_segment([[-1., 0., 0.], [2., 0., 0.]], || false)
+        .unwrap()
+    else {
+        panic!("expected transverse hit of z=x");
+    };
+    let literal = 1.0_f64 / 3.;
+    assert_eq!(location, PlanarAttachmentLocation::Material);
+    assert_eq!(cut.parameter, [literal, literal.next_up()]);
+    assert_eq!(cut.position, [0.; 3]);
+    assert_eq!(cut.error_upper, 0.);
+}
+
+#[test]
+fn single_loop_proof_rejects_the_unbounded_complement_winding() {
+    let clockwise = square(4., true, 0.);
+    assert!(matches!(
+        CertifiedPlanarAttachment::capture_outer(Axis3::default(), PLACEMENT, &clockwise, || false),
+        Err(PlanarAttachmentError::Loop)
+    ));
+}

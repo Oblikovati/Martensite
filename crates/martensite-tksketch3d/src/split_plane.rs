@@ -139,9 +139,7 @@ impl Snapshot {
         mut cancelled: impl FnMut() -> bool,
     ) -> Result<SplitLineOutcome, SplitLineFailure> {
         poll(&mut cancelled)?;
-        if !max_position_error.is_finite() || max_position_error < 0. {
-            return Err(SplitLineFailure::InvalidLimit(max_position_error));
-        }
+        check_split_limit(max_position_error)?;
         let line = self
             .line(source)
             .ok_or(SplitLineFailure::MissingLine(source))?;
@@ -159,17 +157,26 @@ impl Snapshot {
             SegmentPlaneIntersection::Overlap => return Err(SplitLineFailure::Overlap(source)),
             SegmentPlaneIntersection::Crossing(cut) => cut,
         };
-        self.apply_plane_cut(line.line, cut, ids, max_position_error, &mut cancelled)
+        let edit = self.adopt_planar_cut(
+            line.line,
+            cut,
+            ids,
+            max_position_error,
+            SplitAdoption::WorkPlane,
+            &mut cancelled,
+        )?;
+        Ok(SplitLineOutcome::Split(Box::new(edit)))
     }
 
-    fn apply_plane_cut(
+    pub(super) fn adopt_planar_cut(
         &self,
         source: SketchLine,
         cut: SegmentPlaneCut,
         ids: SplitLineIds,
         limit: f64,
+        adoption: SplitAdoption,
         cancelled: &mut impl FnMut() -> bool,
-    ) -> Result<SplitLineOutcome, SplitLineFailure> {
+    ) -> Result<SplitLineEdit, SplitLineFailure> {
         if cut.error_upper > limit {
             return Err(SplitLineFailure::PositionError {
                 upper_bound: cut.error_upper,
@@ -181,19 +188,35 @@ impl Snapshot {
             .curve_role(CurveId::Line(source.id))
             .ok_or(SplitLineFailure::MissingLine(source.id))?;
         let batch = split_batch(source.id, ids.cut, cut.position, fragments, role);
-        let snapshot = self.apply(&batch, &mut *cancelled).map_err(edit_failure)?;
+        let snapshot = match adoption {
+            SplitAdoption::WorkPlane => self.apply(&batch, &mut *cancelled),
+            SplitAdoption::SelectedFace => self.apply_targeted_edit_batch(&batch, cancelled),
+        }
+        .map_err(edit_failure)?;
         poll(cancelled)?;
-        Ok(SplitLineOutcome::Split(Box::new(SplitLineEdit {
+        Ok(SplitLineEdit {
             snapshot,
             cut,
             requested_error: limit,
             point: ids.cut,
             fragments,
-        })))
+        })
     }
 }
 
-fn poll(cancelled: &mut impl FnMut() -> bool) -> Result<(), SplitLineFailure> {
+pub(super) enum SplitAdoption {
+    WorkPlane,
+    SelectedFace,
+}
+
+pub(super) fn check_split_limit(limit: f64) -> Result<(), SplitLineFailure> {
+    if !limit.is_finite() || limit < 0. {
+        return Err(SplitLineFailure::InvalidLimit(limit));
+    }
+    Ok(())
+}
+
+pub(super) fn poll(cancelled: &mut impl FnMut() -> bool) -> Result<(), SplitLineFailure> {
     if cancelled() {
         return Err(SplitLineFailure::Cancelled);
     }

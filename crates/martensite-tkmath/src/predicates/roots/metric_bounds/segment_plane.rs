@@ -145,18 +145,27 @@ fn cut(
     end: &[ExactRatio; 3],
     parameter: ExactRatio,
 ) -> Result<SegmentPlaneCut, SegmentPlaneFailure> {
+    let point = std::array::from_fn(|axis| {
+        start[axis].add(&end[axis].subtract(&start[axis]).multiply(&parameter))
+    });
+    enclose_cut(&point, &parameter)
+}
+
+pub(super) fn enclose_cut(
+    point: &[ExactRatio; 3],
+    parameter: &ExactRatio,
+) -> Result<SegmentPlaneCut, SegmentPlaneFailure> {
     let mut position = [0.; 3];
     let mut coordinates = [[0.; 2]; 3];
     let mut squared = ExactRatio::from_finite(0.);
-    for axis in 0..3 {
-        let value = start[axis].add(&end[axis].subtract(&start[axis]).multiply(&parameter));
-        coordinates[axis] = enclosure(&value)?;
-        position[axis] = nearest_binary64(&value).ok_or(SegmentPlaneFailure::Unrepresentable)?;
+    for (axis, value) in point.iter().enumerate() {
+        coordinates[axis] = enclosure(value)?;
+        position[axis] = nearest_binary64(value).ok_or(SegmentPlaneFailure::Unrepresentable)?;
         let residual = value.subtract(&ExactRatio::from_finite(position[axis]));
         squared = squared.add(&residual.multiply(&residual));
     }
     Ok(SegmentPlaneCut {
-        parameter: enclosure(&parameter)?,
+        parameter: enclosure(parameter)?,
         coordinates,
         position,
         error_upper: radius_bound(&squared)?,

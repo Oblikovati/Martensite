@@ -114,9 +114,10 @@ impl CertifiedPlanarAttachment {
         if start.uv == end.uv {
             return Err(PlanarCurveProofFailure::CoincidentControls(path));
         }
-        let enters_hole = self
-            .hole
-            .intersects_open_interior([&start.uv, &end.uv], cancelled)?;
+        let enters_hole = match &self.hole {
+            Some(hole) => hole.intersects_open_interior([&start.uv, &end.uv], cancelled)?,
+            None => false,
+        };
         let endpoints = [
             self.qualify(start, limit, cancelled)?,
             self.qualify(end, limit, cancelled)?,

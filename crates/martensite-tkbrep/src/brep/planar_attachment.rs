@@ -18,7 +18,7 @@ use martensite_tkmath::gp::UnitPlacementError;
 use martensite_tkmath::predicates::roots::metric_bounds::planar_attachment::CertifiedPlanarAttachment;
 pub use martensite_tkmath::predicates::roots::metric_bounds::planar_attachment::{
     PlanarAttachmentChart, PlanarAttachmentError, PlanarAttachmentLocation, PlanarAttachmentQuery,
-    PlanarCurveCertificate, PlanarCurvePath, PlanarCurveProofFailure,
+    PlanarCurveCertificate, PlanarCurvePath, PlanarCurveProofFailure, PlanarSegmentContact,
 };
 use std::{error::Error, fmt, num::NonZeroU64};
 
@@ -150,8 +150,7 @@ impl FaceAttachment {
         distance_limit: f64,
         mut cancelled: impl FnMut() -> bool,
     ) -> Result<PlanarAttachmentQuery, FaceAttachmentError> {
-        poll(&mut cancelled)?;
-        self.require_source(current)?;
+        self.require_current(current, &mut cancelled)?;
         self.proof
             .classify(point, distance_limit, cancelled)
             .map_err(numeric_failure)
@@ -167,8 +166,7 @@ impl FaceAttachment {
         distance_limit: f64,
         mut cancelled: impl FnMut() -> bool,
     ) -> Result<PlanarAttachmentQuery, FaceAttachmentError> {
-        poll(&mut cancelled)?;
-        self.require_source(current)?;
+        self.require_current(current, &mut cancelled)?;
         self.proof
             .classify_uv(uv, world, distance_limit, cancelled)
             .map_err(numeric_failure)
@@ -183,6 +181,29 @@ impl FaceAttachment {
     ) -> Result<PlanarAttachmentChart, FaceAttachmentError> {
         self.require_source(current)?;
         self.proof.solver_chart(anchor).map_err(numeric_failure)
+    }
+
+    /// Classify a directed segment against this exact finite native trim.
+    /// Example: `attachment.classify_segment(current, endpoints, || false)?`.
+    pub fn classify_segment(
+        &self,
+        current: AttachmentSource,
+        endpoints: [[f64; 3]; 2],
+        mut cancelled: impl FnMut() -> bool,
+    ) -> Result<PlanarSegmentContact, FaceAttachmentError> {
+        self.require_current(current, &mut cancelled)?;
+        self.proof
+            .classify_segment(endpoints, cancelled)
+            .map_err(numeric_failure)
+    }
+
+    fn require_current(
+        &self,
+        current: AttachmentSource,
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<(), FaceAttachmentError> {
+        poll(cancelled)?;
+        self.require_source(current)
     }
 
     fn require_source(&self, current: AttachmentSource) -> Result<(), FaceAttachmentError> {
@@ -209,17 +230,61 @@ pub fn capture_planar_attachment(
     limits: FaceCaptureLimits,
     mut cancelled: impl FnMut() -> bool,
 ) -> Result<FaceAttachment, FaceAttachmentError> {
-    member(body, face, limits.owners, &mut cancelled)?;
+    capture_domain(
+        body,
+        face,
+        source,
+        limits,
+        TrimScope::RequireHole,
+        &mut cancelled,
+    )
+}
+
+/// Bind one exact native face for Split with a convex finite outer loop and at most one convex hole.
+/// Membership and placement are checked under the caller's stable body revision.
+/// Example: `capture_planar_split_domain(&body, &face, source, limits, || false)?`.
+pub fn capture_planar_split_domain(
+    body: &Solid,
+    face: &Face,
+    source: AttachmentSource,
+    limits: FaceCaptureLimits,
+    mut cancelled: impl FnMut() -> bool,
+) -> Result<FaceAttachment, FaceAttachmentError> {
+    capture_domain(
+        body,
+        face,
+        source,
+        limits,
+        TrimScope::OptionalHole,
+        &mut cancelled,
+    )
+}
+
+#[derive(Clone, Copy)]
+enum TrimScope {
+    RequireHole,
+    OptionalHole,
+}
+
+fn capture_domain(
+    body: &Solid,
+    face: &Face,
+    source: AttachmentSource,
+    limits: FaceCaptureLimits,
+    scope: TrimScope,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<FaceAttachment, FaceAttachmentError> {
+    member(body, face, limits.owners, cancelled)?;
     let snapshot = capture_face_input_with_behavior(
         face,
         limits,
         FaceCaptureBehavior::StoredSurfaceQueriesV2,
-        &mut cancelled,
+        &mut *cancelled,
     )
     .map_err(capture_failure)?;
-    let (proof, support) = capture::prove(&snapshot, &mut cancelled)?;
-    member(body, face, limits.owners, &mut cancelled)?;
-    poll(&mut cancelled)?;
+    let (proof, support) = capture::prove(&snapshot, scope, cancelled)?;
+    member(body, face, limits.owners, cancelled)?;
+    poll(cancelled)?;
     Ok(FaceAttachment {
         source,
         proof,

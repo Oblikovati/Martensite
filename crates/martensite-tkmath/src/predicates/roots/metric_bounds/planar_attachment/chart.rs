@@ -6,7 +6,7 @@ use crate::predicates::roots::certificate_arithmetic::rounding::{
     nearest_binary64, outward_binary64,
 };
 use crate::predicates::roots::metric_bounds::placed_plane::{
-    ExactPlacement, ExactVector, dot, exact_point, exact_vector,
+    ExactPlacement, ExactVector, cross, dot, exact_point, exact_vector,
 };
 use std::cmp::Ordering;
 
@@ -44,6 +44,14 @@ impl Chart {
             origin,
             axes: [u, v],
             inverse,
+        })
+    }
+
+    pub(super) fn signed_support(&self, endpoints: [&Vector; 2]) -> [R; 2] {
+        let normal = cross(&self.axes[0], &self.axes[1]);
+        endpoints.map(|point| {
+            let relative = std::array::from_fn(|i| point[i].subtract(&self.origin[i]));
+            dot(&normal, &relative)
         })
     }
 
