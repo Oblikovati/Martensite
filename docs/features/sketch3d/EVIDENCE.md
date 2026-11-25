@@ -182,6 +182,12 @@ native save/reopen and refusal of unsupported Go spatial sections. `Sketch.Creat
 native ribbon. The test results establish the model and persistence baseline before desktop integration in
 [Oblikovati #4190](https://github.com/Oblikovati/Oblikovati/issues/4190).
 
+The app branch then added same-ID endpoint refusal and corrected two stale recipe diagnostic assertions. At
+`5458bc91c`, the complete `oblikovati-model` and `oblikovati-persistence` run passed 2,466 tests and left four
+existing tests ignored. The solver experiment's unmodified app baseline and local-AD adapter each passed 1,954
+tests, failed the same two diagnostic assertions, and ignored the same four. Both affected targets passed when
+run with the diagnostic-only corrections. [Oblikovati #4191](https://github.com/Oblikovati/Oblikovati/issues/4191)
+
 ```sh
 cargo test --locked -p oblikovati-model -p oblikovati-persistence \
   --test spatial_sketch --test inventor_spatial --test package_sketches
@@ -241,6 +247,11 @@ line each had a separate control.
 The boundary circle and tangent seam lacked public face ancestry. Native interference data recovered the unique
 parents using the original edge's face incidence and the common block's other face. The boundary control verified
 both operand orders. [#613](https://github.com/Oblikovati/Martensite/issues/613)
+
+The #613 fix is on the Sketch3D branch through `d09d603f`. It binds the face roots to the completed operation.
+Eight focused ancestry tests and six ranged API tests passed on the integration branch. The reviewed patch also
+passed 147 legacy section and Boolean controls. Pending input edits retain the old result's ancestry. A cancelled
+or failed rebuild clears it. The API reports an unresolved pair when common-block lineage admits multiple parents.
 
 Native non-destructive mode preserved input archives during construction. Some output curves still shared pcurve
 carriers with the source after construction. Copying the operands with their geometry fixed that input alias.
