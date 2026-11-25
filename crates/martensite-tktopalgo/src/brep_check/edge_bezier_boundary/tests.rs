@@ -77,7 +77,7 @@ fn defers_changed_controls_weights_and_trace_direction() {
 #[test]
 fn common_translation_cannot_hide_mutated_raw_control() {
     let mut placement = Transform3::default();
-    placement.set_translation(Vector3::new(0., 0., 2_f64.powi(50)));
+    placement.set_translation(Vector3::new(0., 0., martensite_cmath::powi(2., 50)));
     let location = Location::new(placement);
     let patch = patch();
     let raw_surface = patch.clone().into_upcast();

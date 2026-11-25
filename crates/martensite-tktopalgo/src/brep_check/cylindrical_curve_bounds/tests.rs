@@ -139,8 +139,9 @@ fn refuses_when_translation_rounding_consumes_loaded_margin() {
     let proof = proof(z);
     let controls = Curves::new(z, 0., 0.);
     assert!(controls.reuse_at(&proof, LIMIT, 1.));
-    assert!(!controls.reuse_at(&proof, LIMIT, 2_f64.powi(50)));
-    assert!(controls.reuse_at(&proof, 0.01, 2_f64.powi(50)));
+    let translation = martensite_cmath::powi(2., 50);
+    assert!(!controls.reuse_at(&proof, LIMIT, translation));
+    assert!(controls.reuse_at(&proof, 0.01, translation));
 }
 
 #[test]
