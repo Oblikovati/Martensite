@@ -204,3 +204,6 @@ fn touching_transition_zones_keep_order_and_admit_only_available_sides() {
         1.
     );
 }
+
+#[path = "helix_sequence/native.rs"]
+mod native;

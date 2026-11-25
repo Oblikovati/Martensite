@@ -24,20 +24,36 @@ pub(super) fn build(
     segments: i32,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<Fit, HelixFailure> {
+    build_range(
+        [0., law.resolved().parameter_end],
+        options,
+        segments,
+        |parameter, order| law.component(parameter, order),
+        cancelled,
+    )
+}
+
+pub(super) fn build_range(
+    range: [f64; 2],
+    options: HelixFitOptions,
+    segments: i32,
+    component: impl FnMut(f64, u8) -> Result<[f64; 3], HelixFailure>,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<Fit, HelixFailure> {
     poll(cancelled, HelixStage::Fit)?;
     let tolerance = native(
         approximation_tolerance(options.approximation_tolerance),
         HelixStage::Fit,
     )?;
     let mut evaluator = Evaluator {
-        law,
+        component,
         limit: options.max_evaluations,
         evaluations: 0,
         refused: None,
         cancelled,
     };
     let build = Approximation {
-        range: [0., law.resolved().parameter_end],
+        range,
         continuity: Shape::C2,
         degree: 8,
         segments,
@@ -68,15 +84,19 @@ pub(super) fn build(
     })
 }
 
-struct Evaluator<'a, C> {
-    law: ConstantHelix,
+struct Evaluator<'a, E, C> {
+    component: E,
     limit: u32,
     evaluations: u32,
     refused: Option<HelixFailure>,
     cancelled: &'a mut C,
 }
 
-impl<C: FnMut() -> bool> Evaluator<'_, C> {
+impl<E, C> Evaluator<'_, E, C>
+where
+    E: FnMut(f64, u8) -> Result<[f64; 3], HelixFailure>,
+    C: FnMut() -> bool,
+{
     fn evaluate_checked(&mut self, parameter: f64, order: u8) -> Result<[f64; 3], HelixFailure> {
         poll(self.cancelled, HelixStage::Fit)?;
         if self.evaluations == self.limit {
@@ -86,11 +106,15 @@ impl<C: FnMut() -> bool> Evaluator<'_, C> {
             });
         }
         self.evaluations += 1;
-        self.law.component(parameter, order)
+        (self.component)(parameter, order)
     }
 }
 
-impl<C: FnMut() -> bool> AdvApproxEvaluatorFunction for Evaluator<'_, C> {
+impl<E, C> AdvApproxEvaluatorFunction for Evaluator<'_, E, C>
+where
+    E: FnMut(f64, u8) -> Result<[f64; 3], HelixFailure>,
+    C: FnMut() -> bool,
+{
     fn evaluate(
         &mut self,
         dimension: i32,

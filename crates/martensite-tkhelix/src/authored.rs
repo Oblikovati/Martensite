@@ -15,7 +15,8 @@ pub use martensite_tkmath::predicates::roots::metric_bounds::{HelixTraceBounds, 
 pub use native::{DetachedHelix, FittedHelix, HelixFitOptions, HelixFitReceipt, HelixSpanHistory};
 
 pub use sequence::{
-    FlatEndHelixRequest, HelixEndZone, HelixParameterSide, HelixPitchRow, HelixRowId,
-    HelixSequence, HelixSequenceDefinition, HelixSequenceError, HelixSequencePlacement,
-    HelixSequenceSpan, HelixSpanSource,
+    DetachedHelixSequence, FittedHelixSequence, FlatEndHelixRequest, HelixEndZone,
+    HelixParameterSide, HelixPitchRow, HelixRowId, HelixSequence, HelixSequenceDefinition,
+    HelixSequenceError, HelixSequencePlacement, HelixSequenceSpan, HelixSequenceSpanReceipt,
+    HelixSpanSource,
 };

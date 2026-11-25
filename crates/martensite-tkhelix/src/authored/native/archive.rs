@@ -12,7 +12,7 @@ use martensite_tkernel::{message::ProgressRange, storage::IoStream};
 use martensite_tkgeombase::geom_tools::ConsoleOutput;
 use std::sync::Arc;
 
-pub(super) fn encode(
+pub(in crate::authored) fn encode(
     wire: &Wire,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<Vec<u8>, HelixFailure> {
@@ -39,7 +39,7 @@ pub(super) fn encode(
     Ok(bytes)
 }
 
-pub(super) fn decode(
+pub(in crate::authored) fn decode(
     bytes: &[u8],
     stage: HelixStage,
     cancelled: &mut impl FnMut() -> bool,

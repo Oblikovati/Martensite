@@ -19,7 +19,7 @@ use martensite_tkmath::predicates::roots::metric_bounds::{
 };
 use martensite_tktopalgo::brep_check::BRepCheckAnalyzer;
 
-const STAGE: HelixStage = HelixStage::Verification;
+pub(in crate::authored) const STAGE: HelixStage = HelixStage::Verification;
 
 pub(super) fn edge(wire: &Wire) -> Result<Edge, HelixFailure> {
     let mut members = ShapeIterator::new(wire, true, true);
@@ -97,7 +97,11 @@ fn topology(
     Ok([first, last])
 }
 
-fn tolerance(edge: &Edge, [first, last]: &[Vertex; 2], limit: f64) -> Result<f64, HelixFailure> {
+pub(in crate::authored) fn tolerance(
+    edge: &Edge,
+    [first, last]: &[Vertex; 2],
+    limit: f64,
+) -> Result<f64, HelixFailure> {
     let values = [
         native(BRepTool::edge_tolerance(edge), STAGE)?,
         native(BRepTool::vertex_tolerance(first), STAGE)?,
@@ -113,7 +117,7 @@ fn tolerance(edge: &Edge, [first, last]: &[Vertex; 2], limit: f64) -> Result<f64
     Ok(maximum)
 }
 
-struct Captured {
+pub(in crate::authored) struct Captured {
     degree: usize,
     poles: Vec<[f64; 3]>,
     knots: Vec<f64>,
@@ -121,7 +125,7 @@ struct Captured {
 }
 
 impl Captured {
-    fn read(edge: &Edge, limit: usize) -> Result<Self, HelixFailure> {
+    pub(in crate::authored) fn read(edge: &Edge, limit: usize) -> Result<Self, HelixFailure> {
         let carrier = native(BRepTool::curve_with_location(edge), STAGE)?;
         let expected = HelixFailure::Topology(Invariant::PolynomialCarrier);
         let spline = carrier
@@ -151,7 +155,7 @@ impl Captured {
         })
     }
 
-    fn source(&self) -> HelixSplineSource<'_> {
+    pub(in crate::authored) fn source(&self) -> HelixSplineSource<'_> {
         HelixSplineSource {
             degree: self.degree,
             poles: &self.poles,

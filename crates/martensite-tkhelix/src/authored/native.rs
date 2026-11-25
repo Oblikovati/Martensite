@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Circuit from a typed finite law through the actual retained native edge and immutable bytes.
-mod archive;
-mod verify;
+pub(super) mod archive;
+pub(super) mod verify;
 
 use super::{
     ConstantHelix, HelixFailure, HelixQuantity, HelixStage, HelixTraceBounds, HelixTraceLimits,
@@ -90,7 +90,7 @@ impl ConstantHelix {
         mut cancelled: impl FnMut() -> bool + Send,
     ) -> Result<FittedHelix, HelixFailure> {
         poll(&mut cancelled, HelixStage::Admission)?;
-        let segments = options.admit(self)?;
+        let segments = options.admit_turns(self.resolved().turns)?;
         let curve = fit::build(self, options, segments, &mut cancelled)?;
         let history = self.history();
         let wire = assemble(&curve, history, &mut cancelled)?;
@@ -124,7 +124,7 @@ impl ConstantHelix {
 }
 
 impl HelixFitOptions {
-    fn admit(self, law: ConstantHelix) -> Result<i32, HelixFailure> {
+    pub(super) fn admit_turns(self, requested: f64) -> Result<i32, HelixFailure> {
         positive(self.max_turns, HelixQuantity::Turns)?;
         positive(
             self.approximation_tolerance,
@@ -134,7 +134,6 @@ impl HelixFitOptions {
             self.max_topology_tolerance,
             HelixQuantity::TopologyTolerance,
         )?;
-        let requested = law.resolved().turns;
         if requested > self.max_turns {
             return Err(HelixFailure::TurnLimit {
                 requested,

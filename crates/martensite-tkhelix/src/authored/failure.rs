@@ -61,6 +61,12 @@ pub enum HelixNativeInvariant {
     PolynomialCarrier,
     /// Bounded literal native polynomial degree and pole counts.
     PolynomialExtent,
+    /// Forward retained edges in recipe order.
+    OrderedWire,
+    /// Neighboring edges lack the same native station or an edge reuses its endpoint.
+    SharedStation,
+    /// The actual clamped endpoint and its topological vertex have different coordinates.
+    LiteralEndpoint,
     /// A native archive with a representable byte length.
     ArchiveLength,
     /// A complete native wire archive.
@@ -75,6 +81,9 @@ impl fmt::Display for HelixNativeInvariant {
             Self::ValidWire => "valid native wire and edge topology",
             Self::PolynomialCarrier => "an unlocated open polynomial B-spline",
             Self::PolynomialExtent => "bounded literal polynomial degree and pole counts",
+            Self::OrderedWire => "one open ordered wire with the requested forward edges",
+            Self::SharedStation => "one shared native vertex at each directed join",
+            Self::LiteralEndpoint => "equal literal carrier and topological endpoints",
             Self::ArchiveLength => "a representable native wire archive length",
             Self::CompleteArchive => "a complete native wire archive",
         };

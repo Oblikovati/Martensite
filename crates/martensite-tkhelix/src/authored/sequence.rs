@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Immutable ordered cylindrical helix laws with exact stations and one-sided joins.
 mod law;
+mod native;
+pub use native::{DetachedHelixSequence, FittedHelixSequence, HelixSequenceSpanReceipt};
 mod stations;
 
 use super::HelixFailure;
@@ -115,6 +117,15 @@ pub enum HelixSequenceError {
     OverlappingEndZones,
     /// Finite binary64 parameters or elevations cannot distinguish the positive authored interval.
     UnrepresentableSpan(HelixSpanSource),
+    /// This retained flat-end proof requires a cardinal normal with exact planar coefficients.
+    NativeFlatFrame,
+    /// A specific authored span could not be fitted, retained or certified.
+    SpanFailure {
+        /// Source part whose operation failed.
+        source: HelixSpanSource,
+        /// Typed native or numerical failure for that part.
+        cause: Box<HelixFailure>,
+    },
     /// No admitted span exists on the requested side at this parameter.
     ParameterSide {
         /// Directed radian parameter.
@@ -134,6 +145,7 @@ impl Error for HelixSequenceError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::Helix(cause) => Some(cause),
+            Self::SpanFailure { cause, .. } => Some(cause.as_ref()),
             _ => None,
         }
     }

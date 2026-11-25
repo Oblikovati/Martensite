@@ -400,4 +400,4 @@ fn frame_deserialization_cannot_admit_a_collapsed_spatial_helix() {
 }
 
 #[path = "authored_helix/replay.rs"]
-mod replay;
+pub(crate) mod replay;

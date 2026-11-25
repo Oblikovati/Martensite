@@ -93,7 +93,11 @@ impl HelixSequence {
             .ok_or(Failure::ParameterSide { parameter, side })
     }
 
-    fn components(&self, span: &Span, parameter: f64) -> Result<[[f64; 3]; 3], Failure> {
+    pub(super) fn components(
+        &self,
+        span: &Span,
+        parameter: f64,
+    ) -> Result<[[f64; 3]; 3], HelixFailure> {
         let local = LocalHelix {
             opening_radius: self.placement.radius,
             radial_rate: 0.,
@@ -168,14 +172,13 @@ fn placement(mut placement: HelixSequencePlacement) -> Result<HelixSequencePlace
     Ok(placement)
 }
 
-fn finite(values: [[f64; 3]; 3], parameter: f64) -> Result<[[f64; 3]; 3], Failure> {
+fn finite(values: [[f64; 3]; 3], parameter: f64) -> Result<[[f64; 3]; 3], HelixFailure> {
     for (order, coordinates) in values.iter().enumerate() {
         if coordinates.iter().any(|value| !value.is_finite()) {
             return Err(HelixFailure::Evaluation {
                 parameter,
                 order: order as u8,
-            }
-            .into());
+            });
         }
     }
     Ok(values)
