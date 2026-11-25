@@ -177,6 +177,11 @@ impl Snapshot {
         adoption: SplitAdoption,
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<SplitLineEdit, SplitLineFailure> {
+        if self.included_line(source.id).is_some() {
+            return Err(SplitLineFailure::Edit(EditFailure::IncludedLineEdit(
+                source.id,
+            )));
+        }
         if cut.error_upper > limit {
             return Err(SplitLineFailure::PositionError {
                 upper_bound: cut.error_upper,

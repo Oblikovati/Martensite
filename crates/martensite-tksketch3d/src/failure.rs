@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Refusals identify the exact edit or line input that failed admission.
+use crate::include_geometry::IncludedPointSource;
 use crate::{
     ArcFailure, ArcId, ControlSplineFailure, ControlSplineId, EntityId, FitSplineFailure,
     FitSplineId, FrozenPointSource, LineId, MinimumLength, PointId, SketchLine,
@@ -59,6 +60,15 @@ pub enum EditFailure {
         /// Captured source.
         source: FrozenPointSource,
     },
+    /// A move would change a point owned by a native edge link.
+    IncludedPointMove {
+        /// Destination point identity.
+        point: PointId,
+        /// Original native point lineage.
+        source: IncludedPointSource,
+    },
+    /// The linked native line must be detached as a whole before altering its extent.
+    IncludedLineEdit(LineId),
     /// An editable point has no source to detach.
     PointIsNotFrozen(PointId),
     /// A line has an endpoint without an owned point.
@@ -175,6 +185,15 @@ impl fmt::Display for EditFailure {
                     f,
                     "point {point:?} captured from {source:?} must be detached before moving"
                 )
+            }
+            Self::IncludedPointMove { point, source } => {
+                write!(
+                    f,
+                    "point {point:?} is read-only through its native source {source:?}"
+                )
+            }
+            Self::IncludedLineEdit(line) => {
+                write!(f, "native line {line:?} requires a whole-line detach")
             }
             Self::PointIsNotFrozen(point) => write!(f, "point {point:?} has no frozen source"),
             Self::MissingEndpoint { line, point } => {

@@ -229,6 +229,12 @@ impl Snapshot {
                 protection: EndpointProtection::Frozen(source),
             });
         }
+        if let Some(source) = self.included_point_source(corner) {
+            return Err(BendFailure::ProtectedCorner {
+                corner,
+                protection: EndpointProtection::Included(source),
+            });
+        }
         let selected = request.lines.map(EntityId::Line);
         for incident in self.incident_curves(corner, cancelled)? {
             if !selected.contains(&incident) {

@@ -9,6 +9,7 @@ mod edit;
 mod failure;
 mod fit_spline;
 pub mod import;
+pub mod include_geometry;
 pub mod line_edit;
 mod mirror;
 mod source;
@@ -295,6 +296,7 @@ pub struct Snapshot {
     fit_splines: BTreeMap<FitSplineId, FitSplineGeometry>,
     construction: BTreeSet<CurveId>,
     frozen: BTreeMap<PointId, FrozenPointSource>,
+    included: include_geometry::IncludedLines,
 }
 
 impl Snapshot {
@@ -309,6 +311,7 @@ impl Snapshot {
             fit_splines: BTreeMap::new(),
             construction: BTreeSet::new(),
             frozen: BTreeMap::new(),
+            included: Default::default(),
         }
     }
 

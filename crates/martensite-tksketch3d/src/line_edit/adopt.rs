@@ -28,6 +28,9 @@ impl Snapshot {
                 portion,
             } => (boundary, hit, portion),
         };
+        if self.included_line(source.line.id).is_some() {
+            return Err(EditFailure::IncludedLineEdit(source.line.id).into());
+        }
         let superseded = self.superseded_endpoint(source.line, portion.endpoint(), cancelled)?;
         let contact = hit.placement()?;
         if contact.error_upper > limit {
@@ -68,6 +71,12 @@ impl Snapshot {
             return Err(LineEditFailure::ProtectedEndpoint {
                 point,
                 protection: EndpointProtection::Frozen(stamp),
+            });
+        }
+        if let Some(stamp) = self.included_point_source(point) {
+            return Err(LineEditFailure::ProtectedEndpoint {
+                point,
+                protection: EndpointProtection::Included(stamp),
             });
         }
         let incident = self.incident_curves(point, cancelled)?;

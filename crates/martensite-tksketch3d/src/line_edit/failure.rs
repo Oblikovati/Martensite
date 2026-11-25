@@ -12,6 +12,8 @@ pub enum EndpointProtection {
     Shared(EntityId),
     /// The discarded end is a frozen external capture.
     Frozen(FrozenPointSource),
+    /// The endpoint is owned by a read-only native edge link.
+    Included(crate::include_geometry::IncludedPointSource),
 }
 
 /// Why a directed line edit could not publish a replacement.

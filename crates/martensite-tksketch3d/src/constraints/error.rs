@@ -59,6 +59,8 @@ pub enum ConstraintFailure {
     MissingPoint(PointId),
     /// The drag would change a captured coordinate that requires explicit detachment.
     FrozenDrag(PointId, FrozenPointSource),
+    /// The drag would change an endpoint owned by a native Include Geometry link.
+    IncludedDrag(PointId, crate::include_geometry::IncludedPointSource),
     /// A point drag specified a nonfinite coordinate.
     InvalidTarget(PointId, [f64; 3]),
     /// A driving length lies below the sketch's minimum constructible length.

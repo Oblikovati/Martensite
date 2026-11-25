@@ -43,16 +43,7 @@ impl Snapshot {
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<Self, EditFailure> {
         poll(cancelled, BatchPhase::BeforeStaging)?;
-        let mut draft = Self {
-            minimum: self.minimum,
-            entities: self.entities.clone(),
-            geometry: Default::default(),
-            arcs: Default::default(),
-            control_splines: Default::default(),
-            fit_splines: Default::default(),
-            construction: self.construction.clone(),
-            frozen: self.frozen.clone(),
-        };
+        let mut draft = self.edit_draft();
         let mut retired = RetiredIds::new();
         for &edit in edits {
             poll(cancelled, BatchPhase::Staging)?;
@@ -61,6 +52,29 @@ impl Snapshot {
         if prune_orphans && !retired.is_empty() {
             draft.prune_defining_points(&mut retired, cancelled)?;
         }
+        self.complete_edit(draft, edits, cancelled)
+    }
+
+    pub(super) fn edit_draft(&self) -> Self {
+        Self {
+            minimum: self.minimum,
+            entities: self.entities.clone(),
+            geometry: Default::default(),
+            arcs: Default::default(),
+            control_splines: Default::default(),
+            fit_splines: Default::default(),
+            construction: self.construction.clone(),
+            frozen: self.frozen.clone(),
+            included: self.included.clone(),
+        }
+    }
+
+    pub(super) fn complete_edit(
+        &self,
+        mut draft: Self,
+        edits: &[Edit],
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<Self, EditFailure> {
         // This draft has the same minimum as its source, so matching inputs retain their proof.
         draft.geometry = draft.check_lines(&self.geometry, cancelled)?;
         // Line-only edits keep the single geometry scan used by the drag path.
@@ -142,6 +156,17 @@ impl Snapshot {
         if let Some(source) = self.frozen_source(point) {
             return Err(EditFailure::FrozenPointMove { point, source });
         }
+        if let Some(source) = self.included_point_source(point) {
+            return Err(EditFailure::IncludedPointMove { point, source });
+        }
+        self.move_owned_point(point, position)
+    }
+
+    pub(super) fn move_owned_point(
+        &mut self,
+        point: PointId,
+        position: Point3,
+    ) -> Result<(), EditFailure> {
         admission::finite(point, position)?;
         let target = match self.entities.get_mut(&point.get()) {
             Some(Entity::Point(target)) => target,
@@ -154,6 +179,9 @@ impl Snapshot {
     fn detach_frozen_point(&mut self, point: PointId) -> Result<(), EditFailure> {
         if self.point(point).is_none() {
             return Err(EditFailure::MissingEditTarget(EntityId::Point(point)));
+        }
+        if let Some(source) = self.included_point_source(point) {
+            return Err(EditFailure::IncludedLineEdit(source.line));
         }
         self.frozen
             .remove(&point)
@@ -230,8 +258,14 @@ impl Snapshot {
             if let Some(curve) = entry.remove().curve() {
                 self.construction.remove(&curve);
             }
-            if let EntityId::Point(point) = key {
-                self.frozen.remove(&point);
+            match key {
+                EntityId::Point(point) => {
+                    self.frozen.remove(&point);
+                }
+                EntityId::Line(line) => {
+                    self.included.remove(line);
+                }
+                _ => (),
             }
             return Ok(());
         }

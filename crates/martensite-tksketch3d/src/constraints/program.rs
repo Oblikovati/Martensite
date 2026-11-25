@@ -261,13 +261,13 @@ impl Program {
         if target.iter().any(|value| !value.is_finite()) {
             return Err(Failure::InvalidTarget(point, target));
         }
-        if let Some(source) = geometry.frozen_source(point) {
+        if geometry.point_is_read_only(point) {
             let original = geometry
                 .point(point)
                 .ok_or(Failure::MissingPoint(point))?
                 .position;
             if target.map(f64::to_bits) != original.coordinates().map(f64::to_bits) {
-                return Err(Failure::FrozenDrag(point, source));
+                return Err(read_only_drag(geometry, point));
             }
         }
         Ok([
@@ -496,4 +496,15 @@ fn preview_failure(blocks: &[EquationBlock], error: PreviewError) -> Failure {
         PreviewError::Solve(ref cause) => Failure::Preview(failure_relation(blocks, cause), error),
         error => Failure::Preview(None, error),
     }
+}
+
+fn read_only_drag(geometry: &Snapshot, point: PointId) -> Failure {
+    if let Some(source) = geometry.frozen_source(point) {
+        return Failure::FrozenDrag(point, source);
+    }
+    geometry
+        .included_point_source(point)
+        .map_or(Failure::MissingPoint(point), |source| {
+            Failure::IncludedDrag(point, source)
+        })
 }

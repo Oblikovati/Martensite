@@ -42,7 +42,7 @@ pub(super) fn bind(
         angular_sine: policy.parallel_sine_tolerance,
     };
     for (&id, &start) in point_columns {
-        if geometry.frozen_source(id).is_some() {
+        if geometry.point_is_read_only(id) {
             let point = geometry.point(id).ok_or(Failure::MissingPoint(id))?;
             builder
                 .fixed
