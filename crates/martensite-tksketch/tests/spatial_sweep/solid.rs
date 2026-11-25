@@ -102,3 +102,62 @@ fn non_square_section_integrates_distinct_actual_turn_radii() {
     let result = sweep_rounded_solid(&spine(SPINE), &section, solid_options(), || false).unwrap();
     assert_volume(&result, 22.5 + 3. * std::f64::consts::PI / 8.);
 }
+
+#[test]
+fn independent_parallel_operations_match_a_serial_native_archive_and_history() {
+    use std::{sync::Barrier, thread};
+
+    let path = spine(SPINE);
+    let profile = profile(SECTION);
+    let serial = sweep_rounded_solid(&path, &profile, solid_options(), || false).unwrap();
+    let serial_state = solid_state(&serial);
+    let barrier = Barrier::new(4);
+    thread::scope(|scope| {
+        let workers = (0..4)
+            .map(|_| {
+                scope.spawn(|| {
+                    barrier.wait();
+                    let result =
+                        sweep_rounded_solid(&path, &profile, solid_options(), || false).unwrap();
+                    solid_state(&result)
+                })
+            })
+            .collect::<Vec<_>>();
+        for worker in workers {
+            assert_eq!(worker.join().unwrap(), serial_state);
+        }
+    });
+}
+
+fn solid_state(result: &SolidSweepResult) -> (Vec<u8>, Vec<SolidSweepHistory>, [f64; 2]) {
+    let detached = result.export_brep(|| false).unwrap();
+    let history = result.history().cloned().collect();
+    let volume = result.volume();
+    (
+        archive(&detached.solid),
+        history,
+        [volume.value, volume.error_bound],
+    )
+}
+
+#[test]
+fn cancelling_late_in_volume_phase_refuses_publication() {
+    let path = spine(SPINE);
+    let profile = profile(SECTION);
+    let mut checkpoints = 0;
+    sweep_rounded_solid(&path, &profile, solid_options(), || {
+        checkpoints += 1;
+        false
+    })
+    .unwrap();
+    let mut active = 0;
+    assert!(matches!(
+        sweep_rounded_solid(&path, &profile, solid_options(), || {
+            active += 1;
+            active >= checkpoints - 5
+        }),
+        Err(SweepFailure::Cancelled(
+            martensite_tksketch::spatial_sweep::SweepStage::Integration
+        ))
+    ));
+}
