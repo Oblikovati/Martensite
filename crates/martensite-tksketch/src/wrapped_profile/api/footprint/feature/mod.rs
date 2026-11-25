@@ -19,6 +19,7 @@ mod direct;
 pub use direct::{CertifiedConeAttachmentReport, CertifiedConeFeatureResult};
 mod failure;
 mod history;
+mod source_members;
 use failure::{Attempt, FeatureChecked};
 pub use failure::{CylinderFeatureCause, CylinderFeatureFailure, CylinderFeatureStage};
 pub use history::{

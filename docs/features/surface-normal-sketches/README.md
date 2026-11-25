@@ -147,6 +147,8 @@ candidate solved-profile entry below handles admitted polynomial curves. See the
 
 ## General wrapped profiles
 
+An application can pass its named support members to `CylinderFaceAttachment::bind_feature_sources` and use the returned references to read the boss or pocket history. The binding checks the frozen body and selected-face references before resolving any member.
+
 The [API contract](PUBLIC-API.md) describes `normal_extrude_profile` for cylinders
 and the unreleased `normal_extrude_cone_profile` candidate. Both use the shared
 executor and keyed incidence builder. Existing cylinder and primitive
