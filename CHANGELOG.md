@@ -26,6 +26,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added checked replay of saved spatial relations and anchors, with historical session stamps for frozen source points (#611).
 
+- Added parting silhouettes on supported planar and cylindrical faces, with rim and exclusion rules, detached curves, and source occurrence provenance (#611).
+
+- Added ordinary extrusion from certified coplanar Sketch3D line wires with detached history and volume bounded on the retained native trims (#611).
+
 - Added explicit full-turn cylinder and cone bands with authored rim history and paired native seams (#419).
 
 - Added rectangular and curved apertures across native seams in full-turn cylinder and cone bands, with exact authored split intervals and stable replay (#419).

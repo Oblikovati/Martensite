@@ -475,3 +475,41 @@ The latter preserves the evidence available in an Oblikovati version 18 recipe. 
 its frozen coordinate bits through a later warm drag. The other cases cover a signed-zero anchor mismatch,
 contradictory saved length, malformed relations, size refusal and late cancellation. Independent review,
 78 toolkit tests and strict Clippy passed on Rust `1.98.1`. Package and desktop adoption have their own gates.
+
+## E24. Native parting silhouettes
+
+`bb1b2a3a2` returns detached curves with caller-owned source occurrence IDs. The query checks that the
+native root is a solid. It uses the original placed plane tangents for oriented face signs and recognizes
+cylindrical walls only after checking their stored full UV trim and seam. Along a cylinder's pull axis it
+returns both rims. For a radial pull, each returned line has an outward position bound over its whole
+trim against the exact placed cylinder. The query compares that bound with the original face tolerance.
+It rejects an unsupported or unproved contribution and distinguishes completed empty results.
+
+The fixtures cover principal and diagonal box pulls, the cylinder seam, located geometry, planar and
+cavity exclusions, a through-hole, invalid topology, cancellation and source isolation. Native validation
+observes cancellation at call boundaries. Two processes produced identical receipt bytes with SHA-256
+`7a1d8a15701e4793177cb929d4e92d1aed0ef3aa6ec518eda3434ae373726538`. On Rust `1.98.1`, all 20,361
+TKHLR tests and 1,270 TKMath library tests passed. The 22 focused cases also passed pinned ThreadSanitizer.
+Independent review and strict TKHLR and TKMath library Clippy passed. App command wiring remains open.
+
+## E25. Ordinary extrusion from a spatial line wire
+
+`tksketch::spatial_prism::extrude_wire` accepts one closed straight-line Sketch3D loop. Exact source
+coplanarity precedes projection, and actual native geometry is checked against source XYZ. The ordinary
+TKBO prism validates its result in the existing four stages. The adapter binds retained cap and side
+trims and computes an outward volume enclosure from their oriented planar flux. Detaching the solid
+also detaches the 26 history images in the oblique rectangle fixture.
+
+The review regression requests a displacement halfway between stored coordinates at world X `2^27`.
+The operation refuses the resulting cap-vertex trace under the original `1e-8` source limit. At the adjacent
+exact displacement, the independent volume 45 lies in the enclosure. Both signs of the oblique sweep and
+an oblique non-normal sweep also enclose their independent GProp masses. A cap-only mutation is refused
+without a corresponding vertex or edge change.
+
+At exact source `3b55f9ed`, 1,024 optimized kernel runs on Linux x86-64 and Rust `1.98.1` included the
+four-line recipe, ordinary extrusion, native trim checks, volume, and detached history. Warm p50/p95 were
+`10.038/11.862 ms`, with peak RSS `21,108 KiB`. For 40 independent processes the first operation p95 was
+`11.982 ms` and process wall p95 `16.344 ms`. No samples refused. The host ran other builds. The same
+fixture had boundary trace at most `2.032e-14` model units and an actual volume enclosure radius of
+`7.532e-13` around 75. All 10 focused native cases, two volume unit tests, strict Clippy and the concurrent
+detachment ThreadSanitizer control passed. Curved profiles and desktop timing have their own gates.
