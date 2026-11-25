@@ -15,8 +15,22 @@ mod cone;
 pub(super) struct AperturePlan {
     pub stock: band_admission::BandSection,
     pub band: FullTurnBand,
+    pub contours: Vec<Aperture>,
+    pub rails: Vec<[PeriodicSeamEnd; 2]>,
+}
+
+pub(super) struct Aperture {
     pub region: SurfaceRegionId,
-    pub crossings: [Crossing; 2],
+    pub curves: Vec<SurfaceCurveId>,
+    pub crossings: Option<[Crossing; 2]>,
+    pub meridian: [f64; 2],
+    curved: bool,
+}
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+pub(super) enum Scope {
+    OneCrossed,
+    Batch,
 }
 
 #[derive(Clone, Copy)]
@@ -32,30 +46,78 @@ impl AperturePlan {
         band: &FullTurnBand,
         request: &WrappedNormalRequest,
         options: NormalExtrusionOptions,
+        scope: Scope,
     ) -> Checked<Self> {
         let stock = band_admission::admit(*band, request.depths, options)?;
         let (support, axial) = cylinder(band.support)?;
         check_support(support, request)?;
-        let [selection] = request.selections.as_slice() else {
+        let contours = request
+            .selections
+            .iter()
+            .map(|selection| cylinder_contour(request, selection, support, axial, options))
+            .collect::<Checked<Vec<_>>>()?;
+        Self::compose(*band, stock, contours, scope, options)
+    }
+
+    fn compose(
+        band: FullTurnBand,
+        stock: band_admission::BandSection,
+        mut contours: Vec<Aperture>,
+        scope: Scope,
+        options: NormalExtrusionOptions,
+    ) -> Checked<Self> {
+        if !contours.iter().any(|hole| hole.curved) {
             return Err(incomplete(
-                "one selected curved aperture",
-                format!("{} selections", request.selections.len()),
-            ));
-        };
-        if !selection.holes.is_empty() {
-            return Err(incomplete(
-                "one simply connected aperture",
-                "nested aperture loops",
+                "a genuinely curved aperture span",
+                "no nonlinear polynomial",
             ));
         }
-        let aperture = contour(request, selection, support, axial, options)?;
+        if scope == Scope::OneCrossed
+            && !matches!(contours.as_slice(), [hole] if hole.crossings.is_some())
+        {
+            return Err(incomplete(
+                "one curved aperture with two transverse seam crossings",
+                format!("{} apertures", contours.len()),
+            ));
+        }
+        contours.sort_by_key(|hole| hole.region);
+        if contours
+            .windows(2)
+            .any(|pair| pair[0].region == pair[1].region)
+        {
+            return Err(incomplete(
+                "unique authored aperture regions",
+                "duplicate region",
+            ));
+        }
+        let rails = seam_intervals(band.rims, &contours, options)?;
         Ok(Self {
+            band,
             stock,
-            band: *band,
-            region: selection.region,
-            crossings: aperture,
+            contours,
+            rails,
         })
     }
+
+    pub(super) fn crossing_count(&self) -> usize {
+        self.contours
+            .iter()
+            .filter(|hole| hole.crossings.is_some())
+            .count()
+            * 2
+    }
+
+    pub(super) fn crossings(&self) -> impl Iterator<Item = Crossing> + '_ {
+        self.contours
+            .iter()
+            .filter_map(|hole| hole.crossings)
+            .flatten()
+    }
+
+    pub(super) fn clear_contours(&self) -> impl Iterator<Item = &Aperture> {
+        self.contours.iter().filter(|hole| hole.crossings.is_none())
+    }
+
     pub(super) fn minimum_radius(&self) -> f64 {
         let min = self
             .stock
@@ -65,6 +127,36 @@ impl AperturePlan {
             .fold(f64::INFINITY, f64::min);
         (min - self.stock.sweep.coordinate_error).next_down()
     }
+}
+
+fn seam_intervals(
+    rims: [SurfaceCurveId; 2],
+    contours: &[Aperture],
+    options: NormalExtrusionOptions,
+) -> Checked<Vec<[PeriodicSeamEnd; 2]>> {
+    let mut along = contours.iter().collect::<Vec<_>>();
+    along.sort_by(|a, b| a.meridian[0].total_cmp(&b.meridian[0]));
+    verify_separation(&along, options)?;
+    let mut rails = Vec::with_capacity(along.len() + 1);
+    let mut front = PeriodicSeamEnd::Rim(rims[0]);
+    for hole in along {
+        let Some([start, end]) = hole.crossings else {
+            continue;
+        };
+        rails.push([front, PeriodicSeamEnd::Crossing(start.report.id)]);
+        front = PeriodicSeamEnd::Crossing(end.report.id);
+    }
+    rails.push([front, PeriodicSeamEnd::Rim(rims[1])]);
+    Ok(rails)
+}
+
+fn verify_separation(contours: &[&Aperture], options: NormalExtrusionOptions) -> Checked<()> {
+    let floor = effective_limits(options).linear_separation / 2.;
+    for pair in contours.windows(2) {
+        let gap = (pair[1].meridian[0] - pair[0].meridian[1]).next_down();
+        cylinder_admission::separated("curved aperture meridian separation", gap, floor)?;
+    }
+    Ok(())
 }
 
 fn check_support(support: CylinderSupport, request: &WrappedNormalRequest) -> Checked<()> {
@@ -83,32 +175,64 @@ fn check_support(support: CylinderSupport, request: &WrappedNormalRequest) -> Ch
     ))
 }
 
-fn contour(
+fn cylinder_contour(
     request: &WrappedNormalRequest,
     selection: &WrappedRegionSelection,
     support: CylinderSupport,
     axial: [f64; 2],
     options: NormalExtrusionOptions,
-) -> Checked<[Crossing; 2]> {
+) -> Checked<Aperture> {
     let mut bounds = [[f64::INFINITY, f64::NEG_INFINITY]; 2];
     let curves = contour_curves(&request.profile, selection)?;
     for curve in &curves {
         extend_bounds(&mut bounds, &curve.points);
     }
-    let curved = curves.iter().any(DirectedCurve::is_curved);
-    certify_contour(curved, bounds, support.radius, axial, options)?;
+    certify_cylinder_hull(bounds, support.radius, axial, options)?;
     let margin = effective_limits(options).angular_clearance;
     let roots = curves
         .iter()
         .map(|curve| curve.crossing(support.radius, margin))
         .collect::<Checked<Vec<_>>>()?;
-    ordered_crossings(roots.into_iter().flatten().collect())
+    aperture(
+        selection,
+        curves,
+        bounds[1],
+        roots.into_iter().flatten().collect(),
+    )
+}
+
+fn aperture(
+    selection: &WrappedRegionSelection,
+    curves: Vec<DirectedCurve>,
+    meridian: [f64; 2],
+    roots: Vec<Crossing>,
+) -> Checked<Aperture> {
+    let crossings = if roots.is_empty() {
+        None
+    } else {
+        Some(ordered_crossings(roots)?)
+    };
+    let curved = curves.iter().any(DirectedCurve::is_curved);
+    let curves = curves.iter().map(|curve| curve.id).collect();
+    Ok(Aperture {
+        region: selection.region,
+        curves,
+        crossings,
+        meridian,
+        curved,
+    })
 }
 
 fn contour_curves(
     profile: &SketchProfile,
     selection: &WrappedRegionSelection,
 ) -> Checked<Vec<DirectedCurve>> {
+    if !selection.holes.is_empty() {
+        return Err(incomplete(
+            "one boundary per curved aperture",
+            "nested aperture loops",
+        ));
+    }
     selection
         .outer
         .uses
@@ -135,19 +259,12 @@ fn extend_bounds(bounds: &mut [[f64; 2]; 2], points: &[[f64; 2]]) {
     }
 }
 
-fn certify_contour(
-    curved: bool,
+fn certify_cylinder_hull(
     [chart, height]: [[f64; 2]; 2],
     radius: f64,
     axial: [f64; 2],
     options: NormalExtrusionOptions,
 ) -> Checked<()> {
-    if !curved {
-        return Err(incomplete(
-            "a genuinely curved aperture span",
-            "all selected spans are linear",
-        ));
-    }
     require_rim_clearance(axial, height, options)?;
     let period = certify_developed_period(DevelopedScale::CylinderRadius(radius))
         .map_err(|cause| incomplete("curved aperture exact period", format!("{cause:?}")))?;

@@ -34,10 +34,10 @@ pub use full_turn::{
     FullTurnSupport, PeriodicCrossing, PeriodicCrossingId, PeriodicDepth, PeriodicImageKey,
     PeriodicSeamEnd, PeriodicSourceEnd, SheetTransition, normal_extrude_cone_band_at_authored_seam,
     normal_extrude_cone_band_holes_at_authored_seam, normal_extrude_cone_band_with_curved_hole,
-    normal_extrude_cylinder_band_at_authored_seam,
+    normal_extrude_cone_band_with_curved_holes, normal_extrude_cylinder_band_at_authored_seam,
     normal_extrude_cylinder_band_holes_at_authored_seam,
-    normal_extrude_cylinder_band_with_curved_hole, normal_extrude_cylinder_band_with_hole,
-    normal_extrude_full_turn_band,
+    normal_extrude_cylinder_band_with_curved_hole, normal_extrude_cylinder_band_with_curved_holes,
+    normal_extrude_cylinder_band_with_hole, normal_extrude_full_turn_band,
 };
 pub use history::{HistoryKey, HistoryRole, HistorySource};
 pub use request::*;

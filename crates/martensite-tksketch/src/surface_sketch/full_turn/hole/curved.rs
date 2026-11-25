@@ -6,7 +6,8 @@ use crate::surface_sketch::full_turn::hole::crossed::CrossedBandResult;
 mod admission;
 mod binding;
 mod proof;
-use admission::AperturePlan;
+use admission::{AperturePlan, Scope};
+use std::collections::BTreeMap;
 
 /// Immutable curved aperture body, split provenance and achieved fitting bounds.
 #[derive(Clone, Debug)]
@@ -51,7 +52,7 @@ pub fn normal_extrude_cylinder_band_with_curved_hole(
     request: &WrappedNormalRequest,
     options: NormalExtrusionOptions,
 ) -> Result<CurvedBandResult, SurfaceSketchFailure> {
-    let plan = AperturePlan::admit(band, request, options)
+    let plan = AperturePlan::admit(band, request, options, Scope::OneCrossed)
         .map_err(|cause| admission_failure(band, cause))?;
     let cutter = fitted_cutter(&plan, request)?;
     let report = report(&plan, cutter.reports())?;
@@ -72,7 +73,7 @@ pub fn normal_extrude_cone_band_with_curved_hole(
     request: &WrappedConeNormalRequest,
     options: NormalExtrusionOptions,
 ) -> Result<CurvedBandResult<WrappedConeMemberReport>, SurfaceSketchFailure> {
-    let plan = AperturePlan::admit_cone(band, request, options)
+    let plan = AperturePlan::admit_cone(band, request, options, Scope::OneCrossed)
         .map_err(|cause| admission_failure(band, cause))?;
     let cutter =
         normal_extrude_cone_profile(request).map_err(|cause| tool_failure(&plan, cause))?;
@@ -83,6 +84,61 @@ pub fn normal_extrude_cone_band_with_curved_hole(
         .export_native()
         .map_err(|cause| export_failure(&plan, cause))?;
     finish(plan, report, evidence, &detached)
+}
+
+/// Cut multiple meridian-separated fitted apertures in a canonical cylindrical band.
+/// At least one selected outer loop contains a curved span. The rest may be rectangles.
+/// Each aperture can clear or cross the authored seam.
+/// Example: `let cut = normal_extrude_cylinder_band_with_curved_holes(&band, &profile, options)?;`.
+pub fn normal_extrude_cylinder_band_with_curved_holes(
+    band: &FullTurnBand,
+    request: &WrappedNormalRequest,
+    options: NormalExtrusionOptions,
+) -> Result<CurvedBandResult<BTreeMap<SurfaceRegionId, WrappedMemberReport>>, SurfaceSketchFailure>
+{
+    let request = canonical_cylinder_request(request);
+    let plan = AperturePlan::admit(band, &request, options, Scope::Batch)
+        .map_err(|cause| admission_failure(band, cause))?;
+    let cutter = fitted_cutter(&plan, &request)?;
+    let reports = cutter.reports();
+    let evidence = batch_evidence(&plan, reports, |report| {
+        FitEvidence::cylinder(&plan, report, request.support.radius)
+    })?;
+    let detached = cutter
+        .export_native()
+        .map_err(|cause| export_failure(&plan, cause))?;
+    finish(plan, reports.clone(), evidence, &detached)
+}
+
+/// Cut multiple meridian-separated fitted apertures in a canonical conical band.
+/// The aperture batch may mix curved and straight contours clear of or crossing the zero ray.
+/// Example: `let cut = normal_extrude_cone_band_with_curved_holes(&band, &profile, options)?;`.
+pub fn normal_extrude_cone_band_with_curved_holes(
+    band: &FullTurnBand,
+    request: &WrappedConeNormalRequest,
+    options: NormalExtrusionOptions,
+) -> Result<
+    CurvedBandResult<BTreeMap<SurfaceRegionId, WrappedConeMemberReport>>,
+    SurfaceSketchFailure,
+> {
+    let mut request = request.clone();
+    request.selections.sort_by_key(|selection| selection.region);
+    let plan = AperturePlan::admit_cone(band, &request, options, Scope::Batch)
+        .map_err(|cause| admission_failure(band, cause))?;
+    let cutter =
+        normal_extrude_cone_profile(&request).map_err(|cause| tool_failure(&plan, cause))?;
+    let reports = cutter.reports();
+    let evidence = batch_evidence(&plan, reports, |report| FitEvidence::cone(&plan, report))?;
+    let detached = cutter
+        .export_native()
+        .map_err(|cause| export_failure(&plan, cause))?;
+    finish(plan, reports.clone(), evidence, &detached)
+}
+
+fn canonical_cylinder_request(request: &WrappedNormalRequest) -> WrappedNormalRequest {
+    let mut owned = request.clone();
+    owned.selections.sort_by_key(|selection| selection.region);
+    owned
 }
 
 fn finish<T>(
@@ -143,17 +199,52 @@ fn angle_from_chord(radius: f64, distance: f64) -> Checked<f64> {
 
 fn report<T: Clone>(
     plan: &AperturePlan,
-    reports: &std::collections::BTreeMap<SurfaceRegionId, T>,
+    reports: &BTreeMap<SurfaceRegionId, T>,
 ) -> Result<T, SurfaceSketchFailure> {
-    reports.get(&plan.region).cloned().ok_or_else(|| {
-        plan.stock.sweep.failure(
-            SurfaceStage::Validation,
+    let [contour] = plan.contours.as_slice() else {
+        return Err(plan.stock.sweep.failure(
+            SurfaceStage::Admission,
             incomplete(
-                "one certified aperture cutter report",
-                format!("{:?}", plan.region),
+                "one selected fitted aperture",
+                format!("{}", plan.contours.len()),
             ),
-        )
+        ));
+    };
+    reports
+        .get(&contour.region)
+        .cloned()
+        .ok_or_else(|| missing_report(plan, contour.region))
+}
+
+fn batch_evidence<T>(
+    plan: &AperturePlan,
+    reports: &BTreeMap<SurfaceRegionId, T>,
+    transfer: impl Fn(&T) -> Checked<FitEvidence>,
+) -> Result<FitEvidence, SurfaceSketchFailure> {
+    let mut lower: f64 = 0.;
+    let mut upper: f64 = 0.;
+    let mut angle: f64 = 0.;
+    for contour in &plan.contours {
+        let report = reports
+            .get(&contour.region)
+            .ok_or_else(|| missing_report(plan, contour.region))?;
+        let proof = transfer(report)
+            .map_err(|cause| plan.stock.sweep.failure(SurfaceStage::Validation, cause))?;
+        lower = (lower + proof.authored_volume.lower).next_down();
+        upper = (upper + proof.authored_volume.upper).next_up();
+        angle = angle.max(proof.angular_error);
+    }
+    Ok(FitEvidence {
+        authored_volume: WrappedCertifiedRange { lower, upper },
+        angular_error: angle,
     })
+}
+
+fn missing_report(plan: &AperturePlan, owner: SurfaceRegionId) -> SurfaceSketchFailure {
+    plan.stock.sweep.failure(
+        SurfaceStage::Validation,
+        incomplete("certified aperture cutter report", format!("{owner:?}")),
+    )
 }
 
 fn admission_failure(band: &FullTurnBand, cause: SurfaceFailureCause) -> SurfaceSketchFailure {
@@ -215,7 +306,7 @@ fn publish<T>(
         .map_err(|cause| sweep.failure(SurfaceStage::Volume, cause))?;
     let publication = CrossedBandResult {
         geometry: result::assemble(sweep, bytes, keys, checked.body, volume, errors),
-        crossings: plan.crossings.map(|crossing| crossing.report).to_vec(),
+        crossings: plan.crossings().map(|crossing| crossing.report).collect(),
     };
     Ok(CurvedBandResult {
         publication,

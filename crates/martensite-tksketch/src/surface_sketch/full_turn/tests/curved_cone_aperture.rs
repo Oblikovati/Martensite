@@ -7,7 +7,7 @@ use martensite_tkbo::profile_extrusion::{
 
 static_assertions::assert_impl_all!(CurvedBandResult<WrappedConeMemberReport>: Send, Sync);
 
-fn fixture() -> (FullTurnBand, WrappedConeNormalRequest) {
+pub(super) fn fixture() -> (FullTurnBand, WrappedConeNormalRequest) {
     let mut band = cone(NormalSense::Outward, 0.);
     let FullTurnSupport::Cone { support, slant } = &mut band.support else {
         panic!("conical stock");

@@ -2,10 +2,13 @@
 //! Bind directed coedges to complete outer or clear-aperture wires by incidence.
 use super::*;
 
-pub(super) struct DirectedWires(Vec<Vec<topods::Edge>>);
+pub(in crate::surface_sketch::full_turn) struct DirectedWires(Vec<Vec<topods::Edge>>);
 
 impl DirectedWires {
-    pub(super) fn read(face: &topods::Face, topology: &ExpectedTopology) -> Checked<Self> {
+    pub(in crate::surface_sketch::full_turn) fn read(
+        face: &topods::Face,
+        expected: [usize; 2],
+    ) -> Checked<Self> {
         let mut wires = topods::ShapeIterator::new(face, true, true);
         let mut groups = Vec::new();
         while wires.more() {
@@ -14,16 +17,12 @@ impl DirectedWires {
             wires.next();
         }
         let result = Self(groups);
-        result.check_counts(topology)?;
+        result.check_counts(expected)?;
         Ok(result)
     }
 
-    fn check_counts(&self, topology: &ExpectedTopology) -> Checked<()> {
+    fn check_counts(&self, expected: [usize; 2]) -> Checked<()> {
         let counts = [self.0.len(), self.edges().count()];
-        let expected = [
-            1 + topology.clear,
-            4 + 8 * topology.crossed + 4 * topology.clear,
-        ];
         if counts == expected {
             return Ok(());
         }
@@ -33,35 +32,50 @@ impl DirectedWires {
         ))
     }
 
-    pub(super) fn edges(&self) -> impl Iterator<Item = &topods::Edge> {
+    pub(in crate::surface_sketch::full_turn) fn edges(
+        &self,
+    ) -> impl Iterator<Item = &topods::Edge> {
         self.0.iter().flatten()
     }
 
     pub(super) fn clear_wire(&self, named: [&topods::Shape; 4]) -> Checked<[topods::Edge; 4]> {
-        let mut matches = self.0.iter().filter_map(|wire| match_wire(wire, named));
-        let group = matches.next();
-        if matches.next().is_some() {
+        let wire = self.identify_wire(&named)?;
+        let [a, b, c, d] = named.map(|shape| {
+            wire.iter()
+                .find(|edge| shape.is_same(edge))
+                .cloned()
+                .ok_or_else(|| incomplete("directed clear aperture edge", "no named coedge"))
+        });
+        Ok([a?, b?, c?, d?])
+    }
+
+    pub(in crate::surface_sketch::full_turn) fn identify_wire(
+        &self,
+        names: &[&topods::Shape],
+    ) -> Checked<&[topods::Edge]> {
+        let mut matching = self.0.iter().filter(|wire| matches_wire(wire, names));
+        let wire = matching.next().ok_or_else(|| {
+            incomplete(
+                "one complete rooted clear aperture wire",
+                "no matching wire",
+            )
+        })?;
+        if matching.next().is_some() {
             return Err(incomplete(
                 "one rooted clear aperture wire",
                 "ambiguous occurrences",
             ));
         }
-        group.ok_or_else(|| {
-            incomplete(
-                "one complete rooted clear aperture wire",
-                "no matching wire",
-            )
-        })
+        Ok(wire)
     }
 }
 
-fn match_wire(wire: &[topods::Edge], named: [&topods::Shape; 4]) -> Option<[topods::Edge; 4]> {
-    if wire.len() != named.len() {
-        return None;
-    }
-    let find = |shape: &topods::Shape| wire.iter().find(|edge| shape.is_same(edge)).cloned();
-    let [a, b, c, d] = named.map(find);
-    Some([a?, b?, c?, d?])
+fn matches_wire(wire: &[topods::Edge], names: &[&topods::Shape]) -> bool {
+    !names.is_empty()
+        && wire.len() == names.len()
+        && names
+            .iter()
+            .all(|name| wire.iter().any(|edge| name.is_same(edge)))
 }
 
 fn read_wire(wire: &topods::Shape) -> Checked<Vec<topods::Edge>> {

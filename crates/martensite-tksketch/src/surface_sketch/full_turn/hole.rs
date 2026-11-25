@@ -15,7 +15,8 @@ mod images;
 pub use crossed::*;
 pub use curved::{
     CurvedBandResult, normal_extrude_cone_band_with_curved_hole,
-    normal_extrude_cylinder_band_with_curved_hole,
+    normal_extrude_cone_band_with_curved_holes, normal_extrude_cylinder_band_with_curved_hole,
+    normal_extrude_cylinder_band_with_curved_holes,
 };
 
 /// One authored rectangular through hole on a cylinder, expressed in the band's chart.

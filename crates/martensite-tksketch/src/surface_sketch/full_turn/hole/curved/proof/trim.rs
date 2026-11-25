@@ -11,10 +11,11 @@ pub(super) use frame::CapFrame;
 
 pub(super) struct CapCheck<'a> {
     pub face: &'a topods::Face,
+    pub edges: &'a [topods::Edge],
     pub depth: PeriodicDepth,
     pub bindings: &'a binding::Bindings,
     pub tool: &'a DetachedWrappedBodies,
-    pub sources: &'a [binding::FittedCut; 2],
+    pub sources: &'a [binding::FittedCut],
     pub stock: &'a band_admission::BandSection,
     pub angular_error: f64,
     pub sheet: [f64; 2],
@@ -23,13 +24,12 @@ pub(super) struct CapCheck<'a> {
 }
 
 pub(super) fn verify(check: CapCheck<'_>) -> Checked<[f64; 2]> {
-    let edges = coedges(check.face)?;
     let mut max_spatial: f64 = 0.;
     let mut max_parameter: f64 = 0.;
     for (key, source) in cap_edges(check.tool, check.depth) {
         let edge = as_edge(source)?;
         let original = space_curve(&edge)?;
-        let [space, parameter] = check.verify_images(*key, &edges, &original)?;
+        let [space, parameter] = check.verify_images(*key, check.edges, &original)?;
         max_spatial = max_spatial.max(space);
         max_parameter = max_parameter.max(parameter);
     }
@@ -54,11 +54,12 @@ impl CapCheck<'_> {
             self.verify_decoded_ancestry(*cut)?;
             let images = cut
                 .pieces(self.depth)
-                .map(|name| self.named_image(name, coedges, source));
+                .map(|name| self.named_image(name, key, coedges, source));
             let [left, right] = images;
             return self.verify_split(*cut, [left?, right?]);
         }
-        let actual = self.named_image(PeriodicImageKey::WrappedRetained(key), coedges, source)?;
+        let actual =
+            self.named_image(PeriodicImageKey::WrappedRetained(key), key, coedges, source)?;
         if actual.space != [0., 1.] {
             return Err(incomplete(
                 "unsplit fitted parameter range",
@@ -96,16 +97,39 @@ impl CapCheck<'_> {
     fn named_image(
         &self,
         key: PeriodicImageKey,
+        source_name: WrappedHistoryKey,
         coedges: &[topods::Edge],
         source: &SpaceCurve,
     ) -> Checked<TrimImage> {
         let [edge] = occurrences(coedges, binding::resolve(self.bindings, key)?)?;
+        self.opposite_wall_use(source_name, &edge)?;
         self.verify_image(&edge, source).map_err(|cause| {
             incomplete(
                 "decoded curved aperture cap image",
                 format!("{key:?}: {cause:?}"),
             )
         })
+    }
+
+    fn opposite_wall_use(&self, source: WrappedHistoryKey, edge: &topods::Edge) -> Checked<()> {
+        let wall = PeriodicImageKey::WrappedRetained(WrappedHistoryKey {
+            source: source.source,
+            role: HistoryRole::SideFace,
+        });
+        let face = topods::face(binding::resolve(self.bindings, wall)?)
+            .map_err(|e| native("bound aperture wall", e))?;
+        let [adjacent] = occurrences(&coedges(&face)?, edge)?;
+        use martensite_tkg3d::top_abs::Orientation::{Forward, Reversed};
+        if matches!(
+            [edge.orientation(), adjacent.orientation()],
+            [Forward, Reversed] | [Reversed, Forward]
+        ) {
+            return Ok(());
+        }
+        Err(incomplete(
+            "opposite directed cap and aperture wall coedges",
+            format!("{source:?}"),
+        ))
     }
 
     fn verify_image(&self, edge: &topods::Edge, source: &SpaceCurve) -> Checked<TrimImage> {

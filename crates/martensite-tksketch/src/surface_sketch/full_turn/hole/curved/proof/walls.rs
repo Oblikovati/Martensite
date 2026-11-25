@@ -11,7 +11,7 @@ pub(super) fn verify(
     decoded: &topods::Shape,
     bindings: &binding::Bindings,
     tool: &DetachedWrappedBodies,
-    sources: &[binding::FittedCut; 2],
+    sources: &[binding::FittedCut],
 ) -> Checked<()> {
     let before = rooted_faces(&tool.bodies)?;
     let after = rooted_faces(decoded)?;
@@ -46,7 +46,7 @@ fn rooted_face<'a>(
 fn wall(
     bindings: &binding::Bindings,
     tool: &DetachedWrappedBodies,
-    sources: &[binding::FittedCut; 2],
+    sources: &[binding::FittedCut],
     source: &topods::Shape,
     actual: &topods::Shape,
 ) -> Checked<()> {
@@ -103,7 +103,7 @@ fn source_edge(tool: &DetachedWrappedBodies, edge: &topods::Edge) -> Checked<Wra
     Ok(key)
 }
 
-fn edge_images(key: WrappedHistoryKey, sources: &[binding::FittedCut; 2]) -> Vec<PeriodicImageKey> {
+fn edge_images(key: WrappedHistoryKey, sources: &[binding::FittedCut]) -> Vec<PeriodicImageKey> {
     for depth in [PeriodicDepth::First, PeriodicDepth::Last] {
         if let Some(source) = sources.iter().find(|source| source.edge(depth) == key) {
             return source.pieces(depth).to_vec();

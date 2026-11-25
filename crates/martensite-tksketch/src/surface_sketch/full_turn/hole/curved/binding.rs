@@ -122,15 +122,15 @@ fn dyadic(n: u64, level: u8) -> WrappedSourcePoint {
 pub(super) struct BoundCut {
     pub body: topods::Shape,
     pub bindings: Bindings,
-    pub sources: [FittedCut; 2],
+    pub sources: Vec<FittedCut>,
 }
 
 struct NativeOperands<'a> {
     cut: images::Candidate,
-    band: &'a FullTurnBand,
+    plan: &'a AperturePlan,
     stock: &'a DetachedNormalBody,
     tool: &'a DetachedWrappedBodies,
-    sources: [FittedCut; 2],
+    sources: Vec<FittedCut>,
 }
 
 pub(super) fn bind(
@@ -139,20 +139,28 @@ pub(super) fn bind(
     tool: &DetachedWrappedBodies,
     angular_error: f64,
 ) -> Checked<BoundCut> {
-    let tool_solid = WrappedHistoryKey {
-        source: WrappedEntitySource::Region(plan.region),
-        role: HistoryRole::Solid,
-    };
-    let cutter = tool_image(&tool.entities, tool_solid)?;
-    let [lower, upper] = plan.crossings.map(|item| FittedCut::locate(item, tool));
-    let sources = [lower?, upper?];
-    for source in sources {
+    let cutters = plan
+        .contours
+        .iter()
+        .map(|contour| {
+            let key = WrappedHistoryKey {
+                source: WrappedEntitySource::Region(contour.region),
+                role: HistoryRole::Solid,
+            };
+            Ok(tool_image(&tool.entities, key)?.clone())
+        })
+        .collect::<Checked<Vec<_>>>()?;
+    let sources = plan
+        .crossings()
+        .map(|crossing| FittedCut::locate(crossing, tool))
+        .collect::<Checked<Vec<_>>>()?;
+    for &source in &sources {
         prove_fragment_clearance(plan, source, angular_error)?;
     }
-    let cut = images::subtract(&stock.solid, cutter)?;
+    let cut = images::subtract_all(&stock.solid, cutters)?;
     NativeOperands {
         cut,
-        band: &plan.band,
+        plan,
         stock,
         tool,
         sources,
@@ -219,25 +227,19 @@ impl NativeOperands<'_> {
     }
 
     fn bind_depth(&self, depth: PeriodicDepth, output: &mut Bindings) -> Checked<()> {
-        let [a, b] = self.sources.map(|cut| self.splits(cut, depth, output));
-        let roots = [a?, b?];
-        let seam_key = HistoryKey {
-            source: HistorySource::Region(self.band.region),
+        let mut roots = BTreeMap::new();
+        for &source in &self.sources {
+            let root = self.splits(source, depth, output)?;
+            roots.insert(source.crossing.report.id, root);
+        }
+        let key = HistoryKey {
+            source: HistorySource::Region(self.plan.band.region),
             role: roles::edge_role(depth.index()),
         };
-        let seam =
-            crate::surface_sketch::full_turn::history::lookup(&self.stock.entities, seam_key)?;
-        let witnesses: [topods::Shape; 2] = self.cut.crossing_vertices(seam, seam_key)?;
-        if roots
-            .iter()
-            .any(|root| !witnesses.iter().any(|w| w.is_same(root)))
-        {
-            return Err(incomplete(
-                "same exact roots of cutter and stock seam",
-                format!("{seam_key:?}"),
-            ));
-        }
-        self.bind_rails(depth, seam, seam_key, roots, output)
+        let seam = crate::surface_sketch::full_turn::history::lookup(&self.stock.entities, key)?;
+        let witnesses = self.cut.crossing_vertices_count(seam, key, roots.len())?;
+        verify_roots(&roots, &witnesses)?;
+        self.bind_rails(depth, seam, key, output)
     }
 
     fn splits(
@@ -273,54 +275,55 @@ impl NativeOperands<'_> {
         depth: PeriodicDepth,
         seam: &topods::Shape,
         key: HistoryKey,
-        [a, b]: [topods::Shape; 2],
         output: &mut Bindings,
     ) -> Checked<()> {
-        let candidates = self.cut.split_edges(seam, key)?;
-        let [lower, upper] = self.band.rims.map(|rim| {
-            resolve(
-                output,
-                PeriodicImageKey::Retained(HistoryKey {
-                    source: HistorySource::Curve(rim),
-                    role: roles::vertex_role(depth.index()),
-                }),
-            )
-        });
-        let [lower, upper] = [lower?, upper?];
-        let rails = [
-            crossed::oriented_edge(&candidates, lower, &a)?,
-            crossed::oriented_edge(&candidates, &b, upper)?,
-        ];
-        let names = rail_names(
-            self.band,
-            depth,
-            self.sources.map(|source| source.crossing.report.id),
-        );
-        output.extend(names.into_iter().zip(rails));
+        let count = self.plan.rails.len();
+        let candidates = if count == 1 {
+            vec![self.cut.image(key, seam)?.1]
+        } else {
+            self.cut.split_edges_count(seam, key, count)?
+        };
+        let region = self.plan.band.region;
+        for &ends in &self.plan.rails {
+            let [a, b] = ends.map(|end| resolve(output, seam_vertex_key(depth, end)));
+            let image = crossed::oriented_edge(&candidates, a?, b?)?;
+            output.push((
+                PeriodicImageKey::SeamSegment {
+                    region,
+                    depth,
+                    ends,
+                },
+                image,
+            ));
+        }
         Ok(())
     }
 }
 
-pub(super) fn rail_names(
-    band: &FullTurnBand,
-    depth: PeriodicDepth,
-    [a, b]: [PeriodicCrossingId; 2],
-) -> [PeriodicImageKey; 2] {
-    [
-        [
-            PeriodicSeamEnd::Rim(band.rims[0]),
-            PeriodicSeamEnd::Crossing(a),
-        ],
-        [
-            PeriodicSeamEnd::Crossing(b),
-            PeriodicSeamEnd::Rim(band.rims[1]),
-        ],
-    ]
-    .map(|ends| PeriodicImageKey::SeamSegment {
-        region: band.region,
-        depth,
-        ends,
-    })
+fn verify_roots(
+    roots: &BTreeMap<PeriodicCrossingId, topods::Shape>,
+    witnesses: &[topods::Shape],
+) -> Checked<()> {
+    if roots
+        .values()
+        .any(|root| !witnesses.iter().any(|w| w.is_same(root)))
+    {
+        return Err(incomplete(
+            "same exact roots of cutters and stock seam",
+            format!("{} verified roots", roots.len()),
+        ));
+    }
+    Ok(())
+}
+
+pub(super) fn seam_vertex_key(depth: PeriodicDepth, end: PeriodicSeamEnd) -> PeriodicImageKey {
+    match end {
+        PeriodicSeamEnd::Rim(rim) => PeriodicImageKey::Retained(HistoryKey {
+            source: HistorySource::Curve(rim),
+            role: roles::vertex_role(depth.index()),
+        }),
+        PeriodicSeamEnd::Crossing(crossing) => PeriodicImageKey::CrossingVertex { depth, crossing },
+    }
 }
 
 fn is_cap_edge(role: HistoryRole) -> bool {
