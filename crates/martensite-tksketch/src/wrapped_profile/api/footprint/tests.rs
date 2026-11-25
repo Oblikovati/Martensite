@@ -363,12 +363,12 @@ pub(super) fn attachment(angle: Option<f64>) -> CylinderFaceAttachment {
     };
     freeze(maker.shape().unwrap())
 }
-fn freeze(body: &Shape) -> CylinderFaceAttachment {
+pub(super) fn freeze(body: &Shape) -> CylinderFaceAttachment {
     let face = selected_cylinder(body);
     CylinderFaceAttachment::capture(FaceAttachmentId(19), REVISION, body, &face, resolution())
         .unwrap()
 }
-fn resolution() -> Resolution {
+pub(super) fn resolution() -> Resolution {
     Resolution::new(
         1e-6,
         1e-7,
@@ -380,7 +380,7 @@ fn resolution() -> Resolution {
         ToleranceCap::Refuse(1e-5),
     )
 }
-fn selected_cylinder(body: &Shape) -> Face {
+pub(super) fn selected_cylinder(body: &Shape) -> Face {
     Explorer::new(body, ShapeEnum::Face, ShapeEnum::Shape)
         .unwrap()
         .map(|shape| topods::face(&shape).unwrap())

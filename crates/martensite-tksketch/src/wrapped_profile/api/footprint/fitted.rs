@@ -16,6 +16,7 @@ pub(super) fn check(
         check_full_trim(
             region,
             tool.support().chart_origin,
+            band.reflect_axial,
             exclusions,
             &mut band.outer,
         )?;
@@ -26,6 +27,7 @@ pub(super) fn check(
 fn check_full_trim(
     region: &Request,
     seam: f64,
+    reflect_axial: bool,
     exclusions: &mut holes::Exclusions,
     outer: &mut Option<outer::OuterTrim>,
 ) -> FootprintChecked<()> {
@@ -36,7 +38,15 @@ fn check_full_trim(
     for &pole in region.loops.iter().flatten().flat_map(|piece| &piece.poles) {
         envelope.include(cap_coordinates::angular_pole(pole, region.radius));
     }
-    bounds::check_trim(region.region, envelope, seam, true, exclusions, outer)
+    bounds::check_trim(
+        region.region,
+        envelope,
+        seam,
+        reflect_axial,
+        true,
+        exclusions,
+        outer,
+    )
 }
 
 fn intervals(band: &band::Band, seam: f64) -> FootprintChecked<Intervals> {
@@ -44,7 +54,10 @@ fn intervals(band: &band::Band, seam: f64) -> FootprintChecked<Intervals> {
         .angular
         .map(|[first, last]| inward_angles(first, last, seam))
         .transpose()?;
-    Ok([angular, Some(band.axial)])
+    Ok([
+        angular,
+        Some(band::axial_interval(band.axial, band.reflect_axial)),
+    ])
 }
 
 fn inward_angles(first: f64, last: f64, seam: f64) -> FootprintChecked<[f64; 2]> {

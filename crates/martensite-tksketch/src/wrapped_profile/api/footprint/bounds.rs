@@ -14,6 +14,7 @@ pub(super) fn check(request: &WrappedNormalRequest, band: &mut band::Band) -> Fo
             region.region,
             &region.loops,
             request.support,
+            band.reflect_axial,
             &mut exclusions,
             &mut band.outer,
         )?;
@@ -25,6 +26,7 @@ pub(super) fn check_authored_trim(
     region: SurfaceRegionId,
     loops: &[Vec<AuthoredPiece>],
     support: CylinderSupport,
+    reflect_axial: bool,
     exclusions: &mut holes::Exclusions,
     outer: &mut Option<outer::OuterTrim>,
 ) -> FootprintChecked<()> {
@@ -44,6 +46,7 @@ pub(super) fn check_authored_trim(
         region,
         envelope,
         support.chart_origin,
+        reflect_axial,
         false,
         exclusions,
         outer,
@@ -54,10 +57,12 @@ pub(super) fn check_trim(
     region: SurfaceRegionId,
     mut bounds: holes::TrimBox,
     seam: f64,
+    reflect_axial: bool,
     fitted: bool,
     exclusions: &mut holes::Exclusions,
     outer: &mut Option<outer::OuterTrim>,
 ) -> FootprintChecked<()> {
+    bounds.0[1] = band::axial_interval(bounds.0[1], reflect_axial);
     let [lower, upper] = bounds.0[0];
     bounds.0[0] = [(lower + seam).next_down(), (upper + seam).next_up()];
     if let Some(outer) = outer
@@ -89,7 +94,10 @@ pub(super) fn authored_intervals(
         .angular
         .map(|ranges| inward_arc(ranges, request.support))
         .transpose()?;
-    Ok([arc, Some(band.axial)])
+    Ok([
+        arc,
+        Some(band::axial_interval(band.axial, band.reflect_axial)),
+    ])
 }
 fn source_error(cause: WrappedNormalFailure) -> CylinderFootprintFailure {
     CylinderFootprintFailure::Source(Box::new(cause))

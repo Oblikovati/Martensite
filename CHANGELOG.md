@@ -78,6 +78,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Enabled wrapped bosses and pockets on indirectly parameterized cylindrical sides from planar circle extrusions, with the original seam, trim checks and feature history preserved (#600).
+
 - Fixed directed cone extrusion on radial spans with exact constant non-unit Bézier weights by certifying the native unit-weight representation (#536).
 
 - Avoided duplicate rational interval arithmetic when measuring exact point contacts while preserving native parameter values and errors (#569).

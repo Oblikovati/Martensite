@@ -145,7 +145,7 @@ impl CylinderFaceAttachment {
         let solid = admit(
             attempt,
             &support.body,
-            support.face.orientation(),
+            chart_orientation(support.face.orientation(), band.reflect_axial),
             request.depths,
             request.support.normal,
         )?;
@@ -169,6 +169,14 @@ impl CylinderFaceAttachment {
             tool,
             archive,
         })
+    }
+}
+
+fn chart_orientation(native: Orientation, reflect_axial: bool) -> Orientation {
+    match (native, reflect_axial) {
+        (Orientation::Forward, true) => Orientation::Reversed,
+        (Orientation::Reversed, true) => Orientation::Forward,
+        _ => native,
     }
 }
 

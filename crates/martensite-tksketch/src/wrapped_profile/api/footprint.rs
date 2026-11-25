@@ -151,7 +151,7 @@ impl CylinderFaceAttachment {
         revision: SupportRevision,
         request: &WrappedNormalRequest,
     ) -> FootprintChecked<(DetachedCylinderSupport, band::Band)> {
-        let (detached, support) = self
+        let (detached, support, reflected) = self
             .resolve_chart(
                 revision,
                 request.support.chart_origin,
@@ -159,7 +159,8 @@ impl CylinderFaceAttachment {
             )
             .map_err(|cause| CylinderFootprintFailure::Attachment(Box::new(cause)))?;
         check_support(request.support, support)?;
-        let band = band::capture(&detached.face)?;
+        let mut band = band::capture(&detached.face)?;
+        band.reflect_axial = reflected;
         Ok((detached, band))
     }
 

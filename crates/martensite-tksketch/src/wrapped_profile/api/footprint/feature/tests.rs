@@ -1,4 +1,4 @@
-use super::super::tests::{attachment, request};
+use super::super::tests::{attachment, freeze, request, resolution, selected_cylinder};
 use super::*;
 use martensite_tkgeombase::gprop::GProps;
 use martensite_tktopalgo::brep_gprop::{BRepGProp, VolumeGKFlags};
@@ -13,6 +13,64 @@ fn cylinder_band_boss_publishes_a_single_solid_with_composed_history() {
 #[test]
 fn cylinder_band_pocket_publishes_a_single_solid_with_composed_history() {
     check_feature(CylinderFeatureKind::Pocket, NormalSense::Inward, 9.75);
+}
+
+#[test]
+fn indirect_cylinder_from_planar_circle_admits_wrapped_boss_and_pocket() {
+    let attachment = indirect_extruded_circle();
+    let frame = attachment
+        .extrusion_support(REVISION, 0., NormalSense::Outward)
+        .unwrap();
+    assert_eq!([0., 0., 1.], frame.axis);
+    let beyond_trim = request(&attachment, [-0.25, 0.25], [-2., -1.]);
+    assert!(matches!(
+        attachment.certify_footprint(REVISION, &beyond_trim),
+        Err(CylinderFootprintFailure::ControlOutside { axis: 1, .. })
+    ));
+    for (kind, normal, cap_radius) in [
+        (CylinderFeatureKind::Boss, NormalSense::Outward, 10.25),
+        (CylinderFeatureKind::Pocket, NormalSense::Inward, 9.75),
+    ] {
+        let mut authored = request(&attachment, [-0.25, 0.25], [1., 2.]);
+        authored.support.normal = normal;
+        let result = measured_feature(&attachment, kind, &authored);
+        assert!(result.validation().is_valid());
+        let native = result.export_native().unwrap();
+        check_history(&result, &native);
+        let expected = 400. * std::f64::consts::PI + (cap_radius * cap_radius - 100.) / 40.;
+        assert!((volume(&native.body) - expected).abs() < 1e-4);
+    }
+}
+
+fn indirect_extruded_circle() -> CylinderFaceAttachment {
+    use martensite_tkbo::profile_extrusion::{
+        ExtrudeOptions, ProfileCurve, ProfileCurveId, ProfilePlane, SketchProfile,
+        build_planar_regions, extrude,
+    };
+    use martensite_tkbrep::brep_adaptor::BRepAdaptorSurface;
+    use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
+    let resolution = resolution();
+    let profile = SketchProfile {
+        plane: ProfilePlane::world_xy(),
+        vertices: vec![],
+        curves: vec![ProfileCurve::Circle {
+            id: ProfileCurveId(1),
+            center: [0., 0.],
+            radius: 10.,
+        }],
+    };
+    let regions = build_planar_regions(&profile, resolution).unwrap();
+    let result = extrude(
+        &regions.regions()[0],
+        [0., 0., 4.],
+        &ExtrudeOptions { resolution },
+    )
+    .unwrap();
+    let body = result.solid().to_shape();
+    let side = selected_cylinder(&body);
+    let adaptor = BRepAdaptorSurface::with_face(&side, false).unwrap();
+    assert!(!adaptor.cylinder().unwrap().direct().unwrap());
+    freeze(&body)
 }
 
 fn check_feature(kind: CylinderFeatureKind, normal: NormalSense, cap_radius: f64) {

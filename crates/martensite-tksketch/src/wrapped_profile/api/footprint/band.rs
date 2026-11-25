@@ -25,9 +25,18 @@ fn unsupported(expected: &'static str) -> BandFailure {
 
 pub(super) struct Band {
     pub axial: [f64; 2],
+    pub reflect_axial: bool,
     pub angular: Option<[f64; 2]>,
     pub holes: Vec<holes::TrimBox>,
     pub outer: Option<outer::OuterTrim>,
+}
+
+pub(super) fn axial_interval([lower, upper]: [f64; 2], reflect: bool) -> [f64; 2] {
+    if reflect {
+        [-upper, -lower]
+    } else {
+        [lower, upper]
+    }
 }
 
 struct Use {
@@ -49,6 +58,7 @@ pub(super) fn capture(face: &Face) -> BandChecked<Band> {
     };
     Ok(Band {
         axial: bounds.0[1],
+        reflect_axial: false,
         angular,
         holes: holes::capture(&forward, &inner, bounds.0)?,
         outer,

@@ -101,6 +101,7 @@ fn read_inside(
             region.region,
             &region.loops,
             request.support,
+            band.reflect_axial,
             exclusions,
             &mut band.outer,
         )?;

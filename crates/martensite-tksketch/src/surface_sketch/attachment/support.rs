@@ -2,13 +2,13 @@
 use super::*;
 use crate::surface_sketch::{CylinderSupport, NormalSense};
 use martensite_tkbrep::brep_adaptor::BRepAdaptorSurface;
-use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
 
 impl CylinderFaceAttachment {
     /// Resolve a right-handed extrusion chart from the frozen selected cylinder.
     /// The supplied seam defines zero arc length. The normal is relative to the radius.
-    /// This returns the analytic support. The face trims remain part of the attachment.
+    /// For an indirect face, reverse native height before using this chart. Its angular seam
+    /// stays in native angular coordinates. The face trims remain part of the attachment.
     /// Example: `attachment.extrusion_support(revision, 0., NormalSense::Outward)?`.
     pub fn extrusion_support(
         &self,
@@ -17,7 +17,7 @@ impl CylinderFaceAttachment {
         normal: NormalSense,
     ) -> Checked<CylinderSupport> {
         self.resolve_chart(revision, seam, normal)
-            .map(|(_, chart)| chart)
+            .map(|(_, chart, _)| chart)
     }
 
     pub(in crate::surface_sketch) fn resolve_chart(
@@ -25,7 +25,7 @@ impl CylinderFaceAttachment {
         revision: SupportRevision,
         seam: f64,
         normal: NormalSense,
-    ) -> Checked<(DetachedCylinderSupport, CylinderSupport)> {
+    ) -> Checked<(DetachedCylinderSupport, CylinderSupport, bool)> {
         let attempt = Attempt::new(
             AttachmentOperation::Develop,
             self.record.id,
@@ -39,8 +39,8 @@ impl CylinderFaceAttachment {
             }));
         }
         let selected = codec::decode(&attempt, &self.record.brep)?;
-        let chart = support(&attempt, &selected.face, seam, normal)?;
-        Ok((selected, chart))
+        let (chart, reflected) = support(&attempt, &selected.face, seam, normal)?;
+        Ok((selected, chart, reflected))
     }
 }
 
@@ -49,29 +49,31 @@ fn support(
     face: &Face,
     seam: f64,
     normal: NormalSense,
-) -> Checked<CylinderSupport> {
+) -> Checked<(CylinderSupport, bool)> {
     let adaptor = attempt.native(
         "selected cylinder adaptor",
         BRepAdaptorSurface::with_face(face, false),
     )?;
     let cylinder = attempt.native("selected cylinder geometry", adaptor.cylinder())?;
     let frame = cylinder.position();
-    if !attempt.native("selected cylinder handedness", cylinder.direct())? {
-        return attempt.native(
-            "selected cylinder chart",
-            Err(Failure::new(
-                "indirect native cylinder frame; expected right-handed axis and radial directions",
-            )),
-        );
-    }
-    Ok(CylinderSupport {
-        origin: *frame.location().coordinates(),
-        axis: *frame.direction().coordinates(),
-        radial: *frame.x_direction().coordinates(),
-        radius: cylinder.radius(),
-        chart_origin: seam,
-        normal,
-    })
+    let reflected = !attempt.native("selected cylinder handedness", cylinder.direct())?;
+    let axis = *frame.direction().coordinates();
+    let axis = if reflected {
+        axis.map(|component| -component)
+    } else {
+        axis
+    };
+    Ok((
+        CylinderSupport {
+            origin: *frame.location().coordinates(),
+            axis,
+            radial: *frame.x_direction().coordinates(),
+            radius: cylinder.radius(),
+            chart_origin: seam,
+            normal,
+        },
+        reflected,
+    ))
 }
 
 #[cfg(test)]
