@@ -5,7 +5,13 @@ use std::process::Command;
 #[test]
 fn immutable_trim_and_extend_match_concurrently_and_in_separate_processes() {
     fn send_sync<T: Send + Sync>() {}
-    send_sync::<(LineEditOutcome, LineEditFailure)>();
+    send_sync::<(
+        LineEditOutcome,
+        LineEditFailure,
+        TrimLineRequest,
+        ExtendLineRequest<'static>,
+    )>();
+    send_sync::<LineEditOutcome<martensite_tksketch3d::constraints::ConstrainedSketch>>();
     let trim_source = fixture(&TRIM);
     let extend_source = fixture(&EXTEND);
     let before = (trim_source.clone(), extend_source.clone());

@@ -92,6 +92,12 @@ fn skew_parallel_collinear_and_invalid_sources_have_distinct_results() {
 
 #[test]
 fn directed_parameters_and_placement_are_independent_of_projection_axis() {
+    fn send_sync<T: Send + Sync>() {}
+    send_sync::<(
+        DirectedLineContact,
+        DirectedLinePlacement,
+        DirectedLineIncidenceFailure,
+    )>();
     let first = [[-3., 2., -7.], [5., 2., 9.]];
     let second = [[-1., 2., 0.], [-1., 2., -4.]];
     let exact_position = [-1., 2., -3.];

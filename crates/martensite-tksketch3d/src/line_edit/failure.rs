@@ -70,6 +70,15 @@ pub enum LineEditFailure {
         /// Error limit requested in model units.
         limit: f64,
     },
+    /// The exact edit changes the extent, but its rounded contact leaves it unchanged.
+    UnrepresentableExtent {
+        /// Source line whose extent would be unchanged.
+        source: LineId,
+        /// Original endpoint on the edited side.
+        endpoint: PointId,
+        /// Exact contact's outward normalized parameter enclosure.
+        parameter: [f64; 2],
+    },
     /// An exact source or its contact evidence was refused.
     Intersection(DirectedLineIncidenceFailure),
     /// Normal sketch geometry or identity admission refused the batch.
@@ -131,6 +140,14 @@ impl fmt::Display for LineEditFailure {
             Self::PositionError { upper_bound, limit } => write!(
                 output,
                 "line edit position error {upper_bound} exceeds limit {limit}"
+            ),
+            Self::UnrepresentableExtent {
+                source,
+                endpoint,
+                parameter,
+            } => write!(
+                output,
+                "line edit of {source:?} at {parameter:?} must move {endpoint:?} in binary64 coordinates"
             ),
             Self::Intersection(cause) => cause.fmt(output),
             Self::Geometry(cause) => cause.fmt(output),

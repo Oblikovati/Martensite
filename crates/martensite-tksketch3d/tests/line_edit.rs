@@ -357,10 +357,8 @@ fn extend_existing_end_touch_does_not_publish() {
 #[test]
 fn huge_midpoint_obeys_the_exact_position_cap_and_geometry_admission() {
     let large = 9_007_199_254_740_992.;
-    let source = fixture(&[
-        [[large, 0., 0.], [large + 2., 0., 0.]],
-        [[large, -1., 0.], [large + 2., 1., 0.]],
-    ]);
+    let boundary = [[large, -1., 0.], [large + 2., 1., 0.]];
+    let source = fixture(&[[[large - 2., 0., 0.], [large + 4., 0., 0.]], boundary]);
     let mut pick = trim(0.25);
     pick.max_position_error = 1_f64.next_down();
     assert!(matches!(
@@ -375,10 +373,40 @@ fn huge_midpoint_obeys_the_exact_position_cap_and_geometry_admission() {
     assert_eq!(applied.contact.error_upper, 1.);
     assert_eq!(applied.contact.coordinates[0], [large, large + 2.]);
     assert_eq!(applied.contact.position, [large, 0., 0.]);
+    let collapses = fixture(&[[[large, 0., 0.], [large + 2., 0., 0.]], boundary]);
     pick.pick = 0.75;
     assert!(matches!(
-        source.trim_line(pick, || false),
+        collapses.trim_line(pick, || false),
         Err(LineEditFailure::Geometry(martensite_tksketch3d::EditFailure::CoincidentEndpoints(line)))
             if line.id == lid(52)
     ));
+}
+
+#[test]
+fn exact_near_tip_edits_require_a_representably_changed_extent() {
+    let tip = 1_f64;
+    let inward = fixture(&[X, [[tip, -1., 0.], [tip.next_down(), 7., 0.]]]);
+    let mut trim_request = trim(tip);
+    trim_request.max_position_error = f64::EPSILON;
+    assert!(matches!(
+        inward.trim_line(trim_request, || false),
+        Err(LineEditFailure::UnrepresentableExtent { source, endpoint, parameter })
+            if (source, endpoint) == (lid(3), pid(2)) && parameter == [tip.next_down(), tip]
+    ));
+    let outward = fixture(&[X, [[tip, -1., 0.], [tip.next_up(), 7., 0.]]]);
+    let boundaries = [lid(6)];
+    let mut extend_request = extension(&boundaries, LineEndpoint::End);
+    extend_request.max_position_error = f64::EPSILON;
+    assert!(matches!(
+        outward.extend_line(extend_request, || false),
+        Err(LineEditFailure::UnrepresentableExtent { source, endpoint, parameter })
+            if (source, endpoint) == (lid(3), pid(2)) && parameter == [tip, tip.next_up()]
+    ));
+    for original in [inward, outward] {
+        assert_eq!(
+            original.line(lid(3)).unwrap().line.endpoints,
+            [pid(1), pid(2)]
+        );
+        assert!(original.point(pid(51)).is_none());
+    }
 }

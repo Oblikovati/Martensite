@@ -36,6 +36,14 @@ impl Snapshot {
                 limit,
             });
         }
+        let endpoint = portion.endpoint().index();
+        if contact.position == *source.points[endpoint].coordinates() {
+            return Err(LineEditFailure::UnrepresentableExtent {
+                source: source.line.id,
+                endpoint: source.line.endpoints[endpoint],
+                parameter: contact.parameters[0],
+            });
+        }
         let replacement = lineage(source.line, portion, ids, superseded, contact.parameters[0]);
         let sketch = self.apply_replacement(replacement, contact.position, cancelled)?;
         poll(cancelled)?;
