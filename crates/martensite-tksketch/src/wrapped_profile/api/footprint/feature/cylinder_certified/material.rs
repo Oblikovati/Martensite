@@ -242,10 +242,12 @@ fn build_members(
     };
     let mut ordered: Vec<_> = originals.iter().zip(prepared).collect();
     ordered.sort_by_key(|(source, _)| source.region);
-    let members = work::ordered(
+    // Fitted span count approximates the cost of each region’s storage certificates.
+    let members = work::prioritized(
         attempt,
         TOOL,
         &ordered,
+        |(_, request)| request.loops.iter().map(Vec::len).sum(),
         cancelled,
         |&(original, request), poll| QualifiedMember::build(attempt, original, request, poll),
     )?;

@@ -1,5 +1,6 @@
 //! Execute independent certificates with bounded operation-local workers and ordered results.
 use super::*;
+use std::cmp::Reverse;
 use std::sync::{
     atomic::{AtomicBool, AtomicUsize, Ordering::Relaxed},
     mpsc::{self, Receiver, RecvTimeoutError, Sender},
@@ -22,6 +23,38 @@ where
     O: Send,
     F: Fn(&I, &mut CancelPoll<'_>) -> Checked<O> + Sync,
 {
+    execute(attempt, stage, inputs, None, cancelled, check)
+}
+
+pub(super) fn prioritized<I, O, F>(
+    attempt: Attempt,
+    stage: CylinderFeatureStage,
+    inputs: &[I],
+    cost: fn(&I) -> usize,
+    cancelled: &mut CancelPoll<'_>,
+    check: F,
+) -> Checked<Vec<O>>
+where
+    I: Sync,
+    O: Send,
+    F: Fn(&I, &mut CancelPoll<'_>) -> Checked<O> + Sync,
+{
+    execute(attempt, stage, inputs, Some(cost), cancelled, check)
+}
+
+fn execute<I, O, F>(
+    attempt: Attempt,
+    stage: CylinderFeatureStage,
+    inputs: &[I],
+    cost: Option<fn(&I) -> usize>,
+    cancelled: &mut CancelPoll<'_>,
+    check: F,
+) -> Checked<Vec<O>>
+where
+    I: Sync,
+    O: Send,
+    F: Fn(&I, &mut CancelPoll<'_>) -> Checked<O> + Sync,
+{
     let available = thread::available_parallelism().map_or(1, std::num::NonZeroUsize::get);
     let workers = available.min(MAX_WORKERS).min(inputs.len().div_ceil(2));
     if workers < 2 {
@@ -33,19 +66,29 @@ where
             })
             .collect();
     }
+    let dispatch = cost.map(|cost| by_cost(inputs, cost));
     let queue = Queue {
         next: AtomicUsize::new(0),
         stop: AtomicBool::new(false),
         inputs,
+        dispatch: dispatch.as_deref(),
         check,
     };
     queue.run(attempt, stage, cancelled, workers)
+}
+
+fn by_cost<I>(inputs: &[I], cost: fn(&I) -> usize) -> Vec<usize> {
+    let mut indices: Vec<_> = (0..inputs.len()).collect();
+    // Stable ties retain canonical source order. The indices remain source ranks.
+    indices.sort_by_cached_key(|&index| Reverse(cost(&inputs[index])));
+    indices
 }
 
 struct Queue<'a, I, F> {
     next: AtomicUsize,
     stop: AtomicBool,
     inputs: &'a [I],
+    dispatch: Option<&'a [usize]>,
     check: F,
 }
 
@@ -103,11 +146,12 @@ impl<I: Sync, F: Sync> Queue<'_, I, F> {
     {
         let mut completed = Vec::new();
         while !self.stop.load(Relaxed) {
-            let index = self.next.fetch_add(1, Relaxed);
-            let Some(input) = self.inputs.get(index) else {
+            let slot = self.next.fetch_add(1, Relaxed);
+            if slot >= self.inputs.len() {
                 break;
-            };
-            let result = (self.check)(input, &mut || self.stop.load(Relaxed));
+            }
+            let index = self.dispatch.map_or(slot, |order| order[slot]);
+            let result = (self.check)(&self.inputs[index], &mut || self.stop.load(Relaxed));
             completed.push((index, result));
         }
         if !completed.is_empty() {
@@ -192,6 +236,60 @@ mod tests {
                 expected: "first source"
             }
         ));
+    }
+
+    #[test]
+    fn heavier_tasks_start_first_with_canonical_ties() {
+        let values = [1, 30, 2, 30, 5, 9];
+        assert_eq!(by_cost(&values, |&weight| weight), [1, 3, 5, 4, 2, 0]);
+    }
+
+    #[test]
+    fn prioritized_results_and_failures_use_source_order() {
+        let values = [1, 30, 2, 30, 5, 9];
+        let results = prioritized(
+            ATTEMPT,
+            CylinderFeatureStage::Tool,
+            &values,
+            |&weight| weight,
+            &mut || false,
+            |&value, _| Ok(value),
+        )
+        .unwrap();
+        assert_eq!(results, values);
+        let fault = prioritized(
+            ATTEMPT,
+            CylinderFeatureStage::Tool,
+            &values,
+            |&weight| weight,
+            &mut || false,
+            |&value, _| match value {
+                1 => Err(missing(ATTEMPT, CylinderFeatureStage::Tool, "first source")),
+                30 => Err(missing(ATTEMPT, CylinderFeatureStage::Tool, "later source")),
+                _ => Ok(value),
+            },
+        )
+        .unwrap_err();
+        assert!(matches!(
+            *fault.cause,
+            CylinderFeatureCause::DirectAttachment {
+                expected: "first source"
+            }
+        ));
+    }
+
+    #[test]
+    fn prioritized_serial_work_keeps_source_order_without_estimating_cost() {
+        let values = [1, 30];
+        let result = prioritized(
+            ATTEMPT,
+            CylinderFeatureStage::Tool,
+            &values,
+            |_| panic!("serial work must not estimate dispatch cost"),
+            &mut || false,
+            |&value, _| Ok(value),
+        );
+        assert_eq!(result.unwrap(), values);
     }
 
     #[test]
