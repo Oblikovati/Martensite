@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Exact use and independent measurement of a fixed four-station affine operator.
 use super::{
-    CubicBernsteinFailure, ExactCubicBernstein3, ExactRatio, ExactRows, NonFiniteCoordinate,
-    binary64_parts, nearest_binary64,
+    CubicBernsteinFailure, DyadicBound, ExactCubicBernstein3, ExactRatio, ExactRows,
+    NonFiniteCoordinate, binary64_parts, nearest_binary64,
 };
 use crate::predicates::roots::certificate_arithmetic::rounding::{outward_binary64, outward_sqrt};
 use std::{cmp::Ordering, fmt};
@@ -280,12 +280,16 @@ fn exact_weights(values: &[ExactRows; 3], order: usize) -> [ExactRatio; 4] {
 }
 
 fn complete_weights(weights: [ExactRatio; 3], order: usize) -> [ExactRatio; 4] {
-    let basis_sum = ExactRatio::from_finite(if order == 0 { 1. } else { 0. });
-    let first = weights
-        .iter()
-        .fold(basis_sum, |sum, weight| sum.subtract(weight));
+    let basis_sum = DyadicBound::new(u8::from(order == 0).into(), 0);
+    // A finite coefficient and every stored cubic evaluation have power-of-two denominators.
+    // Align their grids directly to avoid general rational reduction of the same weights.
+    let first = weights.iter().fold(basis_sum, |sum, weight| {
+        let exponent = 1 - weight.denominator().bits() as i32;
+        let term = DyadicBound::new(weight.numerator().clone(), exponent);
+        sum.difference(&term)
+    });
     let [second, third, fourth] = weights;
-    [first, second, third, fourth]
+    [ExactRatio::from_dyadic(&first), second, third, fourth]
 }
 
 fn round_weights(weights: [ExactRatio; 4]) -> Result<[f64; 4], CubicFitNumericError> {

@@ -1,5 +1,28 @@
 // SPDX-License-Identifier: GPL-2.0-only
-use super::{CubicFitNumericError, CubicFitOperator, ExactCubicBernstein3, cubic_chord_distortion};
+use super::{
+    CubicFitNumericError, CubicFitOperator, ExactCubicBernstein3, ExactRatio, complete_weights,
+    cubic_chord_distortion,
+};
+
+#[test]
+fn dyadic_complement_matches_general_ratio_on_mixed_scales_and_cancellation() {
+    for values in [
+        [0., -0., 0.],
+        [0.25, -0.5, 0.125],
+        [f64::MAX, -f64::MAX, f64::from_bits(1)],
+        [-f64::from_bits(1), f64::MIN_POSITIVE, 0.75],
+    ] {
+        for order in 0..3 {
+            let weights = values.map(ExactRatio::from_finite);
+            let basis_sum = ExactRatio::from_finite(f64::from(order == 0));
+            let expected = weights
+                .iter()
+                .fold(basis_sum, |sum, weight| sum.subtract(weight));
+            let [first, _, _, _] = complete_weights(weights, order);
+            assert_eq!(first, expected);
+        }
+    }
+}
 
 #[test]
 fn exact_affine_origin_and_complement_keep_large_translated_stations() {
