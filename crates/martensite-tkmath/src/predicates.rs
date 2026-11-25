@@ -14,7 +14,10 @@ pub use compare::{
     compare_line_projections_2d, compare_squared_distances_2d, compare_squared_length_3d,
 };
 pub use segment_contact::{SegmentContact3d, exact_segment_contact_3d};
-pub use triangle::{compare_triangle_altitude_3d, compare_triangle_orientation_3d};
+pub use triangle::{
+    compare_triangle_altitude_3d, compare_triangle_orientation_3d,
+    compare_triangle_projected_dot_3d,
+};
 pub use triple_product::compare_scalar_triple_product_3d;
 
 use num_bigint::{BigInt, Sign};

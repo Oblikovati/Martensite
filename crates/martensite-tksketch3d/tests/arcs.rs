@@ -314,3 +314,17 @@ fn point_and_line_solver_refuses_an_arc_layout_it_cannot_rank() {
         matches!(result, Err(ConstraintFailure::UnsupportedEntity(EntityId::Arc(id))) if id == aid())
     );
 }
+
+#[test]
+fn a_rounded_oblique_frame_preserves_the_exact_antipodal_branch() {
+    let normal = Direction3::new(13., 241., 343.).unwrap();
+    let start = [187691., 145488., -109337.];
+    let placements = [start, start.map(|component| -component), [0.; 3]];
+    let arc = create(placements, centered(normal), 1e-8)
+        .unwrap()
+        .arc(aid())
+        .unwrap();
+    assert_eq!(arc.range(), [0., PI]);
+    assert_eq!(arc.points(), placements.map(point));
+    assert!(arc.deviation_estimate() < 1e-8);
+}

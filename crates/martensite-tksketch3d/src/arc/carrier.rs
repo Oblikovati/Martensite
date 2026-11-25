@@ -5,7 +5,10 @@ use crate::admission::estimated_norm;
 use martensite_tkmath::{
     elclib,
     gp::{Axis2, Direction3, Point3, Vector3},
-    predicates::{compare_triangle_altitude_3d, compare_triangle_orientation_3d},
+    predicates::{
+        compare_triangle_altitude_3d, compare_triangle_orientation_3d,
+        compare_triangle_projected_dot_3d,
+    },
 };
 use std::{
     cmp::Ordering,
@@ -82,9 +85,12 @@ fn centered(
     let (scale, [a, b]) = scaled_offsets(center, [start, end])?;
     let selected_normal = direction(Vector3::from(normal))?;
     let circle = LocalCircle::new(center, selected_normal, a, scale)?;
-    let sweep = circle.angle(b);
     let sign = orientation(center, start, end, normal)?;
-    let selected = center_sweep(sign, sweep)?;
+    let selected = if sign == Ordering::Equal {
+        semicircle(center, start, end, normal)?
+    } else {
+        center_sweep(sign, circle.angle(b))?
+    };
     Ok(circle.trim(selected, None))
 }
 
@@ -92,9 +98,28 @@ fn center_sweep(sign: Ordering, sweep: f64) -> Result<f64, ArcFailure> {
     match sign {
         Ordering::Greater if sweep > 0. && sweep < PI => Ok(sweep),
         Ordering::Less if sweep > PI && sweep < TAU => Ok(sweep),
-        Ordering::Equal if sweep == PI => Ok(PI),
         _ => Err(ArcFailure::IndeterminateBranch),
     }
+}
+
+fn semicircle(
+    center: Point3,
+    start: Point3,
+    end: Point3,
+    normal: Direction3,
+) -> Result<f64, ArcFailure> {
+    // Reconstructing the oblique frame can move the rounded angle to either side of pi.
+    let projected = compare_triangle_projected_dot_3d(
+        *center.coordinates(),
+        *start.coordinates(),
+        *end.coordinates(),
+        *normal.coordinates(),
+    )
+    .map_err(|_| ArcFailure::UnrepresentableCarrier)?;
+    if projected == Ordering::Less {
+        return Ok(PI);
+    }
+    Err(ArcFailure::IndeterminateBranch)
 }
 
 fn orientation(

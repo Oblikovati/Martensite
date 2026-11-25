@@ -37,6 +37,23 @@ pub fn compare_triangle_altitude_3d(
     Ok(square_norm(&cross).cmp(&(&limit * &limit * square_norm(&first))))
 }
 
+/// Compare the angle of two radii projected onto a plane with a right angle.
+///
+/// `Less` means their projected dot product is negative. The plane normal
+/// need not be unit length. A zero normal or radial projection yields `Equal`.
+/// Example: `compare_triangle_projected_dot_3d([0.; 3], [1., 0., 3.], [-1., 0., 7.], [0., 0., 1.])`.
+pub fn compare_triangle_projected_dot_3d(
+    origin: [f64; 3],
+    first: [f64; 3],
+    second: [f64; 3],
+    normal: [f64; 3],
+) -> Result<Ordering, NonFiniteCoordinate> {
+    let Triangle { first, second } = Triangle::new(origin, first, second)?;
+    let normal = exact_vector3(normal, 3)?;
+    let scaled_dot = square_norm(&normal) * dot3(&first, &second);
+    Ok(scaled_dot.cmp(&(dot3(&normal, &first) * dot3(&normal, &second))))
+}
+
 struct Triangle {
     first: [BigInt; 3],
     second: [BigInt; 3],
@@ -59,7 +76,11 @@ impl Triangle {
 }
 
 fn square_norm(vector: &[BigInt; 3]) -> BigInt {
-    vector.iter().map(|value| value * value).sum()
+    dot3(vector, vector)
+}
+
+fn dot3(first: &[BigInt; 3], second: &[BigInt; 3]) -> BigInt {
+    first.iter().zip(second).map(|(a, b)| a * b).sum()
 }
 
 #[cfg(test)]
@@ -91,5 +112,15 @@ mod tests {
         assert_eq!(side(a, c, b, expected), Ok(Less));
         assert_eq!(side(a, b, c, [1., 2., 0.]), Ok(Equal));
         assert_eq!(side(a, b, c, [1., f64::INFINITY, 0.]).unwrap_err().point, 3);
+    }
+    #[test]
+    fn projected_dot_resolves_opposed_coincident_and_axial_ranges() {
+        let z = [0., 0., 5.];
+        let origin = [8., 3., 7.];
+        let first = [9., 3., 11.];
+        assert_eq!(projected_dot(origin, first, [7., 3., 14.], z), Ok(Less));
+        assert_eq!(projected_dot(origin, first, [9., 3., -1.], z), Ok(Greater));
+        assert_eq!(projected_dot(origin, first, [8., 3., 14.], z), Ok(Equal));
+        assert_eq!(projected_dot(origin, first, [8., 4., 14.], z), Ok(Equal));
     }
 }
