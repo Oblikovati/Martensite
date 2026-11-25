@@ -3,6 +3,7 @@ use super::*;
 use crate::surface_sketch::attachment::{
     CylinderAuthoringChart, DetachedCylinderSupport, OutOfSupportPolicy,
 };
+use martensite_cmath::{atan2, cos, sin};
 use martensite_tkbo::brep_algo_api::BRepAlgoAPICut;
 use martensite_tkbrep::brep_adaptor::BRepAdaptorSurface;
 use martensite_tkg3d::{adaptor3d::Adaptor3dSurface, top_abs::State};
@@ -103,9 +104,11 @@ impl CarriedCylinder {
                 .sum::<f64>()
         };
         [
-            dot(*frame.y_direction().coordinates())
-                .atan2(dot(*frame.x_direction().coordinates()))
-                .rem_euclid(TAU),
+            atan2(
+                dot(*frame.y_direction().coordinates()),
+                dot(*frame.x_direction().coordinates()),
+            )
+            .rem_euclid(TAU),
             dot(*frame.direction().coordinates()),
         ]
     }
@@ -316,8 +319,8 @@ fn clipped_lateral(parent: &CylinderFaceAttachment, direct: bool) -> CarriedCyli
 
 #[test]
 fn indirect_shaped_outer_trim_from_an_oblique_native_cut() {
-    let angle = 0.61_f64;
-    let [x, y] = [RADIUS * angle.cos(), RADIUS * angle.sin()];
+    let angle = 0.61;
+    let [x, y] = [RADIUS * cos(angle), RADIUS * sin(angle)];
     let ceiling = 1.5 + 0.12 * x;
     assert!((3.0..6.0).contains(&y));
     for (stock, direct) in [
