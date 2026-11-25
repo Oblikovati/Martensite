@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+mod precision;
 mod replay;
 
 use crate::fixture::{lid, line, pid, point, seed};

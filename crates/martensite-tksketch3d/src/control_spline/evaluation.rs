@@ -1,14 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
-//! Read-only native evaluation of the captured polynomial.
+//! Read-only Bernstein evaluation of the captured polynomial and its local derivative nets.
 use super::ControlSplineGeometry;
-use martensite_tkernel::{ncollection::Array1, standard::Failure};
-use martensite_tkmath::{
-    bsplclib::{bezier_d0, bezier_d1, bezier_d2},
-    gp::{Point3, Vector3},
-};
+use martensite_tkmath::gp::{Point3, Vector3, Xyz};
 use std::{error::Error, fmt};
 
-/// Rounded native value and derivatives with respect to the normalized cubic parameter.
+/// Rounded value and derivatives with respect to the normalized cubic parameter.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ControlSplineJet {
     /// Curve position.
@@ -19,19 +15,12 @@ pub struct ControlSplineJet {
     pub second: Vector3,
 }
 
-/// A request or returned native jet that cannot supply finite directed geometry.
+/// A request or computed jet that cannot supply finite directed geometry.
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum ControlSplineJetFailure {
     /// Parameter is outside the closed normalized range.
     Parameter(f64),
-    /// Native evaluation refused a parameter in the closed range.
-    Native {
-        /// Requested normalized parameter.
-        parameter: f64,
-        /// Native evaluator diagnostic.
-        source: Failure,
-    },
     /// A rounded position or derivative coordinate is not finite.
     NonFinite {
         /// Requested normalized parameter.
@@ -53,9 +42,6 @@ impl fmt::Display for ControlSplineJetFailure {
             Self::Parameter(t) => {
                 write!(formatter, "control spline parameter {t} must lie in [0,1]")
             }
-            Self::Native { parameter, source } => {
-                write!(formatter, "control spline at {parameter}: {source}")
-            }
             Self::NonFinite {
                 parameter,
                 order,
@@ -73,26 +59,14 @@ impl fmt::Display for ControlSplineJetFailure {
     }
 }
 
-impl Error for ControlSplineJetFailure {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            Self::Native { source, .. } => Some(source),
-            _ => None,
-        }
-    }
-}
+impl Error for ControlSplineJetFailure {}
 
 impl ControlSplineGeometry {
     /// Evaluate a rounded position on the closed span. Endpoints return their authored values.
     /// Example: `curve.value(0.5)?`.
     pub fn value(&self, parameter: f64) -> Result<Point3, ControlSplineJetFailure> {
         check_parameter(parameter)?;
-        if let Some(endpoint) = self.endpoint_at(parameter) {
-            return Ok(endpoint);
-        }
-        let poles = Array1::from_shared(&self.poles, 1);
-        let position = bezier_d0(parameter, &poles, None)
-            .map_err(|source| ControlSplineJetFailure::Native { parameter, source })?;
+        let position = Point3::from(bernstein(self.poles.map(|pole| pole.xyz()), parameter));
         check_coordinate_row(parameter, 0, position.coordinates())?;
         Ok(position)
     }
@@ -101,23 +75,16 @@ impl ControlSplineGeometry {
     /// Example: `curve.first_derivative(0.5)?`.
     pub fn first_derivative(&self, parameter: f64) -> Result<Vector3, ControlSplineJetFailure> {
         check_parameter(parameter)?;
-        let poles = Array1::from_shared(&self.poles, 1);
-        let (_, first) = bezier_d1(parameter, &poles, None)
-            .map_err(|source| ControlSplineJetFailure::Native { parameter, source })?;
-        check_velocity(parameter, first)?;
-        Ok(first)
+        velocity(self.local_differences(), parameter)
     }
 
     /// Evaluate the rounded value and two derivatives on the closed span.
     /// Example: `curve.jet(0.)?.first`.
     pub fn jet(&self, parameter: f64) -> Result<ControlSplineJet, ControlSplineJetFailure> {
-        check_parameter(parameter)?;
-        let poles = Array1::from_shared(&self.poles, 1);
-        let (position, first, second) = bezier_d2(parameter, &poles, None)
-            .map_err(|source| ControlSplineJetFailure::Native { parameter, source })?;
-        let position = self.endpoint_at(parameter).unwrap_or(position);
-        check_coordinate_row(parameter, 0, position.coordinates())?;
-        check_velocity(parameter, first)?;
+        let position = self.value(parameter)?;
+        let [ab, bc, cd] = self.local_differences();
+        let first = velocity([ab, bc, cd], parameter)?;
+        let second = Vector3::from(bernstein([bc - ab, cd - bc], parameter) * 6.);
         check_coordinate_row(parameter, 2, second.xyz().coordinates())?;
         Ok(ControlSplineJet {
             position,
@@ -126,22 +93,38 @@ impl ControlSplineGeometry {
         })
     }
 
-    fn endpoint_at(&self, parameter: f64) -> Option<Point3> {
-        match parameter {
-            0. => Some(self.poles[0]),
-            1. => Some(self.poles[3]),
-            _ => None,
-        }
+    fn local_differences(&self) -> [Xyz; 3] {
+        let [a, b, c, d] = self.poles.map(|pole| pole.xyz());
+        // The endpoint derivatives depend only on nearby point differences.
+        [b - a, c - b, d - c]
     }
 }
 
-fn check_velocity(parameter: f64, derivative: Vector3) -> Result<(), ControlSplineJetFailure> {
+fn bernstein<const N: usize>(mut controls: [Xyz; N], parameter: f64) -> Xyz {
+    if parameter == 0. {
+        return controls[0];
+    }
+    if parameter == 1. {
+        return controls[N - 1];
+    }
+    let left = 1. - parameter;
+    // Recovering t from 1 - left would erase tiny, nonzero endpoint contributions.
+    for remaining in (1..N).rev() {
+        for index in 0..remaining {
+            controls[index] = controls[index] * left + controls[index + 1] * parameter;
+        }
+    }
+    controls[0]
+}
+
+fn velocity(differences: [Xyz; 3], parameter: f64) -> Result<Vector3, ControlSplineJetFailure> {
+    let derivative = Vector3::from(bernstein(differences, parameter) * 3.);
     let coordinates = derivative.xyz().coordinates();
     check_coordinate_row(parameter, 1, coordinates)?;
     if coordinates.iter().all(|value| *value == 0.) {
         return Err(ControlSplineJetFailure::RoundedStationary(parameter));
     }
-    Ok(())
+    Ok(derivative)
 }
 
 fn check_parameter(parameter: f64) -> Result<(), ControlSplineJetFailure> {
