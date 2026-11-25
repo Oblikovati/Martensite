@@ -1,12 +1,11 @@
 //! Resolve each source use and bind the exact authored region before fitting.
 use super::*;
 use martensite_tkbo::profile_extrusion::{
-    LoopUse, ProfileCurve, ProfileLoop, ProfilePlane, ProfileVertex, ProfileVertexId,
-    SketchProfile, exact_bernstein_partition,
+    LoopUse, ProfileCurve, ProfileLoop, ProfilePlane, ProfileVertex, ProfileVertexId, SketchProfile,
 };
 use martensite_tkmath::predicates::roots::metric_bounds::{
-    CertifiedRationalConicSegment, CylindricalProfileOptions, MetricBezier, MetricCurve,
-    OrientedMetricCurve, RationalReferenceBounds,
+    CertifiedNativeSplineSpan, CertifiedRationalConicSegment, CylindricalProfileOptions,
+    MetricBezier, MetricCurve, OrientedMetricCurve, RationalReferenceBounds,
 };
 
 pub(super) struct Source<'a> {
@@ -25,19 +24,21 @@ pub(super) struct Curve<'a> {
 pub(super) struct NativeSpan<'a> {
     controls: NativeControls<'a>,
     pub domain: WrappedSourceSpan,
-    pub map: Option<ConicMap>,
+    pub map: Option<ParameterMap>,
 }
 
 #[derive(Clone, Copy)]
-pub(super) enum ConicMap {
+pub(super) enum ParameterMap {
     Quarter(WrappedConicParameterMap),
     Analytic(WrappedAnalyticArcMap),
+    Spline(WrappedSplineParameterMap),
 }
 
 enum NativeControls<'a> {
     Spline(MetricBezier<'a, 2>),
     Quarter([[f64; 2]; 3]),
-    Transported(Box<CertifiedRationalConicSegment>),
+    TransportedConic(Box<CertifiedRationalConicSegment>),
+    TransportedSpline(CertifiedNativeSplineSpan),
 }
 
 pub(super) struct Line {
@@ -48,6 +49,7 @@ pub(super) struct Line {
 
 mod conic;
 mod selection;
+mod spline;
 pub(super) use selection::select_cell;
 use selection::{VertexMap, point, resolve_uses, selected, selected_profile, vertices};
 
@@ -63,20 +65,28 @@ pub(super) fn read<'a>(
     let profile = selected_profile(&uses, &vertices)?;
     let mut lines = Vec::new();
     let mut curves = Vec::new();
-    let mut analytic_options = CylindricalProfileOptions::default();
+    let mut transport_policy = CylindricalProfileOptions::default();
     for (used, c) in &uses {
         match c {
             ProfileCurve::Line { id, start, end } => {
                 lines.push(line(*id, [*start, *end], *used, &vertices)?)
             }
-            ProfileCurve::Spline { .. } => curves.push(rational(c, *used, &vertices)?),
+            ProfileCurve::Spline { .. } => {
+                curves.push(spline::rational(
+                    c,
+                    *used,
+                    &vertices,
+                    &mut transport_policy,
+                    cancelled,
+                )?);
+            }
             ProfileCurve::Arc { .. } | ProfileCurve::EllipticArc { .. } => {
                 curves.push(conic::analytic_arc(
                     c,
                     *used,
                     &profile,
                     options,
-                    &mut analytic_options,
+                    &mut transport_policy,
                     cancelled,
                 )?);
             }
@@ -118,109 +128,6 @@ fn line(
     })
 }
 
-fn rational<'a>(
-    curve: &'a ProfileCurve,
-    used: LoopUse,
-    vertices: &VertexMap,
-) -> Checked<Curve<'a>> {
-    let ProfileCurve::Spline {
-        id,
-        start,
-        end,
-        degree,
-        poles,
-        weights,
-        knots,
-    } = curve
-    else {
-        return Err(invalid(
-            format!("curve={:?}", curve.id()),
-            "a clamped positive-rational Bézier",
-        ));
-    };
-    let spans = partition(*id, *degree as usize, poles, weights.as_deref(), knots)?;
-    let n = poles.len();
-    let endpoints = [point(vertices, *start)?, point(vertices, *end)?];
-    if endpoints.map(|p| p.map(f64::to_bits))
-        != [poles[0], poles[n - 1]].map(|p| p.map(f64::to_bits))
-    {
-        return Err(invalid(
-            format!(
-                "curve={id:?} authored vertices={endpoints:?}, poles={:?}",
-                [poles[0], poles[n - 1]]
-            ),
-            "bitwise matching authored endpoints and first and last poles",
-        ));
-    }
-    Ok(Curve {
-        spans,
-        occurrence: used,
-        ends: Some([*start, *end]),
-    })
-}
-
-fn partition<'a>(
-    id: ProfileCurveId,
-    degree: usize,
-    poles: &'a [[f64; 2]],
-    weights: Option<&'a [f64]>,
-    knots: &'a [f64],
-) -> Checked<Vec<NativeSpan<'a>>> {
-    let spans = exact_bernstein_partition(degree, poles, weights, knots)
-        .filter(|spans| spans.len() <= 64 && knots[0] == 0. && knots[knots.len() - 1] == 1.)
-        .ok_or_else(|| {
-            invalid(
-                format!(
-                    "curve={id:?}, degree={degree}, poles={}, weights={}, knots={knots:?}",
-                    poles.len(),
-                    weights.map_or(0, <[f64]>::len)
-                ),
-                "one through 64 finite native Bernstein intervals with positive weights when supplied on [0,1]",
-            )
-        })?;
-    spans.map(|piece| bind_span(id, piece)).collect()
-}
-
-fn bind_span(
-    id: ProfileCurveId,
-    piece: martensite_tkbo::profile_extrusion::NativeBernsteinSpan<'_>,
-) -> Checked<NativeSpan<'_>> {
-    let domain = dyadic_cell(piece.interval)
-        .filter(|_| piece.matches_homogeneous_roundtrip())
-        .ok_or_else(|| {
-            invalid(
-                format!("curve={id:?}, native interval={:?}", piece.interval),
-                "an exact dyadic interval with unaltered homogeneous planar controls",
-            )
-        })?;
-    Ok(NativeSpan {
-        controls: NativeControls::Spline(MetricBezier {
-            poles: piece.poles,
-            weights: piece.weights,
-        }),
-        domain,
-        map: None,
-    })
-}
-
-fn dyadic_cell([first, last]: [f64; 2]) -> Option<WrappedSourceSpan> {
-    if !(0. <= first && first < last && last <= 1.) {
-        return None;
-    }
-    for level in 0..=63 {
-        let scale = (1_u64 << level) as f64;
-        let [a, b] = [first * scale, last * scale];
-        if a.fract() == 0. && b.fract() == 0. && a as u64 + 1 == b as u64 {
-            return Some(WrappedSourceSpan {
-                level,
-                index: a as u64,
-                reversed: false,
-            });
-        }
-    }
-    None
-}
-
 impl Source<'_> {
     pub(super) fn rounding_operations(&self) -> u32 {
         self.curves
@@ -235,8 +142,7 @@ impl Source<'_> {
         self.curves
             .iter()
             .flat_map(|curve| &curve.spans)
-            .filter_map(NativeSpan::rounded)
-            .map(|rounded| rounded.area_transfer)
+            .filter_map(NativeSpan::area_error)
             .fold(0., |sum, bound| (sum + bound).next_up())
     }
 
@@ -299,6 +205,14 @@ impl Curve<'_> {
         [first, last[last.len() - 1]]
     }
 
+    pub(super) fn is_mapped_spline(&self) -> bool {
+        matches!(self.spans[0].map, Some(ParameterMap::Spline(_)))
+    }
+
+    pub(super) fn needs_planar_partition(&self) -> bool {
+        self.is_mapped_spline() || self.ends.is_some() && self.spans.len() > 1
+    }
+
     fn metric_spans(&self, reversed: bool) -> impl Iterator<Item = OrientedMetricCurve<'_>> {
         let n = self.spans.len();
         (0..n).map(move |index| {
@@ -312,20 +226,28 @@ impl Curve<'_> {
 }
 
 impl NativeSpan<'_> {
-    fn rounded(&self) -> Option<&CertifiedRationalConicSegment> {
-        if let NativeControls::Transported(value) = &self.controls {
-            Some(value)
-        } else {
-            None
+    pub(super) fn enclosure(&self) -> Option<&[[[f64; 2]; 2]]> {
+        match &self.controls {
+            NativeControls::TransportedConic(value) => Some(&value.control_enclosures),
+            NativeControls::TransportedSpline(value) => Some(&value.control_enclosures),
+            _ => None,
         }
     }
 
-    pub(super) fn enclosure(&self) -> Option<&[[[f64; 2]; 2]; 3]> {
-        self.rounded().map(|rounded| &rounded.control_enclosures)
+    pub(super) fn transport(&self) -> Option<RationalReferenceBounds> {
+        match &self.controls {
+            NativeControls::TransportedConic(value) => Some(value.transport),
+            NativeControls::TransportedSpline(value) => Some(value.transport),
+            _ => None,
+        }
     }
 
-    pub(super) fn transport(&self) -> Option<RationalReferenceBounds> {
-        self.rounded().map(|rounded| rounded.transport)
+    fn area_error(&self) -> Option<f64> {
+        match &self.controls {
+            NativeControls::TransportedConic(value) => Some(value.area_transfer),
+            NativeControls::TransportedSpline(value) => Some(value.area_transfer),
+            _ => None,
+        }
     }
 
     fn hull_points(&self) -> impl Iterator<Item = [f64; 2]> + '_ {
@@ -340,9 +262,13 @@ impl NativeSpan<'_> {
     pub(super) fn metric(&self) -> MetricBezier<'_, 2> {
         match &self.controls {
             NativeControls::Spline(curve) => *curve,
-            NativeControls::Transported(lowered) => MetricBezier {
+            NativeControls::TransportedConic(lowered) => MetricBezier {
                 poles: &lowered.poles,
                 weights: Some(&lowered.weights),
+            },
+            NativeControls::TransportedSpline(lowered) => MetricBezier {
+                poles: &lowered.poles,
+                weights: lowered.weights.as_deref(),
             },
             NativeControls::Quarter(poles) => MetricBezier {
                 poles,
@@ -363,16 +289,10 @@ pub(super) fn enclosure_corners([[x0, x1], [y0, y1]]: [[f64; 2]; 2]) -> [[f64; 2
     [[x0, y0], [x0, y1], [x1, y0], [x1, y1]]
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn native_cells_require_one_exact_dyadic_interval() {
-        let span = dyadic_cell([0.75, 1.]).unwrap();
-        assert_eq!((span.level, span.index), (2, 3));
-        assert!(dyadic_cell([0., 0.75]).is_none());
-        assert!(dyadic_cell([0., f64::NAN]).is_none());
-        assert!(dyadic_cell([1., 0.]).is_none());
+fn unit_interval() -> WrappedSourceSpan {
+    WrappedSourceSpan {
+        level: 0,
+        index: 0,
+        reversed: false,
     }
 }

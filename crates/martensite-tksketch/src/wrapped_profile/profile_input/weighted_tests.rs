@@ -417,5 +417,6 @@ mod analytic;
 mod closed_conics;
 mod holes;
 mod mixed_curves;
+mod native_knots;
 mod one_sided;
 mod strict_cone;

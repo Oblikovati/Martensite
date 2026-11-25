@@ -260,10 +260,11 @@ pub use rational_integrals::{
     certify_rational_sweep_integral,
 };
 pub use rational_reference::{
-    CertifiedRationalConicSegment, RationalConicSegment, RationalConicSegmentFailure,
-    RationalReferenceBounds, RationalReferenceFailure, RationalReferenceRequest,
-    RationalReferenceProof, RationalReferenceSpan, fit_rational_bezier_reference,
-    fit_rational_bezier_reference_with_proof, lower_rational_conic_segment,
+    CertifiedNativeSplineSpan, CertifiedRationalConicSegment, NativeSplineFailure,
+    NativeSplineSource, RationalConicSegment, RationalConicSegmentFailure, RationalReferenceBounds,
+    RationalReferenceFailure, RationalReferenceProof, RationalReferenceRequest,
+    RationalReferenceSpan, fit_rational_bezier_reference, fit_rational_bezier_reference_with_proof,
+    lower_native_bspline, lower_rational_conic_segment, partition_homogeneous_bspline,
 };
 
 mod polynomial_side;

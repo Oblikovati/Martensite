@@ -12,7 +12,7 @@ pub(super) struct Cover {
 
 pub(super) struct FittedSpan {
     pub span: RationalReferenceSpan,
-    pub map: Option<input::ConicMap>,
+    pub map: Option<input::ParameterMap>,
 }
 
 pub(super) fn all_spans(covers: &[Cover]) -> impl Iterator<Item = &RationalReferenceSpan> + Clone {
@@ -43,9 +43,13 @@ fn fit_curve(
     options: &mut CylindricalProfileOptions,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<Cover> {
+    let direction = curve.is_mapped_spline().then(|| {
+        let [first, last] = curve.endpoints();
+        std::array::from_fn(|axis| last[axis] - first[axis])
+    });
     let mut spans = Vec::new();
     for native in &curve.spans {
-        let local = fit_native(native, level, limit, *options, cancelled)?;
+        let local = fit_native(native, direction, level, limit, *options, cancelled)?;
         let work = local.last().map_or(0, |span| span.bounds.operations);
         options.max_operations -= work;
         spans.extend(local.into_iter().map(|span| FittedSpan {
@@ -61,6 +65,7 @@ fn fit_curve(
 
 fn fit_native(
     native: &input::NativeSpan<'_>,
+    direction: Option<[f64; 2]>,
     level: u8,
     limit: f64,
     options: CylindricalProfileOptions,
@@ -70,7 +75,7 @@ fn fit_native(
     if metric.weights.is_none() {
         metric.weights = Some(&[1.; 17][..metric.poles.len()]);
     }
-    let direction = native.direction();
+    let direction = direction.unwrap_or_else(|| native.direction());
     let direction_scale = direction[0].abs().max(direction[1].abs());
     let limits = transport_limits([limit, direction_scale], native.transport())?;
     let query = RationalReferenceRequest {

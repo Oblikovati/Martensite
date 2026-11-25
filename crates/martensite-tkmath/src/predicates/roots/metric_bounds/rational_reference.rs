@@ -12,10 +12,15 @@ use crate::predicates::roots::certificate_arithmetic::{
 };
 mod bound_refinement;
 mod conic_lowering;
+mod native_spline;
 mod rational_difference;
 pub use conic_lowering::{
     CertifiedRationalConicSegment, RationalConicSegment, RationalConicSegmentFailure,
     lower_rational_conic_segment,
+};
+pub use native_spline::{
+    CertifiedNativeSplineSpan, NativeSplineFailure, NativeSplineSource, lower_native_bspline,
+    partition_homogeneous_bspline,
 };
 mod monotone;
 mod reference_fit;

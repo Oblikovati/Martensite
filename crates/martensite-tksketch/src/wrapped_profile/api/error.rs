@@ -370,7 +370,10 @@ fn public_source(source: WrappedEntitySource) -> HistorySource {
         | WrappedEntitySource::MappedSplitVertex { curve, .. }
         | WrappedEntitySource::ConicAnchor { curve, .. }
         | WrappedEntitySource::AnalyticArcCurve { curve, .. }
-        | WrappedEntitySource::AnalyticArcSplitVertex { curve, .. } => HistorySource::Curve(curve),
+        | WrappedEntitySource::AnalyticArcSplitVertex { curve, .. }
+        | WrappedEntitySource::NativeSplineCurve { curve, .. }
+        | WrappedEntitySource::NativeSplineSplitVertex { curve, .. }
+        | WrappedEntitySource::NativeSplineKnot { curve, .. } => HistorySource::Curve(curve),
         WrappedEntitySource::Vertex(vertex) => HistorySource::Vertex(vertex),
     }
 }

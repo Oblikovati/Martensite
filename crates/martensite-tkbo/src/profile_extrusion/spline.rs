@@ -4,6 +4,7 @@
 //! homogeneous coordinates for rational splines. Adjacent pieces share one computed
 //! junction control, so the pieces join bitwise.
 use super::{bernstein_partition::exact_bernstein_partition, bezier::BezierPiece};
+use martensite_tkmath::predicates::roots::metric_bounds::partition_homogeneous_bspline;
 
 /// A checked clamped spline in plane coordinates; its end poles are the authored vertices.
 #[derive(Clone, Debug, PartialEq)]
@@ -43,7 +44,10 @@ impl AdmittedSpline {
                 [x * weights(i), y * weights(i), weights(i)]
             })
             .collect();
-        let pieces = decompose(self.degree, &self.knots, &homogeneous);
+        let Ok(pieces) = partition_homogeneous_bspline(self.degree, &self.knots, &homogeneous)
+        else {
+            return Vec::new();
+        };
         let rational = self.weights.is_some();
         let mut pieces: Vec<BezierPiece> = pieces.iter().map(|q| cartesian(q, rational)).collect();
         // The clamped ends are the poles themselves; keep them bitwise.
@@ -76,69 +80,6 @@ fn cartesian(piece: &[[f64; 3]], rational: bool) -> BezierPiece {
     let controls = piece.iter().map(|[x, y, w]| [x / w, y / w]).collect();
     let weights = rational.then(|| piece.iter().map(|q| q[2]).collect());
     BezierPiece { controls, weights }
-}
-
-/// Homogeneous Bézier pieces of a clamped spline of degree `p` (A5.6).
-fn decompose(p: usize, knots: &[f64], poles: &[[f64; 3]]) -> Vec<Vec<[f64; 3]>> {
-    let m = knots.len() - 1;
-    let (mut a, mut b) = (p, p + 1);
-    let mut pieces = vec![poles[..=p].to_vec()];
-    while b < m {
-        let i = b;
-        while b < m && knots[b + 1] == knots[b] {
-            b += 1;
-        }
-        let multiplicity = b - i + 1;
-        let next = refine(
-            p,
-            knots,
-            [a, b],
-            multiplicity,
-            pieces.last_mut().expect("piece"),
-        );
-        if b < m {
-            let mut piece = next;
-            for (k, slot) in piece.iter_mut().enumerate().skip(p - multiplicity.min(p)) {
-                *slot = poles[b - p + k];
-            }
-            // The junction is one point; share the computed value bitwise.
-            piece[0] = pieces.last().expect("piece")[p];
-            pieces.push(piece);
-            (a, b) = (b, b + 1);
-        }
-    }
-    pieces
-}
-
-/// Insert knot `knots[b]` until it has multiplicity `p` in the current piece; returns the
-/// next piece's leading controls (the junction and the controls computed for it).
-fn refine(
-    p: usize,
-    knots: &[f64],
-    [a, b]: [usize; 2],
-    multiplicity: usize,
-    piece: &mut [[f64; 3]],
-) -> Vec<[f64; 3]> {
-    let mut next = vec![[0.0; 3]; p + 1];
-    if multiplicity >= p {
-        next[0] = piece[p];
-        return next;
-    }
-    let numer = knots[b] - knots[a];
-    let alphas: Vec<f64> = (multiplicity + 1..=p)
-        .map(|j| numer / (knots[a + j] - knots[a]))
-        .collect();
-    let r = p - multiplicity;
-    for j in 1..=r {
-        let (save, s) = (r - j, multiplicity + j);
-        for k in (s..=p).rev() {
-            let alpha = alphas[k - s];
-            piece[k] =
-                std::array::from_fn(|c| alpha * piece[k][c] + (1.0 - alpha) * piece[k - 1][c]);
-        }
-        next[save] = piece[p];
-    }
-    next
 }
 
 #[cfg(test)]
