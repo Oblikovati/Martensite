@@ -4,20 +4,23 @@ use martensite_tkbrep::{
     brep::{
         BRepBuilder, BRepCurve3D, BRepTool,
         access::edge_tshape,
-        face_input_capture::FaceCaptureLimits,
+        face_input_capture::{FaceCaptureIncomplete, FaceCaptureLimits},
         planar_attachment::{
             AttachmentSource, FaceAttachment, FaceAttachmentError as Failure,
             PlanarAttachmentError, PlanarAttachmentLocation as Class, capture_planar_attachment,
         },
     },
     topexp::Explorer,
-    topods::{self, Face, Solid, Wire},
+    topods::{self, Compound, Face, ShapeIterator, Shell, Solid, Wire},
 };
 use martensite_tkernel::standard::Handle;
 use martensite_tkg2d::geom2d::Geom2dLine;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::{
-    gp::{Axis2d, Direction2, Plane3, Point2, Point3, Transform3, Vector3},
+    gp::{
+        Axis1, Axis2d, Direction2, Direction3, Plane3, Point2, Point3, Transform3, TransformForm,
+        UnitPlacementError, Vector3,
+    },
     toploc::Location,
 };
 use martensite_tkprim::brep_prim_api::BRepPrimAPIMakePrism;
@@ -218,6 +221,98 @@ fn source_identity_projection_limit_and_cancellation_are_independent() {
             .location,
         Class::Material
     );
+}
+
+#[test]
+fn a_nominal_solid_wrapper_cannot_admit_a_compound_root() {
+    let (solid, cap) = fixture();
+    let builder = BRepBuilder::default();
+    let mut compound = Compound::default();
+    builder.make_compound(&mut compound);
+    builder.add(&mut compound, &solid).unwrap();
+    let counterfeit = Solid::unchecked(compound.into_shape());
+    assert!(matches!(
+        capture_planar_attachment(
+            &counterfeit,
+            &cap,
+            SOURCE,
+            FaceCaptureLimits::bounded(),
+            || false
+        ),
+        Err(Failure::BodyKind(ShapeEnum::Compound))
+    ));
+}
+
+#[test]
+fn an_actual_rotated_translated_nonunit_scale_is_refused_before_projecting() {
+    let solid = native_tube([0., 0.]);
+    let scale = 1.1_f64;
+    let axis = Axis1::new(Point3::default(), Direction3::Z);
+    let mut transform = Transform3::rotation(axis, 0.3).unwrap();
+    transform.set_scale_factor(scale).unwrap();
+    transform.set_translation_part(Vector3::new(7., 11., 13.));
+    let moved = solid.moved(&Location::new(transform), false).unwrap();
+    let body = topods::solid(&moved).unwrap();
+    let cap = base(&body, 13.);
+    assert!(matches!(
+        capture_planar_attachment(&body, &cap, SOURCE, FaceCaptureLimits::bounded(), || false),
+        Err(Failure::Placement(UnitPlacementError::Scale(actual))) if actual.to_bits() == scale.to_bits()
+    ));
+}
+
+#[test]
+fn native_translation_form_cannot_hide_a_nonidentity_rotation_matrix() {
+    let solid = native_tube([0., 0.]);
+    let axis = Axis1::new(Point3::default(), Direction3::Z);
+    let mut transform = Transform3::rotation(axis, 0.3).unwrap();
+    transform.set_form(TransformForm::Translation);
+    let moved = solid.moved(&Location::new(transform), false).unwrap();
+    let body = topods::solid(&moved).unwrap();
+    let cap = base(&body, 0.);
+    assert!(matches!(
+        capture_planar_attachment(&body, &cap, SOURCE, FaceCaptureLimits::bounded(), || false),
+        Err(Failure::Placement(UnitPlacementError::Shortcut(
+            TransformForm::Translation
+        )))
+    ));
+}
+
+#[test]
+fn membership_counts_empty_shells_and_polls_before_visiting_each_one() {
+    let (source, cap) = fixture();
+    let builder = BRepBuilder::default();
+    let mut body = Solid::default();
+    builder.make_solid(&mut body);
+    for _ in 0..5 {
+        let mut empty = Shell::default();
+        builder.make_shell(&mut empty);
+        builder.add(&mut body, &empty).unwrap();
+    }
+    let shell = ShapeIterator::new(&source, true, true)
+        .value()
+        .unwrap()
+        .clone();
+    builder.add(&mut body, &shell).unwrap();
+    let limits = FaceCaptureLimits {
+        owners: 3,
+        ..FaceCaptureLimits::bounded()
+    };
+    assert!(matches!(
+        capture_planar_attachment(&body, &cap, SOURCE, limits, || false),
+        Err(Failure::Capture(FaceCaptureIncomplete::Limit {
+            actual: 4,
+            maximum: 3,
+            dimension: "source body descendants",
+        }))
+    ));
+    let mut calls = 0;
+    assert!(matches!(
+        capture_planar_attachment(&body, &cap, SOURCE, FaceCaptureLimits::bounded(), || {
+            calls += 1;
+            calls == 4
+        }),
+        Err(Failure::Cancelled)
+    ));
 }
 
 #[test]

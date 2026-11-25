@@ -7,10 +7,10 @@ use crate::{
         FaceCaptureBehavior, FaceCaptureIncomplete, FaceCaptureLimits,
         capture_face_input_with_behavior,
     },
-    topexp::Explorer,
-    topods::{Face, Solid},
+    topods::{Face, ShapeIterator, Solid},
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
+use martensite_tkmath::gp::UnitPlacementError;
 use martensite_tkmath::predicates::roots::metric_bounds::planar_attachment::CertifiedPlanarAttachment;
 pub use martensite_tkmath::predicates::roots::metric_bounds::planar_attachment::{
     PlanarAttachmentError, PlanarAttachmentLocation, PlanarAttachmentQuery,
@@ -39,6 +39,15 @@ pub struct AttachmentSource {
 pub enum FaceAttachmentError {
     /// The selected located, oriented face did not occur exactly once under the source body.
     FaceOccurrence,
+    /// The runtime root kind must be a native solid.
+    BodyKind(ShapeEnum),
+    /// The source body must contain direct shells and faces of the named kinds.
+    BodyChildKind {
+        /// Runtime kind of the visited child.
+        actual: ShapeEnum,
+        /// Required child kind.
+        expected: ShapeEnum,
+    },
     /// Native traversal failed before uniqueness was established.
     Traversal(martensite_tkernel::standard::Failure),
     /// Coherent source capture was incomplete.
@@ -47,6 +56,8 @@ pub enum FaceAttachmentError {
     Topology(usize),
     /// The local support or a required stored carrier is outside the finite affine domain.
     Representation(usize),
+    /// A stored datum or the effective native map is outside the unit-scale placement domain.
+    Placement(UnitPlacementError),
     /// Certification found inconsistent trim geometry or could not finish a query.
     Numeric(PlanarAttachmentError),
     /// The host's current source stamp differs from the captured stamp.
@@ -66,6 +77,14 @@ impl fmt::Display for FaceAttachmentError {
             Self::FaceOccurrence => {
                 output.write_str("expected one matching located and oriented source face")
             }
+            Self::BodyKind(actual) => write!(
+                output,
+                "attachment source body is {actual:?}; expected Solid"
+            ),
+            Self::BodyChildKind { actual, expected } => write!(
+                output,
+                "attachment source body child is {actual:?}, expected {expected:?}"
+            ),
             Self::Traversal(cause) => write!(
                 output,
                 "attachment could not traverse source faces ({cause})"
@@ -81,6 +100,7 @@ impl fmt::Display for FaceAttachmentError {
                 output,
                 "attachment source owner {owner} requires an admitted affine representation"
             ),
+            Self::Placement(cause) => write!(output, "attachment placement refused ({cause})"),
             Self::Numeric(cause) => write!(output, "attachment proof did not complete ({cause})"),
             Self::StaleSource { captured, current } => write!(
                 output,
@@ -95,6 +115,7 @@ impl Error for FaceAttachmentError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::Traversal(cause) => Some(cause),
+            Self::Placement(cause) => Some(cause),
             Self::Numeric(cause) => Some(cause),
             _ => None,
         }
@@ -138,8 +159,9 @@ impl FaceAttachment {
 
 /// Bind the actual native face to a host source stamp and certify both complete linear loops.
 /// The input body topology is stable under the caller's source transaction. The face and its
-/// support may have one common placement on the face occurrence. Inner locations, seams,
-/// curves and touching or concave loops are outside this first domain.
+/// support may have one common unit-scale placement on the face occurrence. Inner locations, seams,
+/// curves and touching or concave loops are outside this first domain. The owner
+/// limit also bounds the shell and face visits used to establish unique membership.
 /// Example: capture_planar_attachment(&body, &face, source, limits, || false).
 pub fn capture_planar_attachment(
     body: &Solid,
@@ -170,27 +192,58 @@ fn member(
 ) -> Result<(), FaceAttachmentError> {
     poll(cancelled)?;
     let map = FaceAttachmentError::Traversal;
-    let mut explorer = Explorer::new(body, ShapeEnum::Face, ShapeEnum::Shape).map_err(map)?;
-    let mut found = false;
-    let mut visited = 0;
-    while explorer.more() {
-        poll(cancelled)?;
-        visited += 1;
-        if visited > limit {
-            return Err(capture_failure(FaceCaptureIncomplete::Limit {
-                actual: visited,
-                maximum: limit,
-                dimension: "source face occurrences",
-            }));
-        }
-        if explorer.current().is_equal(face) && std::mem::replace(&mut found, true) {
-            return Err(FaceAttachmentError::FaceOccurrence);
-        }
-        explorer.next().map_err(map)?;
+    let actual = body.shape_type().map_err(map)?;
+    if actual != ShapeEnum::Solid {
+        return Err(FaceAttachmentError::BodyKind(actual));
     }
-    found
+    let mut census = Census {
+        visited: 0,
+        limit,
+        found: false,
+    };
+    for shell in ShapeIterator::new(body, true, true) {
+        census.visit(&shell, ShapeEnum::Shell, cancelled)?;
+        for occurrence in ShapeIterator::new(&shell, true, true) {
+            census.visit(&occurrence, ShapeEnum::Face, cancelled)?;
+            if occurrence.is_equal(face) && std::mem::replace(&mut census.found, true) {
+                return Err(FaceAttachmentError::FaceOccurrence);
+            }
+        }
+    }
+    census
+        .found
         .then_some(())
         .ok_or(FaceAttachmentError::FaceOccurrence)
+}
+
+struct Census {
+    visited: usize,
+    limit: usize,
+    found: bool,
+}
+
+impl Census {
+    fn visit(
+        &mut self,
+        node: &crate::topods::Shape,
+        expected: ShapeEnum,
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<(), FaceAttachmentError> {
+        poll(cancelled)?;
+        self.visited += 1;
+        if self.visited > self.limit {
+            return Err(capture_failure(FaceCaptureIncomplete::Limit {
+                actual: self.visited,
+                maximum: self.limit,
+                dimension: "source body descendants",
+            }));
+        }
+        let actual = node.shape_type().map_err(FaceAttachmentError::Traversal)?;
+        if actual != expected {
+            return Err(FaceAttachmentError::BodyChildKind { actual, expected });
+        }
+        Ok(())
+    }
 }
 
 fn poll(cancelled: &mut impl FnMut() -> bool) -> Result<(), FaceAttachmentError> {

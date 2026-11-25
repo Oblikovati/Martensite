@@ -10,7 +10,7 @@ use crate::{
 };
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 use martensite_tkmath::{
-    gp::{Axis2d, Axis3, Line3, Transform3},
+    gp::{Axis2d, Axis3, Line3},
     predicates::roots::metric_bounds::planar_attachment::{
         CertifiedPlanarAttachment, PLANAR_ATTACHMENT_MAX_LOOP_EDGES, PlanarAttachmentEdge,
     },
@@ -39,7 +39,17 @@ pub(super) fn prove(
     };
     let a = values.wire(a, surface, cancelled)?;
     let b = values.wire(b, surface, cancelled)?;
-    let placement = rows(root.location.effective_transform(), root.owner)?;
+    for (_, _, datum) in root.location.steps() {
+        poll(cancelled)?;
+        datum
+            .checked_unit_placement_rows()
+            .map_err(Error::Placement)?;
+    }
+    let placement = root
+        .location
+        .effective_transform()
+        .checked_unit_placement_rows()
+        .map_err(Error::Placement)?;
     CertifiedPlanarAttachment::capture(frame, placement, [&a, &b], cancelled)
         .map_err(numeric_failure)
 }
@@ -317,16 +327,4 @@ fn local(occurrence: &CapturedOccurrence) -> Checked<()> {
         .is_empty()
         .then_some(())
         .ok_or(Error::Topology(occurrence.owner))
-}
-
-fn rows(transform: Transform3, owner: usize) -> Checked<[[f64; 4]; 3]> {
-    let mut rows = [[0.; 4]; 3];
-    for (i, row) in rows.iter_mut().enumerate() {
-        for (j, value) in row.iter_mut().enumerate() {
-            *value = transform
-                .value(i as i32 + 1, j as i32 + 1)
-                .map_err(|_| Error::Representation(owner))?;
-        }
-    }
-    Ok(rows)
 }

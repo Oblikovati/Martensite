@@ -4,7 +4,7 @@ mod chart;
 mod trim;
 
 use self::{chart::Chart, trim::Loop};
-use super::super::certificate_arithmetic::{ExactRatio, rounding::outward_binary64};
+use super::super::certificate_arithmetic::{ExactRatio, rounding::outward_sqrt};
 use crate::gp::{Axis2d, Axis3, Line3};
 use crate::predicates::NonFiniteCoordinate;
 use std::{cmp::Ordering, error::Error, fmt};
@@ -51,7 +51,7 @@ pub struct PlanarAttachmentQuery {
     pub uv: [[f64; 2]; 2],
     /// Inclusive lower and upper world-coordinate bounds of the projected point.
     pub projected: [[f64; 2]; 3],
-    /// Upper bound on world Euclidean distance from the exact L1 residual.
+    /// Upper bound on the world Euclidean projection distance.
     pub distance_bound: f64,
 }
 
@@ -75,7 +75,7 @@ pub enum PlanarAttachmentError {
     Hole,
     /// The requested inclusive model distance must be finite and nonnegative.
     DistanceLimit(f64),
-    /// The exact L1 residual exceeds the requested model distance.
+    /// The exact Euclidean residual exceeds the requested model distance.
     OffSupport {
         /// Certified upper bound when representable.
         bound: Option<f64>,
@@ -187,8 +187,13 @@ impl CertifiedPlanarAttachment {
             return Err(Error::DistanceLimit(limit));
         }
         let projection = self.world.project(point)?;
-        let distance_bound = outward_binary64(&projection.distance).map(|interval| interval[1]);
-        if projection.distance > ExactRatio::from_finite(limit) {
+        let cap = ExactRatio::from_finite(limit);
+        let distance_bound = if projection.distance_squared.sign() == Ordering::Equal {
+            Some(0.)
+        } else {
+            outward_sqrt(&projection.distance_squared)
+        };
+        if projection.distance_squared > cap.multiply(&cap) {
             return Err(Error::OffSupport {
                 bound: distance_bound,
                 limit,

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Exact local and world charts. Inversion uses the placed Gram matrix.
-use super::{ExactRatio as R, PlanarAttachmentError as Error, outward_binary64};
+use super::{ExactRatio as R, PlanarAttachmentError as Error};
 use crate::gp::Axis3;
+use crate::predicates::roots::certificate_arithmetic::rounding::outward_binary64;
 use crate::predicates::roots::metric_bounds::placed_plane::{
     ExactPlacement, ExactVector, dot, exact_point, exact_vector,
 };
@@ -20,7 +21,7 @@ pub(super) struct Chart {
 pub(super) struct Projection {
     pub uv: Uv,
     pub world: Vector,
-    pub distance: R,
+    pub distance_squared: R,
 }
 
 impl Chart {
@@ -61,22 +62,11 @@ impl Chart {
         let point = exact_vector(point, 3)?;
         let uv = self.pullback(&point);
         let world = self.lift(&uv);
-        let distance =
-            world
-                .iter()
-                .zip(point)
-                .fold(R::from_finite(0.), |sum, (projected, original)| {
-                    let delta = projected.subtract(&original);
-                    sum.add(&if delta.sign() == Ordering::Less {
-                        delta.negated()
-                    } else {
-                        delta
-                    })
-                });
+        let delta = std::array::from_fn(|i| world[i].subtract(&point[i]));
         Ok(Projection {
             uv,
             world,
-            distance,
+            distance_squared: dot(&delta, &delta),
         })
     }
 }

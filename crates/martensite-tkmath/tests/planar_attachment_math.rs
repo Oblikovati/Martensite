@@ -114,7 +114,7 @@ fn oblique_projection_uses_the_original_nonorthogonal_placed_chart() {
     assert_eq!(query.location, PlanarAttachmentLocation::HoleBoundary);
     assert_eq!(query.uv, [[-1.; 2], [0.; 2]]);
     assert_eq!(query.projected, [[62.; 2], [-9.; 2], [16.; 2]]);
-    assert_eq!(query.distance_bound, 1.);
+    assert_eq!(query.distance_bound, 0.684_653_196_881_457_6);
 }
 
 #[test]
@@ -154,4 +154,64 @@ fn a_valid_indirect_chart_keeps_the_original_uv_directions() {
     let query = proof.classify([61., 0., 9.], 0., || false).unwrap();
     assert_eq!(query.location, PlanarAttachmentLocation::HoleBoundary);
     assert_eq!(query.uv, [[-1.; 2], [0.; 2]]);
+}
+
+#[test]
+fn tilted_support_admits_by_euclidean_distance_and_refuses_the_adjacent_lower_cap() {
+    let [outer, hole] = [square(4., false, 0.), square(1., true, 0.)];
+    let map = [[1., 0., 0., 0.], [-1., 0., 1., 0.], [0., 1., 0., 0.]];
+    let chart =
+        CertifiedPlanarAttachment::capture(Axis3::default(), map, [&outer, &hole], || false)
+            .unwrap();
+    // The nearest support point (2,-2,0) leaves the exact residual (1,1,0).
+    let point = [3., -1., 0.];
+    let upper = f64::from_bits(0x3ff6_a09e_667f_3bcd);
+    let accepted = chart.classify(point, 1.5, || false).unwrap();
+    assert_eq!(accepted.location, PlanarAttachmentLocation::Material);
+    assert_eq!(accepted.projected, [[2.; 2], [-2.; 2], [0.; 2]]);
+    assert_eq!(accepted.distance_bound, upper);
+    assert_eq!(chart.classify(point, upper, || false).unwrap(), accepted);
+    assert_eq!(
+        chart.classify(point, upper.next_down(), || false),
+        Err(PlanarAttachmentError::OffSupport {
+            bound: Some(upper),
+            limit: upper.next_down(),
+        })
+    );
+}
+
+#[test]
+fn native_unit_placement_admits_original_rows_and_rejects_conflicting_shortcuts() {
+    use martensite_tkmath::gp::{Axis1, Transform3, TransformForm, UnitPlacementError, Vector3};
+    let axis = Axis1::new(Point3::default(), Direction3::Z);
+    let rotation = Transform3::rotation(axis, 0.3).unwrap();
+    let translation = Transform3::translation_vector(Vector3::new(1., -0., 2.));
+    for transform in [Transform3::default(), rotation, translation] {
+        let actual = transform.checked_unit_placement_rows().unwrap();
+        for (row, entries) in actual.iter().enumerate() {
+            for (column, value) in entries.iter().enumerate() {
+                let stored = transform.value(row as i32 + 1, column as i32 + 1).unwrap();
+                assert_eq!(value.to_bits(), stored.to_bits());
+            }
+        }
+    }
+    for form in [
+        TransformForm::Identity,
+        TransformForm::Translation,
+        TransformForm::Scale,
+        TransformForm::PointMirror,
+    ] {
+        let mut forged = rotation;
+        forged.set_form(form);
+        assert_eq!(
+            forged.checked_unit_placement_rows(),
+            Err(UnitPlacementError::Shortcut(form))
+        );
+    }
+    let mut forged = translation;
+    forged.set_form(TransformForm::Identity);
+    assert_eq!(
+        forged.checked_unit_placement_rows(),
+        Err(UnitPlacementError::Shortcut(TransformForm::Identity))
+    );
 }
