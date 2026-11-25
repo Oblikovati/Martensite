@@ -3,7 +3,7 @@ use super::*;
 use martensite_tkgeombase::gprop::GProps;
 use martensite_tktopalgo::brep_gprop::{BRepGProp, VolumeGKFlags};
 
-const REVISION: SupportRevision = SupportRevision(7);
+pub(super) const REVISION: SupportRevision = SupportRevision(7);
 
 #[test]
 fn cylinder_band_boss_publishes_a_single_solid_with_composed_history() {
@@ -120,7 +120,7 @@ fn indirect_cylinder_from_planar_circle_admits_wrapped_boss_and_pocket() {
     }
 }
 
-fn indirect_extruded_circle() -> CylinderFaceAttachment {
+pub(super) fn indirect_extruded_circle() -> CylinderFaceAttachment {
     use martensite_tkbo::profile_extrusion::{
         ExtrudeOptions, ProfileCurve, ProfileCurveId, ProfilePlane, SketchProfile,
         build_planar_regions, extrude,
@@ -186,7 +186,7 @@ fn measured_feature(
     result
 }
 
-fn volume(shape: &Shape) -> f64 {
+pub(super) fn volume(shape: &Shape) -> f64 {
     let mut props = GProps::default();
     let estimate =
         BRepGProp::volume_properties_gk(shape, &mut props, 1e-8, true, VolumeGKFlags::default())

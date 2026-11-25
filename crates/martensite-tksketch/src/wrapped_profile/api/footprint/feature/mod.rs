@@ -28,6 +28,8 @@ pub use history::{
 };
 
 #[cfg(test)]
+mod cylinder_recut;
+#[cfg(test)]
 mod tests;
 
 /// Requested material change on the selected face.
