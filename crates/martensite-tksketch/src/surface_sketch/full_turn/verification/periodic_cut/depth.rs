@@ -3,12 +3,14 @@
 use super::*;
 use martensite_tkbrep::brep::EdgePCurve;
 
+mod boundary;
+use boundary::DirectedWires;
+
 pub(super) fn check(proof: &Verification<'_>, depth: PeriodicDepth) -> Checked<()> {
     let face = proof.retained(
         HistorySource::Region(proof.band.region),
         primitive::face_role(depth.index()),
     )?;
-    walls::one_wire(face)?;
     let face = topods::face(face).map_err(|e| native("periodic depth face", e))?;
     let surface = BRepAdaptorSurface::with_face(&face, true)
         .map_err(|e| native("periodic depth carrier", e))?;
@@ -21,7 +23,7 @@ pub(super) fn check(proof: &Verification<'_>, depth: PeriodicDepth) -> Checked<(
     let carrier = carrier_type(stock.cylinder, index);
     require_surface(&surface, carrier)?;
     verify_carrier(stock, &surface, carrier, index)?;
-    let uses = directed_edges(&face, proof.prepared.holes.len())?;
+    let uses = DirectedWires::read(&face, &ExpectedTopology::new(proof.prepared))?;
     let row = DepthFace {
         proof,
         depth,
@@ -37,7 +39,7 @@ struct DepthFace<'a, 'b> {
     depth: PeriodicDepth,
     face: topods::Face,
     surface: BRepAdaptorSurface,
-    uses: Vec<topods::Edge>,
+    uses: DirectedWires,
 }
 
 impl DepthFace<'_, '_> {
@@ -51,8 +53,13 @@ impl DepthFace<'_, '_> {
     }
 
     fn check_aperture(&self, hole: &ApprovedHole, lower_direction: bool) -> Checked<()> {
-        self.aperture_pieces(hole, 0, !lower_direction)?;
-        self.aperture_pieces(hole, 1, lower_direction)?;
+        let Some(crossings) = &hole.crossings else {
+            return self.check_clear_wire(hole, lower_direction);
+        };
+        for (rim, direction) in [!lower_direction, lower_direction].into_iter().enumerate() {
+            let id = crossings.roots[rim].id;
+            self.aperture_pieces(hole, id, rim, direction, crossings.angular_spans)?;
+        }
         let right = self.vertical(hole, 1)?;
         let left = self.vertical(hole, 3)?;
         if right == left {
@@ -62,6 +69,23 @@ impl DepthFace<'_, '_> {
             ));
         }
         Ok(())
+    }
+
+    fn check_clear_wire(&self, hole: &ApprovedHole, lower_direction: bool) -> Checked<()> {
+        let [a, b, c, d] = hole.source.boundaries.map(|id| {
+            self.proof.retained(
+                HistorySource::Curve(id),
+                primitive::edge_role(self.depth.index()),
+            )
+        });
+        let edges = self.uses.clear_wire([a?, b?, c?, d?])?;
+        trim::verify_aperture_loop(
+            self.stock(),
+            &self.face,
+            &self.surface,
+            lower_direction,
+            &edges,
+        )
     }
 
     fn rims(&self) -> Checked<bool> {
@@ -108,8 +132,14 @@ impl DepthFace<'_, '_> {
         Ok(())
     }
 
-    fn aperture_pieces(&self, hole: &ApprovedHole, rim: usize, direction: bool) -> Checked<()> {
-        let id = hole.crossings[rim].id;
+    fn aperture_pieces(
+        &self,
+        hole: &ApprovedHole,
+        id: PeriodicCrossingId,
+        rim: usize,
+        direction: bool,
+        spans: [[f64; 2]; 2],
+    ) -> Checked<()> {
         let meridian = hole.source.meridian[rim];
         let crossing = PeriodicImageKey::CrossingVertex {
             depth: self.depth,
@@ -127,7 +157,14 @@ impl DepthFace<'_, '_> {
         let pieces = self.proof.piece_keys(id, self.depth);
         let increasing = id.transition == SheetTransition::Increasing;
         for (key, negative) in pieces.into_iter().zip([increasing, !increasing]) {
-            self.aperture_piece(hole, key, rim, negative, direction)?;
+            self.aperture_piece(
+                hole,
+                key,
+                rim,
+                negative,
+                direction,
+                spans[usize::from(!negative)],
+            )?;
         }
         Ok(())
     }
@@ -139,9 +176,10 @@ impl DepthFace<'_, '_> {
         rim: usize,
         negative: bool,
         direction: bool,
+        span: [f64; 2],
     ) -> Checked<()> {
         let [edge] = self.coedges(self.proof.resolve(key)?)?;
-        self.aperture_circle(hole, &edge, rim, negative)?;
+        self.aperture_circle(hole, &edge, rim, span)?;
         let trim = self.pcurve(&edge)?;
         if trim::increasing(&edge, &trim, 0)? != direction {
             return Err(incomplete(
@@ -158,7 +196,7 @@ impl DepthFace<'_, '_> {
         hole: &ApprovedHole,
         edge: &topods::Edge,
         rim: usize,
-        negative: bool,
+        span: [f64; 2],
     ) -> Checked<()> {
         let curve =
             BRepAdaptorCurve::with_edge(edge).map_err(|e| native("split aperture arc", e))?;
@@ -168,7 +206,6 @@ impl DepthFace<'_, '_> {
             .map_err(|e| native("split aperture circle", e))?;
         axis_direction(self.stock(), circle.axis())?;
         let [radius, axial] = hole.admitted.meridian(self.depth, rim);
-        let azimuth = hole.source.lift[usize::from(!negative)] / hole.admitted.lift_scale();
         close(
             circle.radius(),
             radius,
@@ -181,12 +218,15 @@ impl DepthFace<'_, '_> {
             tolerance(self.stock()),
             "split arc centre",
         )?;
-        close(
-            curve_span(&curve)?,
-            azimuth.abs(),
-            angular(self.stock()),
-            "original split arc interval",
-        )
+        let actual = curve_span(&curve)?;
+        let bound = angular(self.stock());
+        if actual < span[0] - bound || actual > span[1] + bound {
+            return Err(incomplete(
+                "original split arc interval",
+                format!("{actual} outside {span:?}"),
+            ));
+        }
+        Ok(())
     }
 
     fn vertical(&self, hole: &ApprovedHole, curve: usize) -> Checked<bool> {
@@ -233,7 +273,7 @@ impl DepthFace<'_, '_> {
     fn coedges<const N: usize>(&self, shape: &topods::Shape) -> Checked<[topods::Edge; N]> {
         let occurrences = self
             .uses
-            .iter()
+            .edges()
             .filter(|edge| shape.is_same(edge))
             .cloned()
             .collect::<Vec<_>>();
@@ -260,25 +300,4 @@ impl DepthFace<'_, '_> {
     fn stock(&self) -> &BandSection {
         &self.proof.prepared.stock
     }
-}
-
-fn directed_edges(face: &topods::Face, apertures: usize) -> Checked<Vec<topods::Edge>> {
-    let mut explorer = Explorer::new(face, ShapeEnum::Edge, ShapeEnum::Shape)
-        .map_err(|e| native("seam-cut face coedges", e))?;
-    let mut found = Vec::new();
-    while explorer.more() {
-        found
-            .push(topods::edge(explorer.current()).map_err(|e| native("seam-cut face coedge", e))?);
-        explorer
-            .next()
-            .map_err(|e| native("next seam-cut coedge", e))?;
-    }
-    let expected = 4 + 8 * apertures;
-    if found.len() != expected {
-        return Err(incomplete(
-            "complete seam-cut aperture boundary",
-            format!("{} directed uses, expected {expected}", found.len()),
-        ));
-    }
-    Ok(found)
 }

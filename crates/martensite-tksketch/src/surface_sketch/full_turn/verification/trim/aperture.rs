@@ -90,11 +90,26 @@ pub(super) fn verify_wire(
 ) -> Checked<()> {
     let outer =
         BRepTool::curve_on_face(stock_lower, face).map_err(|e| native("stock rim winding", e))?;
+    verify_aperture_loop(
+        section,
+        face,
+        surface,
+        increasing(stock_lower, &outer, 0)?,
+        hole,
+    )
+}
+
+pub(in crate::surface_sketch::full_turn::verification) fn verify_aperture_loop(
+    section: &BandSection,
+    face: &topods::Face,
+    surface: &BRepAdaptorSurface,
+    winding: bool,
+    hole: &[topods::Edge; 4],
+) -> Checked<()> {
     let mut directions = [false; 4];
     for (index, edge) in hole.iter().enumerate() {
         directions[index] = verify_aperture_edge(section, face, surface, edge, index)?;
     }
-    let winding = increasing(stock_lower, &outer, 0)?;
     if directions[0] == winding || directions[0] == directions[2] || directions[1] == directions[3]
     {
         return Err(incomplete(

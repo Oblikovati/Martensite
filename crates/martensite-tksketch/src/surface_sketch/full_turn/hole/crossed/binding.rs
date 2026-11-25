@@ -81,7 +81,10 @@ impl SplitInputs<'_> {
     ) -> Checked<BTreeMap<PeriodicCrossingId, topods::Shape>> {
         let mut roots = BTreeMap::new();
         for (hole, raw) in self.plan.holes.iter().zip(&self.native.holes) {
-            for crossing in hole.crossings {
+            let Some(crossings) = &hole.crossings else {
+                continue;
+            };
+            for crossing in crossings.roots {
                 let root =
                     self.bind_crossing(depth, direct, output, &hole.source, raw, crossing.id)?;
                 roots.insert(crossing.id, root);
@@ -144,10 +147,7 @@ impl SplitInputs<'_> {
         roots: &BTreeMap<PeriodicCrossingId, topods::Shape>,
         key: HistoryKey,
     ) -> Checked<()> {
-        let native = self
-            .native
-            .proposal
-            .split_edges_count(parent, key, self.plan.rails.len())?;
+        let native = self.seam_images(parent, key)?;
         for rail in &self.plan.rails {
             let [first, last] = rail.ends.map(|end| seam_vertex(direct, roots, depth, end));
             let segment = oriented_edge(&native, first?, last?)?;
@@ -161,6 +161,14 @@ impl SplitInputs<'_> {
             ));
         }
         Ok(())
+    }
+    fn seam_images(&self, parent: &topods::Shape, key: HistoryKey) -> Checked<Vec<topods::Shape>> {
+        let count = self.plan.rails.len();
+        if count == 1 {
+            let (_, image) = self.native.proposal.image(key, parent)?;
+            return Ok(vec![image]);
+        }
+        self.native.proposal.split_edges_count(parent, key, count)
     }
 }
 
@@ -179,10 +187,12 @@ fn retain_aperture(
 
 fn split_hole(hole: &ApprovedHole, key: HistoryKey) -> bool {
     is_depth_edge(key.role)
-        && hole
-            .crossings
-            .iter()
-            .any(|crossing| key.source == HistorySource::Curve(crossing.id.curve))
+        && hole.crossings.as_ref().is_some_and(|crossings| {
+            crossings
+                .roots
+                .iter()
+                .any(|crossing| key.source == HistorySource::Curve(crossing.id.curve))
+        })
 }
 
 fn aperture_ends<'a>(

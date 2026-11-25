@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Prove disjoint axial apertures and name the complement of their seam crossings.
 use super::*;
+use placement::{CutLattice, SeamCrossings};
 use std::collections::BTreeSet;
 
 pub(in crate::surface_sketch::full_turn) struct CrossedPlan {
@@ -14,7 +15,7 @@ pub(in crate::surface_sketch::full_turn) struct CrossedPlan {
 pub(in crate::surface_sketch::full_turn) struct ApprovedHole {
     pub source: tool::Contour,
     pub admitted: tool::ApertureOperand,
-    pub crossings: [PeriodicCrossing; 2],
+    pub crossings: Option<SeamCrossings>,
 }
 
 pub(in crate::surface_sketch::full_turn) struct SeamRail {
@@ -34,6 +35,7 @@ impl CrossedPlan {
         mut sources: Vec<tool::Contour>,
         depths: [f64; 2],
         options: NormalExtrusionOptions,
+        scope: SeamScope,
     ) -> Checked<Self> {
         let (bounds, field) = match band.support {
             FullTurnSupport::Cylinder { axial, .. } => (axial, "aperture axial separation"),
@@ -45,12 +47,13 @@ impl CrossedPlan {
         // Native operand order follows the authored IDs, independent of the caller's list.
         sources.sort_unstable_by_key(|hole| hole.boundaries);
         distinct_contours(&sources)?;
+        let stock = band_admission::admit(band, depths, options)?;
+        let lattice = CutLattice::new(band.support, options)?;
         let holes = sources
             .into_iter()
-            .map(|source| approve(&band, source, depths, options))
+            .map(|source| approve(&band, source, depths, options, &lattice, scope))
             .collect::<Checked<Vec<_>>>()?;
         let rails = approve_complement(band.rims, bounds, &holes, options, field)?;
-        let stock = band_admission::admit(band, depths, options)?;
         Ok(Self {
             band,
             stock,
@@ -84,7 +87,11 @@ impl CrossedPlan {
     }
 
     pub(in crate::surface_sketch::full_turn) fn crossing_count(&self) -> usize {
-        self.holes.len() * 2
+        self.holes
+            .iter()
+            .filter(|hole| hole.crossings.is_some())
+            .count()
+            * 2
     }
 }
 
@@ -93,9 +100,14 @@ fn approve(
     source: tool::Contour,
     depths: [f64; 2],
     options: NormalExtrusionOptions,
+    lattice: &CutLattice,
+    scope: SeamScope,
 ) -> Checked<ApprovedHole> {
+    let crossings = lattice.classify(source)?;
+    if scope == SeamScope::CrossingsOnly && crossings.is_none() {
+        return Err(placement::crossing_clearance(source.lift[0]));
+    }
     let admitted = tool::ApertureOperand::admit(band, source, depths, options)?;
-    let crossings = names::crossings(&source)?;
     Ok(ApprovedHole {
         source,
         admitted,
@@ -136,19 +148,36 @@ fn approve_complement(
 ) -> Checked<Vec<SeamRail>> {
     let mut by_meridian = holes.iter().collect::<Vec<_>>();
     by_meridian.sort_unstable_by(|a, b| a.source.meridian[0].total_cmp(&b.source.meridian[0]));
+    check_separation(&by_meridian, bounds[0], options, field)?;
     let mut rails = Vec::with_capacity(holes.len() + 1);
     let mut front = (PeriodicSeamEnd::Rim(rims[0]), bounds[0]);
-    let minimum = effective_limits(options).linear_separation / 2.;
     for hole in by_meridian {
-        let [lower, upper] = hole.crossings;
-        let [start, last] = hole.source.meridian;
-        cylinder_admission::separated(field, start - front.1, minimum)?;
-        let endpoint = (PeriodicSeamEnd::Crossing(lower.id), start);
-        rails.push(rail(front, endpoint));
+        let Some(crossings) = &hole.crossings else {
+            continue;
+        };
+        let [lower, upper] = crossings.roots;
+        let [first, last] = hole.source.meridian;
+        rails.push(rail(front, (PeriodicSeamEnd::Crossing(lower.id), first)));
         front = (PeriodicSeamEnd::Crossing(upper.id), last);
     }
     rails.push(rail(front, (PeriodicSeamEnd::Rim(rims[1]), bounds[1])));
     Ok(rails)
+}
+
+fn check_separation(
+    holes: &[&ApprovedHole],
+    first: f64,
+    options: NormalExtrusionOptions,
+    field: &'static str,
+) -> Checked<()> {
+    let minimum = effective_limits(options).linear_separation / 2.;
+    let mut front = first;
+    for hole in holes {
+        let [start, end] = hole.source.meridian;
+        cylinder_admission::separated(field, (start - front).next_down(), minimum)?;
+        front = end;
+    }
+    Ok(())
 }
 
 fn rail((a, z0): (PeriodicSeamEnd, f64), (b, z1): (PeriodicSeamEnd, f64)) -> SeamRail {

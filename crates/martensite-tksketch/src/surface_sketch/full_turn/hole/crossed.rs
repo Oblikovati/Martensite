@@ -4,6 +4,7 @@ use super::*;
 
 mod binding;
 mod names;
+mod placement;
 mod plan;
 mod tool;
 pub use names::*;
@@ -24,7 +25,7 @@ impl CrossedBandResult {
         &self.geometry
     }
 
-    /// Lower and upper crossings per aperture, ordered by authored contour IDs.
+    /// Lower and upper crossings per crossed aperture, ordered by authored contour IDs.
     /// Example: `result.crossings()[0].normalized_parameter`.
     pub fn crossings(&self) -> &[PeriodicCrossing] {
         &self.crossings
@@ -33,7 +34,7 @@ impl CrossedBandResult {
 
 /// Extrude one cylindrical band with a rectangular aperture across its actual native seam.
 ///
-/// The aperture must cross the occupied chart's zero-arc meridian transversely.
+/// The aperture must cross one lift of the authored meridian transversely.
 /// The native seam is kept at the authored datum. All split pieces receive
 /// stable source intervals and the generated vertices retain their signed
 /// crossing identities.
@@ -44,19 +45,21 @@ pub fn normal_extrude_cylinder_band_at_authored_seam(
     depths: [f64; 2],
     options: NormalExtrusionOptions,
 ) -> Result<CrossedBandResult, SurfaceSketchFailure> {
-    normal_extrude_cylinder_band_holes_at_authored_seam(
+    cylinder(band.support).map_err(|cause| failure_in_admission(band, cause))?;
+    extrude(
         band,
-        std::slice::from_ref(hole),
+        vec![Contour::from(*hole)],
         depths,
         options,
+        SeamScope::CrossingsOnly,
     )
 }
 
 /// Extrude a cylindrical band with axially separated rectangular through apertures.
 ///
-/// Each contour must cross the native cut at the authored zero arc
-/// transversely. Apertures may cover the entire angular period in
-/// projection: separation is proved on the axial coordinate.
+/// Contours can be clear of the authored meridian or cross it transversely.
+/// Apertures may cover the entire angular period in projection
+/// because separation is proved on the axial coordinate.
 /// Example: `let result = normal_extrude_cylinder_band_holes_at_authored_seam(&band, &holes, [-1.0, 2.0], options)?;`.
 pub fn normal_extrude_cylinder_band_holes_at_authored_seam(
     band: &FullTurnBand,
@@ -70,11 +73,12 @@ pub fn normal_extrude_cylinder_band_holes_at_authored_seam(
         holes.iter().copied().map(Contour::from).collect(),
         depths,
         options,
+        SeamScope::AllowClear,
     )
 }
 
 /// Extrude a full conical band with one aperture crossing the authored seam.
-/// The aperture must cross the zero developed angle transversely.
+/// The aperture must cross one lift of the authored meridian transversely.
 /// Example: `let result = normal_extrude_cone_band_at_authored_seam(&band, &hole, [-0.25, 0.5], options)?;`.
 pub fn normal_extrude_cone_band_at_authored_seam(
     band: &FullTurnBand,
@@ -82,16 +86,18 @@ pub fn normal_extrude_cone_band_at_authored_seam(
     depths: [f64; 2],
     options: NormalExtrusionOptions,
 ) -> Result<CrossedBandResult, SurfaceSketchFailure> {
-    normal_extrude_cone_band_holes_at_authored_seam(
+    require_cone(band)?;
+    extrude(
         band,
-        std::slice::from_ref(hole),
+        vec![Contour::from(*hole)],
         depths,
         options,
+        SeamScope::CrossingsOnly,
     )
 }
 
-/// Extrude a conical band with slant-separated apertures crossing its native seam.
-/// Apertures may cover the angular period in projection if their slant intervals are disjoint.
+/// Extrude a conical band with slant-separated apertures using its authored cut.
+/// Contours may clear or cross the cut. They can cover the angular period in projection.
 /// Example: `let result = normal_extrude_cone_band_holes_at_authored_seam(&band, &holes, [-0.25, 0.5], options)?;`.
 pub fn normal_extrude_cone_band_holes_at_authored_seam(
     band: &FullTurnBand,
@@ -99,6 +105,17 @@ pub fn normal_extrude_cone_band_holes_at_authored_seam(
     depths: [f64; 2],
     options: NormalExtrusionOptions,
 ) -> Result<CrossedBandResult, SurfaceSketchFailure> {
+    require_cone(band)?;
+    extrude(
+        band,
+        holes.iter().copied().map(Contour::from).collect(),
+        depths,
+        options,
+        SeamScope::AllowClear,
+    )
+}
+
+fn require_cone(band: &FullTurnBand) -> Result<(), SurfaceSketchFailure> {
     if let FullTurnSupport::Cylinder { support, .. } = band.support {
         let cause = SurfaceFailureCause::InvalidInput {
             field: "cylinder radius",
@@ -107,12 +124,13 @@ pub fn normal_extrude_cone_band_holes_at_authored_seam(
         };
         return Err(failure_in_admission(band, cause));
     }
-    extrude(
-        band,
-        holes.iter().copied().map(Contour::from).collect(),
-        depths,
-        options,
-    )
+    Ok(())
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum SeamScope {
+    CrossingsOnly,
+    AllowClear,
 }
 
 fn failure_in_admission(band: &FullTurnBand, cause: SurfaceFailureCause) -> SurfaceSketchFailure {
@@ -128,8 +146,9 @@ fn extrude(
     holes: Vec<Contour>,
     depths: [f64; 2],
     options: NormalExtrusionOptions,
+    scope: SeamScope,
 ) -> Result<CrossedBandResult, SurfaceSketchFailure> {
-    let mut prepared = CrossedPlan::admit(*band, holes, depths, options)
+    let mut prepared = CrossedPlan::admit(*band, holes, depths, options, scope)
         .map_err(|cause| failure_in_admission(band, cause))?;
     let cut = prepared.subtract()?;
     let (body, bindings) = binding::bind(&prepared, cut)
@@ -139,7 +158,8 @@ fn extrude(
     let crossings = prepared
         .holes
         .iter()
-        .flat_map(|hole| hole.crossings)
+        .filter_map(|hole| hole.crossings.as_ref())
+        .flat_map(|crossing| crossing.roots)
         .collect();
     Ok(CrossedBandResult {
         geometry,

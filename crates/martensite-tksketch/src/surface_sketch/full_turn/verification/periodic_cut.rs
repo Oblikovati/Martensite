@@ -17,21 +17,20 @@ pub(in crate::surface_sketch::full_turn) fn validate_crossed(
     body: &topods::Shape,
     bindings: &[Image],
 ) -> Checked<validation::CheckedBody> {
-    let count = prepared.holes.len();
-    let cylinder = prepared.stock.cylinder;
-    unique_rooted_images(body, bindings, count, cylinder)?;
+    let topology = ExpectedTopology::new(prepared);
+    unique_rooted_images(body, bindings, &topology)?;
     let proof = Verification::new(prepared, bindings);
     proof.check()?;
     let sweep = &prepared.stock.sweep;
     let report = validation::ordered_report(body, sweep)?;
-    check_census(&report, count, cylinder)?;
+    check_census(&report, &topology)?;
     validation::finish(report, bindings, sweep)
 }
 
-fn check_census(report: &ValidationReport, count: usize, cylinder: bool) -> Checked<()> {
-    let genus = i64::try_from(count + 1)
+fn check_census(report: &ValidationReport, topology: &ExpectedTopology) -> Checked<()> {
+    let genus = i64::try_from(topology.clear + topology.crossed + 1)
         .map_err(|e| incomplete("representable periodic aperture genus", e.to_string()))?;
-    let loops = 4 + 2 * usize::from(cylinder) + 4 * count;
+    let loops = topology.loops();
     if matches!(report.census.as_slice(), [census] if census.shells == 1 && census.loops == loops && census.genus == Some(genus))
     {
         return Ok(());
@@ -40,6 +39,39 @@ fn check_census(report: &ValidationReport, count: usize, cylinder: bool) -> Chec
         "one shell with one handle per aperture and one for the band",
         format!("{:?}", report.census),
     ))
+}
+
+struct ExpectedTopology {
+    clear: usize,
+    crossed: usize,
+    cylinder: bool,
+}
+
+impl ExpectedTopology {
+    fn new(plan: &CrossedPlan) -> Self {
+        let crossed = plan.crossing_count() / 2;
+        Self {
+            clear: plan.holes.len() - crossed,
+            crossed,
+            cylinder: plan.stock.cylinder,
+        }
+    }
+
+    fn loops(&self) -> usize {
+        4 + 2 * usize::from(self.cylinder) + 6 * self.clear + 4 * self.crossed
+    }
+
+    fn members(&self) -> [(ShapeEnum, usize); 4] {
+        [
+            (ShapeEnum::Solid, 1),
+            (ShapeEnum::Face, 4 + 4 * (self.clear + self.crossed)),
+            (
+                ShapeEnum::Edge,
+                6 + 2 * usize::from(!self.cylinder) + 12 * self.clear + 18 * self.crossed,
+            ),
+            (ShapeEnum::Vertex, 4 + 8 * self.clear + 12 * self.crossed),
+        ]
+    }
 }
 
 struct Verification<'a> {
@@ -101,7 +133,11 @@ impl<'a> Verification<'a> {
         depth: PeriodicDepth,
     ) -> Checked<Vec<&topods::Shape>> {
         let curve = hole.source.boundaries[index];
-        let Some(crossing) = hole.crossings.iter().find(|item| item.id.curve == curve) else {
+        let Some(crossing) = hole
+            .crossings
+            .as_ref()
+            .and_then(|cuts| cuts.roots.iter().find(|item| item.id.curve == curve))
+        else {
             return Ok(vec![self.retained(
                 HistorySource::Curve(curve),
                 primitive::edge_role(depth.index()),
@@ -142,8 +178,7 @@ impl<'a> Verification<'a> {
 fn unique_rooted_images(
     body: &topods::Shape,
     bindings: &[Image],
-    count: usize,
-    cylinder: bool,
+    topology: &ExpectedTopology,
 ) -> Checked<()> {
     if bindings.windows(2).any(|pair| pair[0].0 >= pair[1].0) {
         return Err(incomplete(
@@ -151,12 +186,7 @@ fn unique_rooted_images(
             "duplicate or unsorted key",
         ));
     }
-    for (kind, count) in [
-        (ShapeEnum::Solid, 1),
-        (ShapeEnum::Face, 4 + 4 * count),
-        (ShapeEnum::Edge, 6 + 2 * usize::from(!cylinder) + 18 * count),
-        (ShapeEnum::Vertex, 4 + 12 * count),
-    ] {
+    for (kind, count) in topology.members() {
         unique_kind(body, bindings, kind, count)?;
     }
     Ok(())
