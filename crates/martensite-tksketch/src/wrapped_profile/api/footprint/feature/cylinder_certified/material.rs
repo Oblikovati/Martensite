@@ -2,7 +2,7 @@
 use super::*;
 use crate::surface_sketch::attachment::DetachedCylinderSupport;
 use crate::surface_sketch::wrapped_profile::{
-    BindingKey, CurveSpan, Source,
+    BindingKey, Constructed, CurveSpan, Source,
     api::{export_bindings, history_projection},
     history as source_history, native, planar_clearance, planar_cones, storage,
 };
@@ -219,22 +219,35 @@ fn build_members(
     };
     let mut ordered: Vec<_> = originals.iter().zip(prepared).collect();
     ordered.sort_by_key(|(source, _)| source.region);
-    for (original, request) in ordered {
-        working.add(attempt, original, request, cancelled)?;
+    let members = work::ordered(
+        attempt,
+        TOOL,
+        &ordered,
+        cancelled,
+        |&(original, request), poll| QualifiedMember::build(attempt, original, request, poll),
+    )?;
+    // Only the coordinator mutates the compound and commits proof/history order.
+    for member in members {
+        working.add(attempt, member)?;
     }
     working.bindings.sort_by_key(|(key, _)| *key);
     Ok(working)
 }
 
-impl Working {
-    fn add(
-        &mut self,
+struct QualifiedMember {
+    region: SurfaceRegionId,
+    native: Constructed,
+    stored: Vec<storage::StoredProof>,
+    cones: planar_cones::ConeEvidence,
+}
+
+impl QualifiedMember {
+    fn build(
         attempt: Attempt,
         original: &Request,
         request: &Request,
         cancelled: &mut CancelPoll<'_>,
-    ) -> Checked<()> {
-        attempt.poll(cancelled, TOOL)?;
+    ) -> Checked<Self> {
         require(
             attempt,
             TOOL,
@@ -242,11 +255,6 @@ impl Working {
             "matching canonical region order",
         )?;
         let member = attempt.native(TOOL, "source cylinder member", native::construct(request))?;
-        attempt.native(
-            TOOL,
-            "place source member in operation-local compound",
-            Builder.add(&mut self.root, &member.solid),
-        )?;
         let receipts =
             certify_cancellable(attempt, TOOL, "source member storage", cancelled, |poll| {
                 storage::certify_with_cancel(original, request, &member.bindings, poll)
@@ -264,14 +272,30 @@ impl Working {
             "bind authored and cap projections",
             planar_cones::bind(original, request, &receipts, &cones),
         )?;
-        self.add_cones(attempt, cones)?;
+        Ok(Self {
+            region: request.region,
+            native: member,
+            stored: receipts,
+            cones,
+        })
+    }
+}
+
+impl Working {
+    fn add(&mut self, attempt: Attempt, member: QualifiedMember) -> Checked<()> {
+        attempt.native(
+            TOOL,
+            "place source member in operation-local compound",
+            Builder.add(&mut self.root, &member.native.solid),
+        )?;
+        self.add_cones(attempt, member.cones)?;
         require(
             attempt,
             TOOL,
-            self.stored.insert(request.region, receipts).is_none(),
+            self.stored.insert(member.region, member.stored).is_none(),
             "one member for each selected region",
         )?;
-        self.bindings.extend(member.bindings);
+        self.bindings.extend(member.native.bindings);
         Ok(())
     }
 
