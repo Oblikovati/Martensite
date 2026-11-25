@@ -258,3 +258,26 @@ Rust `1.98.1` passed 4,564 affected tests and strict Clippy, with three opt-in
 tests skipped. All 17 mirror tests passed under pinned ThreadSanitizer. Two
 processes produced identical replay receipts with SHA-256
 `26710dc5856beb240319b1520e9b5cb14258a9dc6a4753e6d6cd40f0c1b9606c`.
+
+## E30. Ruled solid loft from two line sections
+
+`loft_ruled_pair` takes two closed planar line recipes with distinct caller section
+IDs. The directed first occurrence anchors the correspondence. The input proof
+requires a positive uniform scale between the ordered points in parallel planes.
+The two planes must be distinct. The native ruled builder retains these section
+uses, with cap, side and rail images tied back to both input recipes.
+
+The result checks the solid in the required four stages. It encloses volume by
+integrating the retained planar and bilinear trims and exports a detached shape
+with its history. The independent slanted and scaled control has volume 28. An
+upstream section edit changes the E10 control from volume 12 to 20. A raw pair
+with a degenerate edge or conflicting traversal order is refused before the
+native ruled history walk.
+
+The original retained-output revision `279bf0e5` measured 116.939 ms p95 across
+256 warmed operation-and-detachment samples on a loaded Linux host. Peak RSS
+was 26,060 KiB. Thirty fresh processes measured 241.011 ms p95 for the first
+kernel operation. The final input-guard revision passed all 145 legacy TKOffset
+tests and strict Clippy. Rust `1.98.1` combined verification also passed the
+seven Loft, ten prism, two direct adapter and one homothety tests. Desktop
+rebuild and presentation require their own timings.

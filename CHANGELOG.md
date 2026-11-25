@@ -30,6 +30,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added ordinary extrusion from certified coplanar Sketch3D line wires with detached history and volume bounded on the retained native trims (#611).
 
+- Added ruled solid lofts between corresponding closed Sketch3D line sections, with detached native history and certified volume on retained trims (#611).
+
 - Added directed axis and plane parallelism, perpendicularity, equal length and driving angles for spatial lines (#611).
 
 - Added open clamped spatial control cubics with certified regularity and exact binary64-rounded position and derivative evaluation (#611).
