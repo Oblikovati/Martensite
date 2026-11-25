@@ -95,5 +95,8 @@ fn add_residual(first: f64, second: f64) -> Option<(f64, f64)> {
     };
     let sum = big + small;
     // With the larger operand first, FastTwoSum gives the exact discarded bits.
-    sum.is_finite().then(|| (sum, small - (sum - big)))
+    if !sum.is_finite() {
+        return None;
+    }
+    Some((sum, small - (sum - big)))
 }
