@@ -3,12 +3,14 @@
 use super::BRepOffsetAPIThruSections;
 use martensite_tkbool::brep_fill::{BRepFillGenerator, ThruSectionErrorStatus};
 use martensite_tkbrep::{
-    topexp::map_shapes_of_type,
-    topods::{self, Face, Shape, Solid, Wire},
+    brep::BRepTool,
+    brep_tools::WireExplorer,
+    topexp::{map_shapes_of_type, vertices},
+    topods::{self, Edge, Face, Shape, ShapeIterator, Solid, Wire},
     toptools::IndexedMapOfShape,
 };
 use martensite_tkernel::standard::Failure;
-use martensite_tkg3d::top_abs::ShapeEnum;
+use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
 use std::{error::Error, fmt};
 
@@ -22,6 +24,22 @@ pub enum CorrespondingRuledPairFailure {
     OpenSection(usize),
     /// The two input closed wires must have the same positive edge count.
     IncompatibleEdgeCount([usize; 2]),
+    /// A degenerate edge cannot drive the corresponding ruled builder.
+    DegenerateSectionEdge {
+        /// Zero-based source section index.
+        section: usize,
+        /// Zero-based occurrence in the input wire.
+        edge: usize,
+    },
+    /// A section does not supply one complete directed native cycle in input order.
+    SectionOrder(usize),
+    /// An occurrence does not have a finite increasing 3D trim.
+    InvalidSectionTrim {
+        /// Zero-based source section index.
+        section: usize,
+        /// Zero-based occurrence in the input wire.
+        edge: usize,
+    },
     /// The ordinary native builder did not complete.
     Incomplete(ThruSectionErrorStatus),
     /// The indicated section lacks a cap or a unique copied member.
@@ -46,6 +64,18 @@ impl fmt::Display for CorrespondingRuledPairFailure {
             Self::IncompatibleEdgeCount(counts) => write!(
                 f,
                 "ruled pair edge counts {counts:?} must be positive and equal"
+            ),
+            Self::DegenerateSectionEdge { section, edge } => write!(
+                f,
+                "ruled pair section {section} edge {edge} must be nondegenerate"
+            ),
+            Self::SectionOrder(section) => write!(
+                f,
+                "ruled pair section {section} must supply one complete directed cycle in input order"
+            ),
+            Self::InvalidSectionTrim { section, edge } => write!(
+                f,
+                "ruled pair section {section} edge {edge} requires a finite increasing 3D trim"
             ),
             Self::Incomplete(status) => {
                 write!(f, "the native ruled pair did not complete ({status:?})")
@@ -89,7 +119,8 @@ pub struct CorrespondingRuledPair {
 }
 
 impl BRepOffsetAPIThruSections {
-    /// Build the ordinary ruled solid without rephasing either corresponding closed wire.
+    /// Build the ordinary ruled solid without rephasing either directed closed wire.
+    /// Each supplied section must have nondegenerate finite trimmed edges in cycle order.
     /// The caller keeps the wire models stable during the operation and supplies any
     /// required geometric correspondence and non-intersection proof separately.
     /// Example: `BRepOffsetAPIThruSections::corresponding_ruled_pair([&a, &b], 1e-6)?`.
@@ -131,6 +162,73 @@ fn admit(wires: [&Wire; 2], precision: f64) -> Result<(), CorrespondingRuledPair
     let counts = wires.map(|wire| wire.nb_children() as usize);
     if counts[0] == 0 || counts[0] != counts[1] {
         return Err(Cause::IncompatibleEdgeCount(counts));
+    }
+    for (section, wire) in wires.into_iter().enumerate() {
+        let edges = admitted_edges(wire, section)?;
+        require_cycle(wire, section, &edges)?;
+    }
+    Ok(())
+}
+
+fn admitted_edges(wire: &Wire, section: usize) -> Result<Vec<Edge>, CorrespondingRuledPairFailure> {
+    use CorrespondingRuledPairFailure as Cause;
+    let mut direct = ShapeIterator::new(wire, true, true);
+    let mut edges = Vec::new();
+    while direct.more() {
+        let edge = native(topods::edge(native(direct.value())?))?;
+        if native(BRepTool::degenerated(&edge))? {
+            // The legacy ruled history loop cannot advance when both sides are
+            // punctual. The explicit paired path never passes such occurrences in.
+            return Err(Cause::DegenerateSectionEdge {
+                section,
+                edge: edges.len(),
+            });
+        }
+        edges.push(edge);
+        direct.next();
+    }
+    for (index, edge) in edges.iter().enumerate() {
+        let trim = native(BRepTool::curve_with_location(edge))?;
+        if trim.curve.is_null()
+            || !trim.first.is_finite()
+            || !trim.last.is_finite()
+            || trim.first >= trim.last
+        {
+            return Err(Cause::InvalidSectionTrim {
+                section,
+                edge: index,
+            });
+        }
+    }
+    Ok(edges)
+}
+
+fn require_cycle(
+    wire: &Wire,
+    section: usize,
+    edges: &[Edge],
+) -> Result<(), CorrespondingRuledPairFailure> {
+    let invalid = || CorrespondingRuledPairFailure::SectionOrder(section);
+    let mut reached = IndexedMapOfShape::default();
+    let mut native_order = native(WireExplorer::with_wire(wire))?;
+    for (index, (edge, next)) in edges.iter().zip(edges.iter().cycle().skip(1)).enumerate() {
+        if !matches!(
+            edge.orientation(),
+            Orientation::Forward | Orientation::Reversed
+        ) || reached.add(edge.to_shape()) != index + 1
+            || !native_order.more()
+            || !native_order.current().is_equal(edge)
+        {
+            return Err(invalid());
+        }
+        let (start, end) = vertices(edge, true);
+        if start.is_null() || end.is_null() || !end.is_same(&vertices(next, true).0) {
+            return Err(invalid());
+        }
+        native(native_order.next())?;
+    }
+    if native_order.more() {
+        return Err(invalid());
     }
     Ok(())
 }
@@ -194,3 +292,7 @@ fn members(
 fn native<T>(value: Result<T, Failure>) -> Result<T, CorrespondingRuledPairFailure> {
     value.map_err(|source| CorrespondingRuledPairFailure::Native(Box::new(source)))
 }
+
+#[cfg(test)]
+#[path = "corresponding_pair_tests.rs"]
+mod tests;
