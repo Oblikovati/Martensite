@@ -6,6 +6,15 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.14.1] - 2026-11-25
+
+This is the first published 0.14 release. **BREAKING** public Rust API
+changes and migration notes are listed in the [0.14.0 changelog](https://github.com/Oblikovati/Martensite/blob/v0.14.0/CHANGELOG.md#0140---2026-11-24).
+
+### Fixed
+
+- Corrected Windows OCCT parity test fixtures so the release workflow can validate the 0.14 SDK (#598).
+
 ## [0.14.0] - 2026-11-24
 
 ### Added
