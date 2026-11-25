@@ -9,6 +9,12 @@ use crate::predicates::roots::certificate_arithmetic::{
 };
 use std::f64::consts::FRAC_PI_2;
 
+mod cone;
+pub use cone::{
+    DevelopedConeRay, DevelopedConeRayError, certify_developed_cone_ray,
+    enclose_developed_cone_angle,
+};
+
 const POLICY: ArithmeticPolicy = ArithmeticPolicy {
     fractional_bits: 128,
     max_operations: 10_000,

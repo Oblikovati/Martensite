@@ -29,7 +29,8 @@ pub fn normal_extrude_cylinder_band_with_rational_hole(
 
 /// Cut a rational quadratic aperture through a full conical band and its periodic seam.
 /// Accepts one closed boundary of explicit lines, exact analytic conic quarters, and open, clamped positive-rational quadratics
-/// crossing the zero ray of a positive-X developed chart.
+/// crossing one lift of the zero ray of a positive-X developed chart.
+/// A nonzero lift requires an explicit certified V5 or V6 planar proof.
 /// Example: `let cut = normal_extrude_cone_band_with_rational_hole(&band, &profile, options, 3)?;`.
 pub fn normal_extrude_cone_band_with_rational_hole(
     band: &FullTurnBand,
@@ -45,8 +46,15 @@ pub fn normal_extrude_cone_band_with_rational_hole(
         SourceModel::Rational(options.resolution),
     )
     .map_err(|cause| admission_failure(band, cause))?;
-    let tool = normal_extrude_rational_cone(request, reference_level, || false)
-        .map_err(|cause| rational_failure(&plan, cause))?;
+    let tool = match cone_execution(&plan)? {
+        Some(selection) => {
+            normal_extrude_rational_cone_with_selection(request, reference_level, selection, || {
+                false
+            })
+        }
+        None => normal_extrude_rational_cone(request, reference_level, || false),
+    }
+    .map_err(|cause| rational_failure(&plan, cause))?;
     finish_rational(plan, tool)
 }
 

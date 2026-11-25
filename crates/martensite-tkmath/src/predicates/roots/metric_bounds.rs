@@ -36,7 +36,8 @@ pub use cylindrical_clearance::{
 };
 mod developed_period;
 pub use developed_period::{
-    DevelopedPeriod, DevelopedPeriodError, DevelopedScale, certify_developed_period,
+    DevelopedConeRay, DevelopedConeRayError, DevelopedPeriod, DevelopedPeriodError, DevelopedScale,
+    certify_developed_cone_ray, certify_developed_period, enclose_developed_cone_angle,
 };
 mod cylindrical_measure;
 pub use cylindrical_measure::{
