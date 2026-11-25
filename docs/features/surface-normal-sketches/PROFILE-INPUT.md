@@ -47,6 +47,24 @@ Publication qualification, sanitizer, glyph-scale, conical-profile and
 oblique-frame work remain open. Existing public primitive operations, package versions and release tags
 are unchanged.
 
+## Positive rational reference
+
+The rational normal entries accept one monotone positive-weight Bézier joined
+to straight edges around one outer region. They require symmetric signed
+depths and one angular chart. The cone additionally requires the profile in
+the positive developed halfplane, clear of the apex. The tested cone request
+selects `GeometricCompositeV6` for its UV cap proof. The reference level splits
+the original curve parameter into equal dyadic intervals.
+
+The operation verifies the original planar region and integrates its signed
+boundary for area. It bounds the position and derivative error between the
+rational curve and each cubic reference span. Both curves stay strictly
+inside the straight boundary halfplanes except at shared authored endpoints.
+The normal map then bounds the error in world coordinates. History records the
+original curve and its dyadic parameter intervals. The result includes the
+authored area and sweep-volume enclosures, the retained boundary flux, the
+spatial bound, and the ordered native validation report.
+
 ## Verification
 
 Fifteen input controls cover mixed curves and holes, reversed authored traversal,
