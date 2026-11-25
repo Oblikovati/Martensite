@@ -98,6 +98,7 @@ fn execute(
         max_operations: query.options.max_operations,
     };
     let mut arithmetic = Arithmetic::new(policy, cancelled);
+    let workspace = workspace.filter(|_| ranges == [[0., 1.]; 2]);
     let previous = workspace.as_ref().and_then(|slot| slot.matching(query));
     let (bounds, captured) = trace::residual(query, ranges, previous, &mut arithmetic)?;
     accept_position(bounds[2], query.spatial_limit)?;
