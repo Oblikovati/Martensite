@@ -4,6 +4,7 @@ use super::{
     Checked, PlanarSectionAnchor, PlanarSectionError as Failure, SectionChartSource,
     SectionLineSource, SectionUvLine, SectionVertexSource,
 };
+use crate::gp::Axis3;
 use crate::predicates::roots::{
     certificate_arithmetic::{
         ExactRatio,
@@ -36,7 +37,7 @@ pub(super) struct Hit {
 impl Chart {
     pub fn capture(source: SectionChartSource, index: usize) -> Checked<Self> {
         let placement = ExactPlacement::capture(source.placement)?;
-        let frame = source.plane.position();
+        let frame = admit_frame(source.plane.position(), index)?;
         let origin = placement.point(exact_point(frame.location(), 0)?);
         let axes = [frame.x_direction(), frame.y_direction()];
         let [u, v] = axes.map(|direction| exact_vector(*direction.coordinates(), 1));
@@ -84,6 +85,21 @@ impl Chart {
     pub fn separation(&self, other: &Self) -> Scalar {
         self.dist(&other.origin)
     }
+}
+
+fn admit_frame(frame: Axis3, chart: usize) -> Checked<Axis3> {
+    // The native plane equation and the stored UV chart must agree on the frame.
+    // The established validator preserves all coefficients and accepts either handedness.
+    Axis3::from_stored_coefficients(
+        frame.location(),
+        *frame.direction().coordinates(),
+        *frame.x_direction().coordinates(),
+        *frame.y_direction().coordinates(),
+    )
+    .map_err(|cause| Failure::Frame {
+        chart,
+        cause: Box::new(cause),
+    })
 }
 
 fn minor([u, v]: &[Vector; 2], i: usize, j: usize) -> Scalar {

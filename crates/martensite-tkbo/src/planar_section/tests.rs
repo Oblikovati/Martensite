@@ -6,9 +6,12 @@ use martensite_tkbrep::{
     topods::{self, Edge, Face, Wire},
 };
 use martensite_tkernel::message::{ProgressIndicator, ProgressIndicatorHooks, ProgressScope};
-use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
+use martensite_tkg3d::{
+    geom::GeomPlane,
+    top_abs::{Orientation, ShapeEnum},
+};
 use martensite_tkmath::{
-    gp::{Direction3, Plane3, Point3, Transform3, Vector3},
+    gp::{Axis3, Direction3, Plane3, Point3, Transform3, Vector3},
     toploc::Location,
 };
 use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeBox;
@@ -183,6 +186,58 @@ fn completed_empty_and_degeneracies_keep_separate_typed_states() {
     assert!(
         matches!(point.cause, PlanarSectionCause::PointOnly(SectionEndpointOrigin::Vertex { incoming, outgoing }) if incoming.id != outgoing.id)
     );
+}
+
+fn malformed_axis_plane() -> Plane3 {
+    let mut frame = Axis3::default();
+    let mut position = 1;
+    let invalid_axes = r#""Location": [0, 0, 6], "Direction": [1, 0, 0], "XDirection": [1, 0, 0], "YDirection": [0, 1, 0]"#;
+    assert!(frame.init_from_json(invalid_axes, &mut position).unwrap());
+    Plane3::from_position(frame)
+}
+
+#[test]
+fn inconsistent_stored_support_frame_refuses_before_classifying_empty() {
+    let face = setup();
+    let malformed = malformed_axis_plane();
+    assert_eq!(malformed.axis().direction(), Direction3::X);
+    assert_eq!(malformed.x_axis().direction(), Direction3::X);
+    let tool = NamedSectionPlane {
+        plane: malformed,
+        ..x_zero()
+    };
+    let wrong_tool = cut(&face, tool).unwrap_err();
+    assert!(matches!(
+        wrong_tool.cause,
+        PlanarSectionCause::Certificate(PlanarSectionError::Frame { chart: 1, .. })
+    ));
+
+    let (surface, _) = BRepTool::surface_with_location(&face).unwrap();
+    surface
+        .downcast_ref::<GeomPlane>()
+        .unwrap()
+        .set_pln(malformed);
+    let wrong_face = cut(&face, x_zero()).unwrap_err();
+    assert!(matches!(
+        wrong_face.cause,
+        PlanarSectionCause::Certificate(PlanarSectionError::Frame { chart: 0, .. })
+    ));
+}
+
+#[test]
+fn indirect_stored_tool_retains_its_handed_chart_and_directs_actual_section() {
+    let face = setup();
+    let mut tool = x_zero();
+    tool.plane.u_reverse();
+    assert!(!tool.plane.direct().unwrap());
+    let result = cut(&face, tool).unwrap();
+    let evidence = segment(&result).evidence;
+    assert_eq!(evidence.endpoints, [EXPECTED[1], EXPECTED[0]]);
+    assert_eq!(
+        evidence.parent_uv[1],
+        [[[-5., -5.], [-2., -2.]], [[-5., -5.], [2., 2.]]]
+    );
+    assert_eq!(result.work.native_builds, 1);
 }
 
 #[test]

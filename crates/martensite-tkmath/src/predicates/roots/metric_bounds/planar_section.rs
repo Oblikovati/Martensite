@@ -9,6 +9,7 @@ use crate::{
     predicates::NonFiniteCoordinate,
 };
 use exact::{Chart, Hit};
+use martensite_tkernel::standard::Failure;
 use std::{error::Error, fmt};
 
 /// The first planar section behavior admits at most this many trim edges.
@@ -139,11 +140,18 @@ pub struct PlanarSectionLineEvidence {
 }
 
 /// A numeric or structural obligation that prevented publication.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 #[non_exhaustive]
 pub enum PlanarSectionError {
     /// Nonfinite raw coefficient.
     Coordinate(NonFiniteCoordinate),
+    /// The original support frame failed the stored orthonormal-frame contract.
+    Frame {
+        /// Chart role in operand order, with the trimmed face first.
+        chart: usize,
+        /// Native frame admission failure.
+        cause: Box<Failure>,
+    },
     /// One source chart has dependent placed basis vectors.
     DegenerateChart(usize),
     /// The number of border uses lies outside the finite admitted domain.
@@ -173,6 +181,7 @@ impl fmt::Display for PlanarSectionError {
     fn fmt(&self, output: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Coordinate(cause) => cause.fmt(output),
+            Self::Frame { chart, cause } => write!(output, "source chart {chart}: {cause}"),
             Self::DegenerateChart(index) => write!(
                 output,
                 "chart {index} requires two independent placed directions"
@@ -213,6 +222,7 @@ impl Error for PlanarSectionError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::Coordinate(cause) => Some(cause),
+            Self::Frame { cause, .. } => Some(cause.as_ref()),
             _ => None,
         }
     }
