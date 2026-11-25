@@ -5,7 +5,8 @@ use super::*;
 type Completed = CurvedBandResult<RationalWrappedResult>;
 
 /// Cut a rational quadratic aperture through a full cylindrical band and its periodic seam.
-/// Accepts one closed boundary of explicit lines, exact analytic conic quarters, and open, clamped positive-rational quadratics.
+/// Accepts one closed boundary of explicit lines, exact short analytic conics, and open, clamped positive-rational quadratics.
+/// Analytic arcs require exactly representable stereographic controls.
 /// The reference level controls exact dyadic subdivision of the original curve parameter.
 /// Example: `let cut = normal_extrude_cylinder_band_with_rational_hole(&band, &profile, options, 3)?;`.
 pub fn normal_extrude_cylinder_band_with_rational_hole(
@@ -28,8 +29,9 @@ pub fn normal_extrude_cylinder_band_with_rational_hole(
 }
 
 /// Cut a rational quadratic aperture through a full conical band and its periodic seam.
-/// Accepts one closed boundary of explicit lines, exact analytic conic quarters, and open, clamped positive-rational quadratics
+/// Accepts one closed boundary of explicit lines, exact short analytic conics, and open, clamped positive-rational quadratics
 /// crossing one lift of the zero ray of a positive-X developed chart.
+/// Analytic arcs require exactly representable stereographic controls.
 /// A nonzero lift requires an explicit certified V5 or V6 planar proof.
 /// Example: `let cut = normal_extrude_cone_band_with_rational_hole(&band, &profile, options, 3)?;`.
 pub fn normal_extrude_cone_band_with_rational_hole(

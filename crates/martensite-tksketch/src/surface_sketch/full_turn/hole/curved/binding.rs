@@ -64,7 +64,12 @@ impl FittedCut {
         let span = self.span;
         match self.crossing.report.conic_map {
             None => WrappedEntitySource::Curve { curve, span },
-            Some(map) => WrappedEntitySource::MappedCurve { curve, span, map },
+            Some(PeriodicConicMap::Quarter(map)) => {
+                WrappedEntitySource::MappedCurve { curve, span, map }
+            }
+            Some(PeriodicConicMap::Arc(map)) => {
+                WrappedEntitySource::AnalyticArcCurve { curve, span, map }
+            }
         }
     }
 
@@ -72,7 +77,12 @@ impl FittedCut {
         let curve = self.crossing.report.id.curve;
         match self.crossing.report.conic_map {
             None => WrappedEntitySource::SplitVertex { curve, point },
-            Some(map) => WrappedEntitySource::MappedSplitVertex { curve, point, map },
+            Some(PeriodicConicMap::Quarter(map)) => {
+                WrappedEntitySource::MappedSplitVertex { curve, point, map }
+            }
+            Some(PeriodicConicMap::Arc(map)) => {
+                WrappedEntitySource::AnalyticArcSplitVertex { curve, point, map }
+            }
         }
     }
 
@@ -121,13 +131,18 @@ fn candidate_span(key: WrappedHistoryKey, root: PeriodicCrossing) -> Option<Wrap
     }
     let (curve, span, map) = match key.source {
         WrappedEntitySource::Curve { curve, span } => (curve, span, None),
-        WrappedEntitySource::MappedCurve { curve, span, map } => (curve, span, Some(map)),
+        WrappedEntitySource::MappedCurve { curve, span, map } => {
+            (curve, span, Some(PeriodicConicMap::Quarter(map)))
+        }
+        WrappedEntitySource::AnalyticArcCurve { curve, span, map } => {
+            (curve, span, Some(PeriodicConicMap::Arc(map)))
+        }
         _ => return None,
     };
     (curve == root.id.curve && map == root.conic_map).then_some(span)
 }
 
-fn endpoint(n: u64, level: u8, map: Option<WrappedConicParameterMap>) -> PeriodicSourceEnd {
+fn endpoint(n: u64, level: u8, map: Option<PeriodicConicMap>) -> PeriodicSourceEnd {
     if n == 0 {
         return PeriodicSourceEnd::Start;
     }
