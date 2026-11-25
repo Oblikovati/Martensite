@@ -226,3 +226,6 @@ pub(super) fn branch(direction: ParallelDirection, dot: f64) -> bool {
         ParallelDirection::Opposite => dot < 0.,
     }
 }
+
+#[cfg(test)]
+mod tests;

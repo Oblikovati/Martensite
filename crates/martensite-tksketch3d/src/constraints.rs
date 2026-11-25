@@ -4,6 +4,7 @@ mod adopt;
 mod angle;
 mod binding;
 mod error;
+mod initialization;
 mod metric;
 mod motion;
 mod program;
@@ -217,6 +218,7 @@ impl ConstrainedSketch {
     }
 
     /// Apply an authoring batch and solve it noninteractively before adoption.
+    /// Plane-parallel and perpendicular relations may initialize a flat seed at a free endpoint.
     /// Example: `sketch.apply(&[RelationEdit::Insert(id, intent)], || false)?`.
     pub fn apply(
         &self,

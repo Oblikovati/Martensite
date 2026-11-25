@@ -90,7 +90,14 @@ impl Program {
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<Vec<f64>, Failure> {
         poll(cancelled)?;
-        let values = self.values(geometry)?;
+        let mut values = self.values(geometry)?;
+        super::initialization::initialize(
+            &mut values,
+            &self.blocks,
+            &self.fixed,
+            options.rank_tolerance,
+            cancelled,
+        )?;
         let blocks = self
             .blocks
             .iter()
