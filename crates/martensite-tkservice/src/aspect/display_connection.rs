@@ -1,11 +1,12 @@
-//! `Aspect_DisplayConnection`: the connection to the window system (an X11 display on
+//! `Aspect_DisplayConnection`: the connection to the window system (Wayland or X11 on
 //! Linux), shared by the windows and the graphic driver.
 //!
-//! On Linux the native library is built with `HAVE_XLIB`: the connection opens the display
-//! named by `DISPLAY` (or the given name) through the Xlib wrapper and interns the
-//! `WM_DELETE_WINDOW` atom. Windows retains the process HINSTANCE used by Win32 surfaces.
-//! On other platforms the window-system backend is not implemented:
-//! initializing a connection raises `Standard_NotImplemented` (see [`crate::platform`]).
+//! On Linux both Wayland and X11 are supported in parallel. [`AspectDisplayConnection::new`]
+//! prefers native Wayland over XWayland whenever `WAYLAND_DISPLAY` is set, and falls back
+//! to X11 (`DISPLAY`) when Wayland is not active. Explicit constructors select either
+//! backend directly. Windows retains the process HINSTANCE used by Win32 surfaces.
+//! On other platforms initializing a connection raises `Standard_NotImplemented`
+//! (see [`crate::platform`]).
 #[cfg(target_os = "linux")]
 use super::exceptions::display_connection_definition_error;
 use super::{AspectFbConfig, AspectXAtom};
@@ -15,6 +16,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 #[path = "display_native_calls.rs"]
 mod native_calls;
+#[cfg(target_os = "linux")]
+use native_calls::WaylandDisplayCalls;
 use native_calls::{NativeDisplayCalls, XlibDisplayCalls};
 #[path = "display_lifecycle_failure.rs"]
 mod lifecycle_failure;
@@ -23,11 +26,29 @@ pub use lifecycle_failure::*;
 mod connection_lease;
 pub use connection_lease::AspectDisplayConnectionLease;
 
+/// The window-system backend backing an [`AspectDisplayConnection`].
+///
+/// Example: `assert_eq!(connection.backend(), AspectDisplayBackend::Wayland);`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum AspectDisplayBackend {
+    /// Native Wayland display (`wl_display*`).
+    Wayland,
+    /// X11 / Xlib display (`Display*`).
+    X11,
+    /// Win32 process module handle (`HINSTANCE`).
+    Win32,
+    /// Unconnected or platform-neutral display.
+    #[default]
+    Unknown,
+}
+
 /// The locked fields of the connection.
 #[derive(Debug, Default)]
 struct ConnectionState {
-    /// `myDisplay`: the `Display*` address, 0 for none.
+    /// `myDisplay`: the `wl_display*`, `Display*` or `HINSTANCE` address, 0 for none.
     display: usize,
+    /// The active window-system backend for `display`.
+    backend: AspectDisplayBackend,
     /// `myDefVisualInfo`: the `XVisualInfo*` address, 0 for none.
     default_visual_info: usize,
     /// `myDefFBConfig`.
@@ -41,8 +62,23 @@ struct ConnectionState {
     leases: AspectDisplayLeaseCounts,
 }
 
-/// A window-system connection; `AspectDisplayConnection::new()?` opens `$DISPLAY`
-/// on Linux or borrows the process module on Windows.
+/// Selects the preferred Linux backend from environment values; Wayland always takes
+/// precedence over XWayland when `WAYLAND_DISPLAY` is non-empty.
+pub(crate) fn select_linux_backend(
+    wayland_display: Option<&str>,
+    x11_display: Option<&str>,
+) -> AspectDisplayBackend {
+    if wayland_display.is_some_and(|value| !value.is_empty()) {
+        return AspectDisplayBackend::Wayland;
+    }
+    if x11_display.is_some_and(|value| !value.is_empty()) {
+        return AspectDisplayBackend::X11;
+    }
+    AspectDisplayBackend::Wayland
+}
+
+/// A window-system connection; `AspectDisplayConnection::new()?` prefers Wayland over
+/// XWayland on Linux, falls back to `$DISPLAY` for X11, or borrows the process module on Windows.
 pub struct AspectDisplayConnection {
     state: SharedState<ConnectionState>,
     native: Arc<dyn NativeDisplayCalls>,
@@ -57,9 +93,14 @@ impl AspectDisplayConnection {
     fn with_name(display_name: AsciiString) -> Self {
         Self::with_native(display_name, Arc::new(XlibDisplayCalls))
     }
+    #[cfg(target_os = "linux")]
+    fn with_wayland_calls(display_name: AsciiString) -> Self {
+        Self::with_native(display_name, Arc::new(WaylandDisplayCalls))
+    }
     fn with_native(display_name: AsciiString, native: Arc<dyn NativeDisplayCalls>) -> Self {
         let state = ConnectionState {
             display_name,
+            backend: native.backend(),
             ..Default::default()
         };
         Self {
@@ -67,18 +108,90 @@ impl AspectDisplayConnection {
             native,
         }
     }
-    /// `Aspect_DisplayConnection()`: opens the display named by the `DISPLAY` environment
-    /// variable; `Aspect_DisplayConnectionDefinitionError` when it cannot be reached (Linux).
+    /// Opens the preferred window-system connection for this host.
+    ///
+    /// On Linux, native Wayland (`WAYLAND_DISPLAY`) is preferred over XWayland (`DISPLAY`).
+    /// When `WAYLAND_DISPLAY` is unset, X11 (`DISPLAY`) is used.
     ///
     /// Example: `let display = AspectDisplayConnection::new()?;`.
     pub fn new() -> Result<Self, Failure> {
-        #[cfg(not(windows))]
+        #[cfg(target_os = "linux")]
+        {
+            let wl = std::env::var("WAYLAND_DISPLAY").ok();
+            let x11 = std::env::var("DISPLAY").ok();
+            match select_linux_backend(wl.as_deref(), x11.as_deref()) {
+                AspectDisplayBackend::Wayland => {
+                    let name = wl.unwrap_or_default();
+                    Self::with_wayland_name(&AsciiString::from(name.as_str()))
+                }
+                _ => {
+                    let name = x11.unwrap_or_default();
+                    Self::with_display_name(&AsciiString::from(name.as_str()))
+                }
+            }
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            #[cfg(not(windows))]
+            let name = std::env::var("DISPLAY").unwrap_or_default();
+            #[cfg(windows)]
+            let name = String::new();
+            Self::with_display_name(&AsciiString::from(name.as_str()))
+        }
+    }
+    /// Opens a native Wayland display connection using `WAYLAND_DISPLAY` (or `wayland-0`).
+    ///
+    /// Example: `let display = AspectDisplayConnection::new_wayland()?;`.
+    pub fn new_wayland() -> Result<Self, Failure> {
+        let name = std::env::var("WAYLAND_DISPLAY").unwrap_or_default();
+        Self::with_wayland_name(&AsciiString::from(name.as_str()))
+    }
+    /// Opens a native Wayland display connection to the named compositor socket.
+    ///
+    /// Example: `AspectDisplayConnection::with_wayland_name(&AsciiString::from("wayland-0"))?`.
+    pub fn with_wayland_name(socket_name: &AsciiString) -> Result<Self, Failure> {
+        #[cfg(target_os = "linux")]
+        {
+            let connection = Self::with_wayland_calls(socket_name.clone());
+            connection.init(0)?;
+            Ok(connection)
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            let _ = socket_name;
+            Err(crate::platform::unsupported(
+                "Aspect_DisplayConnection",
+                "Wayland (Linux)",
+            ))
+        }
+    }
+    /// Wraps an existing caller-owned `wl_display*` address without taking ownership.
+    ///
+    /// Example: `AspectDisplayConnection::with_wayland_display(wl_display_addr)?`.
+    pub fn with_wayland_display(display: usize) -> Result<Self, Failure> {
+        #[cfg(target_os = "linux")]
+        {
+            let connection = Self::with_wayland_calls(AsciiString::default());
+            connection.init(display)?;
+            Ok(connection)
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            let _ = display;
+            Err(crate::platform::unsupported(
+                "Aspect_DisplayConnection",
+                "Wayland (Linux)",
+            ))
+        }
+    }
+    /// Opens an X11 display connection using `DISPLAY`, even when Wayland is active.
+    ///
+    /// Example: `let display = AspectDisplayConnection::new_x11()?;`.
+    pub fn new_x11() -> Result<Self, Failure> {
         let name = std::env::var("DISPLAY").unwrap_or_default();
-        #[cfg(windows)]
-        let name = String::new();
         Self::with_display_name(&AsciiString::from(name.as_str()))
     }
-    /// `Aspect_DisplayConnection(theDisplayName)`: opens the named display.
+    /// `Aspect_DisplayConnection(theDisplayName)`: opens the named X11 display.
     ///
     /// Example: `AspectDisplayConnection::with_display_name(&AsciiString::from(":0"))?`.
     pub fn with_display_name(display_name: &AsciiString) -> Result<Self, Failure> {
@@ -86,14 +199,19 @@ impl AspectDisplayConnection {
         connection.init(0)?;
         Ok(connection)
     }
-    /// `Aspect_DisplayConnection(Aspect_XDisplay*)`: wraps an existing display (the
+    /// `Aspect_DisplayConnection(Aspect_XDisplay*)`: wraps an existing X11 display (the
     /// caller keeps ownership); `AspectDisplayConnection::with_display(address)?`.
     pub fn with_display(display: usize) -> Result<Self, Failure> {
         let connection = Self::with_name(AsciiString::default());
         connection.init(display)?;
         Ok(connection)
     }
-    /// The X display address or Win32 HINSTANCE, 0 for none; `connection.get_display_aspect()`.
+    /// The window-system backend of this connection; `connection.backend()`.
+    pub fn backend(&self) -> AspectDisplayBackend {
+        self.state.read().backend
+    }
+    /// The native display address (`wl_display*`, `Display*` or `HINSTANCE`), 0 for none;
+    /// `connection.get_display_aspect()`.
     pub fn get_display_aspect(&self) -> usize {
         self.state.read().display
     }
@@ -173,11 +291,12 @@ impl Drop for AspectDisplayConnection {
     }
 }
 
-/// The `HAVE_XLIB` branch; ordering is pinned by the owned unleased fixtures.
+/// The Linux backend (`Wayland` or `X11`); ordering is pinned by the owned unleased fixtures.
 #[cfg(target_os = "linux")]
 mod platform {
     use super::{
-        AspectXAtom, ConnectionState, NativeDisplayCalls, display_connection_definition_error,
+        AspectDisplayBackend, AspectXAtom, ConnectionState, NativeDisplayCalls,
+        display_connection_definition_error,
     };
     use martensite_tkernel::standard::Failure;
     pub(super) fn init(
@@ -186,10 +305,15 @@ mod platform {
         native: &dyn NativeDisplayCalls,
     ) -> Result<(), Failure> {
         prepare_display(state, display, native);
-        let atom = (state.display != 0)
-            .then(|| native.delete_atom(state.display))
-            .flatten();
-        let Some(atom) = atom else {
+        if state.display == 0 {
+            return Err(connection_error(state));
+        }
+        state.backend = native.backend();
+        if state.backend == AspectDisplayBackend::Wayland {
+            state.is_own_display = display == 0;
+            return Ok(());
+        }
+        let Some(atom) = native.delete_atom(state.display) else {
             return Err(connection_error(state));
         };
         state.is_own_display = display == 0;
@@ -286,6 +410,55 @@ mod tests {
             "Aspect_DisplayConnectionDefinitionError"
         );
         assert_eq!(failure.message(), "Can not connect to the server \":9999\"");
+    }
+
+    #[test]
+    fn an_unreachable_wayland_socket_raises_the_definition_error() {
+        let Err(failure) = AspectDisplayConnection::with_wayland_name(&AsciiString::from(
+            "martensite-no-such-wayland-socket",
+        )) else {
+            panic!("unreachable Wayland socket must fail");
+        };
+        assert_eq!(
+            failure.exception_type(),
+            "Aspect_DisplayConnectionDefinitionError"
+        );
+        assert_eq!(
+            failure.message(),
+            "Can not connect to the server \"martensite-no-such-wayland-socket\""
+        );
+    }
+
+    #[test]
+    fn linux_backend_preference_favors_wayland_over_xwayland() {
+        assert_eq!(
+            select_linux_backend(Some("wayland-1"), Some(":0")),
+            AspectDisplayBackend::Wayland
+        );
+        assert_eq!(
+            select_linux_backend(Some("wayland-0"), None),
+            AspectDisplayBackend::Wayland
+        );
+        assert_eq!(
+            select_linux_backend(None, Some(":99")),
+            AspectDisplayBackend::X11
+        );
+        assert_eq!(
+            select_linux_backend(Some(""), Some(":0")),
+            AspectDisplayBackend::X11
+        );
+        assert_eq!(
+            select_linux_backend(None, None),
+            AspectDisplayBackend::Wayland
+        );
+    }
+
+    #[test]
+    fn wrapped_wayland_display_preserves_backend_and_non_ownership() {
+        let conn = AspectDisplayConnection::with_wayland_display(0x1234).unwrap();
+        assert_eq!(conn.backend(), AspectDisplayBackend::Wayland);
+        assert_eq!(conn.get_display_aspect(), 0x1234);
+        assert!(!conn.is_own_display());
     }
 }
 

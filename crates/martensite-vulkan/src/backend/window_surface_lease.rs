@@ -8,6 +8,7 @@ use std::sync::Arc;
 pub(super) struct WindowSurfaceLease {
     pub loader: ash::khr::surface::Instance,
     pub handle: vk::SurfaceKHR,
+    pub platform: crate::RenderSurfacePlatform,
     _runtime: Arc<VulkanRuntime>,
     _window: Handle<dyn AspectWindow>,
 }
@@ -23,9 +24,14 @@ impl WindowSurfaceLease {
         Ok(Arc::new(Self {
             loader: ash::khr::surface::Instance::new(&runtime.entry, &runtime.instance),
             handle,
+            platform: factory.platform(),
             _runtime: runtime.clone(),
             _window: window.clone(),
         }))
+    }
+    /// Current logical size of the leased native window; `lease.window_size()`.
+    pub fn window_size(&self) -> (i32, i32) {
+        self._window.size()
     }
 }
 impl Drop for WindowSurfaceLease {

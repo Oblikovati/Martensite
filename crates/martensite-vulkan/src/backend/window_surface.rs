@@ -78,13 +78,13 @@ impl WindowPresenter {
                 )
         }
         .map_err(|error| vk_error("observe GUI surface extent", error))?;
-        authoritative_gui_extent(cap.current_extent)
+        observed_surface_extent(self.surface.platform, &cap, self.surface.window_size())
     }
     pub(super) fn new(
         runtime: &Arc<VulkanRuntime>,
         window: &Handle<dyn AspectWindow>,
     ) -> Result<Self, RenderError> {
-        let factory = super::surface_platform::host_factory();
+        let factory = super::surface_platform::factory_for_window(window);
         let mut presenter = Self {
             runtime: runtime.clone(),
             surface: super::window_surface_lease::WindowSurfaceLease::acquire(
@@ -242,6 +242,28 @@ impl Drop for WindowPresenter {
     }
 }
 
+pub(super) fn observed_surface_extent(
+    platform: crate::RenderSurfacePlatform,
+    cap: &vk::SurfaceCapabilitiesKHR,
+    window_size: (i32, i32),
+) -> Result<[u32; 2], RenderError> {
+    if platform == crate::RenderSurfacePlatform::Wayland
+        && cap.current_extent.width == u32::MAX
+        && cap.current_extent.height == u32::MAX
+    {
+        let (w, h) = window_size;
+        if w <= 0 || h <= 0 {
+            return Err(rejected(
+                window_size,
+                "positive Wayland window extent for surface observation",
+            ));
+        }
+        let chosen = super::window_support::extent(cap, [w as u32, h as u32])?;
+        return Ok([chosen.width, chosen.height]);
+    }
+    authoritative_gui_extent(cap.current_extent)
+}
+
 pub(super) fn authoritative_gui_extent(extent: vk::Extent2D) -> Result<[u32; 2], RenderError> {
     let observed = [extent.width, extent.height];
     if observed
@@ -283,5 +305,31 @@ mod gui_extent_tests {
             height: 72,
         };
         assert_eq!(authoritative_gui_extent(extent).unwrap(), [80, 72]);
+    }
+    #[test]
+    fn wayland_unconstrained_extent_resolves_from_window_size() {
+        let cap = vk::SurfaceCapabilitiesKHR {
+            current_extent: vk::Extent2D {
+                width: u32::MAX,
+                height: u32::MAX,
+            },
+            min_image_extent: vk::Extent2D {
+                width: 1,
+                height: 1,
+            },
+            max_image_extent: vk::Extent2D {
+                width: 4096,
+                height: 4096,
+            },
+            ..Default::default()
+        };
+        assert_eq!(
+            observed_surface_extent(crate::RenderSurfacePlatform::Wayland, &cap, (320, 240))
+                .unwrap(),
+            [320, 240]
+        );
+        assert!(
+            observed_surface_extent(crate::RenderSurfacePlatform::Xlib, &cap, (320, 240)).is_err()
+        );
     }
 }
