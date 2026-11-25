@@ -1,0 +1,334 @@
+use super::super::tests::{REVISION, indirect_extruded_circle, volume};
+use super::*;
+use martensite_tkbo::body_check::validate_body;
+use std::collections::BTreeSet;
+use std::f64::consts::PI;
+
+#[test]
+fn recut_preserves_the_indirect_circle_extrude_stock() {
+    let attachment = indirect_extruded_circle();
+    let original = attachment.export_native(REVISION).unwrap();
+    let attempt = attempt(&attachment);
+    let source_bytes = archive(attempt, &original.body).0;
+    let sew = attachment.record().resolution.sew;
+    let result = prepare(
+        attempt,
+        &original.body,
+        &original.face,
+        [-0.025, 0.025],
+        sew,
+    )
+    .unwrap();
+    assert_eq!(result.sheet, [-PI, PI]);
+    assert!(result.spatial_upper < sew);
+    assert!(result.clear_distance > 1.);
+    assert_eq!(
+        BRepTool::surface_with_location(&result.band).unwrap(),
+        BRepTool::surface_with_location(&original.face).unwrap()
+    );
+    assert_eq!(archive(attempt, &original.body).0, source_bytes);
+    assert!((volume(&result.solid) - 400. * PI).abs() < 1e-7);
+    let empty_tool = DetachedWrappedBodies {
+        bodies: Shape::default(),
+        entities: BTreeMap::new(),
+    };
+    let replacement = [result.band.to_shape()];
+    let captured = history::capture_recut_direct(
+        attempt,
+        &original.face,
+        &original.body,
+        &empty_tool,
+        history::RecutResult {
+            solid: result.solid.clone(),
+            replacement: &replacement,
+            recut: &result,
+        },
+        &mut || false,
+    )
+    .unwrap();
+    assert_eq!(captured.history.removed.len(), 3);
+    assert!(captured.history.removed.iter().all(|source| matches!(
+        source,
+        CylinderFeatureSource::SupportMember(CylinderBodyRef {
+            kind: ShapeEnum::Edge | ShapeEnum::Vertex,
+            ..
+        })
+    )));
+    let binding = result
+        .bind_final(attempt, &captured.index, &result.band)
+        .unwrap();
+    let (_, mut decoded) = body::detach(attempt, &captured, &mut || false).unwrap();
+    binding.rebind(attempt, &decoded).unwrap();
+    check_images(attempt, &original.body, &result, &decoded);
+    let validation = validate_body(&decoded.body, &attachment.record().resolution).unwrap();
+    assert!(validation.is_valid(), "{validation:?}");
+    let seam = result
+        .images
+        .iter()
+        .find(|link| {
+            link.source.kind == ShapeEnum::Edge
+                && link.relation == CylinderFeatureRelation::Generated
+        })
+        .unwrap();
+    let seam_ref = captured
+        .index
+        .reference(&seam.image, attempt)
+        .unwrap()
+        .unwrap();
+    decoded.entities.insert(seam_ref, result.band.to_shape());
+    let failure = binding.rebind(attempt, &decoded).unwrap_err();
+    assert!(matches!(
+        *failure.cause,
+        CylinderFeatureCause::ArchiveMismatch
+    ));
+}
+
+#[test]
+fn recut_history_requires_the_same_native_source_snapshot() {
+    let attachment = indirect_extruded_circle();
+    let source = attachment.export_native(REVISION).unwrap();
+    let independent = attachment.export_native(REVISION).unwrap();
+    let attempt = attempt(&attachment);
+    let result = prepare(
+        attempt,
+        &source.body,
+        &source.face,
+        [-0.025, 0.025],
+        attachment.record().resolution.sew,
+    )
+    .unwrap();
+    let empty_tool = DetachedWrappedBodies {
+        bodies: Shape::default(),
+        entities: BTreeMap::new(),
+    };
+    let replacement = [result.band.to_shape()];
+    let failure = history::capture_recut_direct(
+        attempt,
+        &independent.face,
+        &independent.body,
+        &empty_tool,
+        history::RecutResult {
+            solid: result.solid.clone(),
+            replacement: &replacement,
+            recut: &result,
+        },
+        &mut || false,
+    )
+    .err()
+    .unwrap();
+    assert!(matches!(
+        *failure.cause,
+        CylinderFeatureCause::History {
+            source: CylinderFeatureSource::SupportFace(_),
+            ..
+        }
+    ));
+}
+
+#[test]
+fn recut_refuses_a_hull_at_the_seam_and_a_changed_stock_occurrence() {
+    let attachment = indirect_extruded_circle();
+    let original = attachment.export_native(REVISION).unwrap();
+    let attempt = attempt(&attachment);
+    let sew = attachment.record().resolution.sew;
+    let wrong = topods::face(&original.face.reversed()).unwrap();
+    for (face, hull, expected) in [
+        (
+            &original.face,
+            [PI.next_up(), PI + 0.01],
+            "strict clearance from both images of the replacement seam",
+        ),
+        (
+            &wrong,
+            [-0.025, 0.025],
+            "the exact selected band and two stock disks",
+        ),
+    ] {
+        let cause = prepare(attempt, &original.body, face, hull, sew)
+            .err()
+            .unwrap();
+        assert!(
+            matches!(*cause.cause, CylinderFeatureCause::DirectAttachment { expected: x } if x == expected)
+        );
+    }
+}
+
+fn attempt(attachment: &CylinderFaceAttachment) -> Attempt {
+    Attempt {
+        attachment: attachment.record().id,
+        revision: REVISION,
+        kind: CylinderFeatureKind::Boss,
+    }
+}
+
+fn archive(attempt: Attempt, solid: &Shape) -> (Vec<u8>, DetachedCylinderFeature) {
+    let captured = history::Captured {
+        index: body::Index::new(attempt, solid, STAGE).unwrap(),
+        solid: solid.clone(),
+        history: CylinderFeatureHistory {
+            images: BTreeMap::new(),
+            removed: vec![],
+        },
+    };
+    body::detach(attempt, &captured, &mut || false).unwrap()
+}
+
+fn check_images(
+    attempt: Attempt,
+    source: &Shape,
+    result: &RecutStock,
+    decoded: &DetachedCylinderFeature,
+) {
+    let index = body::Index::new(attempt, source, STAGE).unwrap();
+    let originals: BTreeMap<_, _> = index.members().map(Result::unwrap).collect();
+    let index = body::Index::new(attempt, &result.solid, STAGE).unwrap();
+    let published =
+        |shape: &Shape| &decoded.entities[&index.reference(shape, attempt).unwrap().unwrap()];
+    let sources: BTreeSet<_> = result.images.iter().map(|link| link.source).collect();
+    assert_eq!(sources.len(), 8);
+    assert_eq!(result.images.len(), sources.len());
+    for link in &result.images {
+        check_image(
+            link,
+            originals[&link.source],
+            published(&link.image),
+            result.sheet,
+        );
+        assert!(
+            index
+                .reference(originals[&link.source], attempt)
+                .unwrap()
+                .is_none()
+        );
+    }
+    let band = topods::face(published(&result.band)).unwrap();
+    check_paired_trim(attempt, &band, result.sheet);
+}
+
+fn check_image(link: &StockImage, old: &Shape, new: &Shape, sheet: [f64; 2]) {
+    use CylinderFeatureRelation::{Generated, Modified};
+    assert_eq!(new.shape_type().unwrap(), link.source.kind);
+    assert_eq!(old.orientation(), new.orientation());
+    assert_eq!(old.location(), new.location());
+    match (link.source.kind, link.relation) {
+        (ShapeEnum::Face, Modified) => {
+            let old = topods::face(old).unwrap();
+            let new = topods::face(new).unwrap();
+            assert_eq!(
+                face_tshape(&old, "test").unwrap().tolerance(),
+                face_tshape(&new, "test").unwrap().tolerance()
+            );
+            assert_eq!(
+                BRepTool::surface_with_location(&old).unwrap().1,
+                BRepTool::surface_with_location(&new).unwrap().1
+            );
+        }
+        (ShapeEnum::Edge, Modified | Generated) => {
+            let old = topods::edge(old).unwrap();
+            let new = topods::edge(new).unwrap();
+            assert_eq!(
+                edge_tshape(&old, "test").unwrap().tolerance(),
+                edge_tshape(&new, "test").unwrap().tolerance()
+            );
+            assert!(BRepTool::same_parameter(&new).unwrap() && BRepTool::same_range(&new).unwrap());
+            let curve = BRepTool::curve_with_location(&new).unwrap();
+            if link.relation == Modified {
+                assert_eq!([curve.first, curve.last], sheet);
+                assert!(curve.curve.downcast_ref::<GeomCircle>().is_some());
+            } else {
+                assert_eq!([curve.first, curve.last], [0., 4.]);
+                assert!(curve.curve.downcast_ref::<GeomLine>().is_some());
+            }
+        }
+        (ShapeEnum::Vertex, Generated) => {
+            let old = topods::vertex(old).unwrap();
+            let new = topods::vertex(new).unwrap();
+            assert_eq!(
+                vertex_tshape(&old, "test").unwrap().tolerance(),
+                vertex_tshape(&new, "test").unwrap().tolerance()
+            );
+            let start = BRepTool::pnt(&old).unwrap();
+            let end = BRepTool::pnt(&new).unwrap();
+            assert_eq!([start.x(), end.x()], [10., -10.]);
+            assert_eq!([start.y(), start.z()], [end.y(), end.z()]);
+        }
+        item => panic!("unexpected stock ancestry {item:?}"),
+    }
+}
+
+fn check_paired_trim(attempt: Attempt, band: &Face, sheet: [f64; 2]) {
+    let [wire]: [Shape; 1] = children(RecutCheck(attempt), band)
+        .unwrap()
+        .try_into()
+        .unwrap();
+    let mut seam_uses = Vec::new();
+    let mut rims = 0;
+    for edge in children(RecutCheck(attempt), &wire).unwrap() {
+        let edge = topods::edge(&edge).unwrap();
+        let uv = BRepTool::curve_on_face(&edge, band).unwrap();
+        assert!(uv.is_stored);
+        if BRepTool::is_closed_on_face(&edge, band).unwrap() {
+            let line = uv.pcurve.downcast_ref::<Geom2dLine>().unwrap();
+            seam_uses.push((line.location().x(), edge));
+            assert_eq!([uv.first, uv.last], [0., 4.]);
+        } else {
+            assert!(BRepTool::is_closed(&edge).unwrap());
+            assert_eq!([uv.first, uv.last], sheet);
+            rims += 1;
+        }
+    }
+    assert_eq!(rims, 2);
+    let [(ua, a), (ub, b)] = &seam_uses[..] else {
+        panic!("one paired seam, found {}", seam_uses.len());
+    };
+    assert!(a.is_same(b) && a.orientation() != b.orientation());
+    assert_eq!([ua.min(*ub), ua.max(*ub)], sheet);
+}
+
+#[test]
+fn inherited_forward_cylinder_preserves_the_translated_239_stock_boundary() {
+    use super::super::super::tests::freeze;
+    use martensite_tkmath::gp::Axis2;
+    use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeCylinder;
+
+    let axes = Axis2::with_standard_frame(
+        Point3::new(0., 0., -4.),
+        StandardDirection3::Z,
+        StandardDirection3::X,
+    );
+    let mut maker = BRepPrimAPIMakeCylinder::with_axes(axes, 10., 8.);
+    let attachment = freeze(maker.shape().unwrap());
+    let native = attachment.export_native(REVISION).unwrap();
+    let attempt = attempt(&attachment);
+    let sew = attachment.record().resolution.sew;
+    let receipt: UnchangedStock =
+        certify_unchanged(attempt, &native.body, &native.face, sew).unwrap();
+    assert!(receipt.spatial_upper() > 0. && receipt.spatial_upper() < 1e-13);
+    assert!(
+        certify_unchanged(attempt, &native.body, &native.face, receipt.spatial_upper(),).is_err()
+    );
+    verify_inherited_replay(attempt, &native.body, &native.face, &receipt);
+}
+
+#[test]
+fn inherited_indirect_cylinder_preserves_the_original_circle_extrude_seam() {
+    let attachment = indirect_extruded_circle();
+    let native = attachment.export_native(REVISION).unwrap();
+    let attempt = attempt(&attachment);
+    let receipt = certify_unchanged(
+        attempt,
+        &native.body,
+        &native.face,
+        attachment.record().resolution.sew,
+    )
+    .unwrap();
+    verify_inherited_replay(attempt, &native.body, &native.face, &receipt);
+}
+
+fn verify_inherited_replay(attempt: Attempt, solid: &Shape, band: &Face, receipt: &UnchangedStock) {
+    let index = body::Index::new(attempt, solid, STAGE).unwrap();
+    let binding = receipt.bind_final(attempt, &index, band).unwrap();
+    let (before, decoded) = archive(attempt, solid);
+    binding.rebind(attempt, &decoded).unwrap();
+    assert_eq!(archive(attempt, solid).0, before);
+}

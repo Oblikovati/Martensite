@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tksketch-1bce81d5a48f0d86",
+    "surface_sketch::wrapped_profile::operation::cone::tests::narrow::complete::directed::geometric_v6_outward_requires_complete_actual_si",
+    "--exact",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "binary_sha256": "99ba5a4cf4f66016fcf114da167b2e7ae922e0214222e5ca756a5d2bec69a02e",
+  "concurrent_compilers": [
+    {
+      "pid": "1499168",
+      "name": "cargo",
+      "cwd": "/home/vmiguel/git/oblikovati-workspace/oblikovati-rust/.slim/worktrees/relax-mode-4164"
+    }
+  ],
+  "affinity": "inherited, unpinned",
+  "meaning": "single deeper instrumented attribution diagnostic, not performance acceptance"
+}

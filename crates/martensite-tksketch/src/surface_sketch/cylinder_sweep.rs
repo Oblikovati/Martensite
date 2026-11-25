@@ -1,13 +1,19 @@
 //! Preserve cylinder arithmetic while supplying the shared native sweep pipeline.
-use super::{admission::Admitted, frame, sweep::Sweep};
+use super::{
+    admission::Admitted,
+    frame,
+    sweep::{Sweep, SweepNames},
+};
 
 pub(super) fn prepare(admitted: &Admitted) -> Sweep {
     let rectangle = admitted.rectangle;
     let first_depth = usize::from(admitted.radii[1] < admitted.radii[0]);
     Sweep {
         region: rectangle.region,
-        corners: rectangle.corners,
-        boundaries: rectangle.boundaries,
+        names: SweepNames::Sector {
+            corners: rectangle.corners,
+            boundaries: rectangle.boundaries,
+        },
         options: admitted.options,
         origin: rectangle.support.origin,
         axis: rectangle.support.axis,

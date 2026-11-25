@@ -41,6 +41,18 @@ pub(super) fn residual(
     Ok((bounds, captured))
 }
 
+pub(super) fn ranged_residual(
+    query: ConicalTrimQuery<'_>,
+    [space, chart]: [[f64; 2]; 2],
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<[f64; 3]> {
+    let uv = narrowed(capture_planar(query.pcurve, arithmetic)?, chart, arithmetic)?;
+    let stored = narrowed(source::stored(query.curve, arithmetic)?, space, arithmetic)?;
+    let weight = proof::minimum_weight(&stored);
+    let captured = prepare(query, uv, None, arithmetic)?;
+    residual_bounds(query, &captured, &stored, &weight, arithmetic)
+}
+
 fn captured_uv(
     query: ConicalTrimQuery<'_>,
     reuse: Option<Reuse<'_, '_>>,

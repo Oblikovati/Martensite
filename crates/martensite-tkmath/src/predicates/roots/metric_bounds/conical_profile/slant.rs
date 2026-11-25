@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Bounded distance between source slant and a stored homogeneous rational fit.
 use super::*;
+mod conditioned;
 use crate::predicates::roots::certificate_arithmetic::bernstein_bounds::lower;
 use crate::predicates::roots::certificate_arithmetic::bernstein_bounds::product;
 use crate::predicates::roots::metric_bounds::CylindricalProfileFailure;
@@ -52,17 +53,59 @@ impl std::fmt::Display for SlantFailure {
     }
 }
 
+pub(super) struct SlantCapture {
+    pub(super) error: Interval,
+    pub(super) residual: Vec<Interval>,
+    pub(super) constant: Option<Interval>,
+}
 pub(super) fn slant_from_captured(
     q: &[Interval],
     numerator: &[Interval],
     weights: &[Interval],
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<Interval, SlantFailure> {
+    slant_metric(q, numerator, weights, false, arithmetic).map(|proof| proof.error)
+}
+#[cfg(test)]
+pub(super) fn slant_in_chart(
+    q: &[Interval],
+    numerator: &[Interval],
+    weights: &[Interval],
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<Interval, SlantFailure> {
+    capture_in_chart(q, numerator, weights, arithmetic).map(|proof| proof.error)
+}
+pub(super) fn capture_in_chart(
+    q: &[Interval],
+    numerator: &[Interval],
+    weights: &[Interval],
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<SlantCapture, SlantFailure> {
+    slant_metric(q, numerator, weights, true, arithmetic)
+}
+fn slant_metric(
+    q: &[Interval],
+    numerator: &[Interval],
+    weights: &[Interval],
+    conditioned: bool,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<SlantCapture, SlantFailure> {
     let numerator_min = positive_lower("numerator", numerator, arithmetic)?;
     let weight_min = positive_lower("weight", weights, arithmetic)?;
     let denominator = arithmetic.multiply(&numerator_min, &weight_min)?;
-    let residual = slant_residual(q, numerator, weights, arithmetic)?;
-    Ok(arithmetic.divide(&magnitude_interval(&residual), &denominator)?)
+    let residual = match conditioned {
+        true => conditioned::residual(q, numerator, weights, arithmetic)?,
+        false => slant_residual(q, numerator, weights, arithmetic)?,
+    };
+    let error = arithmetic.divide(&magnitude_interval(&residual), &denominator)?;
+    let constant = conditioned
+        .then(|| conditioned::constant_point(weights).cloned())
+        .flatten();
+    Ok(SlantCapture {
+        error,
+        residual,
+        constant,
+    })
 }
 
 pub(super) fn admit_slant(request: &SlantRequest<'_>) -> Result<(), SlantFailure> {

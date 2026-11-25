@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::super::CylindricalProfileSource;
 use super::*;
+use std::sync::Arc;
+type SourceIntervals = Arc<[super::super::CylindricalProfileInterval]>;
 
 #[derive(Clone, Copy, Debug, Default)]
 pub(super) struct Statistics {
@@ -15,8 +17,8 @@ pub(super) struct Statistics {
 /// Excluded pairs, self-regularity, native incidence and periodic-translation error need separate proofs.
 #[derive(Clone, Debug)]
 pub struct CertifiedCylindricalClearance {
-    sources: Vec<Vec<u64>>,
-    intervals: Vec<super::super::CylindricalProfileInterval>,
+    sources: Arc<[Vec<u64>]>,
+    intervals: SourceIntervals,
     radius: f64,
     origin: f64,
     clearance: f64,
@@ -28,6 +30,10 @@ pub struct CertifiedCylindricalClearance {
     operations: u32,
 }
 impl CertifiedCylindricalClearance {
+    #[cfg(test)]
+    pub(super) fn shares_sources(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.sources, &other.sources) && Arc::ptr_eq(&self.intervals, &other.intervals)
+    }
     /// Established lower bound, not an estimate of the tight minimum; `proof.clearance_lower_bound()`.
     pub fn clearance_lower_bound(&self) -> f64 {
         self.clearance
@@ -103,6 +109,23 @@ impl CertifiedCylindricalClearance {
                     )
             })
     }
+    pub(in crate::predicates::roots::metric_bounds) fn matches_whole_control_bits(
+        &self,
+        mut sources: impl Iterator<Item = impl ExactSizeIterator<Item = [u64; 2]>>,
+    ) -> bool {
+        self.sources.iter().all(|stored| {
+            let Some(poles) = sources.next() else {
+                return false;
+            };
+            let count = poles.len();
+            (2..=4).contains(&count)
+                && stored
+                    .iter()
+                    .copied()
+                    .eq(curve_words(0, 0, count, poles.flatten()))
+        }) && sources.next().is_none()
+    }
+
     /// Declared support radius; `proof.support_radius()`.
     pub fn support_radius(&self) -> f64 {
         self.radius
@@ -113,12 +136,26 @@ impl CertifiedCylindricalClearance {
     }
     pub(super) fn assemble(
         query: CylindricalClearanceQuery<'_>,
+        report: (usize, Statistics, u32),
+    ) -> Self {
+        Self::with_sources(
+            query,
+            report,
+            query.sources.iter().map(source_bits).collect(),
+            source_intervals(query.sources),
+        )
+    }
+
+    fn with_sources(
+        query: CylindricalClearanceQuery<'_>,
         (pair_count, statistics, operations): (usize, Statistics, u32),
+        sources: Arc<[Vec<u64>]>,
+        intervals: SourceIntervals,
     ) -> Self {
         let (scope, excluded) = owned_domain(query.domain);
         Self {
-            sources: query.sources.iter().map(source_bits).collect(),
-            intervals: source_intervals(query.sources),
+            sources,
+            intervals,
             radius: query.support_radius,
             origin: query.angular_origin,
             clearance: query.requested_clearance,
@@ -132,24 +169,36 @@ impl CertifiedCylindricalClearance {
     }
 }
 
-fn source_intervals(
-    sources: &[CylindricalClearanceSource<'_>],
-) -> Vec<super::super::CylindricalProfileInterval> {
+fn source_intervals(sources: &[CylindricalClearanceSource<'_>]) -> SourceIntervals {
     sources.iter().map(|source| source.interval).collect()
 }
 
 fn source_bits(source: &CylindricalClearanceSource<'_>) -> Vec<u64> {
-    let mut bits = vec![
+    source_words(*source).collect()
+}
+
+fn source_words(source: CylindricalClearanceSource<'_>) -> impl Iterator<Item = u64> + '_ {
+    curve_words(
         source.interval.index(),
-        source.interval.level().into(),
-        source.authored.len() as u64,
-    ];
-    bits.extend(source.authored.iter().flatten().map(|v| v.to_bits()));
-    bits
+        source.interval.level(),
+        source.authored.len(),
+        source.authored.iter().flatten().map(|v| v.to_bits()),
+    )
+}
+
+fn curve_words(
+    index: u64,
+    level: u8,
+    count: usize,
+    coordinates: impl Iterator<Item = u64>,
+) -> impl Iterator<Item = u64> {
+    [index, u64::from(level), count as u64]
+        .into_iter()
+        .chain(coordinates)
 }
 
 fn original_matches(old: &[u64], source: &CylindricalClearanceSource<'_>) -> bool {
-    (2..=4).contains(&source.authored.len()) && old == source_bits(source)
+    (2..=4).contains(&source.authored.len()) && old.iter().copied().eq(source_words(*source))
 }
 
 fn owned_domain(

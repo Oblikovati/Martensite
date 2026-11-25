@@ -6,21 +6,52 @@ pub(super) fn certify(
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<CertifiedCylindricalClearance> {
+    let mut by_curve = BTreeMap::new();
+    for piece in originals
+        .iter()
+        .flat_map(|source| source.loops.iter().flatten())
+    {
+        by_curve.entry(piece.span.curve).or_insert(piece);
+    }
     let mut sources = Vec::new();
     for input in prepared {
         for piece in input.source.loops.iter().flatten() {
-            sources.push(source(originals, piece)?);
+            sources.push(source(&by_curve, piece)?);
         }
     }
     let excluded = adjacent(prepared);
     let tolerance = originals.first().map_or(0., |r| r.tolerance);
     let query = query(&sources, &excluded, tolerance, work.remaining());
-    let proof = certify_cylindrical_clearance(query, cancelled)
-        .map_err(|cause| failure(None, None, ConeCause::Clearance(Box::new(cause))))?;
     let region = selection::first_region(originals)?;
-    work.charge(region, None, proof.operations())?;
-    Ok(proof)
+    charge(
+        certify_cylindrical_clearance_with_work(query, cancelled),
+        region,
+        work,
+    )
 }
+
+fn charge(
+    outcome: Result<CertifiedCylindricalClearance, CylindricalClearanceWorkError>,
+    region: SurfaceRegionId,
+    work: &mut Work,
+) -> ConeChecked<CertifiedCylindricalClearance> {
+    match outcome {
+        Ok(proof) => {
+            work.charge(region, None, proof.operations())?;
+            Ok(proof)
+        }
+        Err(error) => {
+            // A bounded leaf's typed refusal takes precedence over ledger bookkeeping.
+            let _ = work.charge(region, None, error.operations);
+            Err(failure(
+                None,
+                None,
+                ConeCause::Clearance(Box::new(error.cause)),
+            ))
+        }
+    }
+}
+
 fn query<'a>(
     sources: &'a [CylindricalClearanceSource<'a>],
     excluded: &'a [[usize; 2]],
@@ -42,13 +73,11 @@ fn query<'a>(
 }
 
 fn source<'a>(
-    originals: &'a [DevelopedRegionRequest],
+    originals: &BTreeMap<SurfaceCurveId, &'a AuthoredPiece>,
     piece: &AuthoredPiece,
 ) -> ConeChecked<CylindricalClearanceSource<'a>> {
     let authored = originals
-        .iter()
-        .flat_map(|r| r.loops.iter().flatten())
-        .find(|p| p.span.curve == piece.span.curve)
+        .get(&piece.span.curve)
         .ok_or_else(|| source_failure(piece.span, "authored-source", 0., "one original owner"))?;
     let interval = CylindricalProfileInterval::new(u64::from(piece.span.index), piece.span.level)
         .map_err(|_| {
@@ -94,3 +123,6 @@ fn adjacent(prepared: &[Prepared]) -> Vec<[usize; 2]> {
     }
     result.into_iter().collect()
 }
+
+#[cfg(test)]
+mod tests;

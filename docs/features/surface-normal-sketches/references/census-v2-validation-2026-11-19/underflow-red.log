@@ -1,0 +1,15 @@
+
+running 1 test
+{"event":"finite_underflow_review","h_bits":1905022642377719808,"filtered_cross":0,"endpoint_only_claim":true,"exact_second_contact":true}
+
+thread 'finite_range_review::exact_second_contact_prevents_endpoint_only_certificate_at_finite_underflow' (718638) panicked at /tmp/martensite-census-v2-review-l614c7ls/census-v2-prototype/rust/src/main.rs.range-red:318:9:
+exact intermediate-value second contact forbids endpoint-only completion
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test finite_range_review::exact_second_contact_prevents_endpoint_only_certificate_at_finite_underflow ... FAILED
+
+failures:
+
+failures:
+    finite_range_review::exact_second_contact_prevents_endpoint_only_certificate_at_finite_underflow
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

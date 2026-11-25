@@ -4,12 +4,15 @@ mod cone;
 pub(super) mod error;
 pub use cone::*;
 mod export_bindings;
+mod footprint;
+pub use footprint::*;
 pub(super) mod failure_projection;
 pub(super) mod history_projection;
 mod history_types;
 pub(super) mod input;
 mod material;
 pub(super) mod placement;
+mod rational;
 pub(super) mod reports;
 mod request;
 mod result;
@@ -18,9 +21,15 @@ pub use error::{WrappedFailureClass, WrappedNormalFailure, WrappedOperation, Wra
 pub use history_types::*;
 pub use material::*;
 pub use placement::{
-    WrappedChartNormalResult, WrappedChartPlacementReport, WrappedPlacementReport,
-    WrappedWorldSpatialReport, normal_extrude_profile_on_chart,
+    WrappedChartNormalResult, WrappedChartPlacementReport, WrappedConePlacementReport,
+    WrappedPlacedConeMemberReport, WrappedPlacedConeResult, WrappedPlacementReport,
+    WrappedWorldSpatialReport, normal_extrude_cone_profile_on_chart,
+    normal_extrude_cone_profile_on_chart_with_cancel, normal_extrude_profile_on_chart,
     normal_extrude_profile_on_chart_with_cancel,
+};
+pub use rational::{
+    RationalWrappedFailure, RationalWrappedResult, normal_extrude_rational_cone,
+    normal_extrude_rational_cone_with_selection, normal_extrude_rational_cylinder,
 };
 pub use reports::*;
 pub use request::*;

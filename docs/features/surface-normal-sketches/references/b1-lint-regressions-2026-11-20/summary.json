@@ -1,0 +1,238 @@
+{
+  "recorded_utc": "2026-11-20T00:06:15.971412+00:00",
+  "status": "SCOPED_FUNCTIONAL_AND_LINT_PASS",
+  "base_head": "db71a18edb2463a3bd969989f472c61401e6fdcc",
+  "source_changes": [
+    {
+      "path": "crates/martensite-tkbo/src/body_check/certified_conical/binding.rs",
+      "sha256": "ad54a828e425773d266808429a4c3e678e2e5a98d3089ef92f9b117d7e051d39"
+    },
+    {
+      "path": "crates/martensite-tkbo/src/body_check/certified_conical/binding/capture.rs",
+      "sha256": "89b45d5633fe6460c9eedd5a0eb8fad77bc699fe0a6899f7a75c8c75ac9b3afd"
+    },
+    {
+      "path": "crates/martensite-tkbo/src/body_check/certified_conical/error_tests.rs",
+      "sha256": "451e6fc80e1e2a5fe14d26286016e60d2187d55ff24a4f964da7c2add78d7d1c"
+    },
+    {
+      "path": "crates/martensite-tkbo/src/body_check/certified_conical/mod.rs",
+      "sha256": "3299380d51ba8a24e7ae00f2d421b0e2143c4a51421fd83415f849ddea2a799e"
+    },
+    {
+      "path": "crates/martensite-tkbo/src/body_check/certified_conical/native/vertices.rs",
+      "sha256": "dbd4b456ec577597d496d6f15ec8a05eb7fff548b42feff12b08176158541a72"
+    },
+    {
+      "path": "crates/martensite-tkbo/src/body_check/certified_conical/ordered/tests.rs",
+      "sha256": "da97aadbfb8ee57540b77ddb777e65a90e0daee2954a7e6585685dbccb6f75f3"
+    },
+    {
+      "path": "crates/martensite-tkbo/src/profile_extrusion/build_regions.rs",
+      "sha256": "c6728f8dd925e93c1ebd0a36437a5db35e4de8e7aa2b9a1028c6efa3ae3bdf9b"
+    },
+    {
+      "path": "crates/martensite-tkbo/src/profile_extrusion/proof.rs",
+      "sha256": "01364852a29aef820cab4ca0ba00def5b0cc7578b0515b04695a9e9c3c4f724c"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/angular/conditioned.rs",
+      "sha256": "83f0b182713169b4ad8b4af20a88d423e2092e79cd098f822db3ff0c8835a64b"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/angular/conditioned/primitive/tests.rs",
+      "sha256": "78bedb091ba5b4ad4698846cfcc1d68b7ff952f2ebe2bc0bb33fce982da1802e"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/angular/conditioned/primitive/weighted_tests.rs",
+      "sha256": "581ee8038b3b70798d46190408cb7b2258f4b21056a6bbe674ada695d15a278a"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/angular/conditioned/tests.rs",
+      "sha256": "1789305e890003555cc3e810699f1a9b6ac611d51e69beb7f8fe7b33d7da63d0"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/developed.rs",
+      "sha256": "0d85a6a8742101f52e96996451f9531f712b3d859fa633d113cd2bd087992193"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/original/conditioned.rs",
+      "sha256": "5bebf92247dc1a9903b8eaad3eb834e16450f230a9539ffb38e4b1f192b0eb22"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/reference/binding.rs",
+      "sha256": "c369b1dd2ba609e5b3a3db17dfc2d318b15a44972b08c7a53d52469e212bebd8"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/volume_boundary.rs",
+      "sha256": "aaf69a773080a2618bd2d962e5bc199c92aca8a7e4d4ec9ad42dbbf5149cc2e6"
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/material/binding.rs",
+      "sha256": "74c3c472c67b629d3b67e80f7ddd4acc3aefe023579771f69b6e444a46a84e2b"
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/measures/flux/tests.rs",
+      "sha256": "126ab7804988b0487d10241ced443230f9af5ea24316b5321e8142817a327ec0"
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/tests/narrow/normals.rs",
+      "sha256": "11e8b3c6d4845f540ef724c5c4f8b8f1ce695a3dbb7e9335bba2e21d82ae34bb"
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/tests/narrow/volume.rs",
+      "sha256": "6be05a691192c25e138434310195ba807e313306661c8ba88a750b86d99a0a06"
+    }
+  ],
+  "scoped_test_passes": 256,
+  "new_tests": 2,
+  "cumulative_unique_test_count_claimed": false,
+  "groups": [
+    {
+      "name": "tkbo-certified-conical",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkbo",
+        "--lib",
+        "body_check::certified_conical",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "summaries": [
+        "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 2287 filtered out; finished in 0.09s"
+      ],
+      "output_sha256": "a4348e6d29ea416afa155210c892623fd403562573683c4f5243f1c90e1f4077"
+    },
+    {
+      "name": "tkbo-region-composite",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkbo",
+        "--lib",
+        "profile_extrusion::composite_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "summaries": [
+        "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 2284 filtered out; finished in 2.20s"
+      ],
+      "output_sha256": "88d70d6a54cf735e392d613ab9bb4804d67251e41d2c2fbd4f586ea18df68551"
+    },
+    {
+      "name": "tkbo-public-work",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkbo",
+        "--test",
+        "toolkit",
+        "profile_extrusion::work::",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "summaries": [
+        "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 2652 filtered out; finished in 0.29s"
+      ],
+      "output_sha256": "11dce96f9be6e82662af8502f5dd829f7e07fb426b2fc589203185d8db4b8195"
+    },
+    {
+      "name": "sketch-flux",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tksketch",
+        "--lib",
+        "surface_sketch::wrapped_profile::operation::cone::measures::flux::tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "summaries": [
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 517 filtered out; finished in 0.00s"
+      ],
+      "output_sha256": "5e9a86e0755e1b782db7777374d8ce0b46492fd2e5d91597ea85a3bfdfdf81a5"
+    },
+    {
+      "name": "sketch-volume-oracle",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tksketch",
+        "--lib",
+        "surface_sketch::wrapped_profile::operation::cone::tests::narrow::volume",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "summaries": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 518 filtered out; finished in 0.00s"
+      ],
+      "output_sha256": "c6ad923f8e0d1826bacdd2e9568e1abed6b2e06320e201dc9d4b455be70fac81"
+    },
+    {
+      "name": "sketch-complete",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tksketch",
+        "--lib",
+        "surface_sketch::wrapped_profile::operation::cone::tests::narrow::complete",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "summaries": [
+        "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 511 filtered out; finished in 234.00s"
+      ],
+      "output_sha256": "ed3288cb311a0d73ca2ed03b273c4389637cf7ff6392626c1bc31b7bd8505e3b"
+    }
+  ],
+  "math_passes": 218,
+  "clippy_source_drift": [],
+  "regression_source_drift": [],
+  "new_570_r3_source_differences": [
+    "crates/martensite-tksketch/src/wrapped_profile/operation/cone/measures/flux/tests.rs"
+  ],
+  "difference_reason": "Only test fixture let-and-return simplification; production accumulator sources unchanged from validated r3.",
+  "published_api_changed": false,
+  "unreleased_layout": "ConicalBindingError.cause is Box<Failure>; signatures and field names preserved, direct Failure source downcast tested. RegionProofFailure boxes private DeclineCause; both original public projections unbox it.",
+  "success_path_allocation_added": false,
+  "toolchain": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.0\nLLVM version: 23.1.1",
+  "target": "/tmp/martensite-cone-b1-cached-target",
+  "jobs": 2,
+  "incremental": false,
+  "debug_info": 0,
+  "strip": "debuginfo",
+  "debug_assertions": true,
+  "overflow_checks": true,
+  "root_cargo_toml_sha256": "6b8e22b47df0f47dfa9b88359deddacb18bbd9699b6fa136551083db7d3ddd2e",
+  "dataset_revision": "34d65afd72cd3ca8ac1f9d17e5ca408b30e9b4b6",
+  "performance_qualification": false,
+  "canonical_gate_run_for_b1": false,
+  "public_work_command_correction": "The first command used nonexistent Cargo target profile_extrusion. Correct target toolkit passed all 6 profile_extrusion::work tests; no implementation failure. Original command/output retained.",
+  "raw_logs": "raw-logs.tar.gz",
+  "exclusions": [
+    "full affected-package canonical gate",
+    "quiet matched time/RSS",
+    "hosted CI",
+    "main-forwarded shared fixes",
+    "multi-chart/periodic/text acceptance"
+  ]
+}

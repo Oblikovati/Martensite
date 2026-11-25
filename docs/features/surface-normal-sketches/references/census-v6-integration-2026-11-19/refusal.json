@@ -1,0 +1,104 @@
+{
+  "active_compilers": [
+    [
+      "967257",
+      "cargo"
+    ],
+    [
+      "967269",
+      "rustc"
+    ]
+  ],
+  "samples": [
+    {
+      "pair": 1,
+      "mode": "v5",
+      "api_seconds": 13.668154,
+      "process_seconds": 18.20169428299414,
+      "peak_rss_kib": 114148,
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/tmp/martensite-census-v6-integrated-ab/1-v5-rss.txt",
+        "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tksketch-1bce81d5a48f0d86",
+        "--exact",
+        "surface_sketch::wrapped_profile::operation::cone::tests::narrow::complete::directed::directed_outward_narrow_polynomial_punctuation_requires_complete_actual_si",
+        "--nocapture",
+        "--test-threads=1"
+      ]
+    },
+    {
+      "pair": 1,
+      "mode": "v6",
+      "api_seconds": 7.583768,
+      "process_seconds": 12.249004276993219,
+      "peak_rss_kib": 64432,
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/tmp/martensite-census-v6-integrated-ab/1-v6-rss.txt",
+        "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tksketch-1bce81d5a48f0d86",
+        "--exact",
+        "surface_sketch::wrapped_profile::operation::cone::tests::narrow::complete::directed::geometric_v6_outward_requires_complete_actual_si",
+        "--nocapture",
+        "--test-threads=1"
+      ]
+    },
+    {
+      "pair": 2,
+      "mode": "v6",
+      "api_seconds": 7.68358,
+      "process_seconds": 12.126693595957477,
+      "peak_rss_kib": 65260,
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/tmp/martensite-census-v6-integrated-ab/2-v6-rss.txt",
+        "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tksketch-1bce81d5a48f0d86",
+        "--exact",
+        "surface_sketch::wrapped_profile::operation::cone::tests::narrow::complete::directed::geometric_v6_outward_requires_complete_actual_si",
+        "--nocapture",
+        "--test-threads=1"
+      ]
+    },
+    {
+      "pair": 2,
+      "mode": "v5",
+      "api_seconds": 13.631294,
+      "process_seconds": 18.071224027022254,
+      "peak_rss_kib": 115256,
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/tmp/martensite-census-v6-integrated-ab/2-v5-rss.txt",
+        "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tksketch-1bce81d5a48f0d86",
+        "--exact",
+        "surface_sketch::wrapped_profile::operation::cone::tests::narrow::complete::directed::directed_outward_narrow_polynomial_punctuation_requires_complete_actual_si",
+        "--nocapture",
+        "--test-threads=1"
+      ]
+    },
+    {
+      "pair": 3,
+      "mode": "v5",
+      "api_seconds": 13.111789,
+      "process_seconds": 17.66702096699737,
+      "peak_rss_kib": 115296,
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/tmp/martensite-census-v6-integrated-ab/3-v5-rss.txt",
+        "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tksketch-1bce81d5a48f0d86",
+        "--exact",
+        "surface_sketch::wrapped_profile::operation::cone::tests::narrow::complete::directed::directed_outward_narrow_polynomial_punctuation_requires_complete_actual_si",
+        "--nocapture",
+        "--test-threads=1"
+      ]
+    }
+  ]
+}

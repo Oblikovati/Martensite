@@ -25,6 +25,7 @@ fn two_relevant_images_and_the_infinite_tail_are_all_covered() {
     );
     for (index, image) in proof.images().iter().enumerate() {
         assert_image_receipt(image, index, proof.requested_clearance());
+        assert!(original.shares_sources(image.clearance_certificate()));
     }
     assert_periodic_receipt(&proof, &original);
 }
@@ -191,4 +192,54 @@ fn every_image_retains_the_exact_original_subinterval() {
         assert!(image.clearance_certificate().matches_sources(&inputs));
     }
     assert_periodic_receipt(&proof, &original);
+}
+
+#[test]
+fn a_caller_can_narrow_the_arithmetic_grant_without_changing_the_relation() {
+    let boundary = helix_source(14., 0.1);
+    let original = boundary.certify_periodic_clearance(4, || false).unwrap();
+    let limit = original.operations();
+    let narrow = boundary
+        .certify_periodic_clearance_with_work(4, limit, || false)
+        .unwrap();
+    assert!(narrow.matches_boundary(&boundary));
+    assert_eq!(narrow.operations(), limit);
+    assert_eq!(narrow.requested_options().max_operations, limit);
+    assert_eq!(
+        narrow.tail_separation_lower_bound(),
+        original.tail_separation_lower_bound()
+    );
+
+    let wider_request = boundary
+        .certify_periodic_clearance_with_work(4, u32::MAX, || false)
+        .unwrap();
+    assert_eq!(
+        wider_request.requested_options(),
+        boundary.requested_options()
+    );
+}
+
+#[test]
+fn planning_and_failed_images_report_all_spent_arithmetic() {
+    let boundary = helix_source(14., 0.1);
+    let planning = boundary
+        .certify_periodic_clearance_with_work(4, 1, || false)
+        .unwrap_err();
+    assert_eq!(planning.operations, 1);
+    assert!(matches!(
+        planning.cause.cause,
+        CylindricalClearanceFailure::Arithmetic(_)
+    ));
+
+    let completed = boundary.certify_periodic_clearance(4, || false).unwrap();
+    let limit = completed.operations() - 1;
+    let image = boundary
+        .certify_periodic_clearance_with_work(4, limit, || false)
+        .unwrap_err();
+    assert_eq!(image.operations, limit);
+    assert_eq!(image.cause.requested_options.max_operations, limit);
+    assert!(matches!(
+        image.cause.cause,
+        CylindricalClearanceFailure::PeriodicImage { turn: 2, .. }
+    ));
 }

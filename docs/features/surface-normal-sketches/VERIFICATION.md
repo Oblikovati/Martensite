@@ -330,7 +330,7 @@ feature snapshot `6e8424f77f1e6556c0660d3ee8107c4368da6c71`; those identify the
 attempt's context, not a successful instrumented test of that feature tree.
 
 The earlier startup observation above remains historical. Cone TSan coverage
-is still pending.
+was pending at this local checkpoint; the later hosted result is recorded below.
 
 ### Ordinary public cone concurrency control
 
@@ -355,7 +355,7 @@ receipts retain their original bytes. The 155-line test file
 has SHA256 `722a884d54414d28197cbb420ebb1b642e6bde87ce8703ae404062c0912879f6`;
 its parent `completed.rs` has SHA256
 `41893c68020496c366ef1c0f8f44e2fa3a0ee911e351f7e62c2b47b6ef26f1d8`.
-No instrumented cone control was built or run, and this ordinary pass does not
+This ordinary run built no instrumented cone control, and its pass does not
 qualify TSan or the final gate.
 
 ### Sanitizer driver and impact selection checks
@@ -367,9 +367,9 @@ seven frozen source hashes, executed scope and startup-failure reference;
 formatting and diff checks also passed for the owned driver files.
 
 These are ordinary driver/selection checks, separate from the passed ordinary
-cone concurrency control. The fresh startup fixture still exited 139 before
-either main marker, and no instrumented cone geometry was built or run. Cone
-TSan qualification remains pending. The ordinary local cone PR gate passed,
+cone concurrency control. The fresh local startup fixture exited 139 before
+either main marker, and that attempt built no instrumented cone geometry. Cone
+TSan qualification was still pending then. The ordinary local cone PR gate passed,
 and the subsequent review accepted bounded Phase A delivery as recorded below.
 
 ## Canonical cone PR gate, 2026-11-18
@@ -427,8 +427,9 @@ the [dated decision](PRODUCTION-MEMORY-ACCEPTANCE.md#maintainer-decision-2026-11
 is separate from the unchanged gate/evidence receipts. It grants no blanket
 runtime, heap, tolerance or performance waiver. Final Gate A review 3
 subsequently accepted the phase commit and ready PR, as recorded below.
-Required hosted checks, including new cone TSan, remain pending before merge;
-B/C have not started. No whole-feature or release claim follows from this gate.
+Required hosted checks, including new cone TSan, were pending at that checkpoint
+and subsequently passed before the merge recorded below. No whole-feature,
+B/C qualification or release claim follows from this local gate.
 
 ## Final Gate A delivery review, 2026-11-18
 
@@ -447,10 +448,52 @@ canonical gate and unchanged prior numerical sources. These publication-status
 updates change documentation only; the report describes its immutable reviewed
 tree, not these later prose updates.
 
-Required hosted checks, including the new cone TSan control, must be green
-before merge. Local startup exit 139 supplies no instrumented cone coverage;
-an older component TSan pass cannot substitute. Any required hosted failure
-must be resolved. This acceptance covers only the canonical-frame,
+Required hosted checks, including the new cone TSan control, had to be green
+before merge; that condition was satisfied by the new hosted run below.
+Local startup exit 139 supplies no instrumented cone coverage, and an older
+component TSan pass cannot substitute. This acceptance covers only the canonical-frame,
 single-common-chart curved outer-plus-hole Phase A operation in both senses.
-It does not complete #414/#418. B/C have not started, and no version, tag,
+It does not complete #414/#418 or B/C qualification, and no version, tag,
 release or blanket performance authorization is granted.
+
+## Hosted Phase A validation and merge, 2026-11-18
+
+The required hosted workflow completed successfully on PR head
+`7a2aa0814a3f8c5b049aaec74b5d98bd26b296fe`: 55 checks succeeded and 4 were
+skipped, with none failed or pending in the
+[final receipt](references/phase-a-549-hosted-final-receipt-2026-11-18.json).
+Linux affected-package PR verification and both Sonar checks succeeded. The
+[workflow](https://github.com/Oblikovati/Martensite/actions/runs/44378122033)
+is distinct from release/full-platform validation.
+
+The [new cone TSan receipt](references/phase-a-549-hosted-tsan-receipt-2026-11-18.json)
+records actual execution of
+`overlapping_public_cone_operations_and_shared_readers_preserve_owned_evidence`
+under the `WrappedCone` selection: 1 passed, 0 failed, 0 ignored, 451 filtered
+in 167.83 seconds. The [hosted job](https://github.com/Oblikovati/Martensite/actions/runs/44378122033/job/135063041701)
+completed successfully. Its full log SHA256 is
+`b4a4edce313f2b68eee8d8aa7acf8435433d8dfce91bd7429e1d2a3942a7602c`;
+the exact test and result line were checked against that log. This hosted pass
+does not erase the separate local startup failure.
+
+Both receipts are preserved byte for byte and were captured before merge: the
+final receipt still says `OPEN` and `merge_performed: false`.
+[PR #549](https://github.com/Oblikovati/Martensite/pull/549) subsequently merged
+into `release/next` at `8f2b423103d13b22d9724747946b43ee1ca15ded`; its second
+parent is the tested head `7a2aa081`. The merge closes #546 and #547. Phase A
+integration does not complete #414/#418, B/C or the full wrapping capability,
+and does not authorize a version, tag or release.
+
+## B1 functional checkpoint, 2026-11-19
+
+The complete outward and inward owned polynomial `O.` controls each passed 1/0/0,
+with terminal exit 0 and no source changes within either run. API times were
+`150.110240` and `114.468438` seconds; both consumed 984593/1000000 arithmetic
+operations and 501 integration subintervals. The `167` log value is derived side
+faces (`faces - 2` per member), not an independently counted fitted-span total.
+[The compact receipt](references/b1-functional-punctuation-2026-11-19.json)
+retains exact commands/environment, original profile limits and matching source
+manifest hashes. It identifies HEAD `8f2b4231` plus uncommitted B1 work and the
+unprobed binary, not the later probe build. These observations are diagnostic,
+not a matched benchmark, five-second pass or B1 acceptance. At that checkpoint, review was 0 of 3.
+[Current bounded correctness and stage attribution](references/b1-directed-correctness-attribution-2026-11-19.md) records review 2 ACCEPT/Standards PASS; full B/C, canonical, hosted, concurrency and performance gates remain open.

@@ -114,6 +114,7 @@ impl Profile {
     pub(super) fn request(self) -> OwnedProfileRequest {
         OwnedProfileRequest {
             version: 1,
+            integral_program: None,
             operation: CallerOperationId(91),
             edges: self.edges,
             loops: self.loops,

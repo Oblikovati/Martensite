@@ -3,10 +3,12 @@ use super::*;
 use crate::surface_sketch::wrapped_profile::operation::stages::{OwnedFamily, SupportStages};
 use std::collections::BTreeMap;
 pub(in crate::surface_sketch::wrapped_profile) struct CylinderStages {
-    pub work: martensite_tkbo::profile_extrusion::PlanarProofWorkLimit,
+    pub work: PlanarProofWorkLimit,
     pub volume: CylindricalMeasureLimit,
+    pub preparation: selection::Preparation,
 }
 impl SupportStages for CylinderStages {
+    type NativeEvidence = ();
     type Original = Request;
     type Prepared = Request;
     type Context = ();
@@ -26,8 +28,14 @@ impl SupportStages for CylinderStages {
         _: &mut (),
         cancelled: &mut CancelPoll<'_>,
     ) -> FamilyChecked<Self::Selection> {
-        selection::certify_with_work(originals, Default::default(), self.work, cancelled)
-            .map_err(|cause| FamilyFailure::Selection(Box::new(cause)))
+        selection::certify_with_proof(
+            originals,
+            Default::default(),
+            self.work,
+            self.preparation,
+            cancelled,
+        )
+        .map_err(|cause| FamilyFailure::Selection(Box::new(cause)))
     }
     fn prepared(selection: &Self::Selection) -> &[Request] {
         &selection.prepared.prepared
@@ -78,6 +86,8 @@ impl SupportStages for CylinderStages {
         originals: &[Request],
         selection: &Self::Selection,
         stored: &BTreeMap<SurfaceRegionId, Self::Stored>,
+        _: &mut (),
+        _: &mut CancelPoll<'_>,
     ) -> FamilyChecked<()> {
         family::bind(originals, selection, stored)
     }

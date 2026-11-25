@@ -63,12 +63,27 @@ pub(super) struct PeriodicEnclosure {
     pub margin: DyadicBound,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub(super) struct PeriodicWork {
     pub image_limit: u32,
     pub operations: u32,
     pub domains: u32,
     pub nodes: u32,
+    pub operation_limit: Option<u32>,
+}
+
+impl std::fmt::Debug for PeriodicWork {
+    fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut work = out.debug_struct("PeriodicWork");
+        work.field("image_limit", &self.image_limit)
+            .field("operations", &self.operations)
+            .field("domains", &self.domains)
+            .field("nodes", &self.nodes);
+        if let Some(limit) = self.operation_limit {
+            work.field("operation_limit", &limit);
+        }
+        work.finish()
+    }
 }
 
 impl CertifiedCylindricalPeriodicClearance {
@@ -129,7 +144,11 @@ impl CertifiedCylindricalPeriodicClearance {
     /// Original aggregate limits; effective per-image remainders appear in each image receipt.
     /// Example: `proof.requested_options()`.
     pub fn requested_options(&self) -> CylindricalClearanceOptions {
-        self.source.requested_options()
+        let mut options = self.source.requested_options();
+        if let Some(limit) = self.work.operation_limit {
+            options.max_operations = limit;
+        }
+        options
     }
     /// Bind the complete proof to original authored inputs and retained O2 chart; `proof.matches_profiles(&sources)`.
     pub fn matches_profiles(&self, sources: &[CylindricalProfileSource<'_>]) -> bool {

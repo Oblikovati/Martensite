@@ -14,12 +14,15 @@ pub(crate) use pair_root_failure::pair_root_failure;
 pub use work_receipt::CensusWorkReceipt;
 mod bernstein_binding;
 mod bernstein_execution;
+mod certified_contact;
+mod conditioned_stage;
 mod domain_certificate;
 mod graph_policy;
 mod paired_admission;
 mod paired_binding;
 mod paired_execution;
 mod paired_types;
+pub(crate) use certified_contact::{CertifiedDomainContact, ContactProofKey};
 pub(crate) use coverage::inspect_contact_coverage;
 pub(crate) use domain_certificate::CertifiedPairDomain;
 pub(crate) use graph_policy::{GraphPolicyMismatch, bind_graph_policy};
@@ -78,9 +81,12 @@ mod bernstein_tests;
 #[cfg(test)]
 mod filtered_tests;
 mod source_access;
-pub(crate) use source_access::{SourceAccess, certificate_in};
+pub(crate) use source_access::{SourceAccess, certificate_in, unified_certificate_in};
 
 pub(crate) use paired_admission::{
     enumerate_carrier_census_with_access, enumerate_exclusion_census_with_access,
-    enumerate_filtered_exclusion_census_with_access,
+    enumerate_filtered_exclusion_census_with_access, enumerate_geometric_census_with_access,
 };
+
+#[cfg(test)]
+mod geometric_tests;

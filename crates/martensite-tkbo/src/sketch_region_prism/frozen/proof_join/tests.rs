@@ -92,7 +92,12 @@ fn missing_colliding_or_wrong_actual_contact_never_reuses_proof() {
             actual: contact.actual,
             original: contact.original.clone(),
         };
-        wrong.actual.candidate_root += 1;
+        wrong.actual.proof_key = match wrong.actual.proof_key {
+            crate::sketch_region_certification::ContactProofKey::ProjectedRoot(index) => {
+                crate::sketch_region_certification::ContactProofKey::ProjectedRoot(index + 1)
+            }
+            _ => panic!("legacy projected root"),
+        };
         assert!(links::link_proof(proof, bound, frozen, &wrong).is_err());
     });
 }

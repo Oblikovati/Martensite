@@ -3,9 +3,10 @@
 use super::contexts::checked_occurrences;
 use super::outcome::{BodyKind, OrderedCoverage, StageCoverage, ValidationStage};
 use martensite_tkbrep::brep::BRepBuilder;
-use martensite_tkbrep::topods::{ShapeIterator, Vertex};
+use martensite_tkbrep::topods::{Builder, Compound, ShapeIterator, Vertex};
 use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::ShapeEnum;
+use martensite_tkmath::{gp::Transform3, toploc::Location};
 use martensite_tktopalgo::brep_check::BRepCheckAnalyzer;
 
 use crate::changing_child_count::changing_shape;
@@ -27,6 +28,25 @@ fn empty_and_exhausted_iterators_are_normal_ends() {
             .unwrap()
             .len(),
         14
+    );
+}
+
+#[test]
+fn repeated_occurrences_keep_first_visit_order_and_distinct_uses() {
+    let mut vertex = Vertex::default();
+    BRepBuilder::default().make_vertex(&mut vertex);
+    let forward = vertex.into_shape();
+    let reversed = forward.reversed();
+    let location = Location::new(Transform3::translation([1., 0., 0.]));
+    let placed = forward.located(&location, false).unwrap();
+    let mut root = Compound::default();
+    Builder.make_compound(&mut root);
+    for child in [&forward, &reversed, &forward, &placed, &reversed] {
+        Builder.add(&mut root, child).unwrap();
+    }
+    assert_eq!(
+        checked_occurrences(&root).unwrap(),
+        vec![root.into_shape(), forward, reversed, placed],
     );
 }
 

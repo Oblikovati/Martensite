@@ -1,13 +1,16 @@
 //! Owned source coefficients prevent a planar identity from certifying later geometry edits.
 use super::*;
 #[derive(Debug)]
-pub(super) struct SourceSnapshot(BTreeMap<SurfaceCurveId, SourceCurve>);
+pub(in crate::surface_sketch::wrapped_profile) struct SourceSnapshot(
+    BTreeMap<SurfaceCurveId, SourceCurve>,
+);
 #[derive(Debug)]
 struct SourceCurve {
     span: CurveSpan,
     start: CornerSource,
     end: CornerSource,
     poles: Vec<[u64; 2]>,
+    weighted: Option<std::sync::Arc<profile_input::WeightedBezierSource>>,
 }
 impl SourceSnapshot {
     pub fn capture(request: &DevelopedRegionRequest) -> Self {
@@ -36,6 +39,7 @@ impl SourceCurve {
             start: piece.start,
             end: piece.end,
             poles: piece.poles.iter().map(|p| p.map(f64::to_bits)).collect(),
+            weighted: piece.weighted_source.clone(),
         }
     }
     fn matches(&self, piece: &AuthoredPiece) -> bool {
@@ -47,5 +51,14 @@ impl SourceCurve {
                 .iter()
                 .copied()
                 .eq(piece.poles.iter().map(|p| p.map(f64::to_bits)))
+            && self.matches_weights(piece)
+    }
+
+    fn matches_weights(&self, piece: &AuthoredPiece) -> bool {
+        match (&self.weighted, &piece.weighted_source) {
+            (Some(expected), Some(actual)) => expected.same_bits(actual),
+            (None, None) => true,
+            _ => false,
+        }
     }
 }

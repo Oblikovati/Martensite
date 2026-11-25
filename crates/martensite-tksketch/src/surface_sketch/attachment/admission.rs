@@ -43,15 +43,18 @@ pub(super) fn membership(
     Ok((count, orientation))
 }
 fn cylinder(attempt: &Attempt, face: &Face) -> Checked<()> {
-    let adaptor = attempt.native(
-        "selected surface",
-        BRepAdaptorSurface::with_face(face, false),
-    )?;
-    let actual = attempt.native("surface classification", adaptor.get_type())?;
+    let actual = surface_type(attempt, face)?;
     if actual != SurfaceType::Cylinder {
         return Err(attempt.reject(AttachmentFailureCause::Surface { actual }));
     }
     Ok(())
+}
+pub(super) fn surface_type(attempt: &Attempt, face: &Face) -> Checked<SurfaceType> {
+    let adaptor = attempt.native(
+        "selected surface",
+        BRepAdaptorSurface::with_face(face, false),
+    )?;
+    attempt.native("surface classification", adaptor.get_type())
 }
 pub(super) fn validation(
     attempt: &Attempt,

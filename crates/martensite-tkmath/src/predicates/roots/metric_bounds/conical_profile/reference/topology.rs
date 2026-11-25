@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Shared monotone projections cover self/adjacent pairs; the exact complement uses clearance.
 use super::*;
-pub(super) fn bind(query: &ConicalReferenceQuery<'_>) -> Result<(), ConicalReferenceFailure> {
+pub(super) fn bind(query: &ReferenceInputs<'_>) -> Result<(), ConicalReferenceFailure> {
     let sources = sources(query)?;
     let clearance = query.clearance;
     if !clearance.matches_sources(&sources)
@@ -16,10 +16,13 @@ pub(super) fn bind(query: &ConicalReferenceQuery<'_>) -> Result<(), ConicalRefer
     if clearance.excluded_pairs() != exclusions(query) {
         return Err(binding_failure("only source-keyed adjacent pairs excluded"));
     }
+    if let Some(atlas) = query.atlas {
+        return super::atlas::bind_domains(query, atlas);
+    }
     sector(query)
 }
 fn sources<'a>(
-    query: &ConicalReferenceQuery<'a>,
+    query: &ReferenceInputs<'a>,
 ) -> Result<Vec<CylindricalClearanceSource<'a>>, ConicalReferenceFailure> {
     query
         .members
@@ -39,7 +42,7 @@ fn sources<'a>(
         })
         .collect()
 }
-fn exclusions(query: &ConicalReferenceQuery<'_>) -> Vec<[usize; 2]> {
+fn exclusions(query: &ReferenceInputs<'_>) -> Vec<[usize; 2]> {
     let mut result = std::collections::BTreeSet::new();
     let mut offset = 0;
     for count in query
@@ -59,8 +62,8 @@ fn adjacent(count: usize, offset: usize, result: &mut std::collections::BTreeSet
         result.insert(pair);
     }
 }
-fn sector(query: &ConicalReferenceQuery<'_>) -> Result<(), ConicalReferenceFailure> {
-    let policy = query.sector.sector.policy;
+fn sector(query: &ReferenceInputs<'_>) -> Result<(), ConicalReferenceFailure> {
+    let policy = query.sector.policy();
     let sector = ConicalSectorQuery {
         spans: query.sector_spans,
         semi_angle: query.members[0].spans[0].query.semi_angle,
@@ -75,28 +78,22 @@ fn sector(query: &ConicalReferenceQuery<'_>) -> Result<(), ConicalReferenceFailu
             "executed original PositiveX quarter-turn wedge",
         ));
     }
+    chart::bind_domain(query)?;
     if !covers_originals(query) {
         return Err(binding_failure("sector and original-boundary coverage"));
     }
     Ok(())
 }
-fn covers_originals(query: &ConicalReferenceQuery<'_>) -> bool {
-    let originals: Vec<_> = query
+fn covers_originals(query: &ReferenceInputs<'_>) -> bool {
+    let fitted = query
         .members
         .iter()
         .flat_map(|member| member.spans)
-        .filter_map(|span| span.query.original.map(|original| original.poles))
-        .collect();
-    query
-        .sector_spans
-        .iter()
-        .all(|original| originals.contains(original))
-        && originals
-            .iter()
-            .all(|original| query.sector_spans.contains(original))
+        .filter_map(|span| span.query.original.map(|original| original.poles));
+    query.sector.covers_originals(fitted)
 }
 pub(super) fn separation(
-    query: &ConicalReferenceQuery<'_>,
+    query: &ReferenceInputs<'_>,
     displacement: &Interval,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<(), ConicalReferenceFailure> {
@@ -113,7 +110,13 @@ pub(super) fn separation(
         displacement.upper.clone(),
         -i32::from(arithmetic.fractional_bits()),
     );
-    if !query.sector.admits_bound(&bound) {
+    let admitted = match query.atlas {
+        Some(atlas) => atlas
+            .iter()
+            .all(|member| member.domain.admits_bound(&bound)),
+        None => query.sector.admits_bound(&bound),
+    };
+    if !admitted {
         return Err(binding_failure(
             "perturbed ideal fit remains inside strict source wedge",
         ));

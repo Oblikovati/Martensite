@@ -1,0 +1,6 @@
+{
+  "fixture_contacts_matched": 148,
+  "unresolved": 0,
+  "sweep_equals_exhaustive_closed_box_pairs": true,
+  "negative_and_positive_controls_pass": true
+}

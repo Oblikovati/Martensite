@@ -54,29 +54,15 @@ impl<'a, 'q> Context<'a, 'q> {
         query: CylindricalClearanceQuery<'q>,
         excluded: BTreeSet<[usize; 2]>,
         cancelled: &'a mut (dyn FnMut() -> bool + Send),
-    ) -> Checked<Self> {
-        let arithmetic = Arithmetic::new(
-            ArithmeticPolicy {
-                fractional_bits: query.options.fractional_bits,
-                max_operations: query.options.max_operations,
-            },
-            cancelled,
-        );
-        let mut result = Self::initialize_clearance(query, excluded, arithmetic)?;
-        result.capture_roots()?;
-        Ok(result)
-    }
-    #[inline(always)]
-    fn initialize_clearance(
-        query: CylindricalClearanceQuery<'q>,
-        excluded: BTreeSet<[usize; 2]>,
-        mut arithmetic: Arithmetic<'a>,
-    ) -> Checked<Self> {
-        let delta = arithmetic.scalar(query.requested_clearance)?;
-        let delta_square = arithmetic.multiply(&delta, &delta)?;
-        let offset = query.domain.offset();
-        let shift = [arithmetic.scalar(offset[0])?, arithmetic.scalar(offset[1])?];
-        Ok(Self {
+    ) -> super::WorkChecked<Self> {
+        let policy = ArithmeticPolicy {
+            fractional_bits: query.options.fractional_bits,
+            max_operations: query.options.max_operations,
+        };
+        let mut arithmetic = Arithmetic::new(policy, cancelled);
+        let (shift, delta, delta_square) = clearance_constants(query, &mut arithmetic)
+            .map_err(|cause| (cause, arithmetic.operations()))?;
+        let mut context = Self {
             arithmetic,
             query,
             curves: Vec::new(),
@@ -86,7 +72,11 @@ impl<'a, 'q> Context<'a, 'q> {
             delta,
             delta_square,
             statistics: Statistics::default(),
-        })
+        };
+        context
+            .capture_roots()
+            .map_err(|cause| (cause, context.arithmetic.operations()))?;
+        Ok(context)
     }
     fn capture_roots(&mut self) -> Checked<()> {
         self.reserve_nodes(self.query.sources.len() as u32)?;
@@ -120,6 +110,17 @@ impl<'a, 'q> Context<'a, 'q> {
         }
         Ok(())
     }
+}
+
+fn clearance_constants(
+    query: CylindricalClearanceQuery<'_>,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<([Interval; 2], Interval, Interval)> {
+    let delta = arithmetic.scalar(query.requested_clearance)?;
+    let delta_square = arithmetic.multiply(&delta, &delta)?;
+    let offset = query.domain.offset();
+    let shift = [arithmetic.scalar(offset[0])?, arithmetic.scalar(offset[1])?];
+    Ok((shift, delta, delta_square))
 }
 
 fn capture_source(

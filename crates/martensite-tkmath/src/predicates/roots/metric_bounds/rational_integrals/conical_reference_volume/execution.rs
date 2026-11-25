@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! One scalar cap and one aggregate cell allowance cover both rational terms of every span.
+use super::super::conical_sum::ConicalSum;
 use super::*;
 use std::cmp::Ordering;
 struct Integration<'a> {
@@ -7,21 +8,21 @@ struct Integration<'a> {
     coefficients: &'a [ContributionBounds; 2],
     operations: u32,
     cells: u64,
-    sum: publish::BoundsSum,
+    sum: ConicalSum,
     work: Vec<CylindricalFluxWork>,
 }
 pub(super) fn integrate(
     query: ConicalReferenceVolumeQuery<'_>,
     coefficients: &[ContributionBounds; 2],
     operations: u32,
-    cancelled: &mut impl FnMut() -> bool,
+    cancelled: &mut (impl FnMut() -> bool + Send),
 ) -> Result<CertifiedConicalReferenceVolume, ConicalReferenceVolumeError> {
     let mut integration = Integration {
         query,
         coefficients,
         operations,
         cells: 0,
-        sum: publish::BoundsSum::zero(),
+        sum: ConicalSum::new(query.options.behavior_version == 2, query.arithmetic),
         work: Vec::new(),
     };
     for (index, span) in query.spans.iter().copied().enumerate() {
@@ -42,7 +43,7 @@ impl Integration<'_> {
         &mut self,
         index: usize,
         span: ConicalReferenceVolumeSpan<'_>,
-        cancelled: &mut impl FnMut() -> bool,
+        cancelled: &mut (impl FnMut() -> bool + Send),
     ) -> Result<(), ConicalReferenceVolumeError> {
         let term = ConicalReferenceVolumeTerm::SquaredSlant;
         poll(cancelled).map_err(|cause| self.failure(Some(index), term, cause.into()))?;
@@ -69,7 +70,7 @@ impl Integration<'_> {
         term: usize,
         quotient: &quotient::Quotients,
         remaining: u32,
-        cancelled: &mut impl FnMut() -> bool,
+        cancelled: &mut (impl FnMut() -> bool + Send),
     ) -> Result<(), ConicalReferenceVolumeError> {
         let coefficient = &self.coefficients[term];
         if zero(coefficient) {
@@ -82,23 +83,46 @@ impl Integration<'_> {
         let kind = term_kind(term);
         let result = result.map_err(|cause| self.failure(Some(index), kind, cause))?;
         let contribution = multiply(coefficient, &result.bounds);
+        self.accumulate(index, reversed, contribution, examined, cancelled)
+    }
+    fn accumulate(
+        &mut self,
+        index: usize,
+        reversed: bool,
+        contribution: ContributionBounds,
+        cells: u64,
+        cancelled: &mut (impl FnMut() -> bool + Send),
+    ) -> Result<(), ConicalReferenceVolumeError> {
         self.sum
-            .accumulate(publish::reversed_bounds(contribution, reversed), examined);
-        Ok(())
+            .accumulate(
+                publish::reversed_bounds(contribution, reversed),
+                cells,
+                &mut self.operations,
+                cancelled,
+            )
+            .map_err(|cause| {
+                ConicalReferenceVolumeError::new(
+                    self.query,
+                    Some(index),
+                    None,
+                    (self.operations, self.cells),
+                    ConicalReferenceVolumeFailure::Arithmetic(Box::new(cause)),
+                )
+            })
     }
     fn remaining(&self) -> u32 {
         self.query.options.max_total_subintervals - self.cells as u32
     }
     fn finish(
         self,
-        cancelled: &mut impl FnMut() -> bool,
+        cancelled: &mut (impl FnMut() -> bool + Send),
     ) -> Result<CertifiedConicalReferenceVolume, ConicalReferenceVolumeError> {
         let query = self.query;
         let work = (self.operations, self.cells);
         let fail = |cause| publication_error(query, work, cause);
         poll(cancelled).map_err(|cause| fail(cause.into()))?;
         let options = engine(query.options, self.remaining());
-        let mut scalar = publish::rounded_scalar(self.sum, options).map_err(fail)?;
+        let mut scalar = publish::rounded_scalar(self.sum.finish(), options).map_err(fail)?;
         scalar.evidence = RationalIntegralEvidence::ErrorBoundedIntegration;
         poll(cancelled).map_err(|cause| fail(cause.into()))?;
         Ok(CertifiedConicalReferenceVolume {
@@ -113,7 +137,7 @@ impl Integration<'_> {
 }
 fn engine(options: CylindricalFluxOptions, remaining: u32) -> RationalIntegralOptions {
     RationalIntegralOptions {
-        behavior_version: options.behavior_version,
+        behavior_version: 1, // Parent2 changes only accumulation; scalar term algorithm remains1.
         max_degree: options.max_degree,
         max_curves: 1,
         absolute_error_limit: options.absolute_error_limit,
@@ -176,7 +200,7 @@ fn integrate_quotient(
     term: usize,
     options: RationalIntegralOptions,
     share: &ExactRatio,
-    cancelled: &mut impl FnMut() -> bool,
+    cancelled: &mut (impl FnMut() -> bool + Send),
 ) -> (Result<curve::CurveIntegral, RationalIntegralFailure>, u64) {
     curve::quotient_integral_accounted(
         quotient.numerators[term].clone(),

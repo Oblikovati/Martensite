@@ -1,0 +1,13 @@
+{
+  "finished": 1795155652.0367103,
+  "source_changed": [],
+  "test_result": "1 passed; 2 failed; 0 ignored",
+  "old_fixed_allowance_refusal_control": "passed",
+  "candidate_both_normals": "refused: chart trim trace bound exceeds requested 5e-6",
+  "operation_events": [
+    "{\"event\":\"conical_text_api\",\"normal\":\"Inward\",\"seconds\":6.213775667}",
+    "{\"event\":\"conical_text_api\",\"normal\":\"Outward\",\"seconds\":6.246441976}"
+  ],
+  "accepted_complete_operation": false,
+  "performance_accepted": false
+}

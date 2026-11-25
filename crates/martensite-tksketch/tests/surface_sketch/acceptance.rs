@@ -189,3 +189,12 @@ fn oblique_translated_frame_preserves_carriers_trims_and_physical_depth() {
         construct(&rectangle(), [-1., 2.]).history()
     );
 }
+
+#[test]
+fn published_detached_body_accepts_an_unannotated_empty_binding_list() {
+    let body = DetachedNormalBody {
+        solid: martensite_tkbrep::topods::Shape::default(),
+        entities: Vec::new(),
+    };
+    assert!(body.entities.is_empty());
+}

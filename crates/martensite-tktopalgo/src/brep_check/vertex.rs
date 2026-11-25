@@ -1,5 +1,6 @@
 //! `BRepCheck_Vertex`: the checker of a vertex, whose point representations must lie
 //! within its tolerance of its point.
+use super::analyzer_contexts::EnumeratedContext;
 use super::explore::holds_same;
 use super::result::{BRepCheckResult, ResultBase, SharedStatusList, add_status};
 use super::status::BRepCheckStatus;
@@ -307,19 +308,19 @@ fn geom2d_curve(
         .ok_or_else(|| super::errors::null_object("BRepCheck_Vertex: null pcurve"))
 }
 
-impl BRepCheckResult for BRepCheckVertex {
-    fn result_base(&self) -> &ResultBase {
-        &self.base
-    }
-
-    /// `InContext(S)`: `SubshapeNotInShape` when the vertex is not in `context`, else
-    /// the point checks on the edge or face `context` (other types record nothing).
-    fn in_context(&self, context: &Shape) -> Result<(), Failure> {
+impl BRepCheckVertex {
+    pub(super) fn check_context(
+        &self,
+        context: &Shape,
+        member: Option<&EnumeratedContext<'_>>,
+    ) -> Result<(), Failure> {
         let Some(list) = self.base.bind_context_list(context) else {
             return Ok(());
         };
         let shape = self.base.shape();
-        if !holds_same(context, ShapeEnum::Vertex, &shape)? {
+        if !member.is_some_and(|entry| entry.includes(context, &shape))
+            && !holds_same(context, ShapeEnum::Vertex, &shape)?
+        {
             add_status(&list, BRepCheckStatus::SubshapeNotInShape);
             return Ok(());
         }
@@ -328,6 +329,18 @@ impl BRepCheckResult for BRepCheckVertex {
             ShapeEnum::Face => self.check_on_face(&face(context)?, &list),
             _ => Ok(()),
         }
+    }
+}
+
+impl BRepCheckResult for BRepCheckVertex {
+    fn result_base(&self) -> &ResultBase {
+        &self.base
+    }
+
+    /// `InContext(S)`: `SubshapeNotInShape` when the vertex is not in `context`, else
+    /// the point checks on the edge or face `context` (other types record nothing).
+    fn in_context(&self, context: &Shape) -> Result<(), Failure> {
+        self.check_context(context, None)
     }
 
     /// `Minimum()`: the vertex itself has no defect (`NoError`).

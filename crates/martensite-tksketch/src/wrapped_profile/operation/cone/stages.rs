@@ -2,7 +2,8 @@
 use super::*;
 use crate::surface_sketch::wrapped_profile::operation::stages::{OwnedFamily, SupportStages};
 pub(super) struct ConeStages<'a> {
-    pub request: &'a WrappedConeNormalRequest,
+    pub request: &'a ConeRun<'a>,
+    pub execution_selection: WrappedConeExecutionSelection,
 }
 impl SupportStages for ConeStages<'_> {
     type Original = DevelopedRegionRequest;
@@ -14,6 +15,7 @@ impl SupportStages for ConeStages<'_> {
     }
     type Stored = storage::Stored;
     type Geometry = Geometry;
+    type NativeEvidence = actual::NativeEvidence;
     type Limits = ();
     type Budget = Budget;
     type Error = ConeFailure;
@@ -26,8 +28,35 @@ impl SupportStages for ConeStages<'_> {
         context: &mut storage::Work,
         cancelled: &mut CancelPoll<'_>,
     ) -> ConeChecked<Selection> {
-        prepare::select(self.request, originals, context, cancelled)
+        match self.execution_selection {
+            WrappedConeExecutionSelection::RoundedProxyNativeSearchV1 {
+                domain: WrappedConeDomainPolicy::LegacySectorV1,
+            } => prepare::select(self.request, originals, context, cancelled),
+            WrappedConeExecutionSelection::RoundedProxyNativeSearchV1 { domain } => {
+                prepare::select_with_policy(self.request, originals, domain, context, cancelled)
+            }
+            WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1
+            | WrappedConeExecutionSelection::DirectedFamilyChartRequireCertifiedV2 { .. }
+            | WrappedConeExecutionSelection::DirectedRecenteredChartRequireCertifiedV3 { .. }
+            | WrappedConeExecutionSelection::DirectedRegionAtlasRequireCertifiedV4 { .. }
+            | WrappedConeExecutionSelection::DirectedTransportedPlacementV5 { .. }
+            | WrappedConeExecutionSelection::DirectedTransportedAuthoredPlanarV8 { .. }
+            | WrappedConeExecutionSelection::DirectedTransportedAuthoredPlanarAndCapCyclesV9 {
+                ..
+            }
+            | WrappedConeExecutionSelection::ConnectedChartAtlasV6 { .. }
+            | WrappedConeExecutionSelection::DirectedConnectedChartAtlasV7 { .. } => {
+                prepare::select_with_execution(
+                    self.request,
+                    originals,
+                    self.execution_selection,
+                    context,
+                    cancelled,
+                )
+            }
+        }
     }
+
     fn prepared(selection: &Selection) -> &[Prepared] {
         &selection.prepared
     }
@@ -105,8 +134,21 @@ impl SupportStages for ConeStages<'_> {
         originals: &[DevelopedRegionRequest],
         selection: &Selection,
         stored: &BTreeMap<SurfaceRegionId, storage::Stored>,
+        context: &mut storage::Work,
+        cancelled: &mut CancelPoll<'_>,
     ) -> ConeChecked<()> {
-        storage::bind(originals, selection, stored)
+        storage::bind(originals, selection, stored)?;
+        if selection.executed_selection.is_connected_atlas() {
+            context.connected = Some(Box::new(material::atlas::capture(
+                self.request,
+                originals,
+                selection,
+                stored,
+                context,
+                cancelled,
+            )?));
+        }
+        Ok(())
     }
     fn geometry(
         &self,
@@ -117,6 +159,36 @@ impl SupportStages for ConeStages<'_> {
         cancelled: &mut CancelPoll<'_>,
     ) -> ConeChecked<(Geometry, Shape)> {
         measures::geometry(self.request, original, prepared, stored, context, cancelled)
+    }
+    fn defer_native_checks(&self) -> bool {
+        self.execution_selection.is_directed()
+    }
+    fn certify_native_family(
+        &self,
+        originals: &[DevelopedRegionRequest],
+        selection: &Selection,
+        members: &BTreeMap<SurfaceRegionId, (Geometry, Shape)>,
+        context: &mut storage::Work,
+        cancelled: &mut CancelPoll<'_>,
+    ) -> ConeChecked<actual::NativeEvidence> {
+        actual::certify_family(
+            self.request,
+            originals,
+            selection,
+            members,
+            context,
+            cancelled,
+        )
+    }
+    fn qualify_native(
+        &self,
+        original: &DevelopedRegionRequest,
+        _: &Prepared,
+        geometry: &Geometry,
+        shape: &Shape,
+        evidence: &actual::NativeEvidence,
+    ) -> ConeChecked<pipeline::NativeQualification> {
+        actual::qualify(original, geometry, shape, evidence)
     }
     fn budget(
         &self,

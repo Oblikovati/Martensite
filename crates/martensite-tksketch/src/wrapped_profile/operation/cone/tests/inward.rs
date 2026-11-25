@@ -118,7 +118,11 @@ pub(super) fn check_vertex(
         _ => return 0,
     };
     let source = authored_vertex(request, id);
-    let expected = expected_point(source.point, -depth, request.support.semi_angle);
+    let physical_depth = match request.support.normal {
+        NormalSense::Outward => depth,
+        NormalSense::Inward => -depth,
+    };
+    let expected = expected_point(source.point, physical_depth, request.support.semi_angle);
     check_point(request, shape, key, source, expected);
     1
 }
@@ -148,7 +152,7 @@ fn check_point(
     }
 }
 
-fn expected_point([x, y]: [f64; 2], physical_depth: f64, alpha: f64) -> [f64; 3] {
+pub(super) fn expected_point([x, y]: [f64; 2], physical_depth: f64, alpha: f64) -> [f64; 3] {
     let (s, c) = (martensite_cmath::sin(alpha), martensite_cmath::cos(alpha));
     let slant = martensite_cmath::hypot(x, y);
     let theta = martensite_cmath::atan2(y, x) / s;

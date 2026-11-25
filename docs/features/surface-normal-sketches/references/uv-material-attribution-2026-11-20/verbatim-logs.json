@@ -1,0 +1,30 @@
+{
+  "archive_sha256": "575076a13920e1a605b6d2b0fdda37cce63fdeede5fc2c83a5b5286a9962c756",
+  "members": [
+    {
+      "member": "plan.json",
+      "bytes": 10953,
+      "sha256": "3842cd523098930d640b3afe377331d1a1cf3124f2a345a5bbc7a138d9d11afa"
+    },
+    {
+      "member": "build.jsonl",
+      "bytes": 35542,
+      "sha256": "217625d0326cf67899527b48a5fd4a9633dafdbf6c9677150997546f8ee69e80"
+    },
+    {
+      "member": "build.stderr",
+      "bytes": 21184,
+      "sha256": "5f8b5a0f60e21982c1ee4c6adbf37d8eac87d04a744d66f68413d8eac1b05974"
+    },
+    {
+      "member": "test.stdout",
+      "bytes": 283,
+      "sha256": "b8453fbac34f2c64354daf9df2f90de3d404891bef8b20a7a020744ee3137efe"
+    },
+    {
+      "member": "test.stderr",
+      "bytes": 11609,
+      "sha256": "76bb77e4e6230d38651149550a06a23ef7baf55759349270b9f322d592448467"
+    }
+  ]
+}

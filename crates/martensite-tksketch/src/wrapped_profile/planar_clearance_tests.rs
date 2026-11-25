@@ -118,12 +118,8 @@ fn within_certificate(original: &Request, prepared: &Request, cancelled: &mut Ca
     let spans = prepared_spans(std::slice::from_ref(prepared));
     let sources = sources(&spans, &authored).unwrap();
     let excluded = excluded_pairs(std::slice::from_ref(prepared));
-    certify_input(
-        clearance_query(original, &sources, &excluded),
-        &spans,
-        cancelled,
-    )
-    .unwrap();
+    let query = clearance_query(original, &sources, &excluded);
+    certify_cylindrical_clearance_with_work(query, cancelled).unwrap();
 }
 #[test]
 fn cancellation_inside_the_last_periodic_image_keeps_its_turn_and_arithmetic_cause() {
@@ -165,4 +161,37 @@ fn assert_image_cancelled(failure: ClearanceFailure, expected: u32) {
     };
     assert_eq!(*turn, expected);
     assert_cancelled_arithmetic(&cause.cause);
+}
+
+#[test]
+fn reduced_family_grant_covers_within_and_periodic_work_once() {
+    let original = request();
+    let prepared = subdivision::prepare(&original).unwrap();
+    let baseline = certify(&original, &prepared).unwrap();
+    let limit = baseline.certificate.operations() + baseline.periodic.operations();
+    let grant = ConeClearanceOptions {
+        max_operations: limit,
+        ..Default::default()
+    };
+    check_shared_grant(&[original], &[prepared], grant);
+}
+
+fn check_shared_grant(originals: &[Request], prepared: &[Request], grant: ConeClearanceOptions) {
+    let complete = certify_many_with_limit(originals, prepared, grant, || false).unwrap();
+    assert_eq!(
+        complete.periodic.requested_options().max_operations,
+        grant.max_operations - complete.certificate.operations(),
+    );
+    let tight = ConeClearanceOptions {
+        max_operations: grant.max_operations - 1,
+        ..grant
+    };
+    let refused = certify_many_with_limit(originals, prepared, tight, || false)
+        .err()
+        .unwrap();
+    assert_eq!(refused.operations, tight.max_operations);
+    assert!(matches!(
+        refused.cause,
+        ClearanceFailure::Certificate { .. }
+    ));
 }

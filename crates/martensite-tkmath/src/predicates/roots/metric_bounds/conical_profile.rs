@@ -372,12 +372,24 @@ fn magnitude_interval(values: &[Interval]) -> Interval {
     }
 }
 
-mod angle;
+mod actual_certificate;
+pub(super) mod angle;
+pub use actual_certificate::*;
 mod angular;
 mod boundary;
 mod boundary_cause;
+mod boundary_chart;
+pub use boundary_chart::{
+    certify_conical_boundary_in_chart, certify_conical_boundary_in_chart_with_refinement,
+};
 mod boundary_kind;
 mod boundary_snapshot;
+mod boundary_transition;
+pub use boundary_transition::{
+    ConicalBoundaryZRowError, ConicalBoundaryZRowEvidence, ConicalBoundaryZRowFailure,
+    ConicalBoundaryZRowTransition, certify_conical_boundary_z_rows,
+};
+mod chart_domain;
 mod combined;
 mod developed;
 mod inverse;
@@ -385,15 +397,19 @@ mod joins;
 mod original;
 mod quadrature;
 mod quadrature_certificate;
+mod refinement;
+pub use refinement::ConicalPrimitiveRefinement;
 mod reference;
 mod request;
 mod sector;
 mod sector_api;
 mod slant;
 mod slant_derivative;
+mod source_index;
 mod spatial;
 mod storage;
 mod storage_api;
+mod storage_pair;
 mod volume;
 mod volume_api;
 mod volume_boundary;
@@ -407,9 +423,22 @@ pub use angle::{
     ConicalJoinsFailure, ConicalJoinsQuery, ConicalOriginalFailure, ConicalOriginalSpan,
     certify_conical_authored_flux, certify_conical_boundary, certify_conical_joins,
 };
+pub use chart_domain::{
+    ConicalChartDomainBound, ConicalChartDomainError, ConicalChartDomainEvidence,
+    ConicalChartDomainFailure, ConicalChartDomainQuery, ConicalChartDomainRequirement,
+    ConicalChartDomainVersion, ConicalChartPlan, ConicalChartPlanError, ConicalChartPlanFailure,
+    ConicalChartPlanQuery, ConicalSubspanChartError, certify_conical_chart_domain,
+    certify_conical_chart_domain_with_version, certify_conical_subspan_chart,
+    plan_conical_subspan_charts,
+};
 pub use reference::{
+    ConicalAtlasReferenceDomain, ConicalAtlasReferenceQuery, ConicalChartReferenceQuery,
+    ConicalDecodedFamilyError, ConicalDecodedFamilyFailure, ConicalDecodedFillFailure,
     ConicalReferenceError, ConicalReferenceEvidence, ConicalReferenceFailure,
-    ConicalReferenceMember, ConicalReferenceQuery, certify_conical_reference,
+    ConicalReferenceMember, ConicalReferenceQuery, certify_conical_atlas_reference,
+    certify_conical_chart_reference, certify_conical_chart_reference_with_refinement,
+    certify_conical_decoded_family, certify_conical_decoded_family_with_fill,
+    certify_conical_reference,
 };
 pub use request::{
     ConeClearanceOptions, ConeRequest, ConeRequestError, ConeRequestReceipt, certify_cone_request,
@@ -437,3 +466,27 @@ fn admit_source_point(pole: usize, point: &[f64; 2]) -> Result<(), ConicalSource
     }
     Ok(())
 }
+
+pub use joins::{
+    ConicalCapClearanceRelation, ConicalCapFamilyHomotopyError, ConicalCapHomotopyEvidence,
+    ConicalCapHomotopyFailure, ConicalCapJoinSpan, ConicalCapJoinsQuery, ConicalCapNormalError,
+    ConicalCapNormalEvidence, ConicalCapVolumeError, ConicalCapVolumeEvidence,
+    ConicalCapVolumeFailure, ConicalChartJoinsError, ConicalDecodedCapEvidence,
+    certify_conical_cap_family_homotopy, certify_conical_cap_joins, certify_conical_joins_in_chart,
+    certify_conical_joins_in_chart_with_refinement,
+};
+
+mod trim_bridge;
+pub use trim_bridge::{
+    ConicalChartTrimPairError, ConicalChartTrimPairFailure, certify_conical_trim_pair_in_chart,
+    certify_conical_trim_pair_in_chart_with_refinement,
+};
+
+pub(super) mod developed_boundary;
+pub use developed_boundary::{ConicalDevelopedBoundaryEvidence, ConicalDevelopedBoundarySpan};
+pub use trim_bridge::{
+    certify_conical_trim_pair_with_developed_boundary,
+    certify_conical_trim_pair_with_developed_boundary_and_refinement,
+};
+
+pub use volume_api::{ConicalAuthoredFluxMethod, certify_conical_authored_flux_with_method};

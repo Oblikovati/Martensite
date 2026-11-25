@@ -1,0 +1,77 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//! Bind the original rational source roots to the detached, certified cutter.
+use super::*;
+
+type Completed = CurvedBandResult<RationalWrappedResult>;
+
+/// Cut one rational aperture through a full cylindrical band, clear of or crossing its seam.
+/// Accepts one closed boundary of explicit lines, exact short analytic conics, and open, clamped positive-rational quadratics.
+/// Analytic arcs require exactly representable stereographic controls.
+/// The reference level controls exact dyadic subdivision of the original curve parameter.
+/// Example: `let cut = normal_extrude_cylinder_band_with_rational_hole(&band, &profile, options, 3)?;`.
+pub fn normal_extrude_cylinder_band_with_rational_hole(
+    band: &FullTurnBand,
+    request: &WrappedNormalRequest,
+    options: NormalExtrusionOptions,
+    reference_level: u8,
+) -> Result<Completed, CurvedBandFailure> {
+    let plan = AperturePlan::admit(
+        band,
+        request,
+        options,
+        Scope::One,
+        SourceModel::Rational(options.resolution),
+    )
+    .map_err(|cause| admission_failure(band, cause))?;
+    let tool = normal_extrude_rational_cylinder(request, reference_level, || false)
+        .map_err(|cause| CurvedBandFailure::rational(&plan, cause))?;
+    finish_rational(plan, tool)
+}
+
+/// Cut one rational aperture through a full conical band, clear of or crossing its seam.
+/// Accepts one closed boundary of explicit lines, exact short analytic conics, and open, clamped positive-rational quadratics
+/// in a positive-X developed chart. Any seam crossing uses one lift of its zero ray.
+/// Analytic arcs require exactly representable stereographic controls.
+/// A nonzero lift requires an explicit certified V5 or V6 planar proof.
+/// Example: `let cut = normal_extrude_cone_band_with_rational_hole(&band, &profile, options, 3)?;`.
+pub fn normal_extrude_cone_band_with_rational_hole(
+    band: &FullTurnBand,
+    request: &WrappedConeNormalRequest,
+    options: NormalExtrusionOptions,
+    reference_level: u8,
+) -> Result<Completed, CurvedBandFailure> {
+    let plan = AperturePlan::admit_cone(
+        band,
+        request,
+        options,
+        Scope::One,
+        SourceModel::Rational(options.resolution),
+    )
+    .map_err(|cause| admission_failure(band, cause))?;
+    let tool = match cone_execution(&plan)? {
+        Some(selection) => {
+            normal_extrude_rational_cone_with_selection(request, reference_level, selection, || {
+                false
+            })
+        }
+        None => normal_extrude_rational_cone(request, reference_level, || false),
+    }
+    .map_err(|cause| CurvedBandFailure::rational(&plan, cause))?;
+    finish_rational(plan, tool)
+}
+
+fn finish_rational(
+    plan: AperturePlan,
+    tool: RationalWrappedResult,
+) -> Result<Completed, CurvedBandFailure> {
+    let angular_error = angle_from_chord(plan.minimum_radius(), tool.spatial_error().upper)
+        .map_err(|cause| plan.stock.sweep.failure(SurfaceStage::Validation, cause))?;
+    let evidence = FitEvidence {
+        authored_volume: tool.authored_volume(),
+        angular_error,
+    };
+    let detached = tool
+        .export_native()
+        .map_err(|cause| CurvedBandFailure::wrapped(&plan, cause))?;
+    finish(plan, tool, evidence, &detached)
+}

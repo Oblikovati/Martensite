@@ -1,0 +1,84 @@
+{
+  "results": [
+    {
+      "name": "tkbo-public-work",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkbo",
+        "--test",
+        "toolkit",
+        "profile_extrusion::work::",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "summaries": [
+        "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 2652 filtered out; finished in 0.29s"
+      ],
+      "output_sha256": "11dce96f9be6e82662af8502f5dd829f7e07fb426b2fc589203185d8db4b8195"
+    },
+    {
+      "name": "sketch-flux",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tksketch",
+        "--lib",
+        "surface_sketch::wrapped_profile::operation::cone::measures::flux::tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "summaries": [
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 517 filtered out; finished in 0.00s"
+      ],
+      "output_sha256": "5e9a86e0755e1b782db7777374d8ce0b46492fd2e5d91597ea85a3bfdfdf81a5"
+    },
+    {
+      "name": "sketch-volume-oracle",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tksketch",
+        "--lib",
+        "surface_sketch::wrapped_profile::operation::cone::tests::narrow::volume",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "summaries": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 518 filtered out; finished in 0.00s"
+      ],
+      "output_sha256": "c6ad923f8e0d1826bacdd2e9568e1abed6b2e06320e201dc9d4b455be70fac81"
+    },
+    {
+      "name": "sketch-complete",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tksketch",
+        "--lib",
+        "surface_sketch::wrapped_profile::operation::cone::tests::narrow::complete",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "summaries": [
+        "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 511 filtered out; finished in 234.00s"
+      ],
+      "output_sha256": "ed3288cb311a0d73ca2ed03b273c4389637cf7ff6392626c1bc31b7bd8505e3b"
+    }
+  ],
+  "source_changed": [],
+  "finished": "2026-11-20T00:04:01.297896+00:00",
+  "all_groups_ran": true
+}

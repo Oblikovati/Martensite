@@ -3,6 +3,7 @@ use super::*;
 pub(super) fn flux(cause: &AnalyticConicalFluxFailure) -> Class {
     use AnalyticConicalFluxFailure as F;
     match cause {
+        F::Arithmetic { .. } => Class::Incomplete,
         F::Input { cause, .. } => cylindrical(cause),
         F::ArithmeticPolicy(_) | F::Carrier { .. } => Class::InvalidInput,
         F::Coefficients { cause, .. } => numerical::profile(cause),

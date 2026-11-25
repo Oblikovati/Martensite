@@ -68,7 +68,7 @@ pub struct WrappedConeBudgetReport {
     pub planar_work: martensite_tkbo::profile_extrusion::PlanarProofWorkReceipt,
     /// Actually charged arithmetic operations across selection and all retained members.
     pub arithmetic_operations: u32,
-    /// Actually examined reference-volume and proxy-flux integration cells across all members.
+    /// Integration cells charged for the authored and retained planar programs, reference volume and proxy flux.
     pub integration_subintervals: u32,
     /// Original spatial limit in model units.
     pub requested_spatial_error: f64,

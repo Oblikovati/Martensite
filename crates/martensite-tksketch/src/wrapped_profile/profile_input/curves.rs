@@ -1,15 +1,19 @@
 //! Preserve source controls, then orient traversal once for the wrapped operation.
 use super::*;
+use std::sync::Arc;
+mod weighted;
+pub(in crate::surface_sketch::wrapped_profile) use weighted::WeightedBezierSource;
 
 pub(super) fn read(
     curve: &ProfileCurve,
     reversed: bool,
     index: &ProfileIndex<'_>,
+    cancelled: &mut CancelPoll<'_>,
 ) -> Checked<AuthoredPiece> {
     let [start, end] = curve
         .ends()
         .ok_or(ProfileInputFailure::Unsupported(curve.id()))?;
-    let mut poles = controls(curve, index)?;
+    let (mut poles, weighted) = controls(curve, index, cancelled)?;
     endpoints(curve.id(), [start, end], &poles, index)?;
     let [start, end] = if reversed {
         poles.reverse();
@@ -17,13 +21,15 @@ pub(super) fn read(
     } else {
         [start, end]
     };
-    Ok(authored_piece(curve.id(), [start, end], poles))
+    let weighted = weighted.map(|source| Arc::new(source.orient(reversed)));
+    Ok(authored_piece(curve.id(), [start, end], poles, weighted))
 }
 
 fn authored_piece(
     id: ProfileCurveId,
     [start, end]: [ProfileVertexId; 2],
     poles: Vec<[f64; 2]>,
+    weighted_source: Option<Arc<WeightedBezierSource>>,
 ) -> AuthoredPiece {
     AuthoredPiece {
         span: CurveSpan {
@@ -34,15 +40,23 @@ fn authored_piece(
         start: CornerSource::Authored(SurfaceVertexId(start.0)),
         end: CornerSource::Authored(SurfaceVertexId(end.0)),
         poles,
+        weighted_source,
         chart_center: 0.,
     }
 }
 
-fn controls(curve: &ProfileCurve, index: &ProfileIndex<'_>) -> Checked<Vec<[f64; 2]>> {
+type Controls = (Vec<[f64; 2]>, Option<WeightedBezierSource>);
+
+fn controls(
+    curve: &ProfileCurve,
+    index: &ProfileIndex<'_>,
+    cancelled: &mut CancelPoll<'_>,
+) -> Checked<Controls> {
     match curve {
-        ProfileCurve::Line { id, start, end } => {
-            Ok(vec![index.vertex(*id, *start)?, index.vertex(*id, *end)?])
-        }
+        ProfileCurve::Line { id, start, end } => Ok((
+            vec![index.vertex(*id, *start)?, index.vertex(*id, *end)?],
+            None,
+        )),
         ProfileCurve::Spline {
             id,
             degree,
@@ -53,7 +67,7 @@ fn controls(curve: &ProfileCurve, index: &ProfileIndex<'_>) -> Checked<Vec<[f64;
         } => {
             spline_shape(*id, *degree, poles.len(), weights.as_deref(), knots.len())?;
             unit_knots(*id, *degree, knots)?;
-            Ok(poles.clone())
+            weighted::resolve(*id, poles, weights.as_deref(), cancelled)
         }
         other => Err(ProfileInputFailure::Unsupported(other.id())),
     }
@@ -74,7 +88,7 @@ fn spline_shape(
     {
         return Err(spline_failure(curve, degree, poles, weights, knots));
     }
-    unit_weights(curve, weights.unwrap_or(&[]))
+    positive_weights(curve, weights.unwrap_or(&[]))
 }
 
 fn spline_failure(
@@ -93,9 +107,9 @@ fn spline_failure(
     }
 }
 
-fn unit_weights(curve: ProfileCurveId, weights: &[f64]) -> Checked<()> {
+fn positive_weights(curve: ProfileCurveId, weights: &[f64]) -> Checked<()> {
     for (index, value) in weights.iter().copied().enumerate() {
-        if value != 1. {
+        if !value.is_finite() || value <= 0. {
             return Err(ProfileInputFailure::Weight {
                 curve,
                 index,

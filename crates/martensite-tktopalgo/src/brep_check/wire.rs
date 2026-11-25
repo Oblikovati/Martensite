@@ -1,6 +1,7 @@
 //! `BRepCheck_Wire`: the checker of a wire (connected, closed in 3d and on a face,
 //! oriented, not self-intersecting). `Closed` and `Closed2d` are in `wire_closed.rs`,
 //! `Orientation` in `wire_orientation.rs`, `SelfIntersect` in `wire_self_intersect.rs`.
+use super::analyzer_contexts::EnumeratedContext;
 use super::explore::{holds_same, sub_shapes};
 use super::result::{BRepCheckResult, ResultBase, add_status, close_status_list};
 use super::status::BRepCheckStatus;
@@ -158,18 +159,19 @@ pub(super) fn append_under_key(
     Ok(())
 }
 
-impl BRepCheckResult for BRepCheckWire {
-    fn result_base(&self) -> &ResultBase {
-        &self.base
-    }
-
-    /// `InContext(S)`: `SubshapeNotInShape` when the wire is not in `context`, else in a
-    /// face the first failing check (see [`BRepCheckWire`]).
-    fn in_context(&self, context: &Shape) -> Result<(), Failure> {
+impl BRepCheckWire {
+    pub(super) fn check_context(
+        &self,
+        context: &Shape,
+        member: Option<&EnumeratedContext<'_>>,
+    ) -> Result<(), Failure> {
         let Some(list) = self.base.bind_context_list(context) else {
             return Ok(());
         };
-        if !holds_same(context, ShapeEnum::Wire, &self.base.shape())? {
+        let shape = self.base.shape();
+        if !member.is_some_and(|entry| entry.includes(context, &shape))
+            && !holds_same(context, ShapeEnum::Wire, &shape)?
+        {
             add_status(&list, BRepCheckStatus::SubshapeNotInShape);
             return Ok(());
         }
@@ -182,6 +184,18 @@ impl BRepCheckResult for BRepCheckWire {
         }
         close_status_list(&list);
         Ok(())
+    }
+}
+
+impl BRepCheckResult for BRepCheckWire {
+    fn result_base(&self) -> &ResultBase {
+        &self.base
+    }
+
+    /// `InContext(S)`: `SubshapeNotInShape` when the wire is not in `context`, else in a
+    /// face the first failing check (see [`BRepCheckWire`]).
+    fn in_context(&self, context: &Shape) -> Result<(), Failure> {
+        self.check_context(context, None)
     }
 
     /// `Minimum()`: `EmptyWire` without edges, `NotConnected` when the edges are not all

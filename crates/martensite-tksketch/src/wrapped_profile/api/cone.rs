@@ -4,8 +4,14 @@ use crate::surface_sketch::ConeSupport;
 use std::collections::BTreeMap;
 mod reports;
 pub use reports::*;
+mod arithmetic_grant;
+pub use arithmetic_grant::*;
 mod proof;
 pub use proof::*;
+mod domain_policy;
+pub use domain_policy::*;
+mod execution_selection;
+pub use execution_selection::*;
 /// Owned cone-normal extrusion input; `normal_extrude_cone_profile(&request)?`.
 #[derive(Clone, Debug, PartialEq)]
 pub struct WrappedConeNormalRequest {
@@ -33,6 +39,8 @@ pub struct WrappedConeNormalResult {
     pub(in crate::surface_sketch::wrapped_profile) depths: [f64; 2],
     pub(in crate::surface_sketch::wrapped_profile) options: WrappedNormalOptions,
     pub(in crate::surface_sketch::wrapped_profile) proof: WrappedConeProofOptions,
+    pub(in crate::surface_sketch::wrapped_profile) arithmetic_grant:
+        Option<operation::cone::input::grant::CapturedGrant>,
 }
 impl WrappedConeNormalResult {
     /// Caller-relative derived/split/created lineage; `result.history().len()`.
@@ -55,6 +63,13 @@ impl WrappedConeNormalResult {
     pub fn depths(&self) -> [f64; 2] {
         self.depths
     }
+    /// Full-family authored planar program, with requested caps, its loan and actual cell count.
+    /// Example: `result.authored_planar_receipt().map(|proof| proof.integration_subintervals())`.
+    pub fn authored_planar_receipt(
+        &self,
+    ) -> Option<&martensite_tkbo::profile_extrusion::PlanarIntegralEvidence> {
+        self.family.family.selection.authored_program.as_ref()
+    }
     /// Requested limits, without replacement by achieved bounds; `result.options().spatial_error`.
     pub fn options(&self) -> WrappedNormalOptions {
         self.options
@@ -72,6 +87,34 @@ impl WrappedConeNormalResult {
     /// Canonical Phase A supports use the apex; `let origin = result.boundary_flux_origin();`.
     pub fn boundary_flux_origin(&self) -> [f64; 3] {
         self.support.apex
+    }
+    /// Decoded UV whole-orbit and face integral receipt for planar proof versions V5 and V6.
+    /// Example: `result.planar_integral_receipt(region).map(|proof| proof.entry_allowance())`.
+    pub fn planar_integral_receipt(
+        &self,
+        region: SurfaceRegionId,
+    ) -> Option<&martensite_tkbo::profile_extrusion::PlanarIntegralEvidence> {
+        self.family
+            .family
+            .members
+            .get(&region)?
+            .geometry
+            .material
+            .integral_program_evidence()
+    }
+    /// Measured work for the directed selected-cap proof, when explicitly selected.
+    /// Example: `let work = result.directed_cap_receipt(region);`.
+    pub fn directed_cap_receipt(
+        &self,
+        region: SurfaceRegionId,
+    ) -> Option<martensite_tkbo::body_check::DirectedCapWork> {
+        self.family
+            .family
+            .members
+            .get(&region)?
+            .geometry
+            .material
+            .directed_cap_work()
     }
     /// Original, effective and consumed integration work; `result.flux_receipt(region)`.
     pub fn flux_receipt(
@@ -97,12 +140,14 @@ impl WrappedConeNormalResult {
             .map(|member| &member.geometry.authored)
     }
     /// Executed reference topology, filled-body and storage composition; `result.reference_body_receipt()`.
+    /// Connected atlas cap receipts are ordered by the request's region selections.
     pub fn reference_body_receipt(
         &self,
     ) -> &martensite_tkmath::predicates::roots::metric_bounds::ConicalReferenceEvidence {
         &self.family.budget.reference
     }
     /// Source-bound reference-volume integration settings and actual work; `result.reference_volume_receipt(region)`.
+    /// Connected atlas volume evidence is available through `result.reference_body_receipt().decoded_caps()`.
     pub fn reference_volume_receipt(
         &self,
         region: SurfaceRegionId,
@@ -112,12 +157,15 @@ impl WrappedConeNormalResult {
             .family
             .members
             .get(&region)
-            .map(|member| &member.geometry.reference_volume)
+            .and_then(|member| member.geometry.reference_volume.common())
     }
     /// Independent keyed native owners; `let detached = result.export_native()?;`.
     pub fn export_native(&self) -> Checked<DetachedWrappedBodies> {
-        let (bodies, bindings) = pipeline::decode(self.encoded_brep(), &self.family.family.keys)
-            .map_err(|cause| {
+        self.export_bytes(self.encoded_brep())
+    }
+    pub(super) fn export_bytes(&self, bytes: &[u8]) -> Checked<DetachedWrappedBodies> {
+        let (bodies, bindings) =
+            pipeline::decode(bytes, &self.family.family.keys).map_err(|cause| {
                 export_failure(WrappedFailureClass::Native, error::Cause::Export(cause))
             })?;
         let entities = self.export_entities(bindings)?;

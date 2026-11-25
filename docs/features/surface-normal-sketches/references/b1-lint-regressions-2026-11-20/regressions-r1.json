@@ -1,0 +1,63 @@
+{
+  "results": [
+    {
+      "name": "tkbo-certified-conical",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkbo",
+        "--lib",
+        "body_check::certified_conical",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "summaries": [
+        "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 2287 filtered out; finished in 0.09s"
+      ],
+      "output_sha256": "a4348e6d29ea416afa155210c892623fd403562573683c4f5243f1c90e1f4077"
+    },
+    {
+      "name": "tkbo-region-composite",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkbo",
+        "--lib",
+        "profile_extrusion::composite_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "summaries": [
+        "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 2284 filtered out; finished in 2.20s"
+      ],
+      "output_sha256": "88d70d6a54cf735e392d613ab9bb4804d67251e41d2c2fbd4f586ea18df68551"
+    },
+    {
+      "name": "tkbo-public-work",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkbo",
+        "--test",
+        "profile_extrusion",
+        "work::",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 101,
+      "summaries": [],
+      "output_sha256": "fec53df96323797a8087dc808cd870184719895fcfd809ad0b094473f9aa0446"
+    }
+  ],
+  "source_changed": [],
+  "finished": "2026-11-19T23:56:26.339489+00:00",
+  "all_groups_ran": false
+}

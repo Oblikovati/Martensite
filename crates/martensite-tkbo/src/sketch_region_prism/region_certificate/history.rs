@@ -116,7 +116,10 @@ fn bind_root_identity(
         .ok_or(RegionCertificateCause::UnavailableCandidates)?;
     holds(
         "retained exact closure root",
-        identity.candidate_root == proof.contact(0).expect("one closure").candidate_index,
+        identity.proof_key
+            == crate::sketch_region_certification::ContactProofKey::ProjectedRoot(
+                proof.contact(0).expect("one closure").candidate_index,
+            ),
     )?;
     let domain = &bridge.census.domains[0];
     let crate::sketch_region_certification::DomainEvidence::PairedReport { report, .. } =

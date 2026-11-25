@@ -10,7 +10,7 @@ use super::*;
 use crate::predicates::roots::certificate_arithmetic::bounded_dyadic::{
     Arithmetic, ArithmeticPolicy, Interval,
 };
-pub use error::{CylindricalProbeError, CylindricalProbeFailure};
+pub use error::{CylindricalProbeError, CylindricalProbeFailure, CylindricalProbeWorkError};
 pub use types::*;
 type Checked<T> = Result<T, CylindricalProbeFailure>;
 impl CertifiedCylindricalPeriodicClearance {
@@ -23,13 +23,30 @@ impl CertifiedCylindricalPeriodicClearance {
         &self,
         requests: &[CylindricalPeriodicProbe],
         options: CylindricalProbeOptions,
-        mut cancelled: impl FnMut() -> bool + Send,
+        cancelled: impl FnMut() -> bool + Send,
     ) -> Result<CertifiedCylindricalProbes, CylindricalProbeError> {
-        execute(self, requests, options, &mut cancelled).map_err(|cause| CylindricalProbeError {
-            requested_options: options,
-            probe_count: requests.len(),
-            clearance: self.requested_clearance(),
-            cause,
+        self.certify_probes_with_work(requests, options, cancelled)
+            .map_err(|error| error.cause)
+    }
+
+    /// Certify the same winding seeds and retain the arithmetic spent on refusal.
+    /// Call with `periodic.certify_probes_with_work(&requests, options, || false)?`.
+    pub fn certify_probes_with_work(
+        &self,
+        requests: &[CylindricalPeriodicProbe],
+        options: CylindricalProbeOptions,
+        mut cancelled: impl FnMut() -> bool + Send,
+    ) -> Result<CertifiedCylindricalProbes, CylindricalProbeWorkError> {
+        execute(self, requests, options, &mut cancelled).map_err(|(cause, operations)| {
+            CylindricalProbeWorkError {
+                operations,
+                cause: CylindricalProbeError {
+                    requested_options: options,
+                    probe_count: requests.len(),
+                    clearance: self.requested_clearance(),
+                    cause,
+                },
+            }
         })
     }
 }
@@ -38,14 +55,11 @@ fn execute(
     requests: &[CylindricalPeriodicProbe],
     options: CylindricalProbeOptions,
     cancelled: &mut (dyn FnMut() -> bool + Send),
-) -> Checked<CertifiedCylindricalProbes> {
-    admit(requests.len(), options)?;
+) -> Result<CertifiedCylindricalProbes, (CylindricalProbeFailure, u32)> {
+    admit(requests.len(), options).map_err(|cause| (cause, 0))?;
     let mut arithmetic = arithmetic(options, cancelled);
-    arithmetic.check_cancelled()?;
-    let mut probes = Vec::new();
-    for (index, request) in requests.iter().enumerate() {
-        probes.push(proof::certify(index, *request, periodic, &mut arithmetic)?);
-    }
+    let probes = issue(periodic, requests, &mut arithmetic)
+        .map_err(|cause| (cause, arithmetic.operations()))?;
     Ok(CertifiedCylindricalProbes {
         probes,
         clearance: periodic.requested_clearance(),
@@ -53,6 +67,21 @@ fn execute(
         operations: arithmetic.operations(),
     })
 }
+
+fn issue(
+    periodic: &CertifiedCylindricalPeriodicClearance,
+    requests: &[CylindricalPeriodicProbe],
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<Vec<CertifiedCylindricalProbe>> {
+    arithmetic.check_cancelled()?;
+    requests
+        .iter()
+        .copied()
+        .enumerate()
+        .map(|(index, request)| proof::certify(index, request, periodic, arithmetic))
+        .collect()
+}
+
 fn arithmetic<'a>(
     options: CylindricalProbeOptions,
     cancelled: &'a mut (dyn FnMut() -> bool + Send),

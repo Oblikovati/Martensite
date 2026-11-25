@@ -4,8 +4,9 @@ Status: Phase A review 2 ended with memory-only remediation; the four
 reference/body correctness findings were resolved. On 2026-11-18 the maintainer
 explicitly accepted the quantified code/process footprint tradeoff recorded
 below for this Phase A candidate. Final review 3 accepted its phase commit and
-ready PR. Required hosted checks, including new cone TSan, remain pending and
-must pass before merge; B/C have not started.
+ready PR. Required hosted checks, including actual new cone TSan execution,
+passed on `7a2aa081` before PR #549 merged into `release/next` at `8f2b4231`.
+B/C qualification remains outstanding.
 
 ## Matched production comparison
 
@@ -100,6 +101,7 @@ policies and evidence receipts remain unchanged.
 Final [Gate A review 3](references/cone-gate-a-oracle-3-2026-11-18.md) accepted
 the bounded phase commit and ready PR, with the user decision resolving the
 remaining footprint finding. Required hosted checks, including new cone TSan,
-must pass before merge. B/C have not started; wider cone charts, text, placement
+passed before the Phase A merge; the [verification record](VERIFICATION.md#hosted-phase-a-validation-and-merge-2026-11-18)
+separates tested head and merge identity. Wider cone charts, text, placement
 and primitive unification remain later work. No version, tag, release or
 whole-feature completion is authorized.

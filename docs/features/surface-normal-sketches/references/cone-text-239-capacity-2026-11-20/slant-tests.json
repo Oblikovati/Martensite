@@ -1,0 +1,42 @@
+{
+  "whole-text-slant": {
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "martensite-tkv3d",
+      "--test",
+      "toolkit",
+      "wrapped_text_regions::wrapped::conical_text::",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit": 0,
+    "changed_sources": [],
+    "outcomes": [
+      "test wrapped_text_regions::wrapped::conical_text::inward_multiline_cone_text_completes_under_explicit_input_bound_and_original_spatial_cap ... {\"event\":\"conical_text_api\",\"normal\":\"Inward\",\"seconds\":13.86094374}",
+      "test wrapped_text_regions::wrapped::conical_text::outward_multiline_cone_text_completes_under_explicit_input_bound_and_original_spatial_cap ... {\"event\":\"conical_text_api\",\"normal\":\"Outward\",\"seconds\":13.974353809}",
+      "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 692 filtered out; finished in 33.14s"
+    ]
+  },
+  "actual-certificate-slant": {
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "martensite-tkmath",
+      "--lib",
+      "conical_profile::actual_certificate::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit": 0,
+    "changed_sources": [],
+    "outcomes": [
+      "test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 1077 filtered out; finished in 0.01s"
+    ]
+  }
+}

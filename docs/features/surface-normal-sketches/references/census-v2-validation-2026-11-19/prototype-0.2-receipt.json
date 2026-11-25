@@ -1,0 +1,19 @@
+{
+  "archive": "census-v2-prototype-0.2.zip",
+  "archive_sha256": "553c865dad16c57095aa1131d254bd52d8936163de8e8c9f4de10d46e63167ba",
+  "python_contact_matches": 148,
+  "python_unresolved": 0,
+  "python_exhaustive_box_sweep_equality": true,
+  "python_negative_positive_controls": "passed",
+  "rust_controls": "5 passed including underflow and scaled hairpin",
+  "rust_fixture_counts": "O137 and dot11 unchanged; unresolved zero",
+  "source_inspection": [
+    "self domains interleaved with candidate pairs",
+    "num-bigint/integer/rational/traits dev opt-level 3",
+    "caller supplied profile label and actual debug assertions printed"
+  ],
+  "scope": "standalone validation; no production edits, full-kernel timing or memory acceptance",
+  "removed_temporary_root": "/tmp/martensite-census02-5e0fxgjy",
+  "user_archive_preserved": true,
+  "temporary_root_removed": true
+}

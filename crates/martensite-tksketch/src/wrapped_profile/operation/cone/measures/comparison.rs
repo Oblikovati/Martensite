@@ -11,7 +11,7 @@ pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn certify(
 ) -> ConeChecked<ComparisonBounds> {
     let authored = range(geometry.authored.volume())?;
     let reference = &geometry.reference_volume;
-    let reference_integration_error = reference.absolute_error_bound();
+    let reference_integration_error = reference.absolute_error_bound()?;
     let authored_reference_discrepancy =
         distance([authored.lower, authored.upper], reference.enclosure())?;
     let proxy_reference_discrepancy = distance(geometry.flux.enclosure(), reference.enclosure())?;
@@ -33,7 +33,10 @@ pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn member_volume
         reference_integration_error: api::reports::bound(actual.reference_integration_error),
     })
 }
-fn distance(a: [f64; 2], b: [f64; 2]) -> ConeChecked<f64> {
+pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn distance(
+    a: [f64; 2],
+    b: [f64; 2],
+) -> ConeChecked<f64> {
     let first = difference(a[0], b[1])?;
     let last = difference(a[1], b[0])?;
     Ok(first.max(last))

@@ -12,6 +12,29 @@ pub struct CylindricalProbeError {
     /// Original cause.
     pub cause: CylindricalProbeFailure,
 }
+/// A refused probe batch and the arithmetic it spent before refusal.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CylindricalProbeWorkError {
+    /// Operations charged across completed and unfinished probes.
+    pub operations: u32,
+    /// Original typed probe failure.
+    pub cause: CylindricalProbeError,
+}
+impl std::fmt::Display for CylindricalProbeWorkError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{} after {} arithmetic operations",
+            self.cause, self.operations
+        )
+    }
+}
+impl std::error::Error for CylindricalProbeWorkError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.cause)
+    }
+}
+
 /// Invalid input or an unresolved strict rounding margin.
 #[derive(Clone, Debug, PartialEq)]
 pub enum CylindricalProbeFailure {

@@ -4,6 +4,9 @@ use super::*;
 use crate::predicates::roots::certificate_arithmetic::ExactRatio;
 use crate::predicates::roots::certificate_arithmetic::bounded_dyadic::ArithmeticPolicy;
 use crate::predicates::roots::metric_bounds::cylindrical_profile::trigonometric;
+use std::sync::Arc;
+
+pub(super) type SourceBits = Arc<[Vec<[u64; 2]>]>;
 
 /// The strict developed-plane quarter-turn wedge established by a sector receipt.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -18,8 +21,10 @@ pub enum ConicalSectorWedge {
     NegativeY,
 }
 
+#[derive(Clone)]
 pub(super) struct SectorEvidence {
-    pub(super) source: Vec<Vec<[u64; 2]>>,
+    pub(super) source: SourceBits,
+    pub(super) original_index: source_index::OriginalSourceIndex,
     pub(super) angle: u64,
     pub(super) policy: ArithmeticPolicy,
     pub(super) operations: u32,
@@ -143,8 +148,11 @@ pub(super) fn certify(
     arithmetic
         .check_cancelled()
         .map_err(SectorFailure::Arithmetic)?;
+    let source = source_bits(spans);
+    let original_index = source_index::OriginalSourceIndex::from_sources(&source);
     Ok(SectorEvidence {
-        source: source_bits(spans),
+        source,
+        original_index,
         angle: angle.to_bits(),
         policy,
         operations: arithmetic.operations(),
@@ -160,15 +168,22 @@ pub(super) fn admit(
     angle: f64,
     policy: ArithmeticPolicy,
 ) -> Result<(), SectorFailure> {
+    admit_policy(policy)?;
+    if spans.is_empty() || spans.len() > 128 {
+        return Err(SectorFailure::SpanCount(spans.len()));
+    }
+    admit_geometry(spans, angle)
+}
+pub(super) fn admit_policy(policy: ArithmeticPolicy) -> Result<(), SectorFailure> {
     if !(8..=4096).contains(&policy.fractional_bits) || policy.max_operations > 1_000_000 {
         return Err(SectorFailure::Policy {
             fractional_bits: policy.fractional_bits,
             max_operations: policy.max_operations,
         });
     }
-    if spans.is_empty() || spans.len() > 128 {
-        return Err(SectorFailure::SpanCount(spans.len()));
-    }
+    Ok(())
+}
+pub(super) fn admit_geometry(spans: &[&[[f64; 2]]], angle: f64) -> Result<(), SectorFailure> {
     if !angle.is_finite() || angle <= 0. || angle >= std::f64::consts::FRAC_PI_2 {
         return Err(SectorFailure::Angle(angle));
     }
@@ -203,7 +218,7 @@ pub(super) fn point_wedge(
     Ok(wedge_from_axes(lower, upper))
 }
 
-pub(super) fn source_bits(spans: &[&[[f64; 2]]]) -> Vec<Vec<[u64; 2]>> {
+pub(super) fn source_bits(spans: &[&[[f64; 2]]]) -> SourceBits {
     spans
         .iter()
         .map(|poles| poles.iter().map(|point| point.map(f64::to_bits)).collect())
@@ -261,7 +276,7 @@ fn wedge_from_axes(lower: Interval, upper: Interval) -> (u8, num_bigint::BigInt)
     (wedge, first_margin.min(second_margin))
 }
 
-fn common_wedge(
+pub(super) fn common_wedge(
     spans: &[&[[f64; 2]]],
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<(u8, Option<num_bigint::BigInt>), SectorFailure> {

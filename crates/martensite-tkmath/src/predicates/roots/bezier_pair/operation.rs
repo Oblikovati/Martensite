@@ -5,6 +5,8 @@ use super::super::{
     signs::RootSignEvaluation,
 };
 use super::candidate_certificate::CandidateCertificate;
+pub(super) use super::checked_equations::checked_equations;
+use super::checked_equations::{CheckedPairEquations, checked_observed_equations};
 use super::constant_exclusion::ConstantEquationExclusion;
 pub(super) use super::operation_failure::PairOperationFailure;
 use super::sign_policy::{EffectivePairSigns, PairSignOptions, PairSignPolicyFailure};
@@ -119,11 +121,11 @@ fn execute(
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<PairOperationProof, PairOperationFailure> {
     validate_world_request(requested_error)?;
-    let prepared = checked_projection(&sources, self_domain, options, signs, budget, cancelled)?;
-    finish_prepared(
+    let checked = checked_equations(&sources, self_domain, options, budget, cancelled)?;
+    finish_checked(
         sources,
-        prepared,
-        (self_domain, options, requested_error),
+        checked,
+        (self_domain, options, signs, requested_error),
         budget,
         cancelled,
     )
@@ -138,31 +140,51 @@ fn execute_with_carrier(
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<PairOperationProof, PairOperationFailure> {
     validate_world_request(requested_error)?;
-    let carrier = super::carrier::certify(&sources, options, requested_error, budget, cancelled)?;
-    if let Some(proof) = carrier {
-        return Ok(proof);
+    let prepared = super::carrier::prepare(&sources, cancelled)?;
+    if let Some(carrier) = prepared.shared {
+        return super::carrier::certify(
+            &sources,
+            carrier,
+            prepared.sources,
+            options,
+            requested_error,
+            budget,
+            cancelled,
+        );
     }
-    execute(
+    validate_world_request(requested_error)?;
+    let checked = checked_observed_equations(prepared.sources, options, budget, cancelled)?;
+    finish_checked(
         sources,
-        false,
-        options,
-        requested_error,
-        signs,
+        checked,
+        (false, options, signs, requested_error),
         budget,
         cancelled,
     )
 }
-fn finish_prepared(
+fn finish_checked(
     sources: [OwnedBezierSource; 2],
-    prepared: PreparedEvidence,
-    settings: (bool, RootIsolationOptions, f64),
+    checked: CheckedPairEquations,
+    settings: (bool, RootIsolationOptions, PairSignOptions, f64),
     budget: &super::work_budget::PairWorkBudget,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<PairOperationProof, PairOperationFailure> {
+    let (self_domain, options, signs, requested_error) = settings;
+    let prepared = prepare_checked_equations(
+        checked,
+        sources[0].interval,
+        (self_domain, options, signs),
+        budget,
+        cancelled,
+    )?;
     match prepared {
-        PreparedEvidence::Graph(graph) => {
-            finish_graph(sources, *graph, settings, budget, cancelled)
-        }
+        PreparedEvidence::Graph(graph) => finish_graph(
+            sources,
+            *graph,
+            (self_domain, options, requested_error),
+            budget,
+            cancelled,
+        ),
         PreparedEvidence::Constant(checked) => {
             Ok(constant_proof(sources, *checked, budget.receipt()))
         }
@@ -232,28 +254,6 @@ fn owned_proof(
         })),
     }
 }
-fn checked_projection(
-    sources: &[OwnedBezierSource; 2],
-    self_domain: bool,
-    options: RootIsolationOptions,
-    signs: PairSignOptions,
-    budget: &super::work_budget::PairWorkBudget,
-    cancelled: &mut impl FnMut() -> bool,
-) -> Result<PreparedEvidence, PairOperationFailure> {
-    let (equations, source_certificates) =
-        checked_equations(sources, self_domain, options, budget, cancelled)?;
-    prepare_checked_equations(
-        (equations, source_certificates),
-        sources[0].interval,
-        (self_domain, options, signs),
-        budget,
-        cancelled,
-    )
-}
-type CheckedPairEquations = (
-    PairedEquations,
-    [super::source_certificate::SourceCertificate; 2],
-);
 fn prepare_checked_equations(
     checked: CheckedPairEquations,
     interval: [f64; 2],
@@ -366,38 +366,6 @@ impl PreparedProjection {
     }
 }
 
-pub(super) fn checked_equations(
-    sources: &[OwnedBezierSource; 2],
-    self_domain: bool,
-    options: RootIsolationOptions,
-    budget: &super::work_budget::PairWorkBudget,
-    cancelled: &mut impl FnMut() -> bool,
-) -> Result<
-    (
-        PairedEquations,
-        [super::source_certificate::SourceCertificate; 2],
-    ),
-    PairOperationFailure,
-> {
-    let left = certify_source_domain(sources, 0, options, budget, cancelled)?;
-    let right = certify_source_domain(sources, 1, options, budget, cancelled)?;
-    let equations = PairedEquations::derive(&left.homogeneous, &right.homogeneous, cancelled)
-        .map_err(PairOperationFailure::Root)?;
-    let equations = divide_if_self(equations, self_domain, cancelled)?;
-    Ok((equations, [left, right]))
-}
-fn divide_if_self(
-    equations: PairedEquations,
-    self_domain: bool,
-    cancelled: &mut impl FnMut() -> bool,
-) -> Result<PairedEquations, PairOperationFailure> {
-    if self_domain {
-        return equations
-            .exclude_diagonal(cancelled)
-            .map_err(PairOperationFailure::Diagonal);
-    }
-    Ok(equations)
-}
 struct GraphOutcome {
     contacts: Vec<PairContact>,
     certificate: CandidateCertificate,
@@ -481,17 +449,6 @@ fn admitted_signs(
     options
         .effective(projection, self_domain)
         .map_err(PairOperationFailure::SignPolicy)
-}
-
-fn certify_source_domain(
-    sources: &[OwnedBezierSource; 2],
-    source_index: usize,
-    options: RootIsolationOptions,
-    budget: &super::work_budget::PairWorkBudget,
-    cancelled: &mut impl FnMut() -> bool,
-) -> Result<super::source_certificate::SourceCertificate, PairOperationFailure> {
-    super::source_certificate::certify(&sources[source_index], options, budget, cancelled)
-        .map_err(|cause| super::operation_failure::source_domain_failure(source_index, cause))
 }
 
 #[cfg(test)]

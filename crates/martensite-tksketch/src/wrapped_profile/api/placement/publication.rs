@@ -18,6 +18,7 @@ pub(in crate::surface_sketch::wrapped_profile) fn publish(
 }
 pub(super) struct PhysicalPublication<B> {
     pub bytes: Vec<u8>,
+    pub graph: super::super::super::frozen_placement::DecodedGraph,
     pub budget: B,
     pub members: BTreeMap<SurfaceRegionId, WrappedWorldSpatialReport>,
 }
@@ -41,6 +42,7 @@ pub(super) fn finish<B: PlacementBudget>(
     result.budget.spatial_error = result.options.spatial_error;
     Ok(PhysicalPublication {
         bytes: physical.bytes,
+        graph: (physical.root, physical.bindings),
         budget: plan.budget,
         members,
     })
@@ -62,17 +64,17 @@ fn validate_members<B: PlacementBudget>(
     }
     Ok(members)
 }
-fn solid(region: SurfaceRegionId, physical: &freeze::Physical) -> Checked<&Shape> {
+pub(super) fn solid(region: SurfaceRegionId, physical: &freeze::Physical) -> Checked<&Shape> {
     let key = BindingKey {
         source: Source::Region(region),
         role: HistoryRole::Solid,
     };
-    physical
+    // Frozen archive decoding preserves the semantic key order used during construction.
+    let index = physical
         .bindings
-        .iter()
-        .find(|(candidate, _)| *candidate == key)
-        .map(|(_, shape)| shape)
-        .ok_or_else(|| fail(PlacementFailure::Member(region)))
+        .binary_search_by_key(&key, |(candidate, _)| *candidate)
+        .map_err(|_| fail(PlacementFailure::Member(region)))?;
+    Ok(&physical.bindings[index].1)
 }
 fn validate(
     region: SurfaceRegionId,
@@ -89,7 +91,7 @@ fn validate(
     };
     Ok(())
 }
-fn physical_validation(
+pub(super) fn physical_validation(
     region: SurfaceRegionId,
     shape: &Shape,
     tolerance: f64,
@@ -118,7 +120,7 @@ fn world_report<B: PlacementBudget>(
         cap_realization_error: world_bound(spatial.cap_realization_error, plan)?,
     })
 }
-fn world_bound<B: PlacementBudget>(
+pub(super) fn world_bound<B: PlacementBudget>(
     bound: WrappedCertifiedBound,
     plan: &Plan<B>,
 ) -> Checked<WrappedCertifiedBound> {
@@ -135,7 +137,7 @@ fn world_bound<B: PlacementBudget>(
     ))?;
     enforce_world(world, plan.budget.input().spatial_limit)
 }
-fn enforce_world(world: f64, requested: f64) -> Checked<WrappedCertifiedBound> {
+pub(super) fn enforce_world(world: f64, requested: f64) -> Checked<WrappedCertifiedBound> {
     if world > requested {
         return error::budget(Err(publication_budget::BudgetFailure::Limit {
             quantity: publication_budget::Quantity::WorldSpatial,

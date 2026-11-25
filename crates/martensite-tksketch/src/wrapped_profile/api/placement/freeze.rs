@@ -5,6 +5,7 @@ use crate::surface_sketch::wrapped_profile::frozen_placement::{
 };
 pub(super) struct Physical {
     pub bytes: Vec<u8>,
+    pub root: Shape,
     pub bindings: Vec<(BindingKey, Shape)>,
 }
 
@@ -12,29 +13,39 @@ pub(super) fn place<B: PlacementBudget>(
     family: &family::UnqualifiedFamily,
     plan: &Plan<B>,
 ) -> Checked<Physical> {
-    archive::place(
-        &family.bytes,
-        &family.keys,
-        plan.transform,
-        pipeline::decode,
-    )
-    .map(physical)
-    .map_err(project)
+    place_bytes(&family.bytes, &family.keys, plan.transform)
+}
+pub(super) fn place_bytes(
+    bytes: &[u8],
+    keys: &[BindingKey],
+    transform: Transform3,
+) -> Checked<Physical> {
+    archive::place(bytes, keys, transform, pipeline::decode)
+        .map(physical)
+        .map_err(project)
+}
+pub(super) fn unchanged_bytes(bytes: &[u8], keys: &[BindingKey]) -> Checked<Physical> {
+    archive::unchanged(bytes, keys, pipeline::decode)
+        .map(physical)
+        .map_err(project)
 }
 
 pub(super) fn unchanged(family: &family::UnqualifiedFamily) -> Checked<Physical> {
-    archive::unchanged(&family.bytes, &family.keys, pipeline::decode)
-        .map(physical)
-        .map_err(project)
+    unchanged_bytes(&family.bytes, &family.keys)
+}
+pub(super) fn identity(transform: Transform3) -> bool {
+    transform.matrix().coefficients() == &[[1., 0., 0.], [0., 1., 0.], [0., 0., 1.]]
+        && transform.translation_part().coordinates() == &[0.; 3]
 }
 fn physical(archive: archive::PhysicalArchive) -> Physical {
     Physical {
         bytes: archive.bytes,
+        root: archive.root,
         bindings: archive.bindings,
     }
 }
 
-fn project(cause: ArchivePlacementFailure<Failure>) -> WrappedNormalFailure {
+pub(super) fn project(cause: ArchivePlacementFailure<Failure>) -> WrappedNormalFailure {
     use ArchivePlacementFailure as A;
     let cause = match cause {
         A::Decode { step, cause } => PlacementFailure::Native { step, cause },

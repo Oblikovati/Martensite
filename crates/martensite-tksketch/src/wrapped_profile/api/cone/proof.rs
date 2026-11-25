@@ -10,7 +10,7 @@ pub struct WrappedConeProofOptions {
     pub planar_proof: martensite_tkbo::profile_extrusion::PlanarProofVersion,
     /// Fixed-grid precision and aggregate charged arithmetic across the complete operation.
     pub arithmetic: ConeClearanceOptions,
-    /// Finite integration limits shared by reference-body volume and conditional proxy-boundary flux.
+    /// Finite integration limits shared by enabled planar programs, reference volume and proxy flux.
     pub integration: CylindricalFluxOptions,
     /// Independent authored normal-volume enclosure settings.
     pub authored_volume: WrappedConeAuthoredVolumeOptions,

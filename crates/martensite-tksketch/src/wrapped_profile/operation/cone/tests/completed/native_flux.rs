@@ -12,15 +12,26 @@ struct NumericalFlux {
     value: f64,
     absolute_error_estimate: f64,
 }
-pub(super) fn check(result: &WrappedConeNormalResult, detached: &DetachedWrappedBodies) {
-    let report = &result.reports()[&SurfaceRegionId(1)];
+pub(in crate::surface_sketch::wrapped_profile::operation::cone::tests) fn check(
+    result: &WrappedConeNormalResult,
+    detached: &DetachedWrappedBodies,
+) {
     let faces = normals::faces(&detached.bodies);
-    assert_eq!(faces.len(), report.coverage.faces);
-    let measured = sum_faces(&faces, result.support().apex);
-    assert_agreement(
-        &measured,
-        [report.boundary_flux.lower, report.boundary_flux.upper],
-    );
+    for (region, report) in result.reports() {
+        let owned: Vec<_> = faces
+            .iter()
+            .filter(|face| {
+                super::occurrences::owner(result, normals::key(detached, face)) == *region
+            })
+            .cloned()
+            .collect();
+        assert_eq!(owned.len(), report.coverage.faces);
+        let measured = sum_faces(&owned, result.support().apex);
+        assert_agreement(
+            &measured,
+            [report.boundary_flux.lower, report.boundary_flux.upper],
+        );
+    }
 }
 fn sum_faces(faces: &[Shape], origin: [f64; 3]) -> NumericalFlux {
     let mut sum = NumericalFlux {

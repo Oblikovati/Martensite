@@ -16,10 +16,20 @@
 //! Admission refusal marks tolerance failed and leaves native stages `NotRun`.
 //! After admission, a non-passing stage leaves every later stage `NotRun`.
 mod admission;
+mod certified_conical;
+pub use certified_conical::{
+    CertifiedConicalBody, CertifiedDirectedPlanarFamily, CertifiedPlanarMaterial,
+    ConicalBindingError, ConicalNativeCap, ConicalNativeCensus, ConicalNativeGeometry,
+    ConicalNativeMember, DirectedCapCause, DirectedCapFailure, DirectedCapPairCause,
+    DirectedCapPolicy, DirectedCapWork, DirectedPlanarFace, bind_conical_actual_family,
+    capture_conical_actual_family, validate_body_with_certified_conical,
+    validate_body_with_transported_conical,
+};
 mod census;
 mod ledger;
 mod naming;
 mod native;
+mod ordered;
 mod report;
 mod tolerance;
 
@@ -29,17 +39,22 @@ mod ledger_tests;
 mod raw_admission_tests;
 
 pub use ledger::ValidationReport;
+pub use ordered::{
+    BodyGeometryValidation, OrderedBodyGeometry, begin_body_validation,
+    begin_body_validation_with_curve_bounds, begin_body_validation_with_scoped_curve_checks,
+};
 pub use report::{
     CheckMode, EulerCensus, Finding, FindingKind, Severity, StageReport, StageVerdict, TopologyRef,
     ValidationStage,
 };
 
 use crate::profile_extrusion::{Resolution, ToleranceCap};
-use crate::sketch_region_validation::ValidationStage as CheckerStage;
+use crate::sketch_region_validation::{CurveChecks, ValidationStage as CheckerStage};
 use ledger::Ledger;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::ShapeEnum;
+use martensite_tktopalgo::brep_check::CylindricalCurveBounds;
 use naming::TopologyNames;
 
 /// A resolution field that is not finite and positive: its name and value.
@@ -74,36 +89,12 @@ pub fn validate_body(
     shape: &Shape,
     resolution: &Resolution,
 ) -> Result<ValidationReport, ResolutionRejected> {
-    let budget = tolerance_budget(resolution)?;
-    let names = match TopologyNames::of(shape) {
-        Ok(names) => names,
-        Err(failure) => return Ok(unindexable(shape, &failure, budget)),
-    };
-    let root = names.name(shape);
-    if let Some(report) = admission::inspect(&names, root, budget) {
-        return Ok(report);
-    }
-    Ok(check_admitted_body(shape, &names, root, budget))
-}
-
-fn check_admitted_body(
-    shape: &Shape,
-    names: &TopologyNames,
-    root: TopologyRef,
-    budget: Option<f64>,
-) -> ValidationReport {
-    let ledger = Ledger::new();
-    let mut stages = Stages {
-        shape,
-        names,
-        root,
-        ledger,
-    };
-    let (passed, census) = stages.topology();
-    if passed && stages.geometry() && stages.self_intersection() {
-        stages.tolerance(budget);
-    }
-    stages.ledger.finish(census, budget)
+    Ok(match begin_body_validation(shape, resolution)? {
+        BodyGeometryValidation::Stopped(report) => report,
+        BodyGeometryValidation::Ready(ordered) => {
+            ordered.finish_ordered(|stages| stages.self_intersection())
+        }
+    })
 }
 
 /// The admitted resolution's cap as the tolerance budget (`NoLimit` checks none).
@@ -142,7 +133,7 @@ struct Stages<'a> {
 
 impl Stages<'_> {
     /// Census and mapped topology: whether the stage passed, and every computed census.
-    fn topology(&mut self) -> (bool, Vec<EulerCensus>) {
+    fn topology(&mut self, checks: Option<CurveChecks<'_>>) -> (bool, Vec<EulerCensus>) {
         let (mut findings, census) = match census::topology_census(self.shape, self.names) {
             Ok(found) => found,
             Err(failure) => {
@@ -155,6 +146,7 @@ impl Stages<'_> {
             self.shape,
             CheckerStage::Topology,
             self.names,
+            checks,
         ));
         let passed = self
             .ledger
@@ -162,8 +154,9 @@ impl Stages<'_> {
         (passed, census)
     }
 
-    fn geometry(&mut self) -> bool {
-        let findings = native::checker_findings(self.shape, CheckerStage::Geometry, self.names);
+    fn geometry(&mut self, bounds: Option<CurveChecks<'_>>) -> bool {
+        let findings =
+            native::checker_findings(self.shape, CheckerStage::Geometry, self.names, bounds);
         self.ledger
             .record(ValidationStage::Geometry, CheckMode::Sampled, findings)
     }
@@ -175,18 +168,5 @@ impl Stages<'_> {
             CheckMode::NativeSearch,
             findings,
         )
-    }
-
-    fn tolerance(&mut self, budget: Option<f64>) {
-        match tolerance::tolerance_findings(self.names, budget) {
-            Ok((findings, mode)) => self
-                .ledger
-                .record(ValidationStage::Tolerance, mode, findings),
-            Err(failure) => {
-                self.ledger
-                    .record_failure(ValidationStage::Tolerance, self.root, &failure);
-                false
-            }
-        };
     }
 }

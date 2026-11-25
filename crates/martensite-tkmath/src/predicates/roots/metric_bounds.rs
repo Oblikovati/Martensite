@@ -3,10 +3,12 @@
 mod arithmetic;
 mod curve_identity;
 pub use curve_identity::{CurveIdentityDecision, MetricCurveChain, compare_curve_chains};
+mod affine_coordinate;
 mod affine_support;
 #[cfg(test)]
 mod curve_identity_tests;
 mod mapped;
+pub use affine_coordinate::exact_affine_coordinate;
 mod parameter;
 mod prism_jacobian;
 pub use prism_jacobian::affine_prism_jacobian;
@@ -24,11 +26,18 @@ pub use cylindrical_clearance::{
     CertifiedCylindricalPeriodicClearance, CertifiedCylindricalPeriodicSlab,
     CylindricalClearanceDomain, CylindricalClearanceError, CylindricalClearanceFailure,
     CylindricalClearanceOptions, CylindricalClearanceQuery, CylindricalClearanceScope,
-    CylindricalClearanceSource, CylindricalPeriodicTranslation, certify_cylindrical_clearance,
+    CylindricalClearanceSource, CylindricalClearanceWorkError, CylindricalPeriodicTranslation,
+    certify_cylindrical_clearance, certify_cylindrical_clearance_with_work,
 };
 pub use cylindrical_clearance::{
     CertifiedCylindricalProbe, CertifiedCylindricalProbes, CylindricalPeriodicProbe,
     CylindricalProbeError, CylindricalProbeFailure, CylindricalProbeOptions, CylindricalProbeSense,
+    CylindricalProbeWorkError,
+};
+mod developed_period;
+pub use developed_period::{
+    DevelopedConeRay, DevelopedConeRayError, DevelopedPeriod, DevelopedPeriodError, DevelopedScale,
+    certify_developed_cone_ray, certify_developed_period, enclose_developed_cone_angle,
 };
 mod cylindrical_measure;
 pub use cylindrical_measure::{
@@ -53,29 +62,71 @@ mod cylindrical_depths;
 pub use cylindrical_depths::{
     CertifiedCylindricalDepths, CylindricalDepthFailure, certify_cylindrical_depths,
 };
+mod conical_development;
 mod conical_material;
+pub use conical_development::{
+    ConicalDevelopment, ConicalDevelopmentFailure, ConicalFootprint, ConicalTrimBand,
+};
 mod conical_profile;
 mod cylindrical_profile;
 mod cylindrical_storage;
 pub use super::certificate_arithmetic::bounded_failure::BoundedArithmeticFailure;
 pub use conical_material::{
-    ConicalMaterialError, ConicalMaterialEvidence, ConicalMaterialQuery, ConicalMaterialSpan,
-    certify_conical_material,
+    ConicalDevelopedMaterialError, ConicalDevelopedMaterialFailure, ConicalMaterialError,
+    ConicalMaterialEvidence, ConicalMaterialQuery, ConicalMaterialSpan, certify_conical_material,
+    certify_conical_material_with_developed_boundaries,
+    certify_conical_material_with_developed_boundaries_and_refinement,
 };
 pub use conical_profile::{
     ConeClearanceOptions, ConeRequest, ConeRequestError, ConeRequestReceipt,
-    ConicalAuthoredContour, ConicalAuthoredFlux, ConicalAuthoredFluxError,
+    ConicalAtlasReferenceDomain, ConicalAtlasReferenceQuery, ConicalAuthoredContour,
+    ConicalAuthoredFlux, ConicalAuthoredFluxError, ConicalAuthoredFluxMethod,
     ConicalAuthoredFluxQuery, ConicalAuthoredFluxStage, ConicalBoundaryError,
     ConicalBoundaryEvidence, ConicalBoundaryFailure, ConicalBoundaryFailureKind,
-    ConicalBoundaryProofFailure, ConicalBoundaryQuery, ConicalBoundaryStage, ConicalDepthFailure,
+    ConicalBoundaryProofFailure, ConicalBoundaryQuery, ConicalBoundaryStage,
+    ConicalCapClearanceRelation, ConicalCapFamilyHomotopyError, ConicalCapHomotopyEvidence,
+    ConicalCapHomotopyFailure, ConicalCapJoinSpan, ConicalCapJoinsQuery, ConicalCapNormalError,
+    ConicalCapNormalEvidence, ConicalCapVolumeError, ConicalCapVolumeEvidence,
+    ConicalCapVolumeFailure, ConicalChartDomainBound, ConicalChartDomainError,
+    ConicalChartDomainEvidence, ConicalChartDomainFailure, ConicalChartDomainQuery,
+    ConicalChartDomainRequirement, ConicalChartDomainVersion, ConicalChartPlan,
+    ConicalChartPlanError, ConicalChartPlanFailure, ConicalChartPlanQuery,
+    ConicalChartReferenceQuery, ConicalDecodedCapEvidence, ConicalDecodedFamilyError,
+    ConicalDecodedFamilyFailure, ConicalDecodedFillFailure, ConicalDepthFailure,
     ConicalJoinFailureKind, ConicalJoinProofFailure, ConicalJoinSpan, ConicalJoinsEvidence,
     ConicalJoinsFailure, ConicalJoinsQuery, ConicalOriginalFailure, ConicalOriginalSpan,
-    ConicalReferenceError, ConicalReferenceEvidence, ConicalReferenceFailure,
-    ConicalReferenceMember, ConicalReferenceQuery, ConicalSectorEvidence, ConicalSectorFailure,
-    ConicalSectorQuery, ConicalSectorWedge, ConicalSourceFailure, ConicalStorageError,
-    ConicalStorageEvidence, ConicalStorageFailure, ConicalStorageQuery, certify_cone_request,
-    certify_conical_authored_flux, certify_conical_boundary, certify_conical_joins,
-    certify_conical_reference, certify_conical_sector, certify_conical_storage,
+    ConicalPrimitiveRefinement, ConicalReferenceError, ConicalReferenceEvidence,
+    ConicalReferenceFailure, ConicalReferenceMember, ConicalReferenceQuery, ConicalSectorEvidence,
+    ConicalSectorFailure, ConicalSectorQuery, ConicalSectorWedge, ConicalSourceFailure,
+    ConicalStorageError, ConicalStorageEvidence, ConicalStorageFailure, ConicalStorageQuery,
+    ConicalSubspanChartError, certify_cone_request, certify_conical_atlas_reference,
+    certify_conical_authored_flux, certify_conical_authored_flux_with_method,
+    certify_conical_boundary, certify_conical_boundary_in_chart,
+    certify_conical_cap_family_homotopy, certify_conical_cap_joins, certify_conical_chart_domain,
+    certify_conical_chart_domain_with_version, certify_conical_chart_reference,
+    certify_conical_decoded_family, certify_conical_decoded_family_with_fill,
+    certify_conical_joins, certify_conical_reference, certify_conical_sector,
+    certify_conical_storage, certify_conical_subspan_chart, plan_conical_subspan_charts,
+};
+pub use conical_profile::{
+    ConicalActualAdjacent, ConicalActualCapCarrier, ConicalActualCapId, ConicalActualCapQuery,
+    ConicalActualCapSnapshot, ConicalActualContourRole, ConicalActualMemberId,
+    ConicalActualPatchCertificate, ConicalActualPatchCoverage, ConicalActualPatchError,
+    ConicalActualPatchFailure, ConicalActualPatchQuery, ConicalActualPatchStage,
+    ConicalActualPeriodicCaps, ConicalActualPeriodicMember, ConicalActualSideId,
+    ConicalActualSideQuery, ConicalActualSideSnapshot, ConicalActualUvContour,
+    ConicalActualUvContourSnapshot, ConicalActualUvEdge, ConicalActualUvEdgeSnapshot,
+    ConicalDirectedGammaEvidence, ConicalDirectedGammaQuery, ConicalDirectedGammaSpan,
+    certify_conical_actual_patches, certify_conical_actual_patches_with_periodic_caps,
+    certify_conical_directed_gamma,
+};
+pub use conical_profile::{
+    ConicalBoundaryZRowError, ConicalBoundaryZRowEvidence, ConicalBoundaryZRowFailure,
+    ConicalBoundaryZRowTransition, certify_conical_boundary_in_chart_with_refinement,
+    certify_conical_boundary_z_rows, certify_conical_chart_reference_with_refinement,
+    certify_conical_joins_in_chart_with_refinement,
+    certify_conical_trim_pair_in_chart_with_refinement,
+    certify_conical_trim_pair_with_developed_boundary_and_refinement,
 };
 pub use cylindrical_profile::{
     CertifiedConicalTrim, CertifiedConicalTrimPair, CertifiedCylindricalLift,
@@ -84,8 +135,9 @@ pub use cylindrical_profile::{
     CylindricalFitChart, CylindricalFitPlan, CylindricalFitQuery, CylindricalLiftError,
     CylindricalProfileBehavior, CylindricalProfileError, CylindricalProfileFailure,
     CylindricalProfileInterval, CylindricalProfileOptions, CylindricalProfileQuery,
-    CylindricalTrimError, CylindricalTrimQuery, certify_conical_trim, certify_conical_trim_pair,
-    certify_cylindrical_lift, certify_cylindrical_profile, certify_cylindrical_trim,
+    CylindricalTrimError, CylindricalTrimQuery, CylindricalTrimWorkspace, certify_conical_trim,
+    certify_conical_trim_pair, certify_conical_trim_ranges, certify_cylindrical_lift,
+    certify_cylindrical_profile, certify_cylindrical_trim, certify_cylindrical_trim_ranges,
     plan_cylindrical_charts, plan_cylindrical_fit,
 };
 mod inequality;
@@ -93,9 +145,15 @@ mod proof;
 mod types;
 use super::{DyadicBound, error::poll};
 pub use cylindrical_storage::{
-    CertifiedCylindricalStorage, CylindricalStorageError, CylindricalStorageFailure,
+    CertifiedCylindricalContactPrefix, CertifiedCylindricalRadialSweep, CertifiedCylindricalSlice,
+    CertifiedCylindricalStorage, CylindricalContactPrefixError, CylindricalContactPrefixFailure,
+    CylindricalContactPrefixQuery, CylindricalRadialSense, CylindricalRadialSweepError,
+    CylindricalRadialSweepFailure, CylindricalRadialSweepQuery, CylindricalSliceQuery,
+    CylindricalSliceRefusal, CylindricalStorageError, CylindricalStorageFailure,
     CylindricalStorageLimits, CylindricalStorageOptions, CylindricalStorageQuery,
-    CylindricalStorageResidual, certify_cylindrical_storage,
+    CylindricalStorageResidual, certify_cylindrical_contact_prefix,
+    certify_cylindrical_radial_sweep, certify_cylindrical_slice_direction,
+    certify_cylindrical_slice_with_joins, certify_cylindrical_storage,
 };
 use num_bigint::BigInt;
 pub use types::*;
@@ -194,18 +252,31 @@ pub use polynomial_integrals::{
 };
 
 mod rational_integrals;
+mod rational_reference;
 pub use rational_integrals::{
     AnalyticConicalFluxError, AnalyticConicalFluxFailure, AnalyticConicalFluxQuery,
-    AnalyticConicalFluxSpan, CertifiedAnalyticConicalFlux, CertifiedConicalReferenceVolume,
-    CertifiedCylindricalFlux, CertifiedRationalMeasure, ConicalReferenceVolumeError,
-    ConicalReferenceVolumeFailure, ConicalReferenceVolumeQuery, ConicalReferenceVolumeSpan,
-    ConicalReferenceVolumeTerm, CylindricalFluxError, CylindricalFluxFailure,
-    CylindricalFluxOptions, CylindricalFluxQuery, CylindricalFluxSpan, CylindricalFluxWork,
+    AnalyticConicalFluxSpan, BoundaryIntegralProgramQuery, CertifiedAnalyticConicalFlux,
+    CertifiedConicalReferenceVolume, CertifiedCylindricalFlux, CertifiedIntegralProgram,
+    CertifiedRationalMeasure, ConicalReferenceVolumeError, ConicalReferenceVolumeFailure,
+    ConicalReferenceVolumeQuery, ConicalReferenceVolumeSpan, ConicalReferenceVolumeTerm,
+    CylindricalFluxError, CylindricalFluxFailure, CylindricalFluxOptions, CylindricalFluxQuery,
+    CylindricalFluxSpan, CylindricalFluxWork, FaceIntegralProgramQuery, IntegralProgramError,
+    IntegralProgramFailure, IntegralProgramLoop, IntegralProgramOptions, IntegralProgramVersion,
     RATIONAL_TAYLOR_ORDER, RationalIntegralError, RationalIntegralEvidence,
     RationalIntegralFailure, RationalIntegralOptions, certify_analytic_conical_boundary_flux,
-    certify_conical_reference_volume, certify_cylindrical_boundary_flux,
+    certify_boundary_integral_program, certify_conical_reference_volume,
+    certify_cylindrical_boundary_flux, certify_face_integral_program,
     certify_rational_boundary_integral, certify_rational_face_area,
     certify_rational_sweep_integral,
+};
+pub use rational_reference::{
+    AdmittedConicFrame, AdmittedConicPhase, AdmittedConicSpan, CertifiedAdmittedConicSpan,
+    CertifiedNativeSplineSpan, CertifiedRationalConicSegment, ConicSpanParameter,
+    NativeSplineFailure, NativeSplineSource, RationalConicSegment, RationalConicSegmentFailure,
+    RationalReferenceBounds, RationalReferenceFailure, RationalReferenceProof,
+    RationalReferenceRequest, RationalReferenceSpan, certify_admitted_conic_span,
+    fit_rational_bezier_reference, fit_rational_bezier_reference_with_proof, lower_native_bspline,
+    lower_rational_conic_segment, partition_homogeneous_bspline,
 };
 
 mod polynomial_side;
@@ -242,3 +313,16 @@ pub use frame_transport::{
 
 #[cfg(test)]
 mod cone_thread_contracts;
+
+pub use conical_profile::{ConicalChartJoinsError, certify_conical_joins_in_chart};
+
+pub use conical_profile::{
+    ConicalChartTrimPairError, ConicalChartTrimPairFailure, ConicalDevelopedBoundaryEvidence,
+    ConicalDevelopedBoundarySpan, certify_conical_trim_pair_in_chart,
+    certify_conical_trim_pair_with_developed_boundary,
+};
+
+/// Checked separation of decoded ruled faces and cap trims from a coaxial stock carrier.
+///
+/// See [`conical_separation::certify_separation`] for admitted frames and caller obligations.
+pub mod conical_separation;

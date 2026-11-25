@@ -2,6 +2,33 @@
 //! Captured source lifetime, mode, policy and caller cancellation remain separate from results.
 use super::super::RootIsolationOptions;
 use super::{query::*, sign_policy::PairSignOptions, source::OwnedBezierSource};
+
+#[test]
+fn captured_pair_reports_share_the_same_owned_curve_coefficients() {
+    use super::{BezierPairCurve, CapturedBezierCurve};
+    let query = distinct();
+    let [left, right] = query.captured_curves();
+    let owned_left = CapturedBezierCurve::capture(left).unwrap();
+    let owned_right = CapturedBezierCurve::capture(right).unwrap();
+    let pair = CapturedBezierPair::from_captured_pair(&owned_left, &owned_right);
+    let diagonal = CapturedBezierPair::from_captured_self(&owned_left);
+    let report = pair.certify_geometric(policy(1), || false);
+    let retained = report.source().captured_curves();
+    assert_eq!(pair, query);
+    assert!(std::ptr::eq(
+        retained[0].controls,
+        diagonal.captured_curves()[1].controls
+    ));
+    assert!(!std::ptr::eq(retained[0].controls, left.controls));
+    let weighted = BezierPairCurve {
+        weights: Some(&[1., 2., 1.]),
+        ..left
+    };
+    let owned = CapturedBezierCurve::capture(weighted).unwrap();
+    let diagonal = CapturedBezierPair::from_captured_self(&owned);
+    let [a, b] = diagonal.captured_curves();
+    assert!(std::ptr::eq(a.weights.unwrap(), b.weights.unwrap()));
+}
 fn policy(version: u32) -> PairQueryPolicy {
     PairQueryPolicy {
         version,

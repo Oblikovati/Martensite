@@ -73,8 +73,9 @@ pub enum ConicalBoundaryStage {
     Budget,
 }
 /// Completed bounded ideal-and-endpoint comparison with immutable source binding.
-#[derive(Debug)]
 pub struct ConicalBoundaryEvidence {
+    pub(super) chart: Option<super::boundary_chart::ChartBinding>,
+    pub(super) retained: Option<std::sync::Arc<super::spatial::RetainedSpatial>>,
     pub(super) total: DyadicBound,
     pub(super) ideal: DyadicBound,
     pub(super) original: DyadicBound,
@@ -379,6 +380,8 @@ pub(super) fn evidence(
     let original_angular_derivative =
         DyadicBound::new(result.original_angular_derivative.upper, exponent);
     ConicalBoundaryEvidence {
+        chart: None,
+        retained: result.retained,
         total: DyadicBound::new(result.total.upper, exponent),
         ideal: DyadicBound::new(result.ideal.upper, exponent),
         original: DyadicBound::new(result.original.upper, exponent),
@@ -387,13 +390,17 @@ pub(super) fn evidence(
         total_angular_derivative: DyadicBound::new(result.total_angular_derivative.upper, exponent),
         authored_level,
         anchor: result.anchor,
-        storage: result
-            .storage
-            .map(|bound| DyadicBound::new(bound.upper, exponent)),
+        storage: storage_bounds(result.storage, exponent),
         operations: result.operations,
         options,
         input,
     }
+}
+fn storage_bounds(storage: [Interval; 2], exponent: i32) -> [DyadicBound; 2] {
+    storage.map(|bound| {
+        // Release each unused lower endpoint before converting the next interval.
+        DyadicBound::new(bound.upper, exponent)
+    })
 }
 impl ConicalBoundaryError {
     /// Typed cause with retained component diagnostics; `error.cause()`.

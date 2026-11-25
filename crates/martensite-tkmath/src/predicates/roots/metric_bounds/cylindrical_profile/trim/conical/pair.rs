@@ -60,6 +60,7 @@ fn compute_trace(
     let trace = CertifiedConicalTrim {
         bounds,
         bits: types::source_bits(query),
+        ranges: [[0., 1.]; 2],
         limit: query.spatial_limit,
         options: query.options,
         operations: arithmetic.operations() - start,

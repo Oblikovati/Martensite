@@ -1,0 +1,70 @@
+{
+  "source_head": "8b5e6e2f",
+  "changed_file_sha256": {
+    "crates/martensite-tksketch/src/surface_sketch/attachment/mod.rs": "9dbc8bc166012722e34e02618f3964a816818c3ef16cc62bde7f86238925a6ad",
+    "crates/martensite-tksketch/src/surface_sketch/attachment/support.rs": "637516a67743871830237816c9ffa118c78cfec9306773c7d2d6588e8c0dc8e9",
+    "crates/martensite-tksketch/src/surface_sketch/attachment/support/tests.rs": "53b7c23097dd13914280aa43ef33e967a0020f0f7fb8139ac4c7d2fbab794e42",
+    "crates/martensite-tkv3d/tests/wrapped_text_regions/body_controls.rs": "8dc5e53abda369bbaa9a3c60453e1d7d6a22cdebb9c682207aebd3191aa6408e",
+    "crates/martensite-tkv3d/tests/wrapped_text_regions/body_controls/multiline.rs": "9cba67bc4a00903eb675eb8809d3b3ee956925a165830bc48f980b06dbfb7d6b",
+    "crates/martensite-tkv3d/tests/wrapped_text_regions/body_controls/multiline/replay.rs": "10892cac2daa6d66e5313ef27a32ac30cd0c9f89018e732f96e889b2c088470e"
+  },
+  "support": {
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "martensite-tksketch",
+      "--lib",
+      "surface_sketch::attachment::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit": 0,
+    "wall_s": 6.703700282028876,
+    "changed_sources": [],
+    "outcomes": [
+      "test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 504 filtered out; finished in 0.28s"
+    ]
+  },
+  "replay": {
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "martensite-tkv3d",
+      "--test",
+      "toolkit",
+      "wrapped_text_regions::wrapped::body_controls::multiline::replay::multiline_boss_replays_after_support_placement_and_depth_edits",
+      "--",
+      "--exact",
+      "--nocapture"
+    ],
+    "exit": 0,
+    "passed": true,
+    "source_changed": [],
+    "wall_s": 387.8481275099912
+  },
+  "curves": 239,
+  "regions": 18,
+  "support_radii": [
+    10,
+    12
+  ],
+  "depths": [
+    0.25,
+    0.375
+  ],
+  "additional_edited_translation": [
+    0.5,
+    0.125
+  ],
+  "process_output_comparison": [
+    "attached BRep bytes",
+    "tool BRep bytes",
+    "authored history"
+  ],
+  "full_trim_coverage": false,
+  "performance_qualified": false
+}

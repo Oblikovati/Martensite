@@ -1,0 +1,50 @@
+{
+  "archive_sha256": "3dae2dec1599fc00caa00dd56ffec4c2c399ae74bf90961361dd8e27472aea54",
+  "members": [
+    {
+      "member": "math-conical-profile.log",
+      "bytes": 54867,
+      "sha256": "1a39dbbcfae725df1ccecec20225c4f052a5363b1ffcd3175d9eccc22d3f3360"
+    },
+    {
+      "member": "clippy-final.log",
+      "bytes": 21035,
+      "sha256": "5e30f15412f4a15c93f0ab90e338c941b02855649ac98940683444e646c05142"
+    },
+    {
+      "member": "r1/tkbo-certified-conical.log",
+      "bytes": 24718,
+      "sha256": "a4348e6d29ea416afa155210c892623fd403562573683c4f5243f1c90e1f4077"
+    },
+    {
+      "member": "r1/tkbo-public-work.log",
+      "bytes": 21973,
+      "sha256": "fec53df96323797a8087dc808cd870184719895fcfd809ad0b094473f9aa0446"
+    },
+    {
+      "member": "r1/tkbo-region-composite.log",
+      "bytes": 22510,
+      "sha256": "88d70d6a54cf735e392d613ab9bb4804d67251e41d2c2fbd4f586ea18df68551"
+    },
+    {
+      "member": "r2/sketch-complete.log",
+      "bytes": 22406,
+      "sha256": "ed3288cb311a0d73ca2ed03b273c4389637cf7ff6392626c1bc31b7bd8505e3b"
+    },
+    {
+      "member": "r2/sketch-flux.log",
+      "bytes": 23118,
+      "sha256": "5e9a86e0755e1b782db7777374d8ce0b46492fd2e5d91597ea85a3bfdfdf81a5"
+    },
+    {
+      "member": "r2/sketch-volume-oracle.log",
+      "bytes": 21272,
+      "sha256": "c6ad923f8e0d1826bacdd2e9568e1abed6b2e06320e201dc9d4b455be70fac81"
+    },
+    {
+      "member": "r2/tkbo-public-work.log",
+      "bytes": 21845,
+      "sha256": "11dce96f9be6e82662af8502f5dd829f7e07fb426b2fc589203185d8db4b8195"
+    }
+  ]
+}

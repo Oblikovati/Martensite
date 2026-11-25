@@ -6,10 +6,10 @@
 use super::binding::SegmentBinding;
 use super::types::*;
 use crate::sketch_region::RegionSourceId;
+use crate::sketch_region_certification::CertifiedDomainContact;
 use crate::sketch_region_certification::{
     BoundaryCensus, CertificationObligation, DomainCertificates,
 };
-use martensite_tkmath::predicates::roots::bezier_pair::CertifiedBezierPairContact;
 use std::collections::BTreeMap;
 
 const STAGE: LoopRegionStage = LoopRegionStage::Joins;
@@ -196,15 +196,15 @@ fn expected_joins(request: &LoopRegionRequest<'_, '_>, binding: &SegmentBinding<
 }
 fn match_contacts<'p>(
     sources: [RegionSourceId; 2],
-    found: impl Iterator<Item = CertifiedBezierPairContact<'p>>,
+    found: impl Iterator<Item = CertifiedDomainContact<'p>>,
     mut wanted: Vec<[u8; 2]>,
 ) -> LoopRegionCheck<Vec<JoinProof>> {
     let mut joins = Vec::new();
     for contact in found {
-        let parameter = exact_endpoints(&contact);
+        let parameter = contact.exact_endpoints();
         let index = parameter.and_then(|p| wanted.iter().position(|w| *w == p));
         let Some(index) = index else {
-            let point = contact.point;
+            let point = contact.point();
             return refuse(STAGE, LoopRegionCause::UnexpectedContact { sources, point });
         };
         joins.push(JoinProof {
@@ -222,20 +222,4 @@ fn match_contacts<'p>(
         ),
         None => Ok(joins),
     }
-}
-/// Both contact parameters as exact native endpoints, or `None`.
-fn exact_endpoints(contact: &CertifiedBezierPairContact<'_>) -> Option<[u8; 2]> {
-    let (lower, upper) = contact.parameter.bounds();
-    let first = [0u8, 1].into_iter().find(|v| {
-        let value = f64::from(*v);
-        lower.compare_f64(value).is_ok_and(|o| o.is_eq())
-            && upper.compare_f64(value).is_ok_and(|o| o.is_eq())
-    })?;
-    let paired = &contact.exact_paired_parameter;
-    let second = [0u8, 1].into_iter().find(|v| {
-        let value = f64::from(*v);
-        paired.compare_lower(value).is_ok_and(|o| o.is_eq())
-            && paired.compare_upper(value).is_ok_and(|o| o.is_eq())
-    })?;
-    Some([first, second])
 }

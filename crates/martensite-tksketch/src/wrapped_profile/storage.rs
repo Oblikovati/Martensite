@@ -32,9 +32,9 @@ use martensite_tkmath::predicates::roots::metric_bounds::{
     CylindricalDepthFailure, CylindricalFluxError, CylindricalFluxOptions, CylindricalFluxQuery,
     CylindricalFluxSpan, CylindricalLiftError, CylindricalProfileError, CylindricalProfileInterval,
     CylindricalProfileQuery, CylindricalStorageError, CylindricalStorageLimits,
-    CylindricalStorageQuery, CylindricalTrimError, CylindricalTrimQuery, MetricBezier,
-    certify_cylindrical_boundary_flux, certify_cylindrical_depths, certify_cylindrical_lift,
-    certify_cylindrical_profile, certify_cylindrical_storage, certify_cylindrical_trim,
+    CylindricalStorageQuery, CylindricalTrimError, CylindricalTrimQuery, CylindricalTrimWorkspace,
+    MetricBezier, certify_cylindrical_boundary_flux, certify_cylindrical_depths,
+    certify_cylindrical_lift, certify_cylindrical_profile, certify_cylindrical_storage,
 };
 use std::collections::BTreeMap;
 

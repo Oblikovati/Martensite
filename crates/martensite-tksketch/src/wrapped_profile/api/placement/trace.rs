@@ -45,13 +45,13 @@ fn certify_cap<B: PlacementBudget>(
     enforce(region, span, depth, actual, cap.requested_spatial_limit())
 }
 
-fn transport(residual: f64, stretch: f64, evaluation: f64) -> Checked<f64> {
+pub(super) fn transport(residual: f64, stretch: f64, evaluation: f64) -> Checked<f64> {
     // The common exact translation cancels, but two independently rounded evaluations remain.
     error::budget(publication_budget::transport_trace(
         residual, stretch, evaluation,
     ))
 }
-fn enforce(
+pub(super) fn enforce(
     region: SurfaceRegionId,
     span: CurveSpan,
     depth: usize,

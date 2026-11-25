@@ -1,0 +1,53 @@
+{
+  "description": "Finite-input second-contact counterexample to the supplied unscaled shared-point orientation shortcut",
+  "degree": 3,
+  "weights": null,
+  "interval": [
+    0.0,
+    1.0
+  ],
+  "curve_control_bits": [
+    [
+      [
+        0,
+        0
+      ],
+      [
+        1905022642377719808,
+        1900519042750349312
+      ],
+      [
+        1905022642377719808,
+        1900519042750349312
+      ],
+      [
+        1905022642377719808,
+        1905022642377719808
+      ]
+    ],
+    [
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        0
+      ],
+      [
+        4607182418800017408,
+        4604930618986332160
+      ]
+    ]
+  ],
+  "shared_endpoint_indices": [
+    0,
+    0
+  ],
+  "exact_relation": "A_y(t)-(3/4)A_x(t)=(h/4)t(t^2+3t-3)",
+  "expected_endpoint_only_certificate": false
+}

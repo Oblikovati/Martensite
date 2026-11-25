@@ -10,7 +10,7 @@ pub(crate) struct BernsteinStoredReport {
     pub outcome: Result<BernsteinExecution, Box<BezierPairCaptureFailure>>,
 }
 pub(crate) struct BernsteinExecution {
-    pub exclusion: BezierPairExclusionReport,
+    pub exclusion: super::conditioned_stage::ConditionedStage,
     pub fallback: Option<BezierPairReport>,
 }
 impl BernsteinStoredReport {
@@ -25,7 +25,8 @@ impl BernsteinStoredReport {
     }
     pub(super) fn cancelled(&self) -> bool {
         self.outcome.as_ref().is_ok_and(|execution| {
-            execution.exclusion.completion() == BezierPairExclusionCompletion::Cancelled
+            execution.exclusion.completion()
+                == super::conditioned_stage::ConditionedCompletion::Cancelled
                 || execution
                     .fallback
                     .as_ref()
@@ -39,25 +40,24 @@ pub(super) fn evaluate(
     sources: [usize; 2],
     mode: PairedQueryMode,
     cancelled: &mut impl FnMut() -> bool,
+    reports: &mut impl super::paired_execution::ReportLookup,
+    source_pool: &super::paired_execution::PairSourcePool,
 ) -> DomainEvidence {
     let Some(paired) = census.paired.as_mut() else {
         return DomainEvidence::Unsupported(CensusGap::BezierPair);
     };
-    if let Some(report) = paired
-        .exclusions
-        .iter()
-        .position(|record| record.sources == sources && record.mode == mode)
-    {
+    if let Some(report) = reports.find(sources, mode) {
         paired.reused_reports += 1;
         return reference(census, pair, report, true);
     }
-    let record = execute(census, sources, mode, cancelled);
+    let record = execute(census, sources, mode, cancelled, source_pool);
     census.bisections += record.completed_work();
     let Some(paired) = census.paired.as_mut() else {
         return DomainEvidence::Unsupported(CensusGap::BezierPair);
     };
     let report = paired.exclusions.len();
     paired.exclusions.push(record);
+    reports.remember(sources, mode, report);
     reference(census, pair, report, false)
 }
 fn execute(
@@ -65,6 +65,7 @@ fn execute(
     sources: [usize; 2],
     mode: PairedQueryMode,
     cancelled: &mut impl FnMut() -> bool,
+    source_pool: &super::paired_execution::PairSourcePool,
 ) -> BernsteinStoredReport {
     let effective = super::paired_execution::remaining_policy(census);
     let policy = BezierPairExclusionPolicy {
@@ -75,8 +76,9 @@ fn execute(
             .unwrap_or(0),
         pair_policy: effective,
     };
-    let outcome = super::paired_execution::captured_query(census, sources, mode)
-        .map(|query| certify(&query, policy, cancelled));
+    let outcome = source_pool
+        .query(census, sources, mode)
+        .map(|query| certify(query, policy, cancelled));
     BernsteinStoredReport {
         sources,
         mode,
@@ -85,14 +87,22 @@ fn execute(
     }
 }
 fn certify(
-    query: &CapturedBezierPair,
+    query: CapturedBezierPair,
     policy: BezierPairExclusionPolicy,
     cancelled: &mut impl FnMut() -> bool,
 ) -> BernsteinExecution {
-    let exclusion = query.certify_bernstein_exclusion(policy, &mut *cancelled);
-    let fallback =
-        (exclusion.completion() == BezierPairExclusionCompletion::Inconclusive).then(|| {
-            query.certify(
+    let exclusion = match policy.version {
+        2 => super::conditioned_stage::ConditionedStage::Geometric(
+            query.into_geometric_report(policy.pair_policy, &mut *cancelled),
+        ),
+        _ => super::conditioned_stage::ConditionedStage::Bernstein(
+            query.certify_bernstein_exclusion(policy, &mut *cancelled),
+        ),
+    };
+    let fallback = (exclusion.completion()
+        == super::conditioned_stage::ConditionedCompletion::Inconclusive)
+        .then(|| {
+            exclusion.source().certify(
                 remaining_after_exclusion(&exclusion, policy.pair_policy),
                 cancelled,
             )
@@ -122,7 +132,7 @@ fn reference(
 }
 
 pub(super) fn remaining_after_exclusion(
-    exclusion: &BezierPairExclusionReport,
+    exclusion: &super::conditioned_stage::ConditionedStage,
     requested: BezierPairPolicy,
 ) -> BezierPairPolicy {
     let mut remaining = requested;

@@ -29,9 +29,13 @@ impl WindowGuiOperation<'_> {
             threaded: false,
         }
     }
-    fn acquire(&mut self, extent: [u32; 2], vsync: bool) -> Result<u32, RenderError> {
+    fn acquire(
+        &mut self,
+        extent: [u32; 2],
+        frame_queue: crate::driver_options::WindowFrameQueue,
+    ) -> Result<u32, RenderError> {
         self.checkpoint(RenderGuiSurfacePhase::Acquire)?;
-        let index = self.presenter.acquire(extent, vsync, self.contract)?;
+        let index = self.presenter.acquire(extent, frame_queue, self.contract)?;
         self.checkpoint(RenderGuiSurfacePhase::BeforeSubmit)?;
         Ok(index)
     }
@@ -55,17 +59,17 @@ impl VulkanRenderer {
         &mut self,
         frame: &RenderFrame,
         presenter: &mut WindowPresenter,
-        vsync: bool,
+        frame_queue: crate::driver_options::WindowFrameQueue,
         policy: RenderGuiSurfacePolicy,
     ) -> Result<FrameReadback, RenderError> {
         let mut probe = NoPresentationProbe;
-        self.render_window_with_probe(frame, presenter, vsync, policy, &mut probe)
+        self.render_window_with_probe(frame, presenter, frame_queue, policy, &mut probe)
     }
     pub(super) fn render_window_with_probe(
         &mut self,
         frame: &RenderFrame,
         presenter: &mut WindowPresenter,
-        vsync: bool,
+        frame_queue: crate::driver_options::WindowFrameQueue,
         policy: RenderGuiSurfacePolicy,
         probe: &mut dyn WindowPresentationProbe,
     ) -> Result<FrameReadback, RenderError> {
@@ -76,7 +80,7 @@ impl VulkanRenderer {
         }
         let contract = WindowGuiContract::new(frame, policy);
         let mut operation = WindowGuiOperation::new(presenter, contract, probe);
-        let result = self.submit_gui_window(frame, &mut operation, vsync);
+        let result = self.submit_gui_window(frame, &mut operation, frame_queue);
         let result = self.runtime.lifecycle.observe(result);
         let result = contract.retain_fault(result, operation.presenter, operation.phase);
         if result.is_err() {
@@ -104,13 +108,13 @@ impl VulkanRenderer {
         &mut self,
         frame: &RenderFrame,
         operation: &mut WindowGuiOperation<'_>,
-        vsync: bool,
+        frame_queue: crate::driver_options::WindowFrameQueue,
     ) -> Result<FrameReadback, RenderError> {
         self.make_flight_room()?;
         let Some(mut streaming) = self.plan_assembly_streaming(frame) else {
             operation.presenter.cancel_assembly_streaming();
             let owned = OwnedWindowFrame::new(self, frame)?;
-            return self.submit_prepared_gui_window(frame, owned, operation, vsync);
+            return self.submit_prepared_gui_window(frame, owned, operation, frame_queue);
         };
         let owned = OwnedWindowFrame::new(self, &streaming.frame)?;
         let uploaded = owned.resources.geometry_transfers.staged_bytes();
@@ -122,7 +126,7 @@ impl VulkanRenderer {
         }
         streaming.progress.uploaded_bytes = uploaded;
         let mut readback =
-            self.submit_prepared_gui_window(&streaming.frame, owned, operation, vsync)?;
+            self.submit_prepared_gui_window(&streaming.frame, owned, operation, frame_queue)?;
         operation
             .presenter
             .assembly_sources
@@ -135,11 +139,11 @@ impl VulkanRenderer {
         frame: &RenderFrame,
         owned: OwnedWindowFrame,
         operation: &mut WindowGuiOperation<'_>,
-        vsync: bool,
+        frame_queue: crate::driver_options::WindowFrameQueue,
     ) -> Result<FrameReadback, RenderError> {
         operation.threaded =
             presents_on_thread(owned.resources.needs_host_completion(), operation.contract);
-        let (owned, index) = self.prepare_owned_window(frame, owned, operation, vsync)?;
+        let (owned, index) = self.prepare_owned_window(frame, owned, operation, frame_queue)?;
         if operation.threaded {
             return self.hand_off_window(frame, owned, operation, index);
         }
@@ -197,12 +201,12 @@ impl VulkanRenderer {
         frame: &RenderFrame,
         owned: OwnedWindowFrame,
         operation: &mut WindowGuiOperation<'_>,
-        vsync: bool,
+        frame_queue: crate::driver_options::WindowFrameQueue,
     ) -> Result<(OwnedWindowFrame, u32), RenderError> {
         // Acquiring blocks until the presentation engine releases an image.
         let acquired = {
             let _waiting = self.runtime.work.enter(WorkPhase::Waiting);
-            operation.acquire(frame.extent(), vsync)
+            operation.acquire(frame.extent(), frame_queue)
         };
         let index = match acquired {
             Ok(index) => index,

@@ -6,9 +6,10 @@ mod family;
 pub(super) mod intervals;
 pub(super) use family::bind_many;
 use martensite_tkmath::predicates::roots::metric_bounds::{
-    CertifiedCylindricalClearance, CertifiedCylindricalPeriodicClearance,
-    CylindricalClearanceDomain, CylindricalClearanceError, CylindricalClearanceQuery,
-    CylindricalClearanceSource, certify_cylindrical_clearance,
+    CertifiedCylindricalClearance, CertifiedCylindricalPeriodicClearance, ConeClearanceOptions,
+    CylindricalClearanceDomain, CylindricalClearanceError, CylindricalClearanceOptions,
+    CylindricalClearanceQuery, CylindricalClearanceSource, CylindricalClearanceWorkError,
+    certify_cylindrical_clearance_with_work,
 };
 use std::collections::BTreeSet;
 #[cfg(test)]
@@ -109,30 +110,100 @@ pub(super) fn certify_many_with_cancel(
     prepared: &[Request],
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Result<OriginalClearance, ClearanceFailure> {
+    certify_family(originals, prepared, None, &mut cancelled).map_err(|error| {
+        debug_assert!(
+            error.operations <= 2 * CylindricalClearanceOptions::default().max_operations
+        );
+        error.cause
+    })
+}
+
+pub(super) fn certify_many_with_limit(
+    originals: &[Request],
+    prepared: &[Request],
+    arithmetic: ConeClearanceOptions,
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> Result<OriginalClearance, ClearanceWorkFailure> {
+    certify_family(originals, prepared, Some(arithmetic), &mut cancelled)
+}
+
+#[derive(Debug)]
+pub(super) struct ClearanceWorkFailure {
+    pub cause: ClearanceFailure,
+    pub operations: u32,
+}
+
+impl From<ClearanceFailure> for ClearanceWorkFailure {
+    fn from(cause: ClearanceFailure) -> Self {
+        Self {
+            cause,
+            operations: 0,
+        }
+    }
+}
+
+fn certify_family(
+    originals: &[Request],
+    prepared: &[Request],
+    arithmetic: Option<ConeClearanceOptions>,
+    cancelled: &mut CancelPoll<'_>,
+) -> Result<OriginalClearance, ClearanceWorkFailure> {
     let first = originals.first().ok_or(ClearanceFailure::EmptySelection)?;
     selection_binding(originals, prepared)?;
     let authored = authored_collection(originals)?;
     let spans = prepared_spans(prepared);
     if !intervals::complete(&spans, &authored) {
-        return Err(ClearanceFailure::OriginalBinding);
+        return Err(ClearanceFailure::OriginalBinding.into());
     }
     let sources = sources(&spans, &authored)?;
     let excluded = excluded_pairs(prepared);
-    let query = clearance_query(first, &sources, &excluded);
-    let certificate = certify_input(query, &spans, &mut cancelled)?;
-    complete_boundary(spans, certificate, &mut cancelled)
+    let mut query = clearance_query(first, &sources, &excluded);
+    query.options = clearance_options(arithmetic);
+    let certificate = certify_cylindrical_clearance_with_work(query, &mut *cancelled)
+        .map_err(|error| work_failure(&spans, 0, error))?;
+    complete_boundary(spans, certificate, arithmetic, cancelled)
 }
+
+fn clearance_options(arithmetic: Option<ConeClearanceOptions>) -> CylindricalClearanceOptions {
+    arithmetic.map_or_else(Default::default, |options| CylindricalClearanceOptions {
+        fractional_bits: options.fractional_bits,
+        max_operations: options.max_operations,
+        ..Default::default()
+    })
+}
+
 fn complete_boundary(
     spans: Vec<CurveSpan>,
     certificate: CertifiedCylindricalClearance,
+    arithmetic: Option<ConeClearanceOptions>,
     cancelled: &mut CancelPoll<'_>,
-) -> Result<OriginalClearance, ClearanceFailure> {
-    let periodic = certify_periodic(&certificate, &spans, cancelled)?;
+) -> Result<OriginalClearance, ClearanceWorkFailure> {
+    let spent = certificate.operations();
+    let limit = arithmetic.map_or(certificate.requested_options().max_operations, |policy| {
+        policy.max_operations - spent
+    });
+    let periodic = certificate
+        .certify_periodic_clearance_with_work(16, limit, cancelled)
+        .map_err(|error| work_failure(&spans, spent, error))?;
     Ok(OriginalClearance {
         spans,
         certificate,
         periodic,
     })
+}
+
+fn work_failure(
+    spans: &[CurveSpan],
+    prior_operations: u32,
+    error: CylindricalClearanceWorkError,
+) -> ClearanceWorkFailure {
+    ClearanceWorkFailure {
+        operations: prior_operations + error.operations,
+        cause: ClearanceFailure::Certificate {
+            spans: spans.to_vec(),
+            cause: Box::new(error.cause),
+        },
+    }
 }
 
 pub(super) fn bind_originals(
@@ -196,19 +267,6 @@ fn authored_collection(
     Ok(result)
 }
 
-fn certify_periodic(
-    certificate: &CertifiedCylindricalClearance,
-    spans: &[CurveSpan],
-    cancelled: &mut CancelPoll<'_>,
-) -> Result<CertifiedCylindricalPeriodicClearance, ClearanceFailure> {
-    certificate
-        .certify_periodic_clearance(16, cancelled)
-        .map_err(|cause| ClearanceFailure::Certificate {
-            spans: spans.to_vec(),
-            cause: Box::new(cause),
-        })
-}
-
 fn prepared_spans(prepared: &[Request]) -> Vec<CurveSpan> {
     prepared
         .iter()
@@ -230,17 +288,6 @@ fn clearance_query<'a>(
         requested_clearance: 4. * original.tolerance,
         options: Default::default(),
     }
-}
-
-fn certify_input(
-    query: CylindricalClearanceQuery<'_>,
-    spans: &[CurveSpan],
-    cancelled: &mut CancelPoll<'_>,
-) -> Result<CertifiedCylindricalClearance, ClearanceFailure> {
-    certify_cylindrical_clearance(query, cancelled).map_err(|cause| ClearanceFailure::Certificate {
-        spans: spans.to_vec(),
-        cause: Box::new(cause),
-    })
 }
 
 fn sources<'a>(

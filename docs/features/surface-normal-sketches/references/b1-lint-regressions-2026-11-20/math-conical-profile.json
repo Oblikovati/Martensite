@@ -1,0 +1,23 @@
+{
+  "exit_code": 0,
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "martensite-tkmath",
+    "--lib",
+    "conical_profile::",
+    "--",
+    "--test-threads=1"
+  ],
+  "passed": 218,
+  "failed": 0,
+  "ignored": 0,
+  "filtered_out": 854,
+  "test_seconds": 0.17,
+  "source_manifest_sha256": "3e9450124b66594089525f4ed872e297ae1eb484af3b82bc27371f59a6c88516",
+  "source_changed_from_frozen_eight_files": [],
+  "output_sha256": "1a39dbbcfae725df1ccecec20225c4f052a5363b1ffcd3175d9eccc22d3f3360",
+  "recorded_at": "2026-11-19T23:45:48.006029+00:00"
+}

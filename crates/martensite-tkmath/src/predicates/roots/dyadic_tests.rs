@@ -53,3 +53,17 @@ fn dyadic_parameter_scale_preserves_exact_sign_and_zero() {
         assert_eq!(scaled.compare_f64(expected).unwrap(), Ordering::Equal);
     }
 }
+
+#[test]
+fn decoded_parts_match_the_fixed_binary64_grid() {
+    for exponent in 0..=2046_u64 {
+        for mantissa in [0_u64, 1, (1 << 51) + 16, (1 << 52) - 1] {
+            for sign in [0_u64, 1_u64 << 63] {
+                let value = f64::from_bits(sign | (exponent << 52) | mantissa);
+                let integer = crate::predicates::exact_coordinate(value, 0, 0).unwrap();
+                let fixed_grid = DyadicBound::new(integer, -1074);
+                assert_eq!(DyadicBound::from_f64(value).unwrap(), fixed_grid);
+            }
+        }
+    }
+}

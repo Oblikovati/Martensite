@@ -135,15 +135,16 @@ specific tradeoff; it grants no general performance or memory exception.
 
 ## Census report reuse (#567)
 
-Before enumerating, a Census checks its retained reports and complete physical
-source inventory. An empty report inventory whose physical sources equal their
-occurrence positions gives a different source-pair/mode key for every logical
-domain. Those queries cannot reuse a report, so that path retains no lookup
+Before enumerating, a Census selects its solver or conditioned report store
+and checks that store plus the complete physical source inventory. When the
+selected store is empty and physical source indices match occurrence indices,
+each logical domain has a different source-pair/mode key.
+Those queries cannot reuse a report, so that path retains no lookup
 index. Every numerical query still executes in the original order.
 
 Other states use an ordered index from canonical source pair and query mode
 to the first retained report address. Existing report keys enter once. A cold
-solver result enters at its actual append position; later occurrences reuse
+result enters at its actual append position; later occurrences reuse
 that position, including capture failures and incomplete proofs. The index is
 discarded when enumeration ends. Report vectors retain their original order
 and remain the evidence owners.
@@ -184,3 +185,62 @@ literal discovery path. Local counters distinguish snapshot entries, endpoint
 lookups, source/incidence visits, parameter products and vertex deduplication;
 they do not claim to count the internal key comparisons of the ordered maps.
 No tolerance, public API, numerical work budget or package version changed.
+
+The B1 conditioned path uses this same enumeration-local lookup for Bernstein,
+geometric and genuine fallback evidence. It seeds only the selected report
+vector; numeric slots in the other vector have no authority. ColdUnique still
+requires the selected vector to be empty and every occurrence to map to its
+own physical-source slot. Native axes accept both retained evidence variants,
+and cardinality consumes their unified certificates, including completed empty
+proofs. Differential controls compare source slots, full conditioned outcomes,
+work and callback order with literal lookup, including aliases, seeded failures,
+mixed-vector refusals, geometric endpoints and native extra-vertex gaps.
+
+## Unified owned occurrence checks (#572)
+
+The unified V3–V6 reader uses the same occurrence predicates as the main-line
+fix. A view first checks its actual first bound report, the complete owned
+source inventory and the current native representations. It then retains the first
+failed occurrence index, or the segment count when all pass. Earlier successful
+checks are reused; the failed row refuses, and later rows use the literal
+predicate. The initial bound check remains live and precedes this marker.
+
+Both solver and conditioned report bindings read metadata through the same
+view. Parameter slots, physical source indices, query mode, full captured query,
+effective policy and genuine solver fallback checks still run per domain.
+Borrowed views retain fresh native and occurrence checks, including after a
+curve, pcurve or support alias changes. Missing occurrence indices refuse
+before any prefix slice is accessed.
+
+The view holds an `Option<usize>` marker and adds no cache-owned heap storage.
+Existing predicate and captured-query allocations are unchanged. Removing the
+O(n) cache allocation does not establish an RSS improvement; time and peak-RSS
+qualification remain pending. Focused controls compare real owned
+and live readers for V3–V6, count evaluated predicates, preserve the initial
+eligibility checks and exercise first/later metadata, source, mode and policy
+refusals. Existing cancellation, work, integral-program and alias guards remain
+part of the targeted verification.
+
+## Exact point parameter measurements (#569)
+
+Native-parameter measurement now evaluates an exact point once when applying
+its affine map and computing its distance from the observed parameter. Identity
+maps retain the exact point directly. Non-point intervals keep the existing
+interval formulas.
+
+Source-trim intersection and scalar admission remain in their original order.
+Endpoint maps still validate both supplied endpoints, including an unused
+endpoint. The measurement retains the observed parameter and requested limit
+with their original signed-zero bits. Exact differential controls cover endpoint
+and interior points, reversed and extreme maps, invalid operands and threshold
+boundaries. This change adds no public API or numerical work policy.
+
+## Borrowed comparison of paired sources
+
+`CapturedBezierPair::matches_pair` compares the two source views in
+order. `matches_self_off_diagonal` compares the single source of a
+self query. Controls, optional weights and trim intervals follow the
+same equality as an owning capture. Signed zeros compare equal and
+NaNs compare unequal. Certificate rebinding uses these views when
+checking the source, and continues to check the recorded query
+domain, policy, completion and work.

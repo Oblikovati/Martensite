@@ -1,6 +1,7 @@
 //! `BRepCheck_Analyzer`: the checkers of a shape and of all its sub-shapes, run in
 //! their contexts (the functor is in `analyzer_contexts.rs`), and the validity queries.
-use super::analyzer_contexts::check_in_contexts;
+use super::analyzer_contexts::{check_in_contexts, check_scoped_faces};
+use super::cylindrical_curve_bounds::CylindricalCurveBounds;
 use super::edge::BRepCheckEdge;
 use super::errors::null_object;
 use super::explore::sub_shapes;
@@ -16,6 +17,7 @@ use martensite_tkernel::ncollection::IndexedDataMap;
 use martensite_tkernel::osd::ThreadPool;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::ShapeEnum;
+use std::num::NonZeroUsize;
 
 /// `NCollection_IndexedDataMap<TopoDS_Shape, Handle(BRepCheck_Result)>` with the default
 /// hasher: a sub-shape met with two orientations has two checkers.
@@ -51,13 +53,76 @@ impl BRepCheckAnalyzer {
         is_parallel: bool,
         is_exact: bool,
     ) -> Result<Self, Failure> {
+        Self::build(shape, geom_controls, is_parallel, is_exact, None)
+    }
+
+    /// Run the usual exact edge checks with an optional full-interval distance bound
+    /// for a verified cylindrical edge/face use.
+    /// Example: `BRepCheckAnalyzer::with_cylindrical_curve_bounds(&shape, &bounds)?`.
+    pub fn with_cylindrical_curve_bounds(
+        shape: &Shape,
+        bounds: &CylindricalCurveBounds,
+    ) -> Result<Self, Failure> {
+        Self::build(shape, true, false, true, Some(bounds))
+    }
+
+    /// Attempt one native checker stage with the same geometry flag as `Self::new`.
+    /// Returns a provisional analyzer only for a solid with distinct face and wire contexts.
+    /// The caller must inspect all required statuses and use the serial checker for any defect
+    /// or incomplete context.
+    /// Example: `BRepCheckAnalyzer::try_scoped_cylindrical_checks(&shape, &bounds, true, limit)`.
+    pub fn try_scoped_cylindrical_checks(
+        shape: &Shape,
+        bounds: &CylindricalCurveBounds,
+        geom_controls: bool,
+        worker_limit: NonZeroUsize,
+    ) -> Option<Self> {
+        if worker_limit.get() == 1
+            || bounds.is_empty()
+            || shape.shape_type().ok()? != ShapeEnum::Solid
+        {
+            return None;
+        }
+        // The table qualifies this operation for scheduling. Only geometry uses its bounds.
+        Self::try_scoped_faces(
+            shape,
+            geom_controls,
+            geom_controls.then_some(bounds),
+            worker_limit,
+        )
+    }
+
+    fn try_scoped_faces(
+        shape: &Shape,
+        geom_controls: bool,
+        bounds: Option<&CylindricalCurveBounds>,
+        worker_limit: NonZeroUsize,
+    ) -> Option<Self> {
+        let mut analyzer = Self {
+            shape: shape.clone(),
+            map: CheckerMap::default(),
+            is_parallel: false,
+            is_exact: true,
+        };
+        analyzer.put(shape, geom_controls).ok()?;
+        check_scoped_faces(&analyzer.map, bounds, worker_limit)?;
+        Some(analyzer)
+    }
+
+    fn build(
+        shape: &Shape,
+        geom_controls: bool,
+        is_parallel: bool,
+        is_exact: bool,
+        bounds: Option<&CylindricalCurveBounds>,
+    ) -> Result<Self, Failure> {
         let mut analyzer = Self {
             shape: Shape::default(),
             map: CheckerMap::default(),
             is_parallel,
             is_exact,
         };
-        analyzer.init(shape, geom_controls)?;
+        analyzer.init_with_curve_bounds(shape, geom_controls, bounds)?;
         Ok(analyzer)
     }
 
@@ -65,13 +130,22 @@ impl BRepCheckAnalyzer {
     /// checks in context; Standard_NullObject for a null shape;
     /// `analyzer.init(&shape, true)?`.
     pub fn init(&mut self, shape: &Shape, geom_controls: bool) -> Result<(), Failure> {
+        self.init_with_curve_bounds(shape, geom_controls, None)
+    }
+
+    fn init_with_curve_bounds(
+        &mut self,
+        shape: &Shape,
+        geom_controls: bool,
+        bounds: Option<&CylindricalCurveBounds>,
+    ) -> Result<(), Failure> {
         if shape.is_null() {
             return Err(null_object("BRepCheck_Analyzer::Init() - NULL shape"));
         }
         self.shape = shape.clone();
         self.map.clear(false);
         self.put(shape, geom_controls)?;
-        self.perform()
+        self.perform(bounds)
     }
 
     /// `SetExactMethod(theIsExact)`; `analyzer.set_exact_method(true)`.
@@ -216,7 +290,7 @@ impl BRepCheckAnalyzer {
     /// `Perform()`: the shapes dealt to tasks of at least 10 shapes (ten tasks per
     /// thread of the default pool), each task checking its shapes in their contexts;
     /// in parallel with the parallel flag, else in order.
-    fn perform(&self) -> Result<(), Failure> {
+    fn perform(&self, bounds: Option<&CylindricalCurveBounds>) -> Result<(), Failure> {
         let size = self.map.extent();
         let threads = ThreadPool::default_pool(-1).nb_threads().max(1) as usize;
         let mut tasks = threads * 10;
@@ -229,6 +303,6 @@ impl BRepCheckAnalyzer {
         for index in 1..=size {
             arrays[(index - 1) / task_size].push(self.map.find_key(index)?.clone());
         }
-        check_in_contexts(&arrays, &self.map, self.is_parallel)
+        check_in_contexts(&arrays, &self.map, self.is_parallel, bounds)
     }
 }

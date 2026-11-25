@@ -3,44 +3,72 @@ use super::*;
 use martensite_tkbrep::{brep::BRepBuilder, topods};
 #[test]
 fn invalid_second_representation_precedes_first_zero_budget() {
-    fixture(|source, piece, curves| {
-        invalidate_last_pcurve(source, piece);
-        let mut work = Work::new(ConeClearanceOptions {
-            max_operations: 0,
-            ..Default::default()
-        });
-        let mut polls = 0;
-        let cause = certify(source, piece, curves, &mut work, &mut || {
+    fixture(invalid_legacy_pair);
+}
+fn invalid_legacy_pair(
+    source: &SourceCapture<'_>,
+    piece: &AuthoredPiece,
+    curves: &[retained::OwnedCurve; 2],
+) {
+    invalidate_last_pcurve(source, piece);
+    let mut work = Work::new(ConeClearanceOptions {
+        max_operations: 0,
+        ..Default::default()
+    });
+    let (cause, polls) = polling_failure(source, piece, curves, &mut work);
+    assert!(matches!(cause.cause, ConeCause::Storage(_)));
+    assert_eq!(cause.span, Some(piece.span));
+    assert_eq!(polls, 0);
+    assert_eq!(work.consumed, 0);
+}
+fn polling_failure(
+    source: &SourceCapture<'_>,
+    piece: &AuthoredPiece,
+    curves: &[retained::OwnedCurve; 2],
+    work: &mut Work,
+) -> (ConeFailure, usize) {
+    let mut polls = 0;
+    let cause = certify(
+        source,
+        piece,
+        curves,
+        &source.prepared.fits[&piece.span].boundary,
+        work,
+        &mut || {
             polls += 1;
             false
-        })
-        .err()
-        .unwrap();
-        assert!(matches!(cause.cause, ConeCause::Storage(_)));
-        assert_eq!(cause.span, Some(piece.span));
-        assert_eq!(polls, 0);
-        assert_eq!(work.consumed, 0);
-    });
+        },
+    )
+    .err()
+    .unwrap();
+    (cause, polls)
 }
 #[test]
 fn complete_representations_preserve_first_pair_depth_failure_and_work() {
-    fixture(|source, piece, curves| {
-        let mut work = Work::new(ConeClearanceOptions {
-            max_operations: 1,
-            ..Default::default()
-        });
-        let cause = certify(source, piece, curves, &mut work, &mut || false)
-            .err()
-            .unwrap();
-        let ConeCause::TrimPair(cause) = cause.cause else {
-            panic!("paired trim cause");
-        };
-        assert_eq!(cause.depth, 0);
-        assert_eq!(work.consumed, cause.operations);
-        assert_eq!(work.consumed, 1);
-    });
+    fixture(exhausted_legacy_pair);
 }
-fn invalidate_last_pcurve(source: &SourceCapture<'_>, piece: &AuthoredPiece) {
+fn exhausted_legacy_pair(
+    source: &SourceCapture<'_>,
+    piece: &AuthoredPiece,
+    curves: &[retained::OwnedCurve; 2],
+) {
+    let mut work = Work::new(ConeClearanceOptions {
+        max_operations: 1,
+        ..Default::default()
+    });
+    let cause = certify(
+        source,
+        piece,
+        curves,
+        &source.prepared.fits[&piece.span].boundary,
+        &mut work,
+        &mut || false,
+    )
+    .err()
+    .unwrap();
+    assert_pair_failure(cause, &work);
+}
+pub(super) fn invalidate_last_pcurve(source: &SourceCapture<'_>, piece: &AuthoredPiece) {
     let edge_key = retained::key(piece.span, HistoryRole::LastDepthEdge);
     let face_key = capture::region_key(source.original.region, HistoryRole::LastDepthFace);
     let edge = topods::edge(retained::lookup(edge_key, source.bindings).unwrap()).unwrap();
@@ -53,12 +81,32 @@ fn invalidate_last_pcurve(source: &SourceCapture<'_>, piece: &AuthoredPiece) {
         .unwrap();
 }
 fn fixture(check: impl FnOnce(&SourceCapture<'_>, &AuthoredPiece, &[retained::OwnedCurve; 2])) {
+    fixture_with_policy(WrappedConeDomainPolicy::LegacySectorV1, check);
+}
+pub(super) fn fixture_with_policy(
+    policy: WrappedConeDomainPolicy,
+    check: impl FnOnce(&SourceCapture<'_>, &AuthoredPiece, &[retained::OwnedCurve; 2]),
+) {
     let request = crate::surface_sketch::wrapped_profile::operation::cone::tests::request();
     let inputs = input::capture(&request, &mut || false).unwrap();
     let mut work = Work::new(request.proof.arithmetic);
-    let selection = prepare::select(&request, &inputs.originals, &mut work, &mut || false).unwrap();
+    let selection = prepare::select_with_policy(
+        &ConeRun::from(&request),
+        &inputs.originals,
+        policy,
+        &mut work,
+        &mut || false,
+    )
+    .unwrap();
     let prepared = &selection.prepared[0];
-    let original = &inputs.originals[0];
+    check_native(&request, &inputs.originals[0], prepared, check);
+}
+fn check_native(
+    request: &WrappedConeNormalRequest,
+    original: &DevelopedRegionRequest,
+    prepared: &Prepared,
+    check: impl FnOnce(&SourceCapture<'_>, &AuthoredPiece, &[retained::OwnedCurve; 2]),
+) {
     let native = native::construct(prepared, request.support).unwrap();
     let bindings = retained::index(&native.bindings).unwrap();
     let carriers = capture::carriers(prepared, &bindings).unwrap();
@@ -86,6 +134,7 @@ fn original_pair_error_outranks_secondary_bookkeeping_failure() {
             source,
             piece,
             expected: &fit.uv,
+            chart: source.prepared.chart_domain.as_deref(),
         };
         let original = refusal(source.carriers[1]);
         let mut work = Work::new(ConeClearanceOptions {
@@ -111,7 +160,7 @@ fn check_original_refusal(refusal: &ConicalTrimPairError) {
         }
     ));
 }
-fn refusal(carrier: ConicalTrimCarrier) -> ConicalTrimPairError {
+pub(super) fn refusal(carrier: ConicalTrimCarrier) -> ConicalTrimPairError {
     ConicalTrimPairError {
         depth: 1,
         operations: 2,
@@ -126,4 +175,13 @@ fn refusal(carrier: ConicalTrimCarrier) -> ConicalTrimPairError {
             },
         }),
     }
+}
+
+fn assert_pair_failure(cause: ConeFailure, work: &Work) {
+    let ConeCause::TrimPair(cause) = cause.cause else {
+        panic!("paired trim cause");
+    };
+    assert_eq!(cause.depth, 0);
+    assert_eq!(work.consumed, cause.operations);
+    assert_eq!(work.consumed, 1);
 }

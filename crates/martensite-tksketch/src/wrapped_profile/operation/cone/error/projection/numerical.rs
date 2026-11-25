@@ -103,3 +103,17 @@ pub(super) fn reference(cause: &ConicalReferenceFailure) -> Class {
         ConicalReferenceFailure::Trigonometric(cause) => profile(cause),
     }
 }
+
+pub(super) fn domain(cause: &ConicalChartDomainFailure) -> Class {
+    match cause {
+        ConicalChartDomainFailure::Sector(cause) => sector(cause),
+        ConicalChartDomainFailure::Chart { .. } | ConicalChartDomainFailure::SourceCount { .. } => {
+            Class::Unsupported
+        }
+        ConicalChartDomainFailure::Unresolved { .. }
+        | ConicalChartDomainFailure::Wedge { .. }
+        | ConicalChartDomainFailure::Point { .. }
+        | ConicalChartDomainFailure::Arithmetic(_) => Class::Incomplete,
+        ConicalChartDomainFailure::Trigonometric(cause) => profile(cause),
+    }
+}

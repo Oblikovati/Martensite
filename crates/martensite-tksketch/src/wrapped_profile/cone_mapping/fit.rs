@@ -173,24 +173,52 @@ fn endpoint_values(
         tangent_rate,
     })
 }
-pub(in super::super) fn ideal_endpoint(
-    input: &FitInput<'_>,
-    endpoint: usize,
-) -> Result<IdealEndpoint, FitFailure> {
-    admit(input)?;
-    let p = input.source[if endpoint == 0 {
-        0
-    } else {
-        input.source.len() - 1
-    }];
-    let slant = hypot(p[0], p[1]);
-    if slant == 0. {
-        return Err(FitFailure::Apex { endpoint });
+#[derive(Clone, Copy)]
+pub(in super::super) struct SourceIncidence {
+    developed: f64,
+    slant: f64,
+}
+impl SourceIncidence {
+    pub(in super::super) fn capture(
+        input: &FitInput<'_>,
+        endpoint: usize,
+    ) -> Result<Self, FitFailure> {
+        admit(input)?;
+        let p = input.source[if endpoint == 0 {
+            0
+        } else {
+            input.source.len() - 1
+        }];
+        let slant = hypot(p[0], p[1]);
+        if slant == 0. {
+            return Err(FitFailure::Apex { endpoint });
+        }
+        finite("slant", &[slant])?;
+        // The certificate uses positive pi on the negative axis for either signed zero.
+        let y = if p[0] < 0. && p[1] == 0. { 0. } else { p[1] };
+        Ok(Self {
+            developed: atan2(y, p[0]),
+            slant,
+        })
     }
-    finite("slant", &[slant])?;
-    let tangent = tan(half_angle(input, endpoint, p, sin(input.semi_angle))?);
-    finite("tangent", &[tangent])?;
-    Ok(IdealEndpoint { tangent, slant })
+
+    pub(in super::super) fn project(
+        self,
+        input: &FitInput<'_>,
+        endpoint: usize,
+    ) -> Result<IdealEndpoint, FitFailure> {
+        let tangent = tan(half_angle(
+            input,
+            endpoint,
+            self.developed,
+            sin(input.semi_angle),
+        )?);
+        finite("tangent", &[tangent])?;
+        Ok(IdealEndpoint {
+            tangent,
+            slant: self.slant,
+        })
+    }
 }
 
 fn endpoint_rates(
@@ -213,12 +241,10 @@ fn endpoint_rates(
 fn half_angle(
     input: &FitInput<'_>,
     endpoint: usize,
-    p: [f64; 2],
+    principal: f64,
     sine: f64,
 ) -> Result<f64, FitFailure> {
-    // The certificate uses positive pi on the negative axis for either signed zero.
-    let y = if p[0] < 0. && p[1] == 0. { 0. } else { p[1] };
-    let developed = atan2(y, p[0]) + TAU * f64::from(input.developed_turns[endpoint]);
+    let developed = principal + TAU * f64::from(input.developed_turns[endpoint]);
     let angle = input.origin + developed / sine + TAU * f64::from(input.physical_turns[endpoint]);
     let half = (angle - input.center) / 2.;
     if !half.is_finite() || half.abs() >= FRAC_PI_2 || cos(half) <= 0. {

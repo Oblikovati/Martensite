@@ -2,6 +2,8 @@
 use super::*;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
+#[path = "body_controls/multiline.rs"]
+mod multiline;
 
 fn cylinder_body() -> martensite_tkbrep::topods::Shape {
     use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeCylinder;
@@ -62,7 +64,13 @@ fn native_snapshot(shape: &martensite_tkbrep::topods::Shape) -> Vec<u8> {
 }
 fn validate_attached_body(shape: &martensite_tkbrep::topods::Shape) {
     use martensite_tkbo::body_check::validate_body;
-    let resolution = Resolution::new(
+    let report = validate_body(shape, &attachment_resolution()).unwrap();
+    assert!(report.is_valid(), "{report:?}");
+    check_one_solid(shape);
+}
+
+pub(super) fn attachment_resolution() -> Resolution {
+    Resolution::new(
         1e-5,
         1e-7,
         1e-9,
@@ -71,11 +79,9 @@ fn validate_attached_body(shape: &martensite_tkbrep::topods::Shape) {
             angular: 0.1,
         },
         ToleranceCap::Refuse(1e-5),
-    );
-    let report = validate_body(shape, &resolution).unwrap();
-    assert!(report.is_valid(), "{report:?}");
-    check_one_solid(shape);
+    )
 }
+
 #[test]
 fn wrapped_glyph_boss_joins_its_cylindrical_support_body() {
     let mut request = glyph_request(0);
@@ -124,7 +130,7 @@ fn inward_wrapped_glyph_cuts_a_pocket_in_its_support_body() {
     assert_eq!(request, original);
 }
 
-fn body_volume_estimate(shape: &martensite_tkbrep::topods::Shape) -> f64 {
+pub(super) fn body_volume_estimate(shape: &martensite_tkbrep::topods::Shape) -> f64 {
     use martensite_tkgeombase::gprop::GProps;
     use martensite_tktopalgo::brep_gprop::{BRepGProp, VolumeGKFlags};
     let mut properties = GProps::default();

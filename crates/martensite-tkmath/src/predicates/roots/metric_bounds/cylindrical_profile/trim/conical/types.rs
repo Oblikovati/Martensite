@@ -18,7 +18,7 @@ pub struct ConicalTrimCarrier {
 pub struct ConicalTrimQuery<'a> {
     /// Degree-one through nine edge on `[0,1]`.
     pub curve: MetricBezier<'a, 3>,
-    /// Degree-one through three retained angular/meridional controls on `[0,1]`.
+    /// Retained polynomial angular/meridional controls. The ranged API permits degree five.
     pub pcurve: &'a [[f64; 2]],
     /// Actual decoded local carrier; rigid placement belongs to the caller.
     pub carrier: ConicalTrimCarrier,
@@ -33,12 +33,13 @@ pub struct ConicalTrimQuery<'a> {
 pub struct CertifiedConicalTrim {
     pub(super) bounds: [f64; 3],
     pub(super) bits: Vec<u64>,
+    pub(super) ranges: [[f64; 2]; 2],
     pub(super) limit: f64,
     pub(super) options: CylindricalProfileOptions,
     pub(super) operations: u32,
 }
 impl CertifiedConicalTrim {
-    /// XY L1, axial, and summed bounds, in model units; `proof.residual_bounds()`.
+    /// XY L1, axial, and Euclidean position bounds in model units; `proof.residual_bounds()`.
     pub fn residual_bounds(&self) -> [f64; 3] {
         self.bounds
     }
@@ -56,7 +57,21 @@ impl CertifiedConicalTrim {
     }
     /// Bind the actual carrier and retained curves; `assert!(proof.matches_source(query))`.
     pub fn matches_source(&self, query: ConicalTrimQuery<'_>) -> bool {
-        admit(query).is_ok() && self.bits == source_bits(query)
+        self.matches_ranges(query, [[0., 1.]; 2])
+    }
+
+    /// Ranges certified on the original space curve and pcurve. Example: `proof.ranges()`.
+    pub fn ranges(&self) -> [[f64; 2]; 2] {
+        self.ranges
+    }
+
+    /// Compare original coefficient bits, cone datum and the two active parameter intervals.
+    /// Example: `assert!(proof.matches_ranges(query, proof.ranges()));`.
+    pub fn matches_ranges(&self, query: ConicalTrimQuery<'_>, ranges: [[f64; 2]; 2]) -> bool {
+        admit_poles(query, 6).is_ok()
+            && self.ranges.map(|pair| pair.map(f64::to_bits))
+                == ranges.map(|pair| pair.map(f64::to_bits))
+            && self.bits == source_bits(query)
     }
 }
 
@@ -91,7 +106,7 @@ impl std::fmt::Display for ConicalTrimError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "conical trim carrier={:?}, limit={}: {}; expected positive-radius +Z cone and complete degree-1..=3 UV / degree-1..=9 rational edge correspondence",
+            "conical trim carrier={:?}, limit={}: {}; expected positive-radius +Z cone and complete polynomial UV / degree-1..=9 rational edge correspondence within the selected proof limits",
             self.carrier, self.requested_spatial_limit, self.cause
         )
     }

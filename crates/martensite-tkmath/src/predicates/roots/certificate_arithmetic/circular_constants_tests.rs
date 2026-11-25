@@ -84,3 +84,44 @@ fn pi_observes_cancellation() {
         Err(BoundedArithmeticFailure::Cancelled)
     );
 }
+
+#[test]
+fn fixed_grid_matches_machin_bounds_work_limits_and_cancellation() {
+    for remaining in 0..=MACHIN_GRID_STEPS + 1 {
+        assert_eq!(
+            evaluate(pi, remaining, None),
+            evaluate(machin_pi, remaining, None),
+            "remaining={remaining}"
+        );
+        assert_eq!(
+            evaluate(pi, remaining, Some(remaining)),
+            evaluate(machin_pi, remaining, Some(remaining)),
+            "cancelled at work limit={remaining}"
+        );
+        assert_eq!(
+            evaluate(pi, MACHIN_GRID_STEPS + 1, Some(remaining)),
+            evaluate(machin_pi, MACHIN_GRID_STEPS + 1, Some(remaining)),
+            "cancelled={remaining}"
+        );
+    }
+}
+
+fn evaluate(
+    operation: impl FnOnce(&mut Arithmetic<'_>) -> Checked<Interval>,
+    remaining: u32,
+    stop: Option<u32>,
+) -> (Checked<Interval>, u32, u32) {
+    let policy = ArithmeticPolicy {
+        fractional_bits: MACHIN_GRID_BITS,
+        max_operations: 1 + remaining,
+    };
+    let mut polls = 0;
+    let mut cancelled = || {
+        polls += 1;
+        stop.is_some_and(|step| polls == 2 + step)
+    };
+    let mut arithmetic = Arithmetic::new(policy, &mut cancelled);
+    arithmetic.certificate_step().unwrap();
+    let result = operation(&mut arithmetic);
+    (result, arithmetic.operations(), polls)
+}

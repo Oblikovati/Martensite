@@ -159,8 +159,8 @@ pub(super) fn weight_minimum(curve: MetricBezier<'_, 3>) -> f64 {
         .map_or(1., |w| w.iter().copied().fold(f64::INFINITY, f64::min))
 }
 
-fn source_bits(curves: [MetricBezier<'_, 3>; 2], radii: [f64; 2]) -> Vec<u64> {
-    let mut result: Vec<_> = radii.into_iter().map(f64::to_bits).collect();
+pub(super) fn source_bits(curves: [MetricBezier<'_, 3>; 2], reference: [f64; 2]) -> Vec<u64> {
+    let mut result: Vec<_> = reference.into_iter().map(f64::to_bits).collect();
     for curve in curves {
         result.push(curve.poles.len() as u64);
         result.push(curve.weights.map_or(u64::MAX, |w| w.len() as u64));

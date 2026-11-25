@@ -8,6 +8,12 @@ use crate::predicates::roots::{
 use num_bigint::{BigInt, Sign};
 
 const MAX_INTEGER_BITS: u64 = 16_384;
+const BINARY64_DENOMINATOR_SHIFT: usize = 1074;
+// The degree-five projected cone trace combines a degree-40 trigonometric
+// enclosure, a degree-five meridian and degree-nine rational weights (#419).
+pub(super) const MAX_BERNSTEIN_PRODUCT_DEGREE: usize = 54;
+const BINOMIAL_SIDE: usize = MAX_BERNSTEIN_PRODUCT_DEGREE + 1;
+static BINOMIALS: [[u64; BINOMIAL_SIDE]; BINOMIAL_SIDE] = binomial_table();
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(in crate::predicates::roots) struct ArithmeticPolicy {
@@ -53,7 +59,6 @@ pub(in crate::predicates::roots) struct Arithmetic<'a> {
     unit: BigInt,
     operations: u32,
     cancelled: &'a mut (dyn FnMut() -> bool + Send),
-    binomials: Box<[[u64; 51]; 51]>,
 }
 impl<'a> Arithmetic<'a> {
     pub fn new(options: ArithmeticPolicy, cancelled: &'a mut (dyn FnMut() -> bool + Send)) -> Self {
@@ -62,7 +67,6 @@ impl<'a> Arithmetic<'a> {
             options,
             operations: 0,
             cancelled,
-            binomials: binomial_table(),
         }
     }
     pub fn operations(&self) -> u32 {
@@ -81,7 +85,7 @@ impl<'a> Arithmetic<'a> {
         }
     }
     pub fn binomial(&self, n: usize, k: usize) -> u64 {
-        self.binomials[n][k]
+        BINOMIALS[n][k]
     }
     pub fn zero(&self) -> Interval {
         Interval {
@@ -91,10 +95,12 @@ impl<'a> Arithmetic<'a> {
     }
     pub fn scalar(&mut self, value: f64) -> Checked<Interval> {
         self.charge()?;
-        let integer = crate::predicates::exact_coordinate(value, 0, 0)
-            .map_err(|_| Failure::NonFiniteScalar { value })?;
-        let numerator = integer << usize::from(self.options.fractional_bits);
-        self.rounded(&numerator, &numerator, &(BigInt::from(1) << 1074))
+        scalar_bounds(value, usize::from(self.options.fractional_bits))
+    }
+    pub fn rational(&mut self, exact: &ExactRatio) -> Checked<Interval> {
+        self.charge()?;
+        let scaled = exact.numerator() * &self.unit;
+        self.rounded(&scaled, &scaled, exact.denominator())
     }
     pub fn add(&mut self, a: &Interval, b: &Interval) -> Checked<Interval> {
         self.charge()?;
@@ -106,19 +112,23 @@ impl<'a> Arithmetic<'a> {
     }
     pub fn multiply(&mut self, a: &Interval, b: &Interval) -> Checked<Interval> {
         self.charge()?;
+        if let Some([(l0, l1), (u0, u1)]) = multiply_extrema(a, b) {
+            return rounded_shift(
+                &(l0 * l1),
+                &(u0 * u1),
+                usize::from(self.options.fractional_bits),
+            );
+        }
         let products = [
             &a.lower * &b.lower,
             &a.lower * &b.upper,
             &a.upper * &b.lower,
             &a.upper * &b.upper,
         ];
-        let lower = products
-            .iter()
-            .fold(products[0].clone(), |a, b| a.min(b.clone()));
-        let upper = products
-            .iter()
-            .fold(products[0].clone(), |a, b| a.max(b.clone()));
-        self.rounded(&lower, &upper, &self.unit)
+        let [a, b, c, d] = &products;
+        let lower = a.min(b).min(c).min(d);
+        let upper = a.max(b).max(c).max(d);
+        rounded_shift(lower, upper, usize::from(self.options.fractional_bits))
     }
     pub fn positive_sqrt(&mut self, value: &Interval) -> Result<Interval, PositiveSqrtFailure> {
         self.charge()?;
@@ -159,6 +169,9 @@ impl<'a> Arithmetic<'a> {
     pub fn divide(&mut self, a: &Interval, b: &Interval) -> Checked<Interval> {
         self.charge()?;
         self.positive_denominator(&b.lower)?;
+        if a.lower <= a.upper && b.lower <= b.upper {
+            return self.divide_ordered(a, b);
+        }
         let pairs = [
             (&a.lower, &b.lower),
             (&a.lower, &b.upper),
@@ -175,6 +188,30 @@ impl<'a> Arithmetic<'a> {
             .iter()
             .fold(bounds[0].upper.clone(), |a, b| a.max(b.upper.clone()));
         checked(lower, upper)
+    }
+    fn divide_ordered(&self, a: &Interval, b: &Interval) -> Checked<Interval> {
+        let shift = usize::from(self.options.fractional_bits);
+        let lower = &a.lower << shift;
+        check_bits(lower.bits())?;
+        let upper = &a.upper << shift;
+        check_bits(upper.bits())?;
+        // A positive integer grid denominator cannot increase either rounded
+        // magnitude past its integral scaled numerator. The legacy lower
+        // numerator size check therefore precedes the upper numerator check.
+        let lo_denominator = if a.lower.sign() == Sign::Minus {
+            &b.lower
+        } else {
+            &b.upper
+        };
+        let hi_denominator = if a.upper.sign() == Sign::Minus {
+            &b.upper
+        } else {
+            &b.lower
+        };
+        checked(
+            divide_floor(&lower, lo_denominator),
+            divide_ceil(&upper, hi_denominator),
+        )
     }
     pub fn integer_scale(&mut self, a: &Interval, factor: &BigInt) -> Checked<Interval> {
         self.charge()?;
@@ -222,6 +259,10 @@ impl<'a> Arithmetic<'a> {
             divide_ceil(upper, denominator),
         )
     }
+    /// Charge one finite certificate step in the same remaining work ledger.
+    pub fn certificate_step(&mut self) -> Checked<()> {
+        self.charge()
+    }
     pub fn check_cancelled(&mut self) -> Checked<()> {
         if (self.cancelled)() {
             return Err(Failure::Cancelled);
@@ -239,6 +280,44 @@ impl<'a> Arithmetic<'a> {
         self.operations += 1;
         Ok(())
     }
+}
+
+fn scalar_bounds(value: f64, fractional_bits: usize) -> Checked<Interval> {
+    let parts = crate::predicates::binary64_parts(value, 0, 0)
+        .map_err(|_| Failure::NonFiniteScalar { value })?;
+    let magnitude = parts.significand;
+    if magnitude == 0 {
+        return checked(0.into(), 0.into());
+    }
+    let numerator_shift = parts.shift + fractional_bits;
+    // Keep the original fixed-grid numerator limit even though we never build that numerator.
+    check_bits(u64::from(magnitude.ilog2() + 1) + numerator_shift as u64)?;
+    let value = if parts.negative {
+        -(magnitude as i64)
+    } else {
+        magnitude as i64
+    };
+    if numerator_shift >= BINARY64_DENOMINATOR_SHIFT {
+        let exact = BigInt::from(value) << (numerator_shift - BINARY64_DENOMINATOR_SHIFT);
+        return checked(exact.clone(), exact);
+    }
+    let shift = BINARY64_DENOMINATOR_SHIFT - numerator_shift;
+    let lower = value >> shift.min(63);
+    let upper = lower + i64::from(shift > magnitude.trailing_zeros() as usize);
+    checked(lower.into(), upper.into())
+}
+
+fn rounded_shift(lower: &BigInt, upper: &BigInt, shift: usize) -> Checked<Interval> {
+    check_bits(lower.bits().max(upper.bits()))?;
+    // BigInt's signed right shift rounds toward negative infinity.
+    let mut ceiling = upper >> shift;
+    if upper
+        .trailing_zeros()
+        .is_some_and(|zeros| zeros < shift as u64)
+    {
+        ceiling += 1;
+    }
+    checked(lower >> shift, ceiling)
 }
 
 fn checked(lower: BigInt, upper: BigInt) -> Checked<Interval> {
@@ -271,15 +350,44 @@ fn divide_floor(numerator: &BigInt, denominator: &BigInt) -> BigInt {
 fn divide_ceil(numerator: &BigInt, denominator: &BigInt) -> BigInt {
     -divide_floor(&(-numerator), denominator)
 }
-fn binomial_table() -> Box<[[u64; 51]; 51]> {
-    // Choose(50,25) < 2^47; every admitted product has total degree at most 50.
-    let mut table = Box::new([[0; 51]; 51]);
-    for n in 0..=50 {
+fn multiply_extrema<'a>(a: &'a Interval, b: &'a Interval) -> Option<[(&'a BigInt, &'a BigInt); 2]> {
+    if a.lower > a.upper || b.lower > b.upper {
+        return None;
+    }
+    sign_definite_product_extrema(a, b).or_else(|| sign_definite_product_extrema(b, a))
+}
+
+fn sign_definite_product_extrema<'a>(
+    a: &'a Interval,
+    b: &'a Interval,
+) -> Option<[(&'a BigInt, &'a BigInt); 2]> {
+    // The order of the right endpoints follows the sign of the left interval.
+    let [lo, hi] = if a.lower.sign() != Sign::Minus {
+        [&b.lower, &b.upper]
+    } else if a.upper.sign() != Sign::Plus {
+        [&b.upper, &b.lower]
+    } else {
+        return None;
+    };
+    let left = [&a.lower, &a.upper];
+    let lower = left[usize::from(lo.sign() == Sign::Minus)];
+    let upper = left[usize::from(hi.sign() != Sign::Minus)];
+    Some([(lower, lo), (upper, hi)])
+}
+const fn binomial_table() -> [[u64; BINOMIAL_SIDE]; BINOMIAL_SIDE] {
+    // Choose(54,27) < 2^51, and each product numerator is bounded by a single
+    // coefficient of the summed degree by Vandermonde's identity.
+    let mut table = [[0; BINOMIAL_SIDE]; BINOMIAL_SIDE];
+    let mut n = 0;
+    while n < BINOMIAL_SIDE {
         table[n][0] = 1;
         table[n][n] = 1;
-        for k in 1..n {
+        let mut k = 1;
+        while k < n {
             table[n][k] = table[n - 1][k - 1] + table[n - 1][k];
+            k += 1;
         }
+        n += 1;
     }
     table
 }
@@ -287,3 +395,11 @@ fn binomial_table() -> Box<[[u64; 51]; 51]> {
 #[cfg(test)]
 #[path = "bounded_dyadic_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "bounded_dyadic_scale_tests.rs"]
+mod scale_tests;
+
+#[cfg(test)]
+#[path = "bounded_dyadic_endpoint_tests.rs"]
+mod endpoint_tests;

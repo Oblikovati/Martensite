@@ -9,6 +9,12 @@ use super::loop_geometry::{Conic, UseGeometry, use_geometry};
 use super::loops::LoopUse;
 use super::plane_math::{length2, on_circle, sub2};
 use std::f64::consts::FRAC_PI_2;
+mod admitted_conic;
+mod exact_quarter;
+pub use admitted_conic::admitted_conic_spans;
+pub use exact_quarter::{
+    ExactConicQuarter, exact_closed_conic, exact_conic_arc_source, exact_conic_quarter,
+};
 
 /// One Bernstein piece in plane coordinates, traversed from its first to its last control.
 #[derive(Clone, Debug, PartialEq)]

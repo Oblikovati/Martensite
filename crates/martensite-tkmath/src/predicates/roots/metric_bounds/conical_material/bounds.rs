@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Linear extrema on compact material occur on its boundary, enclosed by Bernstein hulls.
 use super::*;
-struct Domain {
-    uv: [Interval; 2],
-    halfplane: Interval,
-    error: Interval,
+pub(super) struct Domain {
+    pub(super) uv: [Interval; 2],
+    pub(super) halfplane: Interval,
+    pub(super) error: Interval,
 }
 pub(super) fn certify(
     query: &ConicalMaterialQuery<'_>,
@@ -272,4 +272,66 @@ fn halfplane_minimum(halfplane: &Interval) -> Interval {
         lower: halfplane.lower.clone(),
         upper: halfplane.lower.clone(),
     }
+}
+
+pub(super) fn certify_developed(
+    query: &ConicalMaterialQuery<'_>,
+    contexts: &[ConicalDevelopedBoundarySpan<'_>],
+    domain: &ConicalChartDomainEvidence,
+    refinement: ConicalPrimitiveRefinement,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<f64, ConicalDevelopedMaterialError> {
+    let half_pi = super::super::conical_profile::developed_boundary::half_pi(arithmetic)
+        .map_err(|cause| developed::error::numerical(None, cause, arithmetic.operations()))?;
+    let values = developed_values(query, contexts, domain, refinement, &half_pi, arithmetic)?;
+    let bounds = Domain {
+        uv: std::array::from_fn(|axis| domain_hull(&values, |value| value.uv[axis].clone())),
+        halfplane: domain_hull(&values, |value| value.halfplane.clone()),
+        error: domain_hull(&values, |value| value.error.clone()),
+    };
+    let [sine, cosine] = super::super::conical_profile::developed_boundary::trig(domain);
+    finish(query, bounds, sine, cosine, arithmetic)
+        .map_err(|cause| developed::error::numerical(None, cause, arithmetic.operations()))
+}
+fn developed_values(
+    query: &ConicalMaterialQuery<'_>,
+    contexts: &[ConicalDevelopedBoundarySpan<'_>],
+    domain: &ConicalChartDomainEvidence,
+    refinement: ConicalPrimitiveRefinement,
+    half_pi: &Interval,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<Vec<source::SpanBounds>, ConicalDevelopedMaterialError> {
+    query
+        .spans
+        .iter()
+        .zip(contexts)
+        .enumerate()
+        .map(|(index, (span, context))| {
+            developed_value(
+                query, span, context, domain, refinement, half_pi, arithmetic,
+            )
+            .map_err(|cause| {
+                developed::error::numerical(Some(index), cause, arithmetic.operations())
+            })
+        })
+        .collect()
+}
+fn developed_value(
+    query: &ConicalMaterialQuery<'_>,
+    span: &ConicalMaterialSpan<'_>,
+    context: &ConicalDevelopedBoundarySpan<'_>,
+    domain: &ConicalChartDomainEvidence,
+    refinement: ConicalPrimitiveRefinement,
+    half_pi: &Interval,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<source::SpanBounds, CylindricalProfileFailure> {
+    let (uv, halfplane, error) =
+        super::super::conical_profile::developed_boundary::span_bounds_with_refinement(
+            query, span, context, domain, half_pi, arithmetic, refinement,
+        )?;
+    Ok(source::SpanBounds {
+        uv,
+        halfplane,
+        error,
+    })
 }

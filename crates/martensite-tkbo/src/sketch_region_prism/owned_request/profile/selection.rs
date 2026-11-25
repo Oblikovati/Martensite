@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! #544: graph selectors bind one shared census to its actual generated-sign mode.
-use super::admission::{EXCLUSION_GRAPH_PROFILE_VERSION, FILTERED_GRAPH_PROFILE_VERSION};
+use super::admission::{
+    COMPOSITE_GRAPH_PROFILE_VERSION, EXCLUSION_GRAPH_PROFILE_VERSION,
+    FILTERED_GRAPH_PROFILE_VERSION, GEOMETRIC_GRAPH_PROFILE_VERSION,
+};
 use crate::sketch_region_certification::{
     BoundaryCensus, BoundaryInputs, CensusCause, CensusPolicy, bind_graph_policy,
     enumerate_carrier_census, enumerate_exclusion_census, enumerate_filtered_exclusion_census,
@@ -40,10 +43,19 @@ fn live_census(
     cancelled: impl FnMut() -> bool,
 ) -> Result<BoundaryCensus, CensusCause> {
     match version {
+        GEOMETRIC_GRAPH_PROFILE_VERSION => {
+            crate::sketch_region_certification::enumerate_geometric_census_with_access(
+                inputs,
+                policy,
+                source,
+                cancelled,
+                crate::sketch_region_certification::SourceAccess::Live,
+            )
+        }
         EXCLUSION_GRAPH_PROFILE_VERSION => {
             enumerate_exclusion_census(inputs, policy, source, cancelled)
         }
-        FILTERED_GRAPH_PROFILE_VERSION => {
+        FILTERED_GRAPH_PROFILE_VERSION | COMPOSITE_GRAPH_PROFILE_VERSION => {
             enumerate_filtered_exclusion_census(inputs, policy, source, cancelled)
         }
         _ => enumerate_carrier_census(inputs, policy, source, cancelled),
@@ -58,12 +70,17 @@ fn owned_census(
 ) -> Result<BoundaryCensus, CensusCause> {
     use crate::sketch_region_certification::*;
     match version {
+        GEOMETRIC_GRAPH_PROFILE_VERSION => {
+            enumerate_geometric_census_with_access(inputs, policy, source, cancelled, access)
+        }
         EXCLUSION_GRAPH_PROFILE_VERSION => {
             enumerate_exclusion_census_with_access(inputs, policy, source, cancelled, access)
         }
-        FILTERED_GRAPH_PROFILE_VERSION => enumerate_filtered_exclusion_census_with_access(
-            inputs, policy, source, cancelled, access,
-        ),
+        FILTERED_GRAPH_PROFILE_VERSION | COMPOSITE_GRAPH_PROFILE_VERSION => {
+            enumerate_filtered_exclusion_census_with_access(
+                inputs, policy, source, cancelled, access,
+            )
+        }
         _ => enumerate_carrier_census_with_access(inputs, policy, source, cancelled, access),
     }
 }

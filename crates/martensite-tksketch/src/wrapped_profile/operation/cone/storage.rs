@@ -4,7 +4,10 @@ use super::*;
 mod allocation;
 mod binding;
 mod boundary;
-pub(super) use boundary::query as boundary_query;
+pub(super) use boundary::bind_cap_joins;
+#[cfg(test)]
+pub(super) use boundary::cap_join_spans;
+pub(super) use boundary::{prepared_query, query as boundary_query};
 mod capture;
 mod trims;
 mod work;
@@ -23,6 +26,7 @@ pub(in crate::surface_sketch::wrapped_profile) struct SpanProof {
     pub boundary: std::sync::Arc<ConicalBoundaryEvidence>,
     pub storage: allocation::StorageEvidence,
     pub trims: [CertifiedConicalTrim; 2],
+    pub developed_boundary: Option<ConicalDevelopedBoundaryEvidence>,
     pub cap_pcurves: usize,
     pub side_pcurves: usize,
     pub maximum_tolerance: f64,
@@ -48,27 +52,58 @@ pub(super) fn capture(
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<Stored> {
-    let (coverage, occurrences) = graph(original.region, prepared, &view)?;
-    let bindings = captured_index(original.region, &view.bindings)?;
-    let carriers = capture::carriers(prepared, &bindings)?;
-    let (spans, joins, capture_operations) = capture_proofs(
+    let started = work.consumed;
+    let captured = capture_spans(original, prepared, &view, work, cancelled)?;
+    let joins = boundary::joins(
         original,
         prepared,
-        &bindings,
-        carriers,
-        &occurrences,
+        &captured.spans,
+        captured.carriers,
         work,
         cancelled,
     )?;
     Ok(Stored {
         shape: view.shape,
+        coverage: captured.coverage,
+        spans: captured.spans,
+        carriers: captured.carriers,
+        joins,
+        capture_operations: work.consumed - started,
+    })
+}
+
+struct CapturedSpans {
+    coverage: coverage::CoverageEvidence,
+    spans: Vec<SpanProof>,
+    carriers: [ConicalTrimCarrier; 2],
+}
+
+fn capture_spans(
+    original: &DevelopedRegionRequest,
+    prepared: &Prepared,
+    view: &coverage::MemberView,
+    work: &mut Work,
+    cancelled: &mut CancelPoll<'_>,
+) -> ConeChecked<CapturedSpans> {
+    let (coverage, occurrences) = graph(original.region, prepared, view)?;
+    let bindings = captured_index(original.region, &view.bindings)?;
+    retain_actual_bindings(prepared, view, work);
+    let carriers = capture::carriers(prepared, &bindings)?;
+    let source = capture::SourceCapture {
+        original,
+        prepared,
+        bindings: &bindings,
+        carriers,
+        occurrences: &occurrences,
+    };
+    let spans = capture_proofs(&source, work, cancelled)?;
+    Ok(CapturedSpans {
         coverage,
         spans,
         carriers,
-        joins,
-        capture_operations,
     })
 }
+
 fn graph(
     region: SurfaceRegionId,
     prepared: &Prepared,
@@ -82,38 +117,27 @@ fn graph(
     )
     .map_err(|cause| failure(region, None, ConeCause::Coverage(Box::new(cause))))
 }
+
 fn captured_index(
     region: SurfaceRegionId,
     bindings: &[(BindingKey, Shape)],
 ) -> ConeChecked<Bindings<'_>> {
     retained::index(bindings).map_err(|cause| captured(region, cause))
 }
+
 fn capture_proofs(
-    original: &DevelopedRegionRequest,
-    prepared: &Prepared,
-    bindings: &Bindings<'_>,
-    carriers: [ConicalTrimCarrier; 2],
-    occurrences: &coverage::Occurrences,
+    source: &capture::SourceCapture<'_>,
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
-) -> ConeChecked<(Vec<SpanProof>, ConicalJoinsEvidence, u32)> {
-    let source = capture::SourceCapture {
-        original,
-        prepared,
-        bindings,
-        carriers,
-        occurrences,
-    };
-    let started = work.consumed;
-    let spans = prepared
+) -> ConeChecked<Vec<SpanProof>> {
+    source
+        .prepared
         .source
         .loops
         .iter()
         .flatten()
         .map(|piece| source.span(piece, work, cancelled))
-        .collect::<ConeChecked<Vec<_>>>()?;
-    let joins = boundary::joins(original, prepared, &spans, work, cancelled)?;
-    Ok((spans, joins, work.consumed - started))
+        .collect()
 }
 
 pub(super) fn failure(
@@ -153,5 +177,28 @@ pub(super) fn bind(
     selection: &Selection,
     stored: &BTreeMap<SurfaceRegionId, Stored>,
 ) -> ConeChecked<()> {
-    binding::certify(originals, selection, stored)
+    bind_geometry(
+        originals,
+        &selection.prepared,
+        &selection.domain,
+        &selection.clearance,
+        stored,
+    )
+}
+
+fn retain_actual_bindings(prepared: &Prepared, view: &coverage::MemberView, work: &mut Work) {
+    if domain::directed(prepared) {
+        work.actual_bindings
+            .insert(prepared.source.region, view.bindings.clone());
+    }
+}
+
+pub(super) fn bind_geometry(
+    originals: &[DevelopedRegionRequest],
+    prepared: &[Prepared],
+    domain: &domain::DomainEvidence,
+    clearance: &CertifiedCylindricalClearance,
+    stored: &BTreeMap<SurfaceRegionId, Stored>,
+) -> ConeChecked<()> {
+    binding::certify(originals, prepared, domain, clearance, stored)
 }

@@ -33,13 +33,15 @@ mod tolerance_types;
 mod traversal_tests;
 
 use martensite_tkbrep::topods::Shape;
-use martensite_tktopalgo::brep_check::BRepCheckAnalyzer;
+use martensite_tkernel::standard::Failure;
+use martensite_tktopalgo::brep_check::{BRepCheckAnalyzer, CylindricalCurveBounds};
 pub(crate) use outcome::{
     AnalyticGap, BodyKind, OrderedCoverage, SourceRelation, StageCoverage, ValidationCause,
     ValidationFinding, ValidationStage,
 };
 pub(crate) use self_check::inspect_self_intersection;
 pub(crate) use source_relations::source_relations;
+use std::num::NonZeroUsize;
 pub(crate) use tolerance::inspect_planar_edge_residual;
 
 /// Inspect an already-owned candidate without exposing diagnostic geometry as success.
@@ -72,12 +74,74 @@ pub(crate) fn inspect_stage(
     stage: ValidationStage,
     report: &mut OrderedCoverage,
 ) {
+    inspect_stage_with_curve_bounds(shape, kind, sources, stage, report, None);
+}
+
+pub(crate) fn inspect_stage_with_curve_bounds(
+    shape: &Shape,
+    kind: BodyKind,
+    sources: &[SourceRelation],
+    stage: ValidationStage,
+    report: &mut OrderedCoverage,
+    curve_checks: Option<CurveChecks<'_>>,
+) {
+    if let (ValidationStage::Topology | ValidationStage::Geometry, Some(checks)) =
+        (stage, curve_checks)
+    {
+        let findings = inspect_curves(shape, kind, sources, stage, checks);
+        report.record(stage, findings);
+        return;
+    }
     let outcome = BRepCheckAnalyzer::new(shape, stage == ValidationStage::Geometry, false, true);
-    let findings = match outcome {
+    report.record(stage, inspect_outcome(outcome, shape, kind, sources, stage));
+}
+
+#[derive(Clone, Copy)]
+pub(crate) struct CurveChecks<'a> {
+    pub bounds: &'a CylindricalCurveBounds,
+    pub worker_limit: NonZeroUsize,
+}
+
+fn inspect_curves(
+    shape: &Shape,
+    kind: BodyKind,
+    sources: &[SourceRelation],
+    stage: ValidationStage,
+    checks: CurveChecks<'_>,
+) -> Vec<ValidationFinding> {
+    let geom_controls = stage == ValidationStage::Geometry;
+    let scoped = BRepCheckAnalyzer::try_scoped_cylindrical_checks(
+        shape,
+        checks.bounds,
+        geom_controls,
+        checks.worker_limit,
+    );
+    if let Some(analyzer) = scoped {
+        let findings = inspection::inspect_candidate(&analyzer, shape, kind, sources, stage);
+        if findings.is_empty() {
+            return findings;
+        }
+    }
+    // Incomplete contexts and defects retain the ordinary serial diagnostic order.
+    let outcome = if geom_controls {
+        BRepCheckAnalyzer::with_cylindrical_curve_bounds(shape, checks.bounds)
+    } else {
+        BRepCheckAnalyzer::new(shape, false, false, true)
+    };
+    inspect_outcome(outcome, shape, kind, sources, stage)
+}
+
+fn inspect_outcome(
+    outcome: Result<BRepCheckAnalyzer, Failure>,
+    shape: &Shape,
+    kind: BodyKind,
+    sources: &[SourceRelation],
+    stage: ValidationStage,
+) -> Vec<ValidationFinding> {
+    match outcome {
         Ok(analyzer) => inspection::inspect_candidate(&analyzer, shape, kind, sources, stage),
         Err(failure) => vec![inspection::native_failure(shape, sources, stage, failure)],
-    };
-    report.record(stage, findings);
+    }
 }
 
 /// Inspect owned stage output with complete member attribution, without final acceptance.

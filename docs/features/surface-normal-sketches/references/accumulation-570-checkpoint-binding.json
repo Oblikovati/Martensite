@@ -1,0 +1,10 @@
+{
+  "commit": "6fca95d28468bad2d709915af29f115ca4cbb6ff",
+  "parent": "2e8ab886d4755c9c0165d7f59f2a92ead61f3612",
+  "source_freeze_sha256": "e030fab4954178e532f0eff96b9e2ae7a77f531594fdeced9a15e510a3128162",
+  "source_changed": [],
+  "working_tree_status": "",
+  "scope": "local feature checkpoint only; no push, PR, merge, version change or release",
+  "qualification": "140 targeted tests on identical source; full feature gates/performance still pending",
+  "captured_utc": "2026-11-19T23:15:25.864095+00:00"
+}

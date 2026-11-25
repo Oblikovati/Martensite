@@ -1,0 +1,82 @@
+{
+  "reference-1": {
+    "max_bits": {
+      "input_num_bits": 219,
+      "input_den_bits": 209,
+      "shifted_num_bits": 227,
+      "shifted_den_bits": 215,
+      "remainder_bits": 297,
+      "series_num_bits": 162,
+      "series_den_bits": 158,
+      "raw_num_bits": 7500,
+      "raw_den_bits": 7493,
+      "reduced_num_bits": 7115,
+      "reduced_den_bits": 7108
+    },
+    "records_by_kind": {
+      "cell-polynomials": 274,
+      "sum-lower": 274,
+      "sum-upper": 274
+    }
+  },
+  "flux-1": {
+    "max_bits": {
+      "input_num_bits": 336,
+      "input_den_bits": 332,
+      "shifted_num_bits": 362,
+      "shifted_den_bits": 359,
+      "remainder_bits": 432,
+      "series_num_bits": 156,
+      "series_den_bits": 155,
+      "raw_num_bits": 4947,
+      "raw_den_bits": 4943,
+      "reduced_num_bits": 4662,
+      "reduced_den_bits": 4656
+    },
+    "records_by_kind": {
+      "cell-polynomials": 137,
+      "sum-lower": 411,
+      "sum-upper": 411
+    }
+  },
+  "reference-2": {
+    "max_bits": {
+      "input_num_bits": 207,
+      "input_den_bits": 199,
+      "shifted_num_bits": 215,
+      "shifted_den_bits": 205,
+      "remainder_bits": 289,
+      "series_num_bits": 158,
+      "series_den_bits": 154,
+      "raw_num_bits": 1660,
+      "raw_den_bits": 1660,
+      "reduced_num_bits": 1286,
+      "reduced_den_bits": 1285
+    },
+    "records_by_kind": {
+      "cell-polynomials": 22,
+      "sum-lower": 22,
+      "sum-upper": 22
+    }
+  },
+  "flux-2": {
+    "max_bits": {
+      "input_num_bits": 313,
+      "input_den_bits": 310,
+      "shifted_num_bits": 339,
+      "shifted_den_bits": 337,
+      "remainder_bits": 423,
+      "series_num_bits": 161,
+      "series_den_bits": 158,
+      "raw_num_bits": 1195,
+      "raw_den_bits": 1195,
+      "reduced_num_bits": 917,
+      "reduced_den_bits": 917
+    },
+    "records_by_kind": {
+      "cell-polynomials": 11,
+      "sum-lower": 33,
+      "sum-upper": 33
+    }
+  }
+}

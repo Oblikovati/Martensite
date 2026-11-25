@@ -95,3 +95,6 @@ pub(super) fn curves<'a>(
     };
     uses.iter().map(occurrence).collect()
 }
+
+mod program;
+pub(super) use program::certify as certified_program_face_area;

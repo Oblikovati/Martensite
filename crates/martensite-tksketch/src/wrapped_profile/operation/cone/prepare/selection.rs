@@ -1,12 +1,49 @@
 //! Preserve actual selection and sector receipts without rebuilding their owners.
 use super::*;
 use crate::surface_sketch::wrapped_profile::selection::PlanarSelectionEvidence;
+use martensite_tkbo::profile_extrusion::{
+    PlanarIntegralEvidence, PlanarProofVersion, PlanarRegionSet,
+};
+
+pub(super) struct AuthoredPlanarSelection {
+    pub evidence: PlanarSelectionEvidence,
+    program: Option<PlanarIntegralEvidence>,
+}
+
 pub(super) fn planar(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
+    originals: &[DevelopedRegionRequest],
+    execution: WrappedConeExecutionSelection,
+    work: &mut Work,
+    cancelled: &mut CancelPoll<'_>,
+) -> ConeChecked<AuthoredPlanarSelection> {
+    let (captured, program) = match execution.authored_planar_program() {
+        Some(version) => {
+            let (captured, program) =
+                capture_program(request, originals, version, work, cancelled)?;
+            (captured, Some(program))
+        }
+        None => (capture_legacy(request, originals, work, cancelled)?, None),
+    };
+    let members = planar::select_members(originals, &captured).map_err(|(region, cause)| {
+        failure(Some(region), None, ConeCause::Planar(Box::new(cause)))
+    })?;
+    Ok(AuthoredPlanarSelection {
+        evidence: PlanarSelectionEvidence {
+            members,
+            certificate: captured.certificate(),
+            proof_work: captured.proof_work(),
+        },
+        program,
+    })
+}
+
+fn capture_legacy(
+    request: &ConeRun<'_>,
     originals: &[DevelopedRegionRequest],
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
-) -> ConeChecked<PlanarSelectionEvidence> {
+) -> ConeChecked<PlanarRegionSet> {
     let captured = planar::capture_with_work_and_cancel(
         originals,
         request.options.spatial_error,
@@ -15,33 +52,35 @@ pub(super) fn planar(
     )
     .map_err(|cause| failure(None, None, ConeCause::Planar(Box::new(cause))))?;
     work.charge_planar(first_region(originals)?, captured.proof_work())?;
-    let members = select_members(originals, &captured)?;
-    Ok(PlanarSelectionEvidence {
-        members,
-        certificate: captured.certificate(),
-        proof_work: captured.proof_work(),
-    })
-}
-fn select_members(
-    originals: &[DevelopedRegionRequest],
-    captured: &martensite_tkbo::profile_extrusion::PlanarRegionSet,
-) -> ConeChecked<BTreeMap<SurfaceRegionId, planar::PlanarEvidence>> {
-    let mut members = BTreeMap::new();
-    for source in originals {
-        let evidence = planar::select(source, captured).map_err(|cause| {
-            failure(
-                Some(source.region),
-                None,
-                ConeCause::Planar(Box::new(cause)),
-            )
-        })?;
-        members.insert(source.region, evidence);
-    }
-    Ok(members)
+    Ok(captured)
 }
 
-pub(super) fn sector(
-    request: &WrappedConeNormalRequest,
+fn capture_program(
+    request: &ConeRun<'_>,
+    originals: &[DevelopedRegionRequest],
+    version: PlanarProofVersion,
+    work: &mut Work,
+    cancelled: &mut CancelPoll<'_>,
+) -> ConeChecked<(PlanarRegionSet, PlanarIntegralEvidence)> {
+    let region = first_region(originals)?;
+    let captured = material::capture_planar_program(
+        originals,
+        request.options.planar_work,
+        version,
+        work,
+        request.proof.integration,
+        cancelled,
+        |_, cause| failure(None, None, ConeCause::Planar(Box::new(cause))),
+    )?;
+    let program = captured
+        .integral_program_evidence()
+        .filter(|program| planar::matches_integral_profile(program, originals))
+        .ok_or_else(|| material::mismatch(region, None, "full-family authored planar program"))?
+        .clone();
+    Ok((captured, program))
+}
+pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn sector(
+    request: &ConeRun<'_>,
     originals: &[DevelopedRegionRequest],
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
@@ -61,7 +100,9 @@ pub(super) fn sector(
     work.charge(first_region(originals)?, None, proof.operations())?;
     Ok(proof)
 }
-pub(super) fn first_region(originals: &[DevelopedRegionRequest]) -> ConeChecked<SurfaceRegionId> {
+pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn first_region(
+    originals: &[DevelopedRegionRequest],
+) -> ConeChecked<SurfaceRegionId> {
     originals
         .first()
         .map(|source| source.region)
@@ -77,7 +118,9 @@ pub(super) fn first_region(originals: &[DevelopedRegionRequest]) -> ConeChecked<
             )
         })
 }
-pub(super) fn wedge(sector: &ConicalSectorEvidence) -> ConeChecked<ConicalSectorWedge> {
+pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn wedge(
+    sector: &ConicalSectorEvidence,
+) -> ConeChecked<ConicalSectorWedge> {
     sector.wedge().ok_or_else(|| {
         failure(
             None,
@@ -91,20 +134,21 @@ pub(super) fn wedge(sector: &ConicalSectorEvidence) -> ConeChecked<ConicalSector
     })
 }
 pub(super) fn completed(
-    planar: PlanarSelectionEvidence,
+    executed_selection: WrappedConeExecutionSelection,
+    planar: AuthoredPlanarSelection,
     prepared: Vec<Prepared>,
-    sector: ConicalSectorEvidence,
-    sector_options: ConeClearanceOptions,
+    domain: domain::DomainEvidence,
     clearance: CertifiedCylindricalClearance,
     arithmetic_operations: u32,
 ) -> Selection {
     Selection {
+        executed_selection,
         prepared,
-        planar: planar.members,
-        census: planar.certificate,
-        work: planar.proof_work,
-        sector,
-        sector_options,
+        planar: planar.evidence.members,
+        census: planar.evidence.certificate,
+        work: planar.evidence.proof_work,
+        authored_program: planar.program,
+        domain,
         clearance,
         arithmetic_operations,
     }
@@ -134,7 +178,9 @@ fn sector_failure(
     )
 }
 
-fn sector_index(cause: &ConicalSectorFailure) -> Option<usize> {
+pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn sector_index(
+    cause: &ConicalSectorFailure,
+) -> Option<usize> {
     match cause {
         ConicalSectorFailure::PoleCount { span, .. }
         | ConicalSectorFailure::Point { span, .. }

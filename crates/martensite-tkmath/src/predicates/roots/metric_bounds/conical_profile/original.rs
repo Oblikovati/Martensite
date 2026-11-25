@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Original dyadic span to rounded child under an explicitly matched angle lift.
 use super::*;
+mod conditioned;
 use crate::predicates::roots::certificate_arithmetic::bernstein_bounds::lower;
 use crate::predicates::roots::certificate_arithmetic::bernstein_curve::derivative;
 use crate::predicates::roots::certificate_arithmetic::bernstein_curve::restrict;
@@ -91,11 +92,80 @@ pub(super) fn bound(
     depths: [f64; 2],
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<OriginalEvidence, ConicalOriginalFailure> {
+    bound_metric(original, child, q, sine, depths, false, arithmetic)
+}
+pub(super) fn bound_in_chart(
+    original: ConicalOriginalSpan<'_>,
+    child: &[Vec<Interval>; 2],
+    q: &[Interval],
+    sine: &Interval,
+    depths: [f64; 2],
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<OriginalEvidence, ConicalOriginalFailure> {
+    bound_metric(original, child, q, sine, depths, true, arithmetic)
+}
+fn bound_metric(
+    original: ConicalOriginalSpan<'_>,
+    child: &[Vec<Interval>; 2],
+    q: &[Interval],
+    sine: &Interval,
+    depths: [f64; 2],
+    conditioned: bool,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<OriginalEvidence, ConicalOriginalFailure> {
+    let (displacement, restricted, radius) =
+        prepare_comparison(original, child, q, conditioned, arithmetic)?;
+    if conditioned_identity(conditioned, &displacement) {
+        return Ok(conditioned::zero(
+            displacement,
+            restricted,
+            radius,
+            arithmetic,
+        ));
+    }
+    finish(
+        displacement,
+        restricted,
+        radius,
+        child,
+        sine,
+        depths,
+        arithmetic,
+    )
+}
+fn conditioned_identity(conditioned: bool, displacement: &DisplacementEvidence) -> bool {
+    if !conditioned {
+        return false;
+    }
+    displacement.delta.upper == 0.into() && displacement.derivative.upper == 0.into()
+}
+type PreparedComparison = (DisplacementEvidence, Option<[Vec<Interval>; 2]>, Interval);
+fn prepare_comparison(
+    original: ConicalOriginalSpan<'_>,
+    child: &[Vec<Interval>; 2],
+    q: &[Interval],
+    conditioned: bool,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<PreparedComparison, ConicalOriginalFailure> {
     admit_interval(original)?;
     let source =
         admit_source(original.poles, arithmetic).map_err(ConicalOriginalFailure::Source)?;
-    let displacement = displacement(&source, child, original, arithmetic)?;
+    let (displacement, restricted) = match conditioned {
+        true => conditioned::displacement(&source, child, original, arithmetic)?,
+        false => (displacement(&source, child, original, arithmetic)?, None),
+    };
     let radius = minimum_radius(q, arithmetic)?;
+    Ok((displacement, restricted, radius))
+}
+fn finish(
+    displacement: DisplacementEvidence,
+    restricted: Option<[Vec<Interval>; 2]>,
+    radius: Interval,
+    child: &[Vec<Interval>; 2],
+    sine: &Interval,
+    depths: [f64; 2],
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<OriginalEvidence, ConicalOriginalFailure> {
     let gap = arithmetic.subtract(&radius, &displacement.delta)?;
     let scale = angular_scale(child, sine, depths, arithmetic)?;
     let angle = arithmetic.divide(&displacement.delta, &gap)?;
@@ -106,10 +176,11 @@ pub(super) fn bound(
         bound: arithmetic.add(&displacement.delta, &angular)?,
         angular_derivative,
         anchor: displacement.anchor,
-        comparison: Some(original_comparison(displacement, gap, angle)),
+        comparison: Some(original_comparison(displacement, gap, angle, restricted)),
     })
 }
 pub(super) struct OriginalComparison {
+    pub(super) restricted: Option<[Vec<Interval>; 2]>,
     pub(super) displacement: DisplacementEvidence,
     pub(super) gap: Interval,
     pub(super) angle: Interval,
@@ -138,6 +209,13 @@ pub(super) fn displacement(
 ) -> Result<DisplacementEvidence, ConicalOriginalFailure> {
     let x = axis_error(&source[0], &child[0], original, arithmetic)?;
     let y = axis_error(&source[1], &child[1], original, arithmetic)?;
+    displacement_from_axes(x, y, arithmetic)
+}
+fn displacement_from_axes(
+    x: AxisEvidence,
+    y: AxisEvidence,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<DisplacementEvidence, ConicalOriginalFailure> {
     let same_branch = x.positive || y.nonnegative || y.negative;
     let anchor = AnchorEvidence {
         exact: x.exact && y.exact,
@@ -171,8 +249,15 @@ pub(super) fn axis_error(
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<AxisEvidence, ConicalOriginalFailure> {
     let restricted = restrict(source, original.index, original.level, arithmetic)?;
+    axis_from_restriction(&restricted, child, arithmetic)
+}
+fn axis_from_restriction(
+    restricted: &[Interval],
+    child: &[Interval],
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<AxisEvidence, ConicalOriginalFailure> {
     let exact_anchor = exact_same_point(&restricted[0], &child[0]);
-    let residual = algebra::difference(&restricted, child, arithmetic)
+    let residual = algebra::difference(restricted, child, arithmetic)
         .map_err(ConicalOriginalFailure::Polynomial)?;
     let derivative_error = magnitude_interval(&derivative(&residual, arithmetic)?);
     let zero = 0.into();
@@ -232,15 +317,38 @@ pub(super) fn polar_from_comparison(
     sine: &Interval,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<(Interval, Interval, Interval, AnchorEvidence), ConicalOriginalFailure> {
-    let angle = arithmetic.divide(&comparison.angle, sine)?;
-    let rate =
-        radial_derivative_bound(child, &comparison.displacement, &comparison.gap, arithmetic)?;
+    let (angle, rate) = polar_rates(&comparison, child, sine, arithmetic)?;
     Ok((
         comparison.displacement.delta,
         angle,
         rate,
         comparison.displacement.anchor,
     ))
+}
+pub(super) fn polar_from_retained(
+    comparison: &OriginalComparison,
+    child: &[Vec<Interval>; 2],
+    sine: &Interval,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<(Interval, Interval, Interval, AnchorEvidence), ConicalOriginalFailure> {
+    let (angle, rate) = polar_rates(comparison, child, sine, arithmetic)?;
+    Ok((
+        comparison.displacement.delta.clone(),
+        angle,
+        rate,
+        comparison.displacement.anchor,
+    ))
+}
+fn polar_rates(
+    comparison: &OriginalComparison,
+    child: &[Vec<Interval>; 2],
+    sine: &Interval,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<(Interval, Interval), ConicalOriginalFailure> {
+    let angle = arithmetic.divide(&comparison.angle, sine)?;
+    let rate =
+        radial_derivative_bound(child, &comparison.displacement, &comparison.gap, arithmetic)?;
+    Ok((angle, rate))
 }
 pub(super) fn minimum_radius(
     q: &[Interval],
@@ -283,8 +391,10 @@ fn original_comparison(
     displacement: DisplacementEvidence,
     gap: Interval,
     angle: Interval,
+    restricted: Option<[Vec<Interval>; 2]>,
 ) -> OriginalComparison {
     OriginalComparison {
+        restricted,
         displacement,
         gap,
         angle,

@@ -1,4 +1,6 @@
 //! Fixed dyadic layout isolates geometry qualification from platform font metrics.
+#[path = "conical_text.rs"]
+mod conical_text;
 use super::*;
 use martensite_tkbo::profile_extrusion::*;
 use martensite_tksketch::surface_sketch::*;
@@ -216,8 +218,14 @@ fn check_authored_volume(result: &WrappedNormalResult) {
     check_volume_oracle(result, 226802403. / 134217728.);
 }
 fn check_volume_oracle(result: &WrappedNormalResult, expected: f64) {
+    check_member_volume_oracle(result.reports(), expected);
+}
+fn check_member_volume_oracle(
+    reports: &BTreeMap<SurfaceRegionId, martensite_tksketch::surface_sketch::WrappedMemberReport>,
+    expected: f64,
+) {
     let (mut lower, mut upper) = (0_f64, 0_f64);
-    for report in result.reports().values() {
+    for report in reports.values() {
         lower = (lower + report.measures.authored_volume.lower).next_down();
         upper = (upper + report.measures.authored_volume.upper).next_up();
     }

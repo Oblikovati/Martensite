@@ -1,0 +1,77 @@
+{
+  "finished": "2026-11-20T02:35:22.483504+00:00",
+  "base_head": "e20ffc78021473f77c1dfdfcc1af7646d59943d0",
+  "source_changed": [],
+  "source_manifest_sha256": "2b1377bea405d7bc7ec456b969f5e3828929dc259425b482c6cea2312808627d",
+  "target_consumers": [],
+  "target_bytes": 2339308157,
+  "test_groups": {
+    "owned-attempt1": {
+      "passed": 29,
+      "failed": 0,
+      "exit": 0
+    },
+    "paired_binding-occurrence": {
+      "passed": 3,
+      "failed": 0,
+      "exit": 0
+    },
+    "paired_validation_tests": {
+      "passed": 6,
+      "failed": 0,
+      "exit": 0
+    },
+    "geometric_tests": {
+      "passed": 4,
+      "failed": 0,
+      "exit": 0
+    },
+    "bernstein_tests": {
+      "passed": 7,
+      "failed": 0,
+      "exit": 0
+    },
+    "full-O-attempt1": {
+      "passed": 2,
+      "failed": 0,
+      "exit": 0
+    }
+  },
+  "timing_usable_for_acceptance": false,
+  "main_integration_pending": true,
+  "push_performed": false,
+  "full_operation_work": [
+    {
+      "sense": "Inward",
+      "arithmetic_operations": 994535,
+      "cells": 444,
+      "spans": 148
+    },
+    {
+      "sense": "Outward",
+      "arithmetic_operations": 994535,
+      "cells": 444,
+      "spans": 148
+    }
+  ],
+  "owned_predicates": [
+    72,
+    12
+  ],
+  "initial_live_eligibility_predicates": [
+    24,
+    2
+  ],
+  "owned_capture_predicates": [
+    48,
+    10
+  ],
+  "live_three_reads_predicates": [
+    720,
+    150
+  ],
+  "exact_main_occurrence_modules_reused": true,
+  "commit": "6e176cf07a736b78a399bfbe4fd5c83462b497d2",
+  "git_status_after_commit": "",
+  "target_growth_note": "Preexisting shared target: initial exact byte baseline was not captured; target_bytes reports final total, not net growth."
+}

@@ -1,0 +1,18 @@
+{
+  "head": "1e1800dff56893d3cbd334dca045f0f21d362db0",
+  "paths": [
+    "crates/martensite-tkbo/src/sketch_region_certification/paired_binding.rs",
+    "crates/martensite-tkbo/src/sketch_region_certification/bernstein_binding.rs",
+    "crates/martensite-tkbo/src/sketch_region_prism/region_certificate/loop_region/joins.rs"
+  ],
+  "before": {
+    "crates/martensite-tkbo/src/sketch_region_certification/paired_binding.rs": "6d8c37effed8fcc016c69d1ba5658eaf63b11415b732697d6e334ea59b322a8b",
+    "crates/martensite-tkbo/src/sketch_region_certification/bernstein_binding.rs": "21cc86d4f02ef8e044544f8f3c044216c7e5df52b6f24c54f46315c2f56f48ed",
+    "crates/martensite-tkbo/src/sketch_region_prism/region_certificate/loop_region/joins.rs": "1637e5737afc155d0c57f7f88bd101b96c4728c194c8cdbebbbe6787803bfd69"
+  },
+  "patched": {
+    "crates/martensite-tkbo/src/sketch_region_certification/paired_binding.rs": "7238a119c3ac8ea4fddc842f625345abfcbbd3ff1718b3d05418c042c40825b5",
+    "crates/martensite-tkbo/src/sketch_region_certification/bernstein_binding.rs": "0c19d29c999fe4889fd8cd938af81dc620f966c10c701ea5b3bdbb8cf4122b2b",
+    "crates/martensite-tkbo/src/sketch_region_prism/region_certificate/loop_region/joins.rs": "fefbde933ce56b9d794bf0cb3e79325275eb962366e84fd24e91a468aee7df85"
+  }
+}

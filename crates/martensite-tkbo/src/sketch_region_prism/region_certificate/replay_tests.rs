@@ -17,7 +17,10 @@ fn portable_receipt() -> String {
         orientation,
         evidence.source_candidate.boundaries.len(),
         evidence.contact.report,
-        evidence.contact.candidate_root,
+        match evidence.contact.proof_key {
+            crate::sketch_region_certification::ContactProofKey::ProjectedRoot(index) => index,
+            _ => panic!("legacy projected root"),
+        },
         poles,
         receipt_points(evidence)
     )

@@ -1,0 +1,339 @@
+{
+  "kind": "instrumented_bean_walk_diagnostic_no_optimization",
+  "date": "2026-11-19",
+  "conclusion": "Recorded local walking is below 0.2 seconds; local-walk dominance hypothesis refuted for this workload. No optimization or matched performance acceptance.",
+  "source_receipt_sha256": {
+    "summary": "63697e54387380d9b12eaa55971fd1dff198f28d7d661a6c367fe216f9df632c",
+    "terminal": "0e837c8073256e98f8a160987afa8ff7ed1d2b44679cdae26cbe1efda4a1cafc",
+    "patch_manifest": "29a91470fe785b1466b09d16ed327d55c64b2272b4350ee54547383792e79a2d",
+    "link_plan": "aa38dae8712b7252d130d9d004fd229c1ee7b5c7f21646aefbc6a065ac47a3f7",
+    "build_receipt": "2912e2415cc753b718336c9fc17e62fc7db8b6553eeb12b02246cb340c132910"
+  },
+  "link_plan_generator_sha256": "2a7c0f67e3ece1426c5223ccc70c1944497181370c9b2f7b351dbf485892bb25",
+  "walk_totals_derived_from_summary": {
+    "walks": 1902,
+    "curve_attempts": 5644,
+    "local_calls": 5644,
+    "local_done": 5623,
+    "local_not_done": 21,
+    "fallback_calls": 21,
+    "returned_ok": 1902,
+    "local_seconds": 0.16575861400000003,
+    "fallback_seconds": 0.012119943,
+    "walk_seconds": 0.18572514499999995
+  },
+  "receipts": {
+    "summary": {
+      "source_restored": true,
+      "log_sha256": "999ecca5f73c561312848f5acff02ee3d79c36f9524ecfab37814081651f93a4",
+      "log_bytes": 1431294,
+      "stages": {
+        "exact_intersection": {
+          "calls": 605,
+          "inclusive_seconds": 0.10469249900000013
+        },
+        "extremum": {
+          "calls": 605,
+          "inclusive_seconds": 1.9153315390000019
+        },
+        "near_boundaries": {
+          "calls": 605,
+          "inclusive_seconds": 0.010506093999999997
+        },
+        "collect": {
+          "calls": 1229,
+          "inclusive_seconds": 0.015100833000000034
+        },
+        "localization": {
+          "calls": 624,
+          "inclusive_seconds": 2.4388923680000003
+        }
+      },
+      "walks": {
+        "outside": {
+          "walks": 468,
+          "curve_attempts": 1872,
+          "local_calls": 1872,
+          "local_done": 1872,
+          "local_not_done": 0,
+          "fallback_calls": 0,
+          "local_seconds": 0.05806646999999999,
+          "fallback_seconds": 0.0,
+          "walk_seconds": 0.060856851000000003,
+          "returned_ok": 468
+        },
+        "extremum": {
+          "walks": 280,
+          "curve_attempts": 840,
+          "local_calls": 840,
+          "local_done": 840,
+          "local_not_done": 0,
+          "fallback_calls": 0,
+          "local_seconds": 0.009871244000000001,
+          "fallback_seconds": 0.0,
+          "walk_seconds": 0.011102898999999994,
+          "returned_ok": 280
+        },
+        "localization": {
+          "walks": 1014,
+          "curve_attempts": 2652,
+          "local_calls": 2652,
+          "local_done": 2631,
+          "local_not_done": 21,
+          "fallback_calls": 21,
+          "local_seconds": 0.09501269100000004,
+          "fallback_seconds": 0.012119943,
+          "walk_seconds": 0.11068814199999995,
+          "returned_ok": 1014
+        },
+        "near_boundaries": {
+          "walks": 140,
+          "curve_attempts": 280,
+          "local_calls": 280,
+          "local_done": 280,
+          "local_not_done": 0,
+          "fallback_calls": 0,
+          "local_seconds": 0.002808208999999999,
+          "fallback_seconds": 0.0,
+          "walk_seconds": 0.0030772529999999994,
+          "returned_ok": 140
+        }
+      },
+      "marker_errors": [],
+      "unclosed_markers": [],
+      "native_status": [
+        {
+          "mode": "si",
+          "seconds": 18.930058163,
+          "completion": "Incomplete { operation: CheckerSI, stage: Worker, class: UnqualifiedStage, cause: None, context: Some(ProgressWorksite { label: \"CheckFaceSelfIntersection: inner search coverage unobserved\", input_ordinal: None, entity_key: None }) }",
+          "level": 9,
+          "phase": "PostTreat",
+          "scheduled_faces": true,
+          "faces": 158,
+          "pairs": 0,
+          "diagnostics": 0,
+          "validity_claim": false
+        }
+      ],
+      "timing_scope": "Instrumented concurrent diagnostic. Stage clocks include nested walk logging; walk clocks exclude own final IO. No matched performance acceptance."
+    },
+    "terminal": {
+      "settings": {
+        "CARGO_TARGET_DIR": "/tmp/martensite-b1-a-cone-target",
+        "CARGO_BUILD_JOBS": "2",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "CARGO_PROFILE_DEV_STRIP": "debuginfo",
+        "CARGO_PROFILE_TEST_STRIP": "debuginfo",
+        "CARGO_TERM_COLOR": "never"
+      },
+      "started": "2026-11-19T08:48:44.874389+00:00",
+      "stage": "completed",
+      "build_command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "martensite-tkbo",
+        "--lib",
+        "--message-format=json"
+      ],
+      "build_exit": 0,
+      "link_exit": 0,
+      "binary_sha256": "f7fd251a717652cfff88c3776d6d420b258f7fa59c51e9db5918af760ac4792c",
+      "run_exit": 0,
+      "restored": {
+        "crates/martensite-tkbo/src/int_tools/bean_face/general.rs": "d3578ec625875c9a14afc5536f983f3b4440d504e0780650be4c893d4c245821",
+        "crates/martensite-tkbo/src/int_tools/bean_face/range_walk.rs": "24e0cb9634362f42e23143be7259f7f50feb7e869aff9020a31a420ec6ab09ed"
+      },
+      "finished": "2026-11-19T08:50:34.502335+00:00"
+    },
+    "patch_manifest": {
+      "stage": "prepared_not_applied",
+      "utc": "2026-11-19T08:45:11.012325+00:00",
+      "a_root": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/wrapped-analytic-cone",
+      "a_head": "7a2aa0814a3f8c5b049aaec74b5d98bd26b296fe",
+      "records": [
+        {
+          "path": "crates/martensite-tkbo/src/int_tools/bean_face/general.rs",
+          "backup": "/tmp/martensite-b1-body-stage-probe/bean-walk-patch/0.original.rs",
+          "original_sha256": "d3578ec625875c9a14afc5536f983f3b4440d504e0780650be4c893d4c245821",
+          "staged": "/tmp/martensite-b1-body-stage-probe/bean-walk-patch/0.probed.rs",
+          "proposed_sha256": "ba2b627df8bd36681a8fde22da95568aeaefafa7efe4479d47c04c1c890e74b4",
+          "proposed_lines": 88
+        },
+        {
+          "path": "crates/martensite-tkbo/src/int_tools/bean_face/range_walk.rs",
+          "backup": "/tmp/martensite-b1-body-stage-probe/bean-walk-patch/1.original.rs",
+          "original_sha256": "24e0cb9634362f42e23143be7259f7f50feb7e869aff9020a31a420ec6ab09ed",
+          "staged": "/tmp/martensite-b1-body-stage-probe/bean-walk-patch/1.probed.rs",
+          "proposed_sha256": "b241b689ffeee39493c77e42eba6293fdbc936cbd952a8a55d9ee172a3d22767",
+          "proposed_lines": 260
+        }
+      ],
+      "patch_sha256": "a3e81cba9d623792f329c912f79f30c458cbf7784754f9d919d31d94bb12fc52",
+      "original_consumer_sha256": "62b7cf1ffc50999806d3d3886b7a46cf9d91882ae36c420e3ae3a1c2c92155c6",
+      "timing_scope": "instrumented diagnostic only; stage inclusive of nested walk log IO; walk clocks exclude their own final log IO",
+      "logs": "two JSON markers per entered existing general stage plus one JSON per successfully constructed walk; no per-inner-iteration logs; no total-count prediction",
+      "link_plan_sha256": "2a7c0f67e3ece1426c5223ccc70c1944497181370c9b2f7b351dbf485892bb25"
+    },
+    "link_plan": {
+      "executed": false,
+      "command": [
+        "/home/vmiguel/.rustup/toolchains/1.99.0-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "b1_bean_walk_probe",
+        "/tmp/martensite-b1-body-stage-probe/consumer.rs",
+        "-C",
+        "opt-level=0",
+        "-C",
+        "debug-assertions=yes",
+        "-C",
+        "overflow-checks=yes",
+        "-C",
+        "debuginfo=0",
+        "-C",
+        "strip=debuginfo",
+        "-C",
+        "embed-bitcode=no",
+        "-L",
+        "dependency=/tmp/martensite-b1-a-cone-target/debug/deps",
+        "--extern",
+        "martensite_tkbo=/tmp/martensite-b1-a-cone-target/debug/libmartensite_tkbo.rlib",
+        "--extern",
+        "martensite_tkbrep=/tmp/martensite-b1-a-cone-target/debug/deps/libmartensite_tkbrep-6a803afc7e8b3db7.rlib",
+        "--extern",
+        "martensite_tkernel=/tmp/martensite-b1-a-cone-target/debug/deps/libmartensite_tkernel-be5b2ad5bebd446a.rlib",
+        "-o",
+        "/tmp/martensite-b1-body-stage-probe/offline-bean-walk-consumer"
+      ],
+      "profiles": {
+        "metallic": {
+          "profile": {
+            "opt_level": "0",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          },
+          "features": []
+        },
+        "fast_polynomial": {
+          "profile": {
+            "opt_level": "0",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          },
+          "features": [
+            "std"
+          ]
+        },
+        "martensite_tkmath": {
+          "profile": {
+            "opt_level": "3",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          },
+          "features": []
+        },
+        "martensite_tkbo": {
+          "profile": {
+            "opt_level": "1",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          },
+          "features": []
+        },
+        "martensite_tkbrep": {
+          "profile": {
+            "opt_level": "0",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          },
+          "features": []
+        },
+        "martensite_tkernel": {
+          "profile": {
+            "opt_level": "0",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          },
+          "features": []
+        }
+      },
+      "libraries": {
+        "martensite_tkbo": {
+          "path": "/tmp/martensite-b1-a-cone-target/debug/libmartensite_tkbo.rlib",
+          "sha256": "64e717056ee372f5cd378388376a4c9d2ed1e4556a549f1833aae81b3eba2a0b"
+        },
+        "martensite_tkbrep": {
+          "path": "/tmp/martensite-b1-a-cone-target/debug/deps/libmartensite_tkbrep-6a803afc7e8b3db7.rlib",
+          "sha256": "2ac56fc189067dfdcde28539629d0e74620de5be92d0f86743c2d9a8acf235f0"
+        },
+        "martensite_tkernel": {
+          "path": "/tmp/martensite-b1-a-cone-target/debug/deps/libmartensite_tkernel-be5b2ad5bebd446a.rlib",
+          "sha256": "1b91a186930795f71ee1dbb10d6d92c06dc50dafce1661544fedee9ce94e48ae"
+        }
+      },
+      "build_json": {
+        "path": "/tmp/martensite-b1-bean-walk-once/build.log",
+        "sha256": "9c5fa15d38737d754e3a9a6b58685a7f5283c2a273ab6f270abbd19a8894a612"
+      },
+      "build_receipt": {
+        "path": "/tmp/martensite-b1-bean-walk-once/build-receipt.json",
+        "sha256": "2912e2415cc753b718336c9fc17e62fc7db8b6553eeb12b02246cb340c132910"
+      },
+      "consumer_sha256": "62b7cf1ffc50999806d3d3886b7a46cf9d91882ae36c420e3ae3a1c2c92155c6",
+      "runtime": [
+        "/tmp/martensite-b1-body-stage-probe/offline-bean-walk-consumer",
+        "/tmp/martensite-b1-body-stage-probe/region-1.brep",
+        "si"
+      ],
+      "snapshot_sha256": "e9526a2667b84fb327d51ef2f67fb19aa49b49e69208f1560d770484225c0d82",
+      "scope": "instrumented diagnostic only; inclusive nested timing/log IO; no matched-performance claim"
+    },
+    "build_receipt": {
+      "settings": {
+        "CARGO_TARGET_DIR": "/tmp/martensite-b1-a-cone-target",
+        "CARGO_BUILD_JOBS": "2",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "CARGO_PROFILE_DEV_STRIP": "debuginfo",
+        "CARGO_PROFILE_TEST_STRIP": "debuginfo",
+        "CARGO_TERM_COLOR": "never"
+      },
+      "started": "2026-11-19T08:48:44.874389+00:00",
+      "stage": "build",
+      "build_command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "martensite-tkbo",
+        "--lib",
+        "--message-format=json"
+      ],
+      "build_exit": 0
+    }
+  },
+  "provenance_scope": "Manifest and link-plan preparation flags retained; terminal records completed build/link/run and original source hashes restored. Manifest link_plan_sha256 identifies generator script, not generated JSON.",
+  "timing_scope": "Concurrent instrumented diagnostic. Stage clocks include nested walk logging; walk clocks exclude own final IO. Inclusive clocks cannot be subtracted to isolate numerical work.",
+  "exclusions": [
+    "No whole-operation performance conclusion or optimization adoption.",
+    "Native CheckerSI remains incomplete: 158 faces, zero pairs/diagnostics, no validity claim.",
+    "Raw 1.4 MB log and temporary source/prototype code excluded."
+  ]
+}

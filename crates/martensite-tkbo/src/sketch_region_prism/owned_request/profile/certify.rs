@@ -33,7 +33,7 @@ pub(crate) enum ProfileProofCause {
     Incomplete(String),
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub(crate) struct ProfileProofRefusal {
     pub cause: ProfileProofCause,
     pub root_failure: Option<(
@@ -42,6 +42,11 @@ pub(crate) struct ProfileProofRefusal {
     )>,
     pub work: Option<crate::sketch_region_certification::CensusWorkReceipt>,
     pub cancelled: bool,
+    pub program: Option<
+        Box<
+            crate::sketch_region_prism::region_certificate::loop_region::graph::ProgramGraphFailure,
+        >,
+    >,
 }
 
 /// Plane graph inputs: edges with their vertex ids, no loops or seeds.
@@ -91,12 +96,34 @@ pub(crate) fn certify_profile_graph_version_with_cancel(
     request.version = version;
     super::owned_graph::run_with_cancel(request, &mut cancelled)
 }
+pub(crate) fn certify_profile_program_with_cancel(
+    input: ProfileGraphInput,
+    version: u32,
+    options: martensite_tkmath::predicates::roots::metric_bounds::IntegralProgramOptions,
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> Result<GraphRegionCertificate, ProfileProofRefusal> {
+    let mut request = owned_graph_request(input);
+    request.version = version;
+    request.integral_program = Some(options);
+    super::owned_graph::run_with_cancel(request, &mut cancelled)
+}
+pub(super) fn program_inspection_refusal(
+    prepared: &PreparedProfile,
+    program: Box<crate::sketch_region_prism::ProgramGraphFailure>,
+) -> ProfileProofRefusal {
+    let mut refusal = inspection_refusal(prepared, program.failure.clone());
+    refusal.cancelled |= matches!(&program.failure.cause, LoopRegionCause::IntegralProgram(cause) if cause.is_cancelled());
+    refusal.program = Some(program);
+    refusal
+}
+
 pub(super) fn inspection_refusal(
     prepared: &PreparedProfile,
     failure: LoopRegionFailure,
 ) -> ProfileProofRefusal {
     let census = &prepared.bridge.census;
     ProfileProofRefusal {
+        program: None,
         root_failure: refused_pair_root(census, &failure.cause),
         cancelled: matches!(failure.cause, LoopRegionCause::Cancelled),
         cause: region_cause(failure),
@@ -120,6 +147,7 @@ fn refused_pair_root(
 fn owned_graph_request(input: ProfileGraphInput) -> OwnedProfileRequest {
     OwnedProfileRequest {
         version: GRAPH_PROFILE_VERSION,
+        integral_program: None,
         operation: CallerOperationId(1),
         edges: input.edges.into_iter().map(owned_edge).collect(),
         loops: Vec::new(),
@@ -137,6 +165,7 @@ pub(super) fn preparation_refusal(failure: Box<ProfilePreparationFailure>) -> Pr
     };
     let (class, phase) = (failure.class, failure.phase);
     ProfileProofRefusal {
+        program: None,
         cancelled,
         root_failure: None,
         cause: ProfileProofCause::Incomplete(format!(
@@ -230,3 +259,18 @@ mod work_tests;
 #[cfg(test)]
 #[path = "filtered_work_tests.rs"]
 mod filtered_work_tests;
+
+impl std::fmt::Debug for ProfileProofRefusal {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut output = f.debug_struct("ProfileProofRefusal");
+        output
+            .field("cause", &self.cause)
+            .field("root_failure", &self.root_failure)
+            .field("work", &self.work)
+            .field("cancelled", &self.cancelled);
+        if let Some(program) = &self.program {
+            output.field("program", program);
+        }
+        output.finish()
+    }
+}

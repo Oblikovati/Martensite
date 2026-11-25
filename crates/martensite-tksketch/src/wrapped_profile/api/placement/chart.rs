@@ -1,5 +1,6 @@
 //! Versioned chart placement retains independent rotation evidence without changing legacy results.
 use super::*;
+use crate::surface_sketch::encoding;
 mod material;
 use martensite_tkmath::predicates::roots::metric_bounds::CertifiedRotatedFrameSpatialBudget;
 /// Physical graph and rotation-aware bounds for chart behavior version one.
@@ -16,6 +17,11 @@ pub struct WrappedChartPlacementReport {
     /// Achieved physical bounds for every authored region.
     pub members: BTreeMap<SurfaceRegionId, WrappedWorldSpatialReport>,
 }
+pub(in crate::surface_sketch::wrapped_profile::api) struct ChartGraph {
+    root: Shape,
+    bindings: Vec<(BindingKey, Shape)>,
+}
+
 impl WrappedChartNormalResult {
     /// Selected replay behavior; `assert_eq!(result.behavior_version(), 1)`.
     pub fn behavior_version(&self) -> u32 {
@@ -62,6 +68,23 @@ impl WrappedChartNormalResult {
     pub fn export_native(&self) -> Checked<DetachedWrappedBodies> {
         result::export_bytes(&self.base, &self.bytes)
     }
+
+    pub(in crate::surface_sketch::wrapped_profile::api) fn attachment_operand(
+        &self,
+        graph: ChartGraph,
+    ) -> Checked<DetachedWrappedBodies> {
+        let archived = encoding::encode(&graph.root, &graph.bindings);
+        if !archived.is_ok_and(|actual| actual == self.bytes) {
+            // Ordered native checks may update the working graph after its archive was issued.
+            drop(graph);
+            return self.export_native();
+        }
+        result::export_graph(&self.base, (graph.root, graph.bindings))
+    }
+
+    pub(in crate::surface_sketch::wrapped_profile::api) fn fitted_sources(&self) -> &[Request] {
+        &self.base.family.family.selection.prepared.prepared
+    }
 }
 /// Extrude with a finite chart angle using behavior version one.
 /// Example: `let result = normal_extrude_profile_on_chart(&request)?;`.
@@ -77,49 +100,50 @@ pub fn normal_extrude_profile_on_chart_with_cancel(
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Checked<WrappedChartNormalResult> {
     input::poll(&mut cancelled, WrappedStage::Admission)?;
-    let mut inputs = canonical_inputs(request, &mut cancelled)?;
+    let inputs = input::read_canonical_chart(request, &mut cancelled)?;
+    qualify_chart(request, inputs, &mut cancelled).map(|(result, _)| result)
+}
+pub(in crate::surface_sketch::wrapped_profile::api) fn qualify_chart(
+    request: &WrappedNormalRequest,
+    inputs: input::Inputs,
+    cancelled: &mut CancelPoll<'_>,
+) -> Checked<(WrappedChartNormalResult, ChartGraph)> {
+    let proof = martensite_tkbo::profile_extrusion::PlanarProofVersion::CarrierV2;
+    qualify_chart_with_preparation(request, inputs, proof.into(), cancelled)
+}
+
+pub(in crate::surface_sketch::wrapped_profile::api) fn qualify_chart_with_preparation(
+    request: &WrappedNormalRequest,
+    mut inputs: input::Inputs,
+    preparation: selection::Preparation,
+    cancelled: &mut CancelPoll<'_>,
+) -> Checked<(WrappedChartNormalResult, ChartGraph)> {
     let plan = chart_admission::prepare(request, &inputs.requests)?;
     for source in &mut inputs.requests {
         source.tolerance = plan.budget.canonical_allowance();
     }
-    let mut base = operation::from_inputs(request, inputs, &mut cancelled)?;
-    let physical = publish_chart(&mut base, plan, &mut cancelled)?;
-    input::poll(&mut cancelled, WrappedStage::Publication)?;
-    Ok(assemble(base, physical))
-}
-fn assemble(
-    base: WrappedNormalResult,
-    physical: publication::PhysicalPublication<CertifiedRotatedFrameSpatialBudget>,
-) -> WrappedChartNormalResult {
-    WrappedChartNormalResult {
+    let mut base =
+        operation::from_inputs_with_preparation(request, inputs, preparation, cancelled)?;
+    let physical = publish_chart(&mut base, plan, cancelled)?;
+    input::poll(cancelled, WrappedStage::Publication)?;
+    let result = WrappedChartNormalResult {
         base,
         bytes: physical.bytes,
         placement: WrappedChartPlacementReport {
             spatial_budget: physical.budget,
             members: physical.members,
         },
-    }
+    };
+    let (root, bindings) = physical.graph;
+    Ok((result, ChartGraph { root, bindings }))
 }
 
-fn canonical_inputs(
-    request: &WrappedNormalRequest,
-    cancelled: &mut CancelPoll<'_>,
-) -> Checked<input::Inputs> {
-    let mut canonical = request.clone();
-    canonical.support.origin = [0.; 3];
-    canonical.support.axis = [0., 0., 1.];
-    canonical.support.radial = [1., 0., 0.];
-    canonical.support.chart_origin = 0.;
-    input::read(&canonical, cancelled)
-}
 fn publish_chart(
     result: &mut WrappedNormalResult,
     plan: Plan<CertifiedRotatedFrameSpatialBudget>,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<publication::PhysicalPublication<CertifiedRotatedFrameSpatialBudget>> {
-    if plan.transform.matrix().coefficients() == &[[1., 0., 0.], [0., 1., 0.], [0., 0., 1.]]
-        && plan.transform.translation_part().coordinates() == &[0.; 3]
-    {
+    if freeze::identity(plan.transform) {
         input::poll(cancelled, WrappedStage::Placement)?;
         let physical = freeze::unchanged(&result.family.family)?;
         return publication::finish(result, plan, physical, cancelled);

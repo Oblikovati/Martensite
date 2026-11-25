@@ -11,6 +11,7 @@ impl CancellationCause for wrapped::planar::PlanarFailure {
             Self::Selection { .. }
             | Self::SplitSource { .. }
             | Self::NonAuthoredVertex(..)
+            | Self::MissingVertex(..)
             | Self::EmptyMaterial
             | Self::Join(..) => false,
         }
@@ -41,6 +42,8 @@ impl CancellationCause for wrapped::selection::SelectionFailure {
             Self::Limit { .. } | Self::Admission { .. } => false,
             Self::Region { cause, .. } => cause.cancelled(),
             Self::Capture(cause) => cause.cancelled(),
+            Self::Directed(cause) => cause.cancelled,
+            Self::DirectedPolicy(_) | Self::DirectedSource => false,
             Self::Planning { cause, .. } => cause.source_cause().is_cancelled(),
             Self::Clearance(cause) => cause.cancelled(),
             Self::DuplicateRegion(..)

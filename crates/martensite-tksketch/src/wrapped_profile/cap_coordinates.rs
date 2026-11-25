@@ -1,6 +1,12 @@
 //! Retain one angular-control conversion while decoded verification remains independent.
 pub(super) fn angular_controls(source: &[[f64; 2]], radius: f64) -> Vec<[f64; 2]> {
-    source.iter().map(|[s, z]| [s / radius, *z]).collect()
+    source
+        .iter()
+        .map(|&pole| angular_pole(pole, radius))
+        .collect()
+}
+pub(super) fn angular_pole([s, z]: [f64; 2], radius: f64) -> [f64; 2] {
+    [s / radius, z]
 }
 #[cfg(test)]
 mod tests {

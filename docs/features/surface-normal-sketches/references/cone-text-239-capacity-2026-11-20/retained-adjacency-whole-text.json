@@ -1,0 +1,24 @@
+{
+  "test_result": "1 passed; 2 failed; 0 ignored",
+  "adjacency_stage": "completed in both senses",
+  "first_unresolved_nonincident_pair": [
+    9001,
+    9016,
+    9018
+  ],
+  "published_body": false,
+  "runs": [
+    {
+      "event": "conical_text_api",
+      "normal": "Inward",
+      "seconds": 11.099718179,
+      "refusal": "WrappedNormalFailure { operation: NormalExtrusion, stage: Construction, class: Incomplete, entities: [Region(SurfaceRegionId(9001)), Curve(SurfaceCurveId(9016)), Curve(SurfaceCurveId(9018))], cause: Cone(ConeFailure { stage: Construction, class: Incomplete, region: Some(SurfaceRegionId(9001)), span: Some(CurveSpan { curve: SurfaceCurveId(9016), level: 1, index: 0 }), cause: ActualPair { cause: ConicalActualPatchError { stage: Hierarchy, side: Some(ConicalActualSideId(186)), cap: None, operations: 243816, options: ConeClearanceOptions { fractional_bits: 128, max_operations: 1000000 }, cause: UnresolvedSidePair { sides: [ConicalActualSideId(186), ConicalActualSideId(190)], lower: [[DyadicBound { significand: 2027190813139027, exponent: -51 }, DyadicBound { significand: -7130810596895811, exponent: -49 }, DyadicBound { significand: 1775332271597853, exponent: -44 }], [DyadicBound { significand: 4189262281363211, exponent: -52 }, DyadicBound { significand: -1784059008777181, exponent: -47 }, DyadicBound { significand: 444516630894233, exponent: -42 }]], upper: [[DyadicBound { significand: 8389918488013797, exponent: -53 }, DyadicBound { significand: -872551161747271, exponent: -46 }, DyadicBound { significand: 7114979116778325, exponent: -46 }], [DyadicBound { significand: 2239206253690719, exponent: -51 }, DyadicBound { significand: -1747095451889573, exponent: -47 }, DyadicBound { significand: 1780269020346829, exponent: -44 }]], expected: \"strict complete hull separation for nonincident actual sides\" } }, entities: [Region(SurfaceRegionId(9001)), Curve(SurfaceCurveId(9016)), Region(SurfaceRegionId(9001)), Curve(SurfaceCurveId(9018))] } }) }"
+    },
+    {
+      "event": "conical_text_api",
+      "normal": "Outward",
+      "seconds": 11.05174548,
+      "refusal": "WrappedNormalFailure { operation: NormalExtrusion, stage: Construction, class: Incomplete, entities: [Region(SurfaceRegionId(9001)), Curve(SurfaceCurveId(9016)), Curve(SurfaceCurveId(9018))], cause: Cone(ConeFailure { stage: Construction, class: Incomplete, region: Some(SurfaceRegionId(9001)), span: Some(CurveSpan { curve: SurfaceCurveId(9016), level: 1, index: 0 }), cause: ActualPair { cause: ConicalActualPatchError { stage: Hierarchy, side: Some(ConicalActualSideId(186)), cap: None, operations: 243816, options: ConeClearanceOptions { fractional_bits: 128, max_operations: 1000000 }, cause: UnresolvedSidePair { sides: [ConicalActualSideId(186), ConicalActualSideId(190)], lower: [[DyadicBound { significand: 516904069030823, exponent: -49 }, DyadicBound { significand: -7270073977795513, exponent: -49 }, DyadicBound { significand: 3549567892643331, exponent: -45 }], [DyadicBound { significand: 534079320003647, exponent: -49 }, DyadicBound { significand: -3637743005484657, exponent: -48 }, DyadicBound { significand: 3555036396601489, exponent: -45 }]], upper: [[DyadicBound { significand: 4276886003821719, exponent: -52 }, DyadicBound { significand: -7119679614845707, exponent: -49 }, DyadicBound { significand: 7112785815673575, exponent: -46 }], [DyadicBound { significand: 1141470361749563, exponent: -50 }, DyadicBound { significand: -7127592511797825, exponent: -49 }, DyadicBound { significand: 3559441390141283, exponent: -45 }]], expected: \"strict complete hull separation for nonincident actual sides\" } }, entities: [Region(SurfaceRegionId(9001)), Curve(SurfaceCurveId(9016)), Region(SurfaceRegionId(9001)), Curve(SurfaceCurveId(9018))] } }) }"
+    }
+  ]
+}

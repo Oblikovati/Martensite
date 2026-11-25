@@ -215,3 +215,29 @@ fn probe_public_types_are_send_and_sync() {
     check::<CylindricalProbeError>();
     check::<CylindricalProbeFailure>();
 }
+
+#[test]
+fn refused_probe_batches_keep_completed_and_unfinished_arithmetic_work() {
+    let periodic = periodic();
+    let requests = requests();
+    let all = periodic
+        .certify_probes(&requests, Default::default(), || false)
+        .unwrap();
+    let first = periodic
+        .certify_probes(&requests[..1], Default::default(), || false)
+        .unwrap();
+    let limit = all.operations() - 1;
+    assert!(limit > first.operations());
+    let options = CylindricalProbeOptions {
+        max_operations: limit,
+        ..Default::default()
+    };
+    let error = periodic
+        .certify_probes_with_work(&requests, options, || false)
+        .unwrap_err();
+    assert_eq!(error.operations, limit);
+    assert!(matches!(
+        error.cause.cause,
+        CylindricalProbeFailure::Arithmetic(_)
+    ));
+}

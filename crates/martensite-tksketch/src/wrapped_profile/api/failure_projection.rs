@@ -68,7 +68,7 @@ pub(in crate::surface_sketch::wrapped_profile) fn member_context(cause: &Refusal
     context.entities.push(HistorySource::Region(cause.region));
     context
 }
-fn selection_context(cause: &selection::SelectionFailure) -> Context {
+pub(super) fn selection_context(cause: &selection::SelectionFailure) -> Context {
     use selection::SelectionFailure as S;
     match cause {
         S::Empty | S::Limit { .. } => Context::new(Class::InvalidInput, vec![]).admission(),
@@ -82,6 +82,9 @@ fn selection_context(cause: &selection::SelectionFailure) -> Context {
         S::DuplicateVertex { vertex, owners } => vertex_context(*vertex, owners),
         S::Region { region, cause } => planar_context(cause, Some(*region)),
         S::Capture(cause) => planar_context(cause, None),
+        S::Directed(cause) if cause.cancelled => Context::new(Class::Cancelled, vec![]),
+        S::Directed(_) | S::DirectedSource => Context::new(Class::Incomplete, vec![]),
+        S::DirectedPolicy(_) => Context::new(Class::InvalidInput, vec![]).admission(),
         S::Planning { region, .. } => Context::owner(Class::Incomplete, *region),
         S::Material(cause) => material_context(cause),
         S::Clearance(cause) => clearance_context(cause),
@@ -110,7 +113,7 @@ pub(in crate::surface_sketch::wrapped_profile) fn planar_context(
             context.entities.push(HistorySource::Curve(*curve))
         }
         planar::PlanarFailure::WorkCapture(cause) => {
-            error::decline_entities(&cause.decline().cause, &mut context.entities)
+            planar_work_entities(cause, &mut context.entities);
         }
         #[cfg(test)]
         planar::PlanarFailure::Capture(cause) => {
@@ -127,7 +130,11 @@ pub(in crate::surface_sketch::wrapped_profile) fn planar_class(
         return Class::Cancelled;
     }
     match cause {
-        planar::PlanarFailure::WorkCapture(cause) => decline_class(cause.decline().class()),
+        planar::PlanarFailure::WorkCapture(cause) => decline_class(
+            cause
+                .integral_policy_failure()
+                .map_or_else(|| cause.decline().class(), |policy| policy.class()),
+        ),
         #[cfg(test)]
         planar::PlanarFailure::Capture(cause) => decline_class(cause.class()),
         planar::PlanarFailure::EmptyMaterial
@@ -202,7 +209,9 @@ fn limit_context(region: Option<SurfaceRegionId>, span: Option<CurveSpan>) -> Co
     entities.extend(span.map(|span| HistorySource::Curve(span.curve)));
     Context::new(Class::Incomplete, entities)
 }
-fn material_context(cause: &selection::MaterialFailure) -> Context {
+pub(in crate::surface_sketch::wrapped_profile) fn material_context(
+    cause: &selection::MaterialFailure,
+) -> Context {
     use selection::MaterialFailure as M;
     match cause {
         M::Admission(cause) => selection_context(cause),
@@ -238,7 +247,7 @@ fn contour_context(class: Class, region: SurfaceRegionId, contour: SurfaceCurveI
         vec![HistorySource::Region(region), HistorySource::Curve(contour)],
     )
 }
-fn clearance_context(cause: &planar_clearance::ClearanceFailure) -> Context {
+pub(super) fn clearance_context(cause: &planar_clearance::ClearanceFailure) -> Context {
     use planar_clearance::ClearanceFailure as C;
     let entities = match cause {
         C::SelectionBinding { actual, expected } => region_entities(actual, expected),
@@ -308,24 +317,28 @@ fn corner_source(corner: CornerSource) -> HistorySource {
     }
 }
 fn cone_context(region: SurfaceRegionId, cause: &planar_cones::ConeFailure) -> Context {
-    use planar_cones::ConeFailure as C;
     let mut context = Context::owner(Class::Incomplete, region);
+    context.entities.extend(cone_entities(cause));
+    context
+}
+
+pub(super) fn cone_entities(cause: &planar_cones::ConeFailure) -> Vec<HistorySource> {
+    use planar_cones::ConeFailure as C;
+    let mut entities = Vec::new();
     match cause {
         C::Membership { span, .. } | C::Interval { span, .. } => {
-            context.entities.push(HistorySource::Curve(span.curve))
+            entities.push(HistorySource::Curve(span.curve))
         }
         C::Binding { spans, .. } | C::Certificate { spans, .. } => {
-            context.entities.extend(span_entities(spans.iter()))
+            entities.extend(span_entities(spans.iter()))
         }
         C::CapJoin { spans, owners, .. } => {
-            context.entities.extend(span_entities(spans.iter()));
-            context
-                .entities
-                .extend(owners.iter().copied().map(corner_source));
+            entities.extend(span_entities(spans.iter()));
+            entities.extend(owners.iter().copied().map(corner_source));
         }
-        C::Authored(_) => {}
+        C::Authored(cause) => entities.push(binding_source(cause.key)),
     }
-    context
+    entities
 }
 
 pub(in crate::surface_sketch::wrapped_profile) fn budget(
@@ -333,4 +346,17 @@ pub(in crate::surface_sketch::wrapped_profile) fn budget(
 ) -> (WrappedStage, Class, Vec<HistorySource>) {
     let context = budget_context(cause);
     (context.stage, context.class, context.entities)
+}
+
+fn planar_work_entities(
+    cause: &martensite_tkbo::profile_extrusion::PlanarRegionWorkFailure,
+    entities: &mut Vec<HistorySource>,
+) {
+    error::decline_entities(&cause.decline().cause, entities);
+    if let Some(curve) = cause
+        .integral_program_failure()
+        .and_then(|proof| proof.offending_curve())
+    {
+        entities.push(HistorySource::Curve(SurfaceCurveId(curve.0)));
+    }
 }

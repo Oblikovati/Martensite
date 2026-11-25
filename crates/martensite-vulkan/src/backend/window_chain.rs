@@ -23,7 +23,7 @@ impl WindowConfig {
         surface: &ash::khr::surface::Instance,
         handle: vk::SurfaceKHR,
         requested: [u32; 2],
-        vsync: bool,
+        frame_queue: crate::driver_options::WindowFrameQueue,
     ) -> Result<Self, RenderError> {
         let cap =
             // SAFETY: the instance, physical device and device handles stay valid while the runtime holds them, and the call only reads through out-parameters it owns.
@@ -62,7 +62,7 @@ impl WindowConfig {
         })?;
         let format = window_support::surface_format(&formats)?;
         validate_blit(runtime, format.format)?;
-        let mode = window_support::present_mode(&modes, vsync)?;
+        let mode = window_support::present_mode(&modes, frame_queue)?;
         Ok(Self {
             extent: window_support::extent(&cap, requested)?,
             format,

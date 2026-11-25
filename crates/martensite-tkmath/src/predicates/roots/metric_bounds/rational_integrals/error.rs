@@ -3,7 +3,7 @@ use super::super::{super::RootIsolationError, PolynomialIntegralOperation, Resid
 use super::RationalIntegralOptions;
 
 /// Incomplete integration retains its operation, offending occurrence and typed cause.
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct RationalIntegralError {
     /// Requested scalar operation, never an assertion of valid geometry.
     pub operation: PolynomialIntegralOperation,
@@ -16,7 +16,7 @@ pub struct RationalIntegralError {
 }
 
 /// Unsupported domains and unmet bounds are incomplete, never a partial integral.
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum RationalIntegralFailure {
     /// Unsupported version, work limit, or nonfinite/negative error cap.
     Policy(RationalIntegralOptions),

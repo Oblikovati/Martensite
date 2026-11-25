@@ -17,7 +17,9 @@ use martensite_tkmath::predicates::roots::metric_bounds::{
 pub(in crate::surface_sketch::wrapped_profile) const NATIVE_VOLUME_RELATIVE_TOLERANCE: f64 = 1e-8;
 
 mod qualification;
-pub(super) use qualification::{NativeQualification, qualify_native};
+pub(super) use qualification::{
+    NativeQualification, qualify_native, qualify_native_with_certified_conical,
+};
 #[cfg(test)]
 type FrozenParts = (Vec<u8>, Vec<BindingKey>, Shape, Vec<(BindingKey, Shape)>);
 

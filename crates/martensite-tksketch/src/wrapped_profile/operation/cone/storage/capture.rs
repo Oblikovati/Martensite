@@ -1,6 +1,5 @@
 //! Decode analytic cone datums; generic retained curve and ruled-net checks are shared.
 use super::*;
-use martensite_cmath::{cos, sin};
 use martensite_tkbrep::{brep::BRepTool, topods};
 use martensite_tkernel::standard::Handle;
 use martensite_tkg3d::{
@@ -100,13 +99,8 @@ fn frame_coefficients(frame: &martensite_tkmath::gp::Axis3) -> Vec<f64> {
     values
 }
 fn expected_coefficients(prepared: &Prepared, depth: usize) -> Vec<f64> {
-    let (s, c) = (sin(prepared.semi_angle), cos(prepared.semi_angle));
-    let d = prepared.source.depths[depth];
-    let mut expected = vec![
-        prepared.reference_slant * s + d * c,
-        prepared.reference_slant * c - d * s,
-        prepared.semi_angle,
-    ];
+    let datum = native::cap_datum(prepared, prepared.semi_angle, depth);
+    let mut expected = vec![datum.radius, datum.axial_origin, datum.semi_angle];
     expected.extend([0., 0., 1., 0., 0., 0., 1., 0., 0., 0., 1.]);
     expected
 }
@@ -148,7 +142,7 @@ impl SourceCapture<'_> {
             cancelled,
         )?;
         let storage = self.storage(piece.span, &boundary)?;
-        let trims = trims::certify(self, piece, &curves, work, cancelled)?;
+        let trims = trims::certify(self, piece, &curves, &boundary, work, cancelled)?;
         self.finish(piece.span, curves, boundary, trims, storage)
     }
     fn finish(
@@ -165,6 +159,7 @@ impl SourceCapture<'_> {
             boundary,
             storage,
             trims: trims.proofs,
+            developed_boundary: trims.developed_boundary,
             curves,
             pcurves: trims.pcurves,
             cap_pcurves: trims.count,

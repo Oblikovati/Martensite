@@ -1,0 +1,21 @@
+{
+  "head": "37d97127a981c3a4ab57fb169ee39bc257de00f5",
+  "original_source_sha256": "e6cbe39cd287332f0001be62b0e11adc17fa96ec1ff58796d03daccbbf0fd43d",
+  "curves": 239,
+  "selected_regions": 18,
+  "developed_transform": "[x,y] -> [100+y,-x], orientation preserving",
+  "semi_angle": 0.125,
+  "depths": [
+    0,
+    0.25
+  ],
+  "spatial_error": 1e-05,
+  "max_fit_level": 8,
+  "planar_pair_bisections": 8192,
+  "metric_max_operations": 1000000,
+  "proof": "GeometricCompositeV6",
+  "aggregate_version": 2,
+  "no_tolerance_or_metric_grant_widening": true,
+  "purpose": "One complete public cone text operation; failure establishes actual next blocker, not acceptance",
+  "temporary_source_restore_and_artifact_cleanup_required": true
+}

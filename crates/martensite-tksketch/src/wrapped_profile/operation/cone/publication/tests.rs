@@ -1,6 +1,15 @@
 use super::*;
+mod native_report_fault;
 
 pub(in super::super) fn assert_publication(
+    result: &WrappedConeNormalResult,
+    request: &WrappedConeNormalRequest,
+) {
+    assert_publication_core(result, request);
+    assert_detached_history(result);
+}
+
+pub(in super::super) fn assert_publication_core(
     result: &WrappedConeNormalResult,
     request: &WrappedConeNormalRequest,
 ) {
@@ -8,28 +17,36 @@ pub(in super::super) fn assert_publication(
     assert_eq!(result.options(), request.options);
     assert_eq!(result.proof_options(), request.proof);
     assert_eq!(result.boundary_flux_origin(), [0.; 3]);
-    assert_report_sources(result);
-    assert_material_engine(result, request);
-    assert_storage_sources(result);
-    assert_measure_sources(result);
-    assert_proxy_volume(result);
-    assert_reference_measures(result);
+    for region in result.reports().keys().copied() {
+        assert_report_sources(result, region);
+        assert_material_engine(result, request, region);
+        assert_storage_sources(result, region);
+        assert_measure_sources(result, region);
+        assert_proxy_volume(result, region);
+        assert_reference_measures(result, region);
+        assert_work_sources(result, region);
+    }
     assert_reference_bounds(result);
-    assert_work_sources(result);
     assert_budget_sources(result);
-    assert_detached_history(result);
 }
 
-fn assert_material_engine(result: &WrappedConeNormalResult, request: &WrappedConeNormalRequest) {
-    let region = SurfaceRegionId(1);
+fn assert_material_engine(
+    result: &WrappedConeNormalResult,
+    request: &WrappedConeNormalRequest,
+    region: SurfaceRegionId,
+) {
     let geometry = &result.family.family.members[&region].geometry;
     let material = &result.reports()[&region].material;
     assert_eq!(material.planar_proof, geometry.material.proof_version());
-    assert_eq!(material.planar_proof, request.proof.planar_proof);
+    if let Some(proof) = result.planar_integral_receipt(region) {
+        assert_eq!(proof.requested_proof_version(), request.proof.planar_proof);
+        assert_program_method(material.planar_proof, proof);
+    } else {
+        assert_eq!(material.planar_proof, request.proof.planar_proof);
+    }
 }
 
-fn assert_proxy_volume(result: &WrappedConeNormalResult) {
-    let region = SurfaceRegionId(1);
+fn assert_proxy_volume(result: &WrappedConeNormalResult, region: SurfaceRegionId) {
     let geometry = &result.family.family.members[&region].geometry;
     let report = &result.reports()[&region];
     assert_eq!(
@@ -42,8 +59,7 @@ fn assert_proxy_volume(result: &WrappedConeNormalResult) {
     );
 }
 
-fn assert_storage_sources(result: &WrappedConeNormalResult) {
-    let region = SurfaceRegionId(1);
+fn assert_storage_sources(result: &WrappedConeNormalResult, region: SurfaceRegionId) {
     let geometry = &result.family.family.members[&region].geometry;
     let report = &result.reports()[&region];
     let (depths, ruling, allowance) = reports::storage_bounds(geometry).unwrap();
@@ -54,8 +70,7 @@ fn assert_storage_sources(result: &WrappedConeNormalResult) {
     assert!(ruling <= allowance);
 }
 
-fn assert_report_sources(result: &WrappedConeNormalResult) {
-    let region = SurfaceRegionId(1);
+fn assert_report_sources(result: &WrappedConeNormalResult, region: SurfaceRegionId) {
     let member = &result.family.family.members[&region];
     let report = &result.reports()[&region];
     let geometry = &member.geometry;
@@ -63,8 +78,7 @@ fn assert_report_sources(result: &WrappedConeNormalResult) {
     assert_eq!(report.coverage.side_pcurves, geometry.spans.len() * 4);
 }
 
-fn assert_measure_sources(result: &WrappedConeNormalResult) {
-    let region = SurfaceRegionId(1);
+fn assert_measure_sources(result: &WrappedConeNormalResult, region: SurfaceRegionId) {
     let geometry = &result.family.family.members[&region].geometry;
     let report = &result.reports()[&region];
     assert_eq!(
@@ -77,8 +91,7 @@ fn assert_measure_sources(result: &WrappedConeNormalResult) {
     );
 }
 
-fn assert_work_sources(result: &WrappedConeNormalResult) {
-    let region = SurfaceRegionId(1);
+fn assert_work_sources(result: &WrappedConeNormalResult, region: SurfaceRegionId) {
     let geometry = &result.family.family.members[&region].geometry;
     assert_eq!(
         result.flux_receipt(region).unwrap().span_count(),
@@ -122,8 +135,7 @@ fn assert_family_work(result: &WrappedConeNormalResult) {
     );
 }
 
-fn assert_reference_measures(result: &WrappedConeNormalResult) {
-    let region = SurfaceRegionId(1);
+fn assert_reference_measures(result: &WrappedConeNormalResult, region: SurfaceRegionId) {
     let geometry = &result.family.family.members[&region].geometry;
     let report = &result.reports()[&region];
     let comparison = measures::comparison(geometry).unwrap();
@@ -183,4 +195,38 @@ fn assert_detached_history(result: &WrappedConeNormalResult) {
         second.entities.keys().collect::<Vec<_>>()
     );
     assert!(!first.bodies.is_partner(&second.bodies));
+}
+
+fn assert_program_method(
+    actual: martensite_tkbo::profile_extrusion::PlanarProofVersion,
+    proof: &martensite_tkbo::profile_extrusion::PlanarIntegralEvidence,
+) {
+    use martensite_tkbo::profile_extrusion::PlanarProofVersion;
+    let requested = proof.requested_proof_version();
+    let (max_components, cap) = match requested {
+        PlanarProofVersion::FilteredCompositeBernsteinV5 {
+            max_components,
+            max_total_subintervals,
+        }
+        | PlanarProofVersion::GeometricCompositeV6 {
+            max_components,
+            max_total_subintervals,
+        } => (max_components, max_total_subintervals),
+        _ => panic!("explicit composite program"),
+    };
+    let grant = cap.min(proof.entry_allowance());
+    assert_eq!(proof.granted_subintervals(), grant);
+    let expected = match requested {
+        PlanarProofVersion::GeometricCompositeV6 { .. } => {
+            PlanarProofVersion::GeometricCompositeV6 {
+                max_components,
+                max_total_subintervals: grant,
+            }
+        }
+        _ => PlanarProofVersion::FilteredCompositeBernsteinV5 {
+            max_components,
+            max_total_subintervals: grant,
+        },
+    };
+    assert_eq!(actual, expected);
 }

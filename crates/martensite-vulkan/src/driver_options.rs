@@ -32,6 +32,23 @@ impl Default for RenderDriverOptions {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum WindowFrameQueue {
+    Synchronized,
+    Unrestricted,
+    Latest,
+}
+
+impl WindowFrameQueue {
+    pub(crate) fn for_view(vertical_sync: bool, prefer_latest: bool) -> Self {
+        match (vertical_sync, prefer_latest) {
+            (true, true) => Self::Latest,
+            (true, false) => Self::Synchronized,
+            (false, _) => Self::Unrestricted,
+        }
+    }
+}
+
 /// The options instance a driver shares with the views it creates.
 pub(crate) type SharedDriverOptions = Arc<SharedState<RenderDriverOptions>>;
 

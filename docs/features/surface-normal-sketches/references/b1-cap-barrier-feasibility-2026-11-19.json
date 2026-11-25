@@ -1,0 +1,351 @@
+{
+  "kind": "actual_stored_cap_closed_slab_endpoint_feasibility_not_self_intersection_proof",
+  "date": "2026-11-19",
+  "source_receipt_sha256": {
+    "summary": "87b7311f0ae5aed24ea7aa180581b9e6f6eb3ca6d180ee593b3d54be316fb6d8",
+    "terminal": "f1d429db07489e0f0dd6f290548fc42e5dfb38cff37406fd98457969384d83ce",
+    "invocation": "b2d3ff556c481959ce0aa357ff760c7583479dc4603cba81a8aa316518ec2225",
+    "earlier_failed_terminal": "03a973be07dde801717699cfc559804b36a2a8566216799c2600c5e26d9227e6",
+    "earlier_failed_compile_log": "9d293302b4b45a5f52715d41ffe2277fb5e6a066d595189afe966a1bca8e3b92"
+  },
+  "summary": {
+    "scope": "One sufficient closed-slab endpoint barrier refuted; no trimmed-face intersection claim or production acceptance",
+    "counts": {
+      "not_established_by_this_point": 582,
+      "refuted_closed_slab_endpoint": 42
+    },
+    "actual_corners": 624,
+    "inventory": [
+      {
+        "event": "barrier_inventory",
+        "caps": 2,
+        "sides": 156,
+        "production_acceptance_claim": false
+      }
+    ],
+    "source_self_checks": "passed before geometry capture",
+    "witness": {
+      "event": "incident_actual_trim_corner",
+      "side_face_occurrence": 21,
+      "u_pole": 10,
+      "v_pole": 2,
+      "incident_cap_face": 1,
+      "other_cap_face": 0,
+      "point_bits": [
+        13831764252033925740,
+        4622301660127129577,
+        4635709074874293767
+      ],
+      "weight_bits": 4612277320044759298,
+      "exact_rectangle_verified": true,
+      "shared_edge_is_same": true,
+      "sign_D_minus_b": "positive",
+      "barrier_endpoint_condition": "refuted_closed_slab_endpoint",
+      "F_integer_bounds": [
+        "34107249061523054702980348705192912487069003660502913742625189371562981841895336017282462162003648473049996325995720121986683086543005714789812945878914631421339281345369390156116221515802586955190341488004488845376097738801168504469664481218586231105661585141197104051656044449164456372492287436998701550703823628055529978812318507751527940463710099688214609233201600829430726765940248740655969838725819014918767161385596956040517182561150536394326856881531987251486535232391910416219501481150007162901492021965815739772033702065138658194313628594102318319834839820788468032608588284908387310898768754389259727251785544849193996535425928919520162935845652579751298437310989664652414434424796428792548323260811726286384670266688659154698244792385492066667672183792502703607263989425600881885122680522151341367451673783317837831239938783764156985544404885351467844271170124614802392196340816911222131823563057080591919032238583574762940910465977212617572881342415962079417931572157530233675250924956296611683641375227148467612803951432096602845072947165388645322299641904293978394128566099960288149826259221629004979017388977286764901530480487728682709442249146825488813224147411401669018305111732950941974261570371192403380513692825331666709297001169377319035933713150551703683072",
+        "124391680971336287468506722064894437629551419326831839717941108710418508635878288133465414768994352139050325848274630999692632812550945689361964288126867969451891454935386351506049117484702246223200164429836419090917558364817638932655364855607126901781440633266122267922330457310799172244271615034603425331156548621301799131755020923921776516894566022696579603883201176760202715400288502272605992351968260192087264297288324447319937091226272637561045063265417565432347204682639691457941270568082073406218069096979174425778680044655934999579896546398589049539615031876005297840747539704616621445357850279818578811543238605929889560358050977110347569762554314318159148094119508705237620688391792014361373539271041638118424779273582518342385422473983422940433457463779026521907982623091664026979335255382574891064835440210127366801746339254452254311295618856499006409091721553746121068884134318544925874001447228272303185602672075959038688544812938213137054741326700414376949175632465110333688615980857299981731258353820365323358658841939369134706417449384862098296592531878225862645272198493883041890541917356186261369113657411012807285022259693053816050663832979224704278403022494582414386816194968187588209316906676252293650439611209595812693165587878124138429426290684171355422720"
+      ],
+      "F_exponent": -4296,
+      "other_minus_incident_b_integer_bounds": [
+        "-12290001643163047109700834265357564277322344903749948678332741999849634833592041348067655015939686086608168363305032434364567268333968551433092920504813837624572428320701219457499447738137740849729079305793697988053875994454575538103275541556622891718966765284127244887399974542896773653384553877925734557404753961311298349523088959333503405288122733148781345612665281555263575980525963124567172491816738301776795884754860835448186262521788753220212239770795178176639468357528997548207958274314488333168764004974530316664932192167325976715256898996336999154858314202735105199371811021262354977496254935379239711657216631196318434321046763416322048",
+        "-12290001643163045734618281401612429219226400159170233124883532793646437439014158864480548306836516938222720647988254684372964928144190589610099180949181082554735767533584036691012006586863344503079786320083605275995031917878867290739910047743730805820344850920081025631225253068658347063194962888556989250312551119619511639382660168057711222768321590690190566589108123362603623289096946943908128518619004403446656453381022274603172451577678150374810484028111858152995090355214389189177284537057697020986349406979742542183976088046565564494463731176395618196089828242923109867323709823920439527482719509769705531702593169563190480003155333941821440"
+      ],
+      "b_exponent": -2148,
+      "branch_positive": true,
+      "SI_claim": false
+    },
+    "log_sha256": "7a079b36769d78e261aed782382728c587d95d5baf0b4816c607274694dfbcbd",
+    "log_bytes": 2931035,
+    "terminal": {
+      "started": "2026-11-19T08:58:23.979617+00:00",
+      "command": [
+        "/home/vmiguel/.rustup/toolchains/1.99.0-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "b1_cap_barrier_diagnostic",
+        "/tmp/martensite-b1-cap-barrier-feasibility/consumer-draft.rs",
+        "-C",
+        "opt-level=0",
+        "-C",
+        "debug-assertions=yes",
+        "-C",
+        "overflow-checks=yes",
+        "-C",
+        "debuginfo=0",
+        "-C",
+        "strip=debuginfo",
+        "-L",
+        "dependency=/tmp/martensite-cone-b1-cached-target/debug/deps",
+        "--extern",
+        "martensite_tkbrep=/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkbrep-6a803afc7e8b3db7.rlib",
+        "--extern",
+        "martensite_tkernel=/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkernel-be5b2ad5bebd446a.rlib",
+        "--extern",
+        "martensite_tkg2d=/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkg2d-077044ff5a9be722.rlib",
+        "--extern",
+        "martensite_tkg3d=/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkg3d-fc085c00b210295e.rlib",
+        "--extern",
+        "martensite_tkmath=/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkmath-a875d45b93c4b370.rlib",
+        "--extern",
+        "num_bigint=/tmp/martensite-cone-b1-cached-target/debug/deps/libnum_bigint-5867d84839ef3c83.rlib",
+        "-o",
+        "/tmp/martensite-b1-cap-barrier-feasibility/actual-o-run-fixed/barrier-consumer"
+      ],
+      "libraries": {
+        "martensite_tkbrep": {
+          "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkbrep-6a803afc7e8b3db7.rlib",
+          "sha256": "e1e3468ea62a7421111b558c04dc6c8a504f0fd90a94f2dabf0377e7ab6249c2",
+          "profile": {
+            "opt_level": "0",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          }
+        },
+        "martensite_tkernel": {
+          "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkernel-be5b2ad5bebd446a.rlib",
+          "sha256": "c436471a7bf7f756a860aeb6271a9c92eaaf240cef5f37095a68d37b4eab9b7d",
+          "profile": {
+            "opt_level": "0",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          }
+        },
+        "martensite_tkg2d": {
+          "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkg2d-077044ff5a9be722.rlib",
+          "sha256": "b32d52d4b1fc1fbb12d82e42dde0cfe7b153a05f68945a9fd1e52aadd497b478",
+          "profile": {
+            "opt_level": "0",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          }
+        },
+        "martensite_tkg3d": {
+          "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkg3d-fc085c00b210295e.rlib",
+          "sha256": "12bd557d934c1575ddf38a5571aee9499d1807d9f6bfccc1a7544bcdce901cf3",
+          "profile": {
+            "opt_level": "0",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          }
+        },
+        "martensite_tkmath": {
+          "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkmath-a875d45b93c4b370.rlib",
+          "sha256": "371b2615c85906af8157c3e099bd4546df8adb80c544452a07725daecfcb4729",
+          "profile": {
+            "opt_level": "3",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          }
+        },
+        "num_bigint": {
+          "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libnum_bigint-5867d84839ef3c83.rlib",
+          "sha256": "2de783c571ead2ddc8e7cbc0b8ac92ce9e6386b4f990a9b22c4df64c49e745c3",
+          "profile": {
+            "opt_level": "3",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          }
+        }
+      },
+      "sources": {
+        "consumer-draft.rs": "e32adfc587d29a2b3510d04da6cc97709a805799b381f708e8afca867d44b74a",
+        "integer_interval.rs": "5c2534fe0aa4a2591442e5d1908df17564fb1d24660c44c7559b9f1e3429948c"
+      },
+      "build_json_sha256": "8a5a42ff1eda728f73e3f034aaa024ad293e055b4fd9227e682c2ab3025d5194",
+      "compile_exit": 0,
+      "snapshot_sha256": "e9526a2667b84fb327d51ef2f67fb19aa49b49e69208f1560d770484225c0d82",
+      "binary_sha256": "13bb6d2e2207ca39554c1e5cf69c429090dc676a81099f6b60062cef28972f3c",
+      "run_exit": 0,
+      "finished": "2026-11-19T08:58:24.417691+00:00"
+    }
+  },
+  "witness_cap_datums_and_trig_bound_bits": [
+    {
+      "event": "cap",
+      "face_occurrence": 0,
+      "datum_bits": [
+        4622310098202681752,
+        4635845428193378125,
+        4593671619917905920
+      ],
+      "sine_bound_bits": [
+        4593648181988224565,
+        4593648181988224566
+      ],
+      "cosine_bound_bits": [
+        4607112141634100179,
+        4607112141634100180
+      ],
+      "auxiliary_trig_operations": 485,
+      "fractional_bits": 128,
+      "trig_operation_limit": 10000
+    },
+    {
+      "event": "cap",
+      "face_occurrence": 1,
+      "datum_bits": [
+        4622477665491847198,
+        4635842796232052424,
+        4593671619917905920
+      ],
+      "sine_bound_bits": [
+        4593648181988224565,
+        4593648181988224566
+      ],
+      "cosine_bound_bits": [
+        4607112141634100179,
+        4607112141634100180
+      ],
+      "auxiliary_trig_operations": 485,
+      "fractional_bits": 128,
+      "trig_operation_limit": 10000
+    }
+  ],
+  "witness_side_stored_rectangle_records": [
+    {
+      "event": "side_boundary",
+      "face_occurrence": 21,
+      "edge_occurrence": 0,
+      "uv_role": 0,
+      "pcurve_bits": [
+        1,
+        1,
+        0,
+        0,
+        4607182418800017408,
+        0,
+        4607182418800017408,
+        4607182418800017408
+      ],
+      "range_bits": [
+        0,
+        4607182418800017408
+      ],
+      "is_stored": true,
+      "exact_stored_coefficients_verified": true
+    },
+    {
+      "event": "side_boundary",
+      "face_occurrence": 21,
+      "edge_occurrence": 1,
+      "uv_role": 3,
+      "pcurve_bits": [
+        1,
+        1,
+        4607182418800017408,
+        0,
+        4607182418800017408,
+        4607182418800017408,
+        4607182418800017408,
+        4607182418800017408
+      ],
+      "range_bits": [
+        0,
+        4607182418800017408
+      ],
+      "is_stored": true,
+      "exact_stored_coefficients_verified": true
+    },
+    {
+      "event": "side_boundary",
+      "face_occurrence": 21,
+      "edge_occurrence": 2,
+      "uv_role": 1,
+      "pcurve_bits": [
+        1,
+        1,
+        0,
+        4607182418800017408,
+        4607182418800017408,
+        4607182418800017408,
+        4607182418800017408,
+        4607182418800017408
+      ],
+      "range_bits": [
+        0,
+        4607182418800017408
+      ],
+      "is_stored": true,
+      "exact_stored_coefficients_verified": true
+    },
+    {
+      "event": "side_boundary",
+      "face_occurrence": 21,
+      "edge_occurrence": 3,
+      "uv_role": 2,
+      "pcurve_bits": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        4607182418800017408,
+        4607182418800017408,
+        4607182418800017408
+      ],
+      "range_bits": [
+        0,
+        4607182418800017408
+      ],
+      "is_stored": true,
+      "exact_stored_coefficients_verified": true
+    }
+  ],
+  "arithmetic_self_check_record": {
+    "event": "exact_integer_self_checks",
+    "passed": true,
+    "production_acceptance_claim": false
+  },
+  "independent_witness_replay": {
+    "arithmetic": "Exact integer interval operations from binary64 bits; operands integer times 2^-1074. No binary64 arithmetic in replay.",
+    "datum_order": [
+      "radius",
+      "z0",
+      "semi_angle"
+    ],
+    "formula": "T = sin(a)*(z-z0) + cos(a)*radius; F = cos(a)^2*(x^2+y^2) - T^2; delta_b = cos(a)*(other_radius-radius) - sin(a)*(other_z0-z0).",
+    "F_scale_exponent": -4296,
+    "delta_b_scale_exponent": -2148,
+    "checks": [
+      "Recomputed integer interval endpoints exactly equal retained witness endpoints.",
+      "cosine_lower>0 and T_lower>0 establish positive branch.",
+      "F_lower>0 and delta_b_upper<0 refute this sufficient closed-slab endpoint condition."
+    ],
+    "self_checks": "Prototype integer embedding/basic interval checks and positive/negative residual scaling checks passed before capture; exact self-check event retained.",
+    "counts_recounted": {
+      "not_established_by_this_point": 582,
+      "refuted_closed_slab_endpoint": 42
+    },
+    "all_624_corner_rectangle_and_shared_edge_flags_true": true
+  },
+  "earlier_compile_failure": {
+    "compile_exit": 1,
+    "sources": {
+      "consumer-draft.rs": "2b66ba6c8fdd138e9b82d08152b9502cf23929779d1e07057371105e72f7d6b4",
+      "integer_interval.rs": "5c2534fe0aa4a2591442e5d1908df17564fb1d24660c44c7559b9f1e3429948c"
+    },
+    "correction": "Diagnostic getter receipt.operations() corrected to receipt.result().proof().operations(); no geometry/proof gate changed.",
+    "later_compile_and_run_exit": [
+      0,
+      0
+    ]
+  },
+  "exclusions": [
+    "One sufficient closed-slab endpoint condition refuted; not a trimmed-face intersection, kernel invalidity or self-intersection existence finding.",
+    "582 other corners not established by this point test; not certified safe.",
+    "No strict self-intersection production gate or optimization implemented; issue #498 proof remains.",
+    "Raw 3 MB log, executable and prototype implementation excluded."
+  ]
+}

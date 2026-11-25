@@ -1,9 +1,9 @@
 //! Stored tolerance measurements and explicit report/refuse policy.
-use super::{failure::*, history::Bindings, result::SurfaceDiagnostic};
+use super::{failure::*, result::SurfaceDiagnostic};
 use martensite_tkbo::profile_extrusion::{AchievedTolerance, ToleranceCap};
 use martensite_tkbrep::{brep::BRepTool, topods};
 use martensite_tkg3d::top_abs::ShapeEnum;
-pub(super) fn tolerances(bindings: &Bindings) -> Checked<AchievedTolerance> {
+pub(super) fn tolerances<K>(bindings: &[(K, topods::Shape)]) -> Checked<AchievedTolerance> {
     let mut achieved = AchievedTolerance {
         vertex: 0.,
         edge: 0.,

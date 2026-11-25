@@ -1,0 +1,152 @@
+{
+  "platform": "Linux x86_64, pinned to logical CPU 20",
+  "profile": "cached Cargo test profile, debug info stripped, default workspace optimizer overrides",
+  "workload": "Existing datum-centered directed V6 outward narrow-cone O. control",
+  "baseline_commit": "07603513957e53772790a7c14e4eb629cdad22ea",
+  "baseline_binary_sha256": "b4bba8e3c860d95279d4f01ee9ac020ecd5606a0dc4f2c72a63aa28640be9e91",
+  "candidate_binary_sha256": "121e51af0dcdf5343b18ad4e0e43a335fb865e7de8a8e46547b7dbf23dceffaa",
+  "pre_change_and_candidate_legacy_replay_sha256": "c92b61adde678c3e1633e10c27612c2401d08e8f4e028c69202ce884954b46b5",
+  "paired_samples": [
+    {
+      "build": "baseline",
+      "api_seconds": 5.457563,
+      "peak_rss_kib": 65664,
+      "test_process_elapsed_seconds": 9.53,
+      "cpu_seconds": 9.51,
+      "work": {
+        "event": "narrow_cone_completed_work",
+        "arithmetic_operations": 989355,
+        "integration_subintervals": 444,
+        "retained_spans": 148
+      }
+    },
+    {
+      "build": "candidate",
+      "api_seconds": 5.32527,
+      "peak_rss_kib": 66636,
+      "test_process_elapsed_seconds": 9.37,
+      "cpu_seconds": 9.37,
+      "work": {
+        "event": "narrow_cone_completed_work",
+        "arithmetic_operations": 989355,
+        "integration_subintervals": 444,
+        "retained_spans": 148
+      }
+    },
+    {
+      "build": "candidate",
+      "api_seconds": 5.336732,
+      "peak_rss_kib": 66536,
+      "test_process_elapsed_seconds": 9.49,
+      "cpu_seconds": 9.49,
+      "work": {
+        "event": "narrow_cone_completed_work",
+        "arithmetic_operations": 989355,
+        "integration_subintervals": 444,
+        "retained_spans": 148
+      }
+    },
+    {
+      "build": "baseline",
+      "api_seconds": 5.358274,
+      "peak_rss_kib": 66456,
+      "test_process_elapsed_seconds": 9.4,
+      "cpu_seconds": 9.39,
+      "work": {
+        "event": "narrow_cone_completed_work",
+        "arithmetic_operations": 989355,
+        "integration_subintervals": 444,
+        "retained_spans": 148
+      }
+    },
+    {
+      "build": "baseline",
+      "api_seconds": 5.349277,
+      "peak_rss_kib": 66432,
+      "test_process_elapsed_seconds": 9.43,
+      "cpu_seconds": 9.42,
+      "work": {
+        "event": "narrow_cone_completed_work",
+        "arithmetic_operations": 989355,
+        "integration_subintervals": 444,
+        "retained_spans": 148
+      }
+    },
+    {
+      "build": "candidate",
+      "api_seconds": 5.438424,
+      "peak_rss_kib": 66704,
+      "test_process_elapsed_seconds": 9.6,
+      "cpu_seconds": 9.59,
+      "work": {
+        "event": "narrow_cone_completed_work",
+        "arithmetic_operations": 989355,
+        "integration_subintervals": 444,
+        "retained_spans": 148
+      }
+    }
+  ],
+  "median": {
+    "baseline": {
+      "api_seconds": 5.358274,
+      "peak_rss_kib": 66432,
+      "test_process_elapsed_seconds": 9.43
+    },
+    "candidate": {
+      "api_seconds": 5.336732,
+      "peak_rss_kib": 66636,
+      "test_process_elapsed_seconds": 9.49
+    }
+  },
+  "rss_sample_interval_seconds": 0.025,
+  "diagnostic_rss_components_at_sampled_peak": [
+    {
+      "label": "baseline",
+      "observed_peak": {
+        "VmHWM": 66300,
+        "VmRSS": 66300,
+        "RssAnon": 27660,
+        "RssFile": 38640,
+        "RssShmem": 0,
+        "seconds": 1.342
+      },
+      "sampled_hwm_kib": 66300
+    },
+    {
+      "label": "candidate",
+      "observed_peak": {
+        "VmHWM": 66836,
+        "VmRSS": 66836,
+        "RssAnon": 27668,
+        "RssFile": 39168,
+        "RssShmem": 0,
+        "seconds": 1.283
+      },
+      "sampled_hwm_kib": 66836
+    },
+    {
+      "label": "candidate",
+      "observed_peak": {
+        "VmHWM": 66788,
+        "VmRSS": 66788,
+        "RssAnon": 27700,
+        "RssFile": 39088,
+        "RssShmem": 0,
+        "seconds": 1.312
+      },
+      "sampled_hwm_kib": 66788
+    },
+    {
+      "label": "baseline",
+      "observed_peak": {
+        "VmHWM": 66152,
+        "VmRSS": 66152,
+        "RssAnon": 27684,
+        "RssFile": 38468,
+        "RssShmem": 0,
+        "seconds": 1.338
+      },
+      "sampled_hwm_kib": 66152
+    }
+  ]
+}

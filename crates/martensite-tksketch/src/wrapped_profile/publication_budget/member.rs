@@ -61,7 +61,7 @@ fn source(original: &Request, family: &family::UnqualifiedFamily, tolerance: f64
         .get(&original.region)
         .ok_or(BudgetFailure::Source(original.region))?;
     let retained = prepared(family, original.region)?;
-    if !evidence.matches_request(original)
+    if !evidence.matches_member(original)
         || context(original) != context(retained)
         || original.tolerance.to_bits() != tolerance.to_bits()
     {

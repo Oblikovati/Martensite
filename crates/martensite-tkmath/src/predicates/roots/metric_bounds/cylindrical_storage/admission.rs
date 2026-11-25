@@ -11,7 +11,7 @@ pub(super) fn admit(query: &CylindricalStorageQuery<'_>) -> Checked<()> {
     admit_limits(query.limits)
 }
 
-fn admit_policy(policy: CylindricalStorageOptions) -> Checked<()> {
+pub(super) fn admit_policy(policy: CylindricalStorageOptions) -> Checked<()> {
     if !(8..=4096).contains(&policy.fractional_bits)
         || !(1..=25).contains(&policy.max_degree)
         || policy.max_operations > 1_000_000
@@ -34,7 +34,7 @@ fn admit_limits(limits: CylindricalStorageLimits) -> Checked<()> {
     Ok(())
 }
 
-fn admit_curve(curve: MetricBezier<'_, 3>, depth: usize, limit: u8) -> Checked<()> {
+pub(super) fn admit_curve(curve: MetricBezier<'_, 3>, depth: usize, limit: u8) -> Checked<()> {
     admit_counts(curve, depth, limit)?;
     for (i, pole) in curve.poles.iter().enumerate() {
         admit_pole(*pole, i, depth)?;

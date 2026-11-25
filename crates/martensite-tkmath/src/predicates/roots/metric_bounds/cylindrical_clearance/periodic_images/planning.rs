@@ -14,19 +14,28 @@ pub(super) struct PeriodicPlan {
 pub(super) fn plan(
     source: &CertifiedCylindricalClearance,
     maximum: u32,
+    options: CylindricalClearanceOptions,
     cancelled: &mut (dyn FnMut() -> bool + Send),
-) -> Checked<PeriodicPlan> {
-    admit_maximum(maximum)?;
+) -> WorkChecked<PeriodicPlan> {
+    admit_maximum(maximum).map_err(|cause| (cause, 0))?;
     let policy = ArithmeticPolicy {
-        fractional_bits: source.options.fractional_bits,
-        max_operations: source.options.max_operations,
+        fractional_bits: options.fractional_bits,
+        max_operations: options.max_operations,
     };
     let mut arithmetic = Arithmetic::new(policy, cancelled);
-    let width = periodic_slab::source_width(&source.sources, &mut arithmetic)?;
-    let period = periodic_slab::circumference(source.radius, &mut arithmetic)?;
-    let count = image_count(&width, &period, source.clearance, maximum, &mut arithmetic)?;
-    let images = image_shifts(count, &period, source.clearance, &mut arithmetic)?;
-    assemble_plan(width, period, images, maximum, &mut arithmetic)
+    build(source, maximum, &mut arithmetic).map_err(|cause| (cause, arithmetic.operations()))
+}
+
+fn build(
+    source: &CertifiedCylindricalClearance,
+    maximum: u32,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<PeriodicPlan> {
+    let width = periodic_slab::source_width(&source.sources, arithmetic)?;
+    let period = periodic_slab::circumference(source.radius, arithmetic)?;
+    let count = image_count(&width, &period, source.clearance, maximum, arithmetic)?;
+    let images = image_shifts(count, &period, source.clearance, arithmetic)?;
+    assemble_plan(width, period, images, maximum, arithmetic)
 }
 
 fn image_shifts(

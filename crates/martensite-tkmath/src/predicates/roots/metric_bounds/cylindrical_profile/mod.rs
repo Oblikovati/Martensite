@@ -15,7 +15,7 @@ mod source;
 #[cfg(test)]
 mod tests;
 pub(in crate::predicates::roots::metric_bounds) mod trigonometric;
-mod trim;
+pub(in crate::predicates::roots::metric_bounds) mod trim;
 mod types;
 use crate::predicates::roots::certificate_arithmetic::{
     bernstein_bounds as polynomial,
@@ -31,8 +31,9 @@ pub use planning_types::{CylindricalFitPlan, CylindricalFitQuery};
 pub use trim::{
     CertifiedConicalTrim, CertifiedConicalTrimPair, CertifiedCylindricalTrim, ConicalTrimCarrier,
     ConicalTrimError, ConicalTrimPairError, ConicalTrimPairQuery, ConicalTrimQuery,
-    CylindricalTrimError, CylindricalTrimQuery, certify_conical_trim, certify_conical_trim_pair,
-    certify_cylindrical_trim,
+    CylindricalTrimError, CylindricalTrimQuery, CylindricalTrimWorkspace, certify_conical_trim,
+    certify_conical_trim_pair, certify_conical_trim_ranges, certify_cylindrical_trim,
+    certify_cylindrical_trim_ranges,
 };
 pub use types::*;
 

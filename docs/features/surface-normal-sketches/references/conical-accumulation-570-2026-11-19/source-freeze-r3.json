@@ -1,0 +1,273 @@
+{
+  "issue": 570,
+  "head": "2e8ab886d4755c9c0165d7f59f2a92ead61f3612",
+  "state": "SOURCE_FROZEN_UNTESTED",
+  "cargo_executed": false,
+  "files": [
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals.rs",
+      "sha256": "317b287e095af8e3f5af3975431db259456ca60ed3ac5b4cab8c2b28fc84844a",
+      "bytes": 5859
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_sum.rs",
+      "sha256": "388a4832a0155e2a4addc827c58d9b6271167bc08f5f148d6b7a64b754fc7034",
+      "bytes": 4306
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_sum/tests.rs",
+      "sha256": "bae08541e2aa8e3ccd8f9c05c590e8d4212a5e61ed6d88d95ea374ed5fa7a7de",
+      "bytes": 6194
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_reference_volume/admission.rs",
+      "sha256": "6b8eb2baff442b9343dbaa0c0f81fc025867c3741454c94a5473ef1eede63407",
+      "bytes": 4916
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_reference_volume/execution.rs",
+      "sha256": "083c28b2f99fff0daed5c27c67a017176679ba91c588b6d71ae565e717668b71",
+      "bytes": 7662
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_reference_volume/types.rs",
+      "sha256": "26d4942e593050f5189672caa7fb09b4e5dd4db749efa4a6f3862d8b788a1edb",
+      "bytes": 4381
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_reference_volume/tests.rs",
+      "sha256": "136733c01be0a2deed79e94b4faa99839f746f42ca2a2c01b28020a3ee919a2e",
+      "bytes": 11966
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_reference_volume/tests/accumulation.rs",
+      "sha256": "34a5b632dce98ea0ea16721aed4a32fa3671fb214b2517316d4bd457c969cf11",
+      "bytes": 2491
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone.rs",
+      "sha256": "73a4051cf4558308f52bd6f608b8b7cd02a1626e12083caddf90b79344b3a289",
+      "bytes": 2427
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/admission.rs",
+      "sha256": "e708abd5da7e216901b5f93818b741893886bd6a50e69219ae26c26f4a2fe6f1",
+      "bytes": 3231
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/binding.rs",
+      "sha256": "f6faf1e8af625833dc6e4102a2783692b1a0037795fcde62987e935b4612affd",
+      "bytes": 1968
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/error.rs",
+      "sha256": "595ca3d3efe1d736c1e8555749e35c9ddf5afec9c4646e514edb7f577463507b",
+      "bytes": 5755
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/execution.rs",
+      "sha256": "1a75f02d764562843bfa328928e8f19c6b76e6dfe98a8e83cf8f11d63ff14403",
+      "bytes": 3242
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/types.rs",
+      "sha256": "9f4b503746d852672aa14195f274392ed26c65e91266e814d35ec53911f8fc73",
+      "bytes": 4959
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/caps.rs",
+      "sha256": "bc614abc907ca4cbc40c7adb5beabe8019014a874ac957243f58e24d1bf4bb5c",
+      "bytes": 2146
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/caps/coefficients.rs",
+      "sha256": "fb09d8f119eabd08adbe06cacb7a37ec9ee5fbea99a926475444610d80840937",
+      "bytes": 2688
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/tests.rs",
+      "sha256": "d6ee9ce424b982c78033397deef3c4595c72ce7ec86800a11a9f5d2fe867b43d",
+      "bytes": 4508
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/tests/accumulation.rs",
+      "sha256": "00e2dcd59b75735038c0294a46d7a7f5bb0ed718eb4518cea5c8fd949b16a9cd",
+      "bytes": 5003
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/side.rs",
+      "sha256": "af176c45861f5ad8e76e812f3254d96388f64369dbcd82c33c14aa95df954ada",
+      "bytes": 4206
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/side/accounting_tests.rs",
+      "sha256": "d7cd3d6cf1810d4014cd94cf2e7562ad6edd213db8b9a57df69cc651311119cb",
+      "bytes": 2491
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/types.rs",
+      "sha256": "498c0d0e0d24098d0561faac210f51f97bb90782f2ccc6a5b3345d60aac798cb",
+      "bytes": 5082
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/input/policy.rs",
+      "sha256": "d1b1689cc79fe6bcd3f56fc001e605b04f64b837af3fe4858233df3161ebc6f8",
+      "bytes": 1230
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/measures/flux.rs",
+      "sha256": "4d94d7f86bb71a25d0cec451d6d36530b910514bf3aea5af143a41e7d6ff48b9",
+      "bytes": 2662
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/measures/flux/tests.rs",
+      "sha256": "fb190f25bb1be46af3047f3fc7e61a812756be94fc6c6c57184f47fc39553a0e",
+      "bytes": 3198
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/error.rs",
+      "sha256": "c4d631532b594ee611d6fbe925fbf938f8d2b36f6e1c704a797aa8372fb5e7be",
+      "bytes": 9114
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/error/projection/integrals.rs",
+      "sha256": "ebf8540a40c76c9dca882f9024784ac5cc50ddbc9f26bfcd95314c30d2ee7b21",
+      "bytes": 3396
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/error/tests.rs",
+      "sha256": "d07578c16945fa48a03f14da33885761357632761cb792b472062e7d1622f67a",
+      "bytes": 6957
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/error/tests/accumulation.rs",
+      "sha256": "8b7111e7bd5ed20b51220273816531a70a5aae35e60259093ca83d16e94f2c92",
+      "bytes": 1400
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/tests/narrow/complete/directed.rs",
+      "sha256": "23f7039d4ed455a671c7e42edec972174f27a42a09420fc6f45443cf7d45621f",
+      "bytes": 5743
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "3734d36e1fc01ea214a67f8ae612c497c53786f9bb05edabd88b4fe6ab8abd5a",
+      "bytes": 46569
+    },
+    {
+      "path": "docs/architecture/decisions/conical-volume-accumulation.md",
+      "sha256": "11f96066107f341ae3fe068eb2e596621f6591e665253cfb62d523a06cb938b1",
+      "bytes": 3456
+    },
+    {
+      "path": "docs/features/surface-normal-sketches/CONICAL-ACCUMULATION.md",
+      "sha256": "34b37d7d490a3f6da88c9d652a16ded3b8b9325f69548d681fcca353657ca663",
+      "bytes": 1634
+    }
+  ],
+  "new_leaf_tests": [
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_sum/tests.rs",
+      "name": "signed_nonbinary_and_distinct_denominators_contain_independent_exact_sum"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_sum/tests.rs",
+      "name": "large_exact_cancellation_does_not_relax_the_final_cap"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_sum/tests.rs",
+      "name": "exhausted_add_reports_actual_import_work_and_examined_cells"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_sum/tests.rs",
+      "name": "bit_refusal_keeps_the_actual_offending_integer_size"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_sum/tests.rs",
+      "name": "v1_remains_exact_unpolled_and_does_not_spend_bounded_work"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_sum/tests.rs",
+      "name": "rounded_cancellation_can_refuse_a_zero_cap_without_a_retry"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_sum/tests.rs",
+      "name": "every_import_checkpoint_cancels_before_its_actual_charge"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_sum/tests.rs",
+      "name": "retained_term_width_and_outward_rounding_have_distinct_budgets"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_sum/tests.rs",
+      "name": "parent_two_explicitly_selects_child_one_without_changing_shared_engine"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_reference_volume/tests/accumulation.rs",
+      "name": "parent_two_keeps_exact_term_cells_and_independent_sector_value"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_reference_volume/tests/accumulation.rs",
+      "name": "parent_two_reports_actual_remaining_import_work_before_refusal"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_reference_volume/tests/accumulation.rs",
+      "name": "parent_two_reference_binding_preserves_signed_zero_policy_bits"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/tests/accumulation.rs",
+      "name": "parent_two_contains_independent_flux_and_rebinds_all_effective_settings"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/tests/accumulation.rs",
+      "name": "typed_accumulation_refusal_keeps_span_actual_work_and_original_cause"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/tests/accumulation.rs",
+      "name": "legacy_source_match_still_allows_resource_changes_but_never_parent_promotion"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/tests/accumulation.rs",
+      "name": "unsupported_parent_keeps_original_policy_and_first_invalid_carrier_wins"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/tests/accumulation.rs",
+      "name": "ordinary_cylinder_still_refuses_conical_parent_two"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/tests/accumulation.rs",
+      "name": "parent_two_policy_binding_retains_signed_zero_cap_bits"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/side/accounting_tests.rs",
+      "name": "accounted_side_preserves_original_value_polls_and_exact_rectangle_oracle"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/side/accounting_tests.rs",
+      "name": "accounted_failed_side_keeps_actual_examined_cell"
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/measures/flux/tests.rs",
+      "name": "failed_flux_charges_once_and_retains_primary_cause_when_cell_charge_refuses"
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/measures/flux/tests.rs",
+      "name": "successful_flux_charge_refusal_keeps_the_actual_computed_work"
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/error/tests/accumulation.rs",
+      "name": "actual_accumulation_worklimit_and_cancel_keep_typed_original_source"
+    }
+  ],
+  "new_complete_tests": [
+    "outward_accumulation_v2_preserves_complete_actual_si_and_original_caps",
+    "inward_accumulation_v2_preserves_complete_actual_si_and_original_caps"
+  ],
+  "format_check_status": 0,
+  "style_scan": "/tmp/martensite-570-size-scan.json",
+  "pre570_recovery": "/tmp/martensite-pre570-source-recovery/manifest.json",
+  "scope_note": "No paths beyond the original 32-path list; old baseline independently recovered by root; source tests and complete operation not executed yet.",
+  "revision": 3,
+  "previous_manifest": "/tmp/martensite-570-source-freeze-r2.json",
+  "remediation": "Test fixture converts ConeClearanceOptions through existing Work.profile into requested CylindricalProfileOptions; no production change."
+}

@@ -1,0 +1,20 @@
+{
+  "hypothesis": "Choose the common projection by scaling each side chord independently. Keep the exact injectivity inequalities unchanged.",
+  "previous_refusal": [
+    2001,
+    2003,
+    2004
+  ],
+  "candidate_refusal": [
+    13001,
+    13009,
+    13010
+  ],
+  "outward_only": true,
+  "elapsed_seconds": 10.692681791,
+  "actual_refusal": "WrappedNormalFailure { operation: NormalExtrusion, stage: Construction, class: Incomplete, entities: [Region(SurfaceRegionId(13001)), Curve(SurfaceCurveId(13009)), Curve(SurfaceCurveId(13010))], cause: Cone(ConeFailure { stage: Construction, class: Incomplete, region: Some(SurfaceRegionId(13001)), span: Some(CurveSpan { curve: SurfaceCurveId(13009), level: 0, index: 0 }), cause: ActualPair { cause: ConicalActualPatchError { stage: Adjacent, side: Some(ConicalActualSideId(283)), cap: None, operations: 67298, options: ConeClearanceOptions { fractional_bits: 128, max_operations: 1000000 }, cause: SidePair { sides: [ConicalActualSideId(283), ConicalActualSideId(284)], cause: Unresolved { quantity: \"whole-union f_u\", lower: DyadicBound { significand: -908128030724506952202775343049543559, exponent: -124 }, upper: DyadicBound { significand: -908128030724506952202775343049543559, exponent: -124 }, expected: \"strictly positive\" } } }, entities: [Region(SurfaceRegionId(13001)), Curve(SurfaceCurveId(13009)), Region(SurfaceRegionId(13001)), Curve(SurfaceCurveId(13010))] } }) }",
+  "published_body": false,
+  "candidate_source_restored": true,
+  "removed_executable_sha256": "dd2d225d1c8f0c3f976359555bbde2a62a8dbd7a46a3e1e88ad42e0da9747deb",
+  "removed_executable_bytes": 138113488
+}

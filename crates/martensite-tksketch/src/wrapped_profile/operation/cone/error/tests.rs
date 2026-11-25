@@ -176,3 +176,13 @@ fn boxed_sector_keeps_public_leaf_identity_and_cancellation() {
 }
 
 mod boundary;
+
+mod chart_joins;
+
+mod chart_trims;
+
+mod developed_material;
+
+mod actual_pairs;
+
+mod accumulation;

@@ -1,0 +1,87 @@
+{
+  "runs": [
+    {
+      "label": "math-integrals",
+      "command": [
+        "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tkmath-fed422b24a04790c",
+        "rational_integrals",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "passed": 133,
+      "failed": 0,
+      "log": "/tmp/martensite-570-focused-validation-r3/math-integrals.log"
+    },
+    {
+      "label": "sketch-flux-accounting",
+      "command": [
+        "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tksketch-1bce81d5a48f0d86",
+        "operation::cone::measures::flux::tests",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "passed": 2,
+      "failed": 0,
+      "log": "/tmp/martensite-570-focused-validation-r3/sketch-flux-accounting.log"
+    },
+    {
+      "label": "sketch-error-projection",
+      "command": [
+        "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tksketch-1bce81d5a48f0d86",
+        "operation::cone::error::tests::accumulation",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "log": "/tmp/martensite-570-focused-validation-r3/sketch-error-projection.log"
+    },
+    {
+      "label": "legacy-v1-complete",
+      "command": [
+        "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tksketch-1bce81d5a48f0d86",
+        "geometric_v6_",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "passed": 2,
+      "failed": 0,
+      "log": "/tmp/martensite-570-focused-validation-r3/legacy-v1-complete.log",
+      "work": [
+        {
+          "event": "narrow_cone_completed_work",
+          "arithmetic_operations": 989355,
+          "integration_subintervals": 444,
+          "retained_spans": 148
+        },
+        {
+          "event": "narrow_cone_completed_work",
+          "arithmetic_operations": 989355,
+          "integration_subintervals": 444,
+          "retained_spans": 148
+        }
+      ]
+    },
+    {
+      "label": "v2-complete",
+      "command": [
+        "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tksketch-1bce81d5a48f0d86",
+        "accumulation_v2_preserves_complete_actual_si_and_original_caps",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "passed": 2,
+      "failed": 0,
+      "log": "/tmp/martensite-570-focused-validation-r3/v2-complete.log"
+    }
+  ],
+  "all_requested_completed": true,
+  "all_passed": true,
+  "source_changed": [],
+  "finished": "2026-11-19T22:57:20.739236+00:00"
+}

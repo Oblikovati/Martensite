@@ -1,0 +1,8 @@
+{
+  "head": "6e176cf07a736b78a399bfbe4fd5c83462b497d2",
+  "main_fix": "a7a705f9",
+  "patch_sha256": "ab4ffe731c3c72a1ea78140b48ccf13dd20a26ddc8a079592cd51e3bf02c8641",
+  "new_tests_identical_to_reviewed_main": true,
+  "preserved_B1_only_difference": "Existing pub(super) visibility of measure_captured_axes; otherwise parent module equals reviewed main fix",
+  "shipping_main_first": true
+}

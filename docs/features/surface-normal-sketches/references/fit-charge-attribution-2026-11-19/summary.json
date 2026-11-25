@@ -1,0 +1,29 @@
+{
+  "classes": {
+    "accepted": {
+      "attempts": 148,
+      "operations": 433797
+    },
+    "rejected": {
+      "attempts": 136,
+      "operations": 254957
+    }
+  },
+  "attempts": 284,
+  "fitted_boundary_units": 688754,
+  "original_radius_units": 6664,
+  "whole_operation_units": 989355,
+  "rejected_share_whole": 0.2577002188294394,
+  "rejected_share_fitted": 0.3701713529068434,
+  "avoiding_all_rejected_theoretical_units": 734398,
+  "theoretical_limit_note": "not a measured replacement; changes in spans, planning and later stages may alter work",
+  "full_operation_test_exit": 0,
+  "source_paths_verified": 346,
+  "source_changed": [],
+  "discarded_probe_artifacts": [
+    {
+      "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tksketch-1bce81d5a48f0d86",
+      "sha256": "1309efa037223b6c2c5b5756e2b00e0ee8b11959d8065e1b7cc793d2de8fe140"
+    }
+  ]
+}

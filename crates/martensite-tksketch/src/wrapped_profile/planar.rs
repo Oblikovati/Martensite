@@ -9,32 +9,50 @@ mod order_tests;
 #[path = "planar_tests.rs"]
 mod tests;
 
+#[path = "planar_directed.rs"]
+pub(super) mod directed;
 #[path = "planar_joins.rs"]
 mod joins;
 #[path = "planar_sources.rs"]
-mod source;
+pub(super) mod source;
 
 type LoopIdentity = Vec<(ProfileCurveId, bool)>;
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(super) struct MaterialIdentity {
     outer: LoopIdentity,
     holes: Vec<LoopIdentity>,
 }
 
-#[derive(Debug)]
 pub(super) struct PlanarEvidence {
     pub area: Measured,
+    pub selected_region: RegionId,
     #[cfg(test)]
     pub certificate: RegionCertificate,
     identity: MaterialIdentity,
     source: source::SourceSnapshot,
+    integral: Option<PlanarIntegralEvidence>,
 }
 
 impl PlanarEvidence {
     pub(super) fn matches_request(&self, request: &DevelopedRegionRequest) -> bool {
+        self.matches_member(request)
+            && self
+                .integral
+                .as_ref()
+                .is_none_or(|proof| matches_integral_profile(proof, std::slice::from_ref(request)))
+    }
+
+    pub(super) fn matches_member(&self, request: &DevelopedRegionRequest) -> bool {
         requested_identity(request).is_ok_and(|id| id == self.identity)
             && self.source.matches(request)
     }
+}
+
+pub(super) fn matches_integral_profile(
+    proof: &PlanarIntegralEvidence,
+    requests: &[impl AsRef<DevelopedRegionRequest>],
+) -> bool {
+    combined_profile(requests).is_ok_and(|profile| proof.matches_profile(&profile))
 }
 
 #[derive(Debug)]
@@ -52,6 +70,7 @@ pub(super) enum PlanarFailure {
         index: u32,
     },
     NonAuthoredVertex(CornerSource),
+    MissingVertex(ProfileVertexId),
     EmptyMaterial,
     Join(Box<joins::JoinFailure>),
 }
@@ -72,6 +91,7 @@ impl std::fmt::Display for PlanarFailure {
                 index,
             } => source_message(f, *curve, *level, *index),
             Self::NonAuthoredVertex(source) => vertex_message(f, *source),
+            Self::MissingVertex(id) => write!(f, "vertex={id:?}; expected a captured endpoint"),
             Self::EmptyMaterial => write!(
                 f,
                 "material loops=0; expected an outer boundary with optional holes"
@@ -164,7 +184,47 @@ pub(super) fn capture_with_proof_and_cancel(
     .map_err(|cause| PlanarFailure::WorkCapture(Box::new(cause)))
 }
 
-fn combined_profile(
+pub(super) fn capture_with_integration_budget_and_cancel(
+    requests: &[impl AsRef<DevelopedRegionRequest>],
+    tolerance: f64,
+    work: PlanarProofWorkLimit,
+    version: PlanarProofVersion,
+    remaining: u64,
+    cancelled: impl FnMut() -> bool + Send,
+) -> Result<PlanarRegionSet, PlanarFailure> {
+    let profile = combined_profile(requests)?;
+    build_planar_regions_with_integration_budget_and_cancel(
+        &profile,
+        super::pipeline::resolution(tolerance),
+        work,
+        version,
+        remaining,
+        cancelled,
+    )
+    .map_err(|cause| PlanarFailure::WorkCapture(Box::new(cause)))
+}
+impl PlanarEvidence {
+    pub(super) fn integral_program_evidence(&self) -> Option<&PlanarIntegralEvidence> {
+        self.integral.as_ref()
+    }
+}
+impl std::fmt::Debug for PlanarEvidence {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut output = f.debug_struct("PlanarEvidence");
+        output.field("area", &self.area);
+        #[cfg(test)]
+        output.field("certificate", &self.certificate);
+        output
+            .field("identity", &self.identity)
+            .field("source", &self.source);
+        if let Some(integral) = &self.integral {
+            output.field("integral", integral);
+        }
+        output.finish()
+    }
+}
+
+pub(super) fn combined_profile(
     requests: &[impl AsRef<DevelopedRegionRequest>],
 ) -> Result<SketchProfile, PlanarFailure> {
     let mut combined = SketchProfile {
@@ -260,13 +320,67 @@ pub(super) fn select(
 ) -> Result<PlanarEvidence, PlanarFailure> {
     let expected = requested_identity(request)?;
     let selected = unique_region(&expected, captured)?;
-    Ok(PlanarEvidence {
+    Ok(selected_evidence(request, captured, expected, selected))
+}
+
+pub(super) fn select_members(
+    requests: &[impl AsRef<DevelopedRegionRequest>],
+    captured: &PlanarRegionSet,
+) -> Result<BTreeMap<SurfaceRegionId, PlanarEvidence>, (SurfaceRegionId, PlanarFailure)> {
+    if let [request] = requests {
+        let request = request.as_ref();
+        return select(request, captured)
+            .map(|proof| [(request.region, proof)].into())
+            .map_err(|cause| (request.region, cause));
+    }
+    let mut index = BTreeMap::<_, Vec<_>>::new();
+    for candidate in captured.regions() {
+        index
+            .entry(region_identity(candidate))
+            .or_default()
+            .push(candidate);
+    }
+    requests
+        .iter()
+        .map(|request| {
+            let request = request.as_ref();
+            select_indexed(request, captured, &index)
+                .map(|proof| (request.region, proof))
+                .map_err(|cause| (request.region, cause))
+        })
+        .collect()
+}
+
+fn select_indexed(
+    request: &DevelopedRegionRequest,
+    captured: &PlanarRegionSet,
+    index: &BTreeMap<MaterialIdentity, Vec<&PlanarRegion>>,
+) -> Result<PlanarEvidence, PlanarFailure> {
+    let expected = requested_identity(request)?;
+    if let Some([selected]) = index.get(&expected).map(Vec::as_slice) {
+        return Ok(selected_evidence(request, captured, expected, selected));
+    }
+    Err(PlanarFailure::Selection {
+        expected,
+        candidates: captured.regions().iter().map(region_identity).collect(),
+    })
+}
+
+fn selected_evidence(
+    request: &DevelopedRegionRequest,
+    captured: &PlanarRegionSet,
+    expected: MaterialIdentity,
+    selected: &PlanarRegion,
+) -> PlanarEvidence {
+    PlanarEvidence {
         area: selected.area(),
+        selected_region: selected.id(),
         #[cfg(test)]
         certificate: captured.certificate(),
         identity: expected,
         source: source::SourceSnapshot::capture(request),
-    })
+        integral: captured.integral_program_evidence().cloned(),
+    }
 }
 
 fn unique_region<'a>(

@@ -1,19 +1,32 @@
 //! Budget-driven dyadic fits precede native construction; only spatial refusals subdivide.
 use super::*;
+mod local;
+pub(super) use local::plan as plan_local;
 #[cfg(test)]
 mod tests;
 use martensite_cmath::atan;
 pub(super) fn plan(
     prepared: &mut Prepared,
     original: &AuthoredPiece,
+    local: Option<ConicalChartDomainEvidence>,
     endpoints: &mut endpoints::EndpointPool,
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<Vec<AuthoredPiece>> {
-    let mut pending = vec![original.clone()];
+    let seed = seed_piece(
+        prepared,
+        original,
+        local.as_ref().or(prepared.chart_domain.as_deref()),
+    )?;
+    let slot = local
+        .map(|chart| prepared.retain_local_chart(original.span, chart))
+        .transpose()?;
+    let mut pending = vec![seed];
     let mut accepted = Vec::new();
     while let Some(mut piece) = pending.pop() {
-        let candidate = candidate(prepared, original, &mut piece, endpoints, work, cancelled);
+        let candidate = candidate(
+            prepared, original, &mut piece, slot, endpoints, work, cancelled,
+        );
         match candidate {
             Ok(fit) => {
                 prepared.fits.insert(piece.span, fit);
@@ -24,23 +37,77 @@ pub(super) fn plan(
     }
     Ok(accepted)
 }
+fn seed_piece(
+    prepared: &Prepared,
+    original: &AuthoredPiece,
+    chart: Option<&ConicalChartDomainEvidence>,
+) -> ConeChecked<AuthoredPiece> {
+    let scope = chart.and_then(ConicalChartDomainEvidence::source_restriction);
+    let Some((index, level)) = scope else {
+        return Ok(original.clone());
+    };
+    let within = domain::covers(
+        (u64::from(original.span.index), original.span.level),
+        (index, level),
+    );
+    if level > prepared.source.max_fit_level || !within {
+        return Err(restriction_failure(prepared, original.span, index, level));
+    }
+    Ok(subdivision::restrict_piece(original, index, level))
+}
+
+fn restriction_failure(
+    prepared: &Prepared,
+    source: CurveSpan,
+    index: u64,
+    level: u8,
+) -> ConeFailure {
+    failure(
+        Some(prepared.source.region),
+        Some(source),
+        ConeCause::Binding {
+            field: "local chart restriction within authored span and allowed fit level",
+            actual: vec![index, u64::from(level)],
+            expected: vec![
+                u64::from(source.index),
+                u64::from(source.level),
+                u64::from(prepared.source.max_fit_level),
+            ],
+        },
+    )
+}
+
 fn candidate(
-    prepared: &mut Prepared,
+    prepared: &Prepared,
     original: &AuthoredPiece,
     piece: &mut AuthoredPiece,
+    slot: Option<domain::ChartSlot>,
     endpoints: &mut endpoints::EndpointPool,
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<SpanFit> {
     let turns = endpoint_turns(piece, prepared.wedge);
-    piece.chart_center = prepared.chart_center;
+    let metric = prepared.boundary_metric(piece.span, slot)?;
+    piece.chart_center = metric.chart.map_or(
+        prepared.chart_center,
+        ConicalChartDomainEvidence::fit_center,
+    );
     let fit = candidate_fit(prepared, piece, turns, endpoints)?;
     let poles = candidate_edges(prepared, piece, &fit)?;
     let uv = cap_uv(&fit, prepared.reference_slant);
     let view = fit.view();
     let query = boundary_query(prepared, original, piece, &view, &poles, turns[0]);
-    let boundary = certify(prepared.source.region, piece.span, query, work, cancelled)?;
+    let boundary = certify(
+        prepared.source.region,
+        piece.span,
+        metric,
+        query,
+        work,
+        cancelled,
+    )?;
     Ok(SpanFit {
+        transition: None,
+        local_chart: slot,
         fit,
         poles,
         uv,
@@ -64,7 +131,7 @@ fn candidate_fit(
         physical_turns: [0; 2],
         outward: true,
     };
-    let shared = endpoints.pair(prepared, piece, &query)?;
+    let shared = endpoints.pair(prepared.source.region, piece, &query)?;
     let fit = cone_mapping::fit::fit_span(&query, &shared).map_err(|cause| {
         failure(
             Some(prepared.source.region),
@@ -87,18 +154,36 @@ fn candidate_edges(
                 ConeCause::Coefficients(cause),
             )
         })?;
+    if domain::directed(prepared) {
+        native_weight_gauge(&mut poles);
+    }
     bind_native_endpoints(prepared, piece, &mut poles);
     Ok(poles)
+}
+
+fn native_weight_gauge(rows: &mut [angular::RationalPoles; 2]) {
+    // #536: the two rows share the same positive weights. Native Bézier storage
+    // encodes a constant weight as unit weights, with no change in the curve.
+    let weights = &rows[0].weights;
+    if weights
+        .first()
+        .is_some_and(|first| *first != 1. && weights.iter().all(|w| w == first))
+    {
+        for row in rows {
+            row.weights.fill(1.);
+        }
+    }
 }
 
 fn certify(
     region: SurfaceRegionId,
     span: CurveSpan,
+    metric: domain::BoundaryMetric<'_>,
     query: ConicalBoundaryQuery<'_>,
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<std::sync::Arc<ConicalBoundaryEvidence>> {
-    let result = certify_conical_boundary(query, work.remaining(), cancelled);
+    let result = metric.certify(query, work.remaining(), cancelled);
     let operations = match &result {
         Ok(proof) => proof.operations(),
         Err(cause) => cause.operations(),

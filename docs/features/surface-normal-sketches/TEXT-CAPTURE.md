@@ -192,3 +192,30 @@ The remaining qualification path is the existing hosted sanitizer job with the
 new pinned-font checkout prerequisite. Both startup markers and both actual
 font stress controls must pass there at the candidate SHA before merge. The
 older hosted primitive control remains runtime-existence evidence only.
+
+
+## Packaged desktop attachment fixture
+
+The source is the Oblikovati desktop test at `6422e5cc3` that creates a
+Circle → Extrude body, selects its cylindrical side, and places the full
+two-line text with `save_full_wrapped_text`. The test uses the layout input
+corners `[-40, 22]` and `[68, 75]` and the bundled Liberation Sans Regular
+font. Export the selected face attachment's `record().brep` before applying
+the extrusion. Take the solved profile and selected outer and hole cycles
+from the saved wrap recipe. The text fixture stores vertex and pole
+coordinates as binary64 hex and records traversal in signed authored
+curve IDs. It has 265 authored curves and 18 material regions.
+
+| Packaged input | SHA-256 |
+| --- | --- |
+| [Native stock](../../../crates/martensite-tksketch/tests/fixtures/wrapped_text/desktop-text-cylinder.brep) | `b712dbe247f224b725bad0504c761863b832241b9f47c4032cc730a871bea522` |
+| [Solved authored loops](../../../crates/martensite-tksketch/tests/fixtures/wrapped_text/desktop-text-material.tsv) | `0a312b3b8a3bc761bf1394850bc2b80c25e50c169a60797c863aacbaad94b7f3` |
+
+Replay both normal senses in the kernel and compare the finished solids
+with the independent native checks and signed material bounds.
+
+```sh
+cargo test --locked --release -p martensite-tksketch --lib \
+  certified_cylinder_seam_crossing_desktop_265_curve_text \
+  -- --ignored --nocapture --test-threads=1
+```

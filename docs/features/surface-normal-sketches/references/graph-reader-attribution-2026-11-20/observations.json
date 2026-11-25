@@ -1,0 +1,193 @@
+[
+  {
+    "event": "graph_reader_begin",
+    "n": 12,
+    "domains": 78,
+    "owned": true,
+    "counts": [
+      0,
+      1,
+      1,
+      2,
+      72,
+      2,
+      1,
+      0,
+      1,
+      12,
+      0,
+      0,
+      0
+    ],
+    "retained_kinds": [
+      78,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "event": "graph_reader_end",
+    "n": 12,
+    "domains": 78,
+    "owned": true,
+    "counts": [
+      234,
+      235,
+      235,
+      470,
+      16920,
+      3044,
+      235,
+      0,
+      1,
+      12,
+      0,
+      0,
+      0
+    ],
+    "retained_kinds": [
+      78,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "event": "graph_reader_begin",
+    "n": 137,
+    "domains": 9453,
+    "owned": true,
+    "counts": [
+      0,
+      1,
+      1,
+      2,
+      822,
+      2,
+      1,
+      1,
+      1,
+      137,
+      0,
+      0,
+      0
+    ],
+    "retained_kinds": [
+      0,
+      9453,
+      0,
+      9316,
+      137,
+      0,
+      0
+    ]
+  },
+  {
+    "event": "graph_reader_end",
+    "n": 137,
+    "domains": 9453,
+    "owned": true,
+    "counts": [
+      28359,
+      28360,
+      28360,
+      56720,
+      23311920,
+      3913544,
+      28360,
+      28360,
+      1,
+      137,
+      0,
+      0,
+      0
+    ],
+    "retained_kinds": [
+      0,
+      9453,
+      0,
+      9316,
+      137,
+      0,
+      0
+    ]
+  },
+  {
+    "event": "graph_reader_begin",
+    "n": 11,
+    "domains": 66,
+    "owned": true,
+    "counts": [
+      0,
+      1,
+      1,
+      2,
+      66,
+      2,
+      1,
+      1,
+      1,
+      11,
+      0,
+      0,
+      0
+    ],
+    "retained_kinds": [
+      0,
+      66,
+      0,
+      55,
+      11,
+      0,
+      0
+    ]
+  },
+  {
+    "event": "graph_reader_end",
+    "n": 11,
+    "domains": 66,
+    "owned": true,
+    "counts": [
+      198,
+      199,
+      199,
+      398,
+      13134,
+      2378,
+      199,
+      199,
+      1,
+      11,
+      0,
+      0,
+      0
+    ],
+    "retained_kinds": [
+      0,
+      66,
+      0,
+      55,
+      11,
+      0,
+      0
+    ]
+  },
+  {
+    "event": "directed_narrow_cone_api",
+    "sense": "Outward",
+    "seconds": 7.581873
+  },
+  {
+    "event": "narrow_cone_completed_work",
+    "arithmetic_operations": 994535,
+    "integration_subintervals": 444,
+    "retained_spans": 148
+  }
+]

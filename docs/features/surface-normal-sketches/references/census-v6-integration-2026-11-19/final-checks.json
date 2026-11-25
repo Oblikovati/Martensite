@@ -1,0 +1,19 @@
+{
+  "source_changed": [],
+  "test_counts": {
+    "tkbo_affected": 184,
+    "math_geometric_filter": 18,
+    "sketch_geometric_filter": 4
+  },
+  "total_passed": 206,
+  "whole_api_diagnostic_seconds": {
+    "inward": 7.920225,
+    "outward": 7.853291
+  },
+  "coverage": {
+    "spans": 148,
+    "integration_cells": 444,
+    "metric_arithmetic_operations": 989355
+  },
+  "status": "local targeted integration passed; full gates, checked-release benchmark, wider matrix and integration pending"
+}

@@ -7,7 +7,7 @@ use crate::predicates::roots::metric_bounds::MetricBezier;
 pub struct CylindricalTrimQuery<'a> {
     /// Retained 3D rational Bezier, degree one through nine on `[0,1]`.
     pub curve: MetricBezier<'a, 3>,
-    /// Retained polynomial Bezier `(angle,height)` controls, degree one through three.
+    /// Retained polynomial Bezier `(angle,height)` controls. The ranged API permits degree five.
     pub pcurve: &'a [[f64; 2]],
     /// Actual positive cylinder radius; placement/frame admission belongs to the caller.
     pub radius: f64,
@@ -23,6 +23,7 @@ pub struct CylindricalTrimQuery<'a> {
 pub struct CertifiedCylindricalTrim {
     pub(super) bounds: [f64; 3],
     pub(super) bits: Vec<u64>,
+    pub(super) ranges: [[f64; 2]; 2],
     pub(super) limit: f64,
     pub(super) options: CylindricalProfileOptions,
     pub(super) operations: u32,
@@ -55,7 +56,21 @@ impl CertifiedCylindricalTrim {
     /// Compare geometry bits independently of limit/work policy; this does not recertify another limit.
     /// Example: `assert!(proof.matches_source(query));`.
     pub fn matches_source(&self, query: CylindricalTrimQuery<'_>) -> bool {
-        admit(query).is_ok() && self.bits == source_bits(query)
+        self.matches_ranges(query, [[0., 1.]; 2])
+    }
+
+    /// Exact ranges certified on the space curve and pcurve. Example: `proof.ranges()`.
+    pub fn ranges(&self) -> [[f64; 2]; 2] {
+        self.ranges
+    }
+
+    /// Compare parent coefficients, support radius and active intervals.
+    /// Example: `assert!(proof.matches_ranges(query, proof.ranges()));`.
+    pub fn matches_ranges(&self, query: CylindricalTrimQuery<'_>, ranges: [[f64; 2]; 2]) -> bool {
+        admit(query, 6).is_ok()
+            && self.ranges.map(|pair| pair.map(f64::to_bits))
+                == ranges.map(|pair| pair.map(f64::to_bits))
+            && self.bits == source_bits(query)
     }
 }
 
@@ -95,7 +110,7 @@ impl std::fmt::Display for CylindricalTrimError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "cylindrical cap trim radius={}, limit={}: {:?}; expected finite degree-1..=3 polynomial UV controls, degree-1..=9 space controls, positive weights/radius and a complete spatial bound",
+            "cylindrical cap trim radius={}, limit={}: {:?}; expected finite polynomial UV controls within the selected proof's degree limit, degree-1..=9 space controls, positive weights/radius and a complete spatial bound",
             self.radius, self.requested_spatial_limit, self.cause
         )
     }

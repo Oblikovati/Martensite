@@ -141,15 +141,30 @@ impl WirePair<'_> {
     fn intersect(&self, wire1: &Shape, wire2: &Shape) -> Result<bool, Failure> {
         let (c1, c2) = (Geom2dAdaptorCurve::default(), Geom2dAdaptorCurve::default());
         let mut inter = GInter::new();
-        for s1 in sub_shapes(wire1, ShapeEnum::Edge)? {
+        let first = sub_shapes(wire1, ShapeEnum::Edge)?;
+        if first.is_empty() {
+            return Ok(false);
+        }
+        let second = sub_shapes(wire2, ShapeEnum::Edge)?;
+        for s1 in first {
             let edge1 = Edge::unchecked(s1);
             let range1 = load_pcurve(&c1, &edge1, self.face)?;
             let box1 = self.edge_box(&edge1, &c1, range1)?;
-            for s2 in sub_shapes(wire2, ShapeEnum::Edge)? {
-                let edge2 = Edge::unchecked(s2);
-                if edge1.is_same(&edge2) {
+            for s2 in &second {
+                if edge1.is_same(s2) {
                     continue;
                 }
+                // wire_boxes already read this exact occurrence's pcurve and range.
+                // Use the same non-void bounds before loading another adaptor for the pair.
+                if !box1.is_void()
+                    && self
+                        .boxes
+                        .seek(s2)
+                        .is_some_and(|bounds| !bounds.is_void() && box1.is_out_box(bounds))
+                {
+                    continue;
+                }
+                let edge2 = Edge::unchecked(s2.clone());
                 let range2 = load_pcurve(&c2, &edge2, self.face)?;
                 let box2 = self.edge_box(&edge2, &c2, range2)?;
                 if box1.is_out_box(&box2) {

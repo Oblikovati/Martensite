@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "martensite-tksketch",
+    "--test",
+    "surface_sketch",
+    "accumulation_v2_preserves_complete_actual_si_and_original_caps",
+    "--",
+    "--test-threads=1"
+  ],
+  "correction": "Existing surface_sketch Cargo integration target; prior toolkit target did not exist and executed zero tests",
+  "source_unchanged": true
+}

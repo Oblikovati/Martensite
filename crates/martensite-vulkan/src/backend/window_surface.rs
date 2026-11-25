@@ -14,8 +14,11 @@ pub(crate) struct WindowPresenter {
     pub(super) chain: Option<WindowChain>,
     pub(super) present_family: u32,
     retiring: super::window_chain_retirement::RetiringChains,
-    /// The requested extent and vsync of the last surface query, and its result.
-    last_query: Option<(([u32; 2], bool), WindowConfig)>,
+    /// The requested extent and frame queue of the last surface query, and its result.
+    last_query: Option<(
+        ([u32; 2], crate::driver_options::WindowFrameQueue),
+        WindowConfig,
+    )>,
     /// The job that holds `chain` on the presentation thread (#594).
     presenting: Option<Arc<super::window_present_thread::PresentReceipt>>,
     pub(super) assembly_sources: Vec<crate::PrimitiveDraw>,
@@ -125,11 +128,11 @@ impl WindowPresenter {
     pub(super) fn acquire(
         &mut self,
         extent: [u32; 2],
-        vsync: bool,
+        frame_queue: crate::driver_options::WindowFrameQueue,
         contract: super::window_gui_contract::WindowGuiContract,
     ) -> Result<u32, RenderError> {
         self.reclaim_chain();
-        let config = self.window_config(extent, vsync, contract)?;
+        let config = self.window_config(extent, frame_queue, contract)?;
         contract.validate(
             [config.extent.width, config.extent.height],
             crate::RenderGuiSurfacePhase::Acquire,
@@ -138,22 +141,22 @@ impl WindowPresenter {
         let result = self.chain.as_mut().unwrap().acquire();
         // The submission waits on the acquired semaphore; the host waits on the acquire
         // fence only when this slot is used again (#594).
-        self.resolve_window_acquire(result, extent, vsync, contract)
+        self.resolve_window_acquire(result, extent, frame_queue, contract)
     }
     /// The surface configuration for this frame. A frame without GUI that asks for the same extent
-    /// and vsync as the last query reuses it while the chain is not stale: the surface queries
+    /// and frame queue as the last query reuses it while the chain is not stale: the surface queries
     /// are X server round trips that OCCT's redraw does not make, and a window change still
     /// marks the chain stale through a suboptimal or out-of-date result (#594). A GUI frame
     /// observes the surface every time, so it still detects a native resize the view missed.
     fn window_config(
         &mut self,
         extent: [u32; 2],
-        vsync: bool,
+        frame_queue: crate::driver_options::WindowFrameQueue,
         contract: super::window_gui_contract::WindowGuiContract,
     ) -> Result<WindowConfig, RenderError> {
         let fresh_chain = self.chain.as_ref().is_some_and(|chain| !chain.stale);
         if let Some((key, config)) = self.last_query
-            && key == (extent, vsync)
+            && key == (extent, frame_queue)
             && fresh_chain
             && !contract.observes_surface()
         {
@@ -164,9 +167,9 @@ impl WindowPresenter {
             &self.surface.loader,
             self.surface.handle,
             extent,
-            vsync,
+            frame_queue,
         )?;
-        self.last_query = Some(((extent, vsync), config));
+        self.last_query = Some(((extent, frame_queue), config));
         Ok(config)
     }
     fn prepare_window_chain(&mut self, config: WindowConfig) -> Result<(), RenderError> {
@@ -187,7 +190,7 @@ impl WindowPresenter {
         &mut self,
         result: Result<u32, vk::Result>,
         extent: [u32; 2],
-        vsync: bool,
+        frame_queue: crate::driver_options::WindowFrameQueue,
         contract: super::window_gui_contract::WindowGuiContract,
     ) -> Result<u32, RenderError> {
         match result {
@@ -197,18 +200,22 @@ impl WindowPresenter {
                 if let Some(change) = contract.out_of_date(crate::RenderGuiSurfacePhase::Acquire) {
                     return Err(change);
                 }
-                self.legacy_reacquire(extent, vsync)
+                self.legacy_reacquire(extent, frame_queue)
             }
             Err(error) => Err(vk_error("acquire window image", error)),
         }
     }
-    fn legacy_reacquire(&mut self, extent: [u32; 2], vsync: bool) -> Result<u32, RenderError> {
+    fn legacy_reacquire(
+        &mut self,
+        extent: [u32; 2],
+        frame_queue: crate::driver_options::WindowFrameQueue,
+    ) -> Result<u32, RenderError> {
         let config = WindowConfig::query(
             &self.runtime,
             &self.surface.loader,
             self.surface.handle,
             extent,
-            vsync,
+            frame_queue,
         )?;
         self.recreate(config)?;
         self.chain

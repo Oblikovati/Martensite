@@ -5,8 +5,9 @@ Phase A candidate. The curved holed-cone public-entry workload completes.
 Gate A review 2 ended with memory-only remediation after resolving the four
 reference/body correctness findings. On 2026-11-18 the maintainer accepted this
 candidate's quantified code/process footprint tradeoff. Final review 3 accepted
-the phase commit and ready PR. Required hosted checks, including new cone TSan,
-must pass before merge. Related:
+the phase commit and ready PR. Required hosted checks, including actual new cone
+TSan execution, passed on `7a2aa081` before PR #549 merged into `release/next`
+at `8f2b4231`. B/C qualification remains outstanding. Related:
 #414 and #418. The tracked
 [2026-11-13 review](../../features/surface-normal-sketches/REVIEW-2026-11-13.md#verdict)
 recommends rational edges and one complete operation before further proof work.
@@ -133,15 +134,17 @@ records 41 affected packages, 473 native targets and 40 doctest crates:
 89075 passed, 0 failed and 158 ignored, with 9 separate unsafe-inventory passes.
 Outer totals exclude intentional nested SDK/worker summaries; the
 [verification record](../../features/surface-normal-sketches/VERIFICATION.md#canonical-cone-pr-gate-2026-11-18)
-retains exact source, command and exclusion scope. Hosted checks remain pending.
+retains exact source, command and exclusion scope. Those local checks preceded
+the hosted pass recorded below.
 The focused ordinary
 [public cone concurrency control](../../features/surface-normal-sketches/VERIFICATION.md#ordinary-public-cone-concurrency-control)
 passed 1/0/0 in 9.71 seconds, covering overlapping operations and shared readers
 with isolated native exports. Ordinary sanitizer-driver and inventory checks
 passed 46 and 9 tests; their [receipt](../../features/surface-normal-sketches/references/cone-tsan-driver-2026-11-18-receipt.json)
-retains the frozen source hashes. TSan startup exited 139 before either main
-marker. No instrumented cone control was built or run, and cone TSan coverage
-has not passed.
+retains the frozen source hashes. Local TSan startup exited 139 before either
+main marker; that failed attempt built no instrumented cone control. The later
+hosted cone control actually ran and passed 1/0/0 in 167.83 seconds, as retained
+in its [receipt](../../features/surface-normal-sketches/references/phase-a-549-hosted-tsan-receipt-2026-11-18.json).
 The maintainer's 2026-11-18 "accepted" decision covers the matched production
 consumer's +156 KiB (about 0.3%) median RSS and associated quantified code
 footprint in the [memory record](../../features/surface-normal-sketches/PRODUCTION-MEMORY-ACCEPTANCE.md#maintainer-decision-2026-11-18).
@@ -149,8 +152,12 @@ It is case-specific; runtime, heap, tolerance and general performance policy
 remain unchanged. Final
 [review 3](../../features/surface-normal-sketches/references/cone-gate-a-oracle-3-2026-11-18.md)
 accepted delivery of this bounded Phase A result as a commit and ready PR.
-Required hosted checks, including new cone TSan, remain pending before merge;
-B/C have not started.
+Required hosted checks passed on PR head
+`7a2aa0814a3f8c5b049aaec74b5d98bd26b296fe`, with 55 successful and 4 skipped
+checks in the [final receipt](../../features/surface-normal-sketches/references/phase-a-549-hosted-final-receipt-2026-11-18.json).
+Those receipts were captured before PR #549 merged at
+`8f2b423103d13b22d9724747946b43ee1ca15ded`; merge identity is separate from the
+tested head. B/C qualification remains outstanding.
 These results do not complete the broader capability or authorize a release.
 
 The earlier [cap microbenchmark](../../features/surface-normal-sketches/references/cap-representation-microbenchmark-2026-11-17.json)

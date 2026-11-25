@@ -1,0 +1,7 @@
+profile: debug (opt 0, bignum opt 3)
+O137: Stats { self_excluded: 137, sweep_candidates: 137, box_excluded: 9179, adjacent_certified: 137, hull_excluded: 0, unresolved: 0 }
+   predicates/run 2204, exact fallbacks 0
+   census v2: 0.046 ms/run   |   all-pairs exact BigRational root test: 233.8 ms (9179 pairs excluded)
+dot11: Stats { self_excluded: 11, sweep_candidates: 11, box_excluded: 44, adjacent_certified: 11, hull_excluded: 0, unresolved: 0 }
+   predicates/run 169, exact fallbacks 0
+   census v2: 0.003 ms/run   |   all-pairs exact BigRational root test: 1.3 ms (44 pairs excluded)

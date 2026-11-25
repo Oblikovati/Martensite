@@ -1,12 +1,17 @@
 //! The family gate publishes one q/L reference and separately labelled native proxies.
 use super::comparison::add;
 use super::*;
+mod native_validation;
 pub(super) fn certify(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     family: &OwnedFamily<Selection, Geometry>,
     work: &mut storage::Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<Budget> {
+    native_validation::require(family)?;
+    if family.selection.executed_selection.is_connected_atlas() {
+        return connected(request, family, work);
+    }
     let reference = material::certify_reference(request, family, work, cancelled)?;
     let mut bounds = accumulated(family)?;
     verify_work(request, family, work, reference.operations())?;
@@ -17,12 +22,58 @@ pub(super) fn certify(
         .max(reference.filled_error())
         .max(cap_reference_proxy_error);
     enforce_spatial(request, bounds.spatial_error)?;
-    completed(bounds, reference, cap_reference_proxy_error, work)
+    completed(bounds, reference, cap_reference_proxy_error, None, work)
+}
+fn connected(
+    request: &ConeRun<'_>,
+    family: &OwnedFamily<Selection, Geometry>,
+    work: &mut storage::Work,
+) -> ConeChecked<Budget> {
+    let region = family
+        .selection
+        .prepared
+        .first()
+        .map(|p| p.source.region)
+        .ok_or_else(|| {
+            scalar(
+                "decoded atlas member count",
+                0.,
+                "at least one certified member",
+            )
+        })?;
+    let captured = work
+        .connected
+        .take()
+        .ok_or_else(|| material::mismatch(region, None, "completed decoded atlas binding"))?;
+    let (reference, binding) = captured.finish(region)?;
+    let mut bounds = accumulated(family)?;
+    verify_work(request, family, work, binding.operations)?;
+    enforce(request.options.volume, &bounds.volume)?;
+    let [composed, cap] = connected_errors(&reference, region)?;
+    bounds.spatial_error = bounds.spatial_error.max(composed);
+    enforce_spatial(request, bounds.spatial_error)?;
+    completed(bounds, reference, cap, Some(Box::new(binding)), work)
+}
+fn connected_errors(
+    reference: &ConicalReferenceEvidence,
+    region: SurfaceRegionId,
+) -> ConeChecked<[f64; 2]> {
+    let caps = reference
+        .decoded_caps()
+        .ok_or_else(|| material::mismatch(region, None, "decoded cap family reference"))?;
+    let mut bounds = [0_f64; 2];
+    for cap in caps {
+        bounds[0] = bounds[0].max(upper(cap.composed_error())?);
+        let [first, last] = cap.cap_errors();
+        bounds[1] = bounds[1].max(upper(first.max(last))?);
+    }
+    Ok(bounds)
 }
 fn completed(
     bounds: FamilyBounds,
     reference: ConicalReferenceEvidence,
     cap_reference_proxy_error: f64,
+    connected: Option<Box<material::atlas::Binding>>,
     work: &storage::Work,
 ) -> ConeChecked<Budget> {
     let planar_work = work.planar_receipt().ok_or_else(|| {
@@ -33,6 +84,7 @@ fn completed(
         )
     })?;
     Ok(Budget {
+        actual_certificate: work.actual_certificate.clone(),
         spatial_error: bounds.spatial_error,
         volume: bounds.volume,
         arithmetic_operations: work.consumed,
@@ -40,6 +92,7 @@ fn completed(
         planar_work,
         reference,
         cap_reference_proxy_error,
+        connected,
     })
 }
 struct FamilyBounds {
@@ -136,7 +189,7 @@ fn cap_bridge(
     }
     Ok(maximum)
 }
-fn enforce_spatial(request: &WrappedConeNormalRequest, actual: f64) -> ConeChecked<()> {
+fn enforce_spatial(request: &ConeRun<'_>, actual: f64) -> ConeChecked<()> {
     if actual > request.options.spatial_error {
         return Err(scalar(
             "achieved cone spatial bound",
@@ -147,7 +200,7 @@ fn enforce_spatial(request: &WrappedConeNormalRequest, actual: f64) -> ConeCheck
     Ok(())
 }
 fn verify_work(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     family: &OwnedFamily<Selection, Geometry>,
     work: &storage::Work,
     reference_operations: u32,
@@ -155,6 +208,7 @@ fn verify_work(
     let members = member_operations(family)?;
     let total = members
         .checked_add(reference_operations)
+        .and_then(|total| total.checked_add(work.actual_operations))
         .ok_or_else(work_overflow)?;
     if work.requested != request.proof.arithmetic || work.consumed != total {
         return Err(scalar(

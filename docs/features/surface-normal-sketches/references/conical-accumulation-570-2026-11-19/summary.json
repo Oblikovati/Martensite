@@ -1,0 +1,27 @@
+{
+  "captured_utc": "2026-11-19T23:05:03.364757+00:00",
+  "issue": 570,
+  "source_freeze_sha256": "e030fab4954178e532f0eff96b9e2ae7a77f531594fdeced9a15e510a3128162",
+  "source_changed": [],
+  "tests_passed": 140,
+  "new_leaf_controls": 23,
+  "new_complete_operation_controls": 2,
+  "legacy_complete_operations": 2,
+  "v1_work": {
+    "operations": 989355,
+    "cells": 444,
+    "spans": 148
+  },
+  "v2_work": {
+    "operations": 994535,
+    "cells": 444,
+    "spans": 148
+  },
+  "requested_operation_limit": 1000000,
+  "arithmetic_grant_changed": false,
+  "original_caps_preserved": true,
+  "performance_qualification": "pending; all API timers in functional logs are diagnostic under concurrent host activity",
+  "main_shared_fixes_integrated": false,
+  "published": false,
+  "review_note": "Spec source accepted r2; r3 changes only one test fixture conversion, verified by root and passing test. Standards accepts r3."
+}

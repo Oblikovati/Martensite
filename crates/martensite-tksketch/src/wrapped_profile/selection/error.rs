@@ -19,6 +19,9 @@ pub(in super::super) enum SelectionFailure {
         cause: Box<planar::PlanarFailure>,
     },
     Capture(Box<planar::PlanarFailure>),
+    Directed(Box<martensite_tkbo::body_check::DirectedCapFailure>),
+    DirectedPolicy(PlanarProofVersion),
+    DirectedSource,
     Planning {
         region: SurfaceRegionId,
         cause: Box<subdivision::PlanningFailure>,
@@ -99,6 +102,11 @@ impl SelectionFailure {
             }
             Self::Clearance(cause) => write!(f, "selection boundary clearance: {cause}"),
             Self::Capture(cause) => write!(f, "global planar capture: {cause}"),
+            Self::Directed(cause) => write!(f, "directed planar material: {cause:?}"),
+            Self::DirectedPolicy(proof) => {
+                write!(f, "planar proof={proof:?}; expected GeometricCompositeV6")
+            }
+            Self::DirectedSource => write!(f, "directed profile differs from the proved family"),
             _ => write!(f, "{self:?}"),
         }
     }
