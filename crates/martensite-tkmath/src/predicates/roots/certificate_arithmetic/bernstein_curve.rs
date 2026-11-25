@@ -42,11 +42,22 @@ pub(in crate::predicates::roots) fn restrict_range(
     if poles.len() == 1 || [first, last] == [0., 1.] {
         return Ok(poles.to_vec());
     }
-    let one = arithmetic.scalar(1.)?;
     let first = arithmetic.scalar(first)?;
     let last = arithmetic.scalar(last)?;
-    let low = [arithmetic.subtract(&one, &first)?, first];
-    let high = [arithmetic.subtract(&one, &last)?, last];
+    restrict_enclosed(poles, [&first, &last], arithmetic)
+}
+
+pub(in crate::predicates::roots) fn restrict_enclosed(
+    poles: &[Interval],
+    [first, last]: [&Interval; 2],
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<Vec<Interval>> {
+    if poles.len() == 1 {
+        return Ok(poles.to_vec());
+    }
+    let one = arithmetic.scalar(1.)?;
+    let low = [arithmetic.subtract(&one, first)?, first.clone()];
+    let high = [arithmetic.subtract(&one, last)?, last.clone()];
     let degree = poles.len() - 1;
     (0..=degree)
         .map(|i| blossom(poles, [&low, &high], i, arithmetic))

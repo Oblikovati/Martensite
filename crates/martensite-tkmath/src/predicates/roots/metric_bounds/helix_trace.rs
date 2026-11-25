@@ -1,19 +1,21 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Whole-span evidence for a literal polynomial native spline against an authored helix.
 mod model;
+mod progress;
 
 use super::{
     CylindricalProfileFailure, NativeSplineFailure, cylindrical_profile::algebra,
     rational_reference::native_spline::spatial_polynomial_pieces,
 };
+use crate::predicates::roots::DyadicBound;
 use crate::predicates::roots::certificate_arithmetic::{
     bernstein_bounds as polynomial,
-    bernstein_curve::{bisect, derivative},
+    bernstein_curve::bisect,
     bounded_dyadic::{Arithmetic, ArithmeticPolicy, Interval},
     bounded_failure::BoundedArithmeticFailure,
 };
 use model::PreparedLaw;
-use num_bigint::Sign;
+use progress::Progress;
 use std::{error::Error, fmt};
 
 /// Two independent literal scalars defining the ideal axial rise and total angle.
@@ -54,6 +56,38 @@ pub struct HelixTraceLaw {
     pub parameter_end: f64,
 }
 
+/// Progress condition established on the actual retained polynomial.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum HelixSpanProgress {
+    /// Strictly positive axial derivative on every knot interval.
+    Advancing,
+    /// A positive axial derivative inside each knot interval with stationary endpoints allowed.
+    Ramp,
+    /// A constant axial plane with strict progress along the endpoint chord.
+    Flat,
+}
+
+/// Literal exact stations and planar axial controls of one ordered cylindrical piece.
+#[derive(Clone, Copy, Debug)]
+pub struct HelixCylindricalSpanLaw<'a> {
+    /// Model-space center axis origin.
+    pub origin: [f64; 3],
+    /// Checked frame columns in X, Y, Z order.
+    pub basis: [[f64; 3]; 3],
+    /// Common positive cylindrical radius.
+    pub radius: f64,
+    /// Exact opening and closing turn stations.
+    pub turns: [&'a DyadicBound; 2],
+    /// Exact axial Bernstein controls in the full source span.
+    pub axial_controls: &'a [DyadicBound],
+    /// Actual active native parameter range.
+    pub native_parameter: [f64; 2],
+    /// True for rotation about positive frame Z.
+    pub positive_rotation: bool,
+    /// Required retained topology evidence for this span.
+    pub progress: HelixSpanProgress,
+}
+
 /// Literal clamped, open, nonrational B-spline data read from a retained edge.
 #[derive(Clone, Copy, Debug)]
 pub struct HelixSplineSource<'a> {
@@ -85,7 +119,7 @@ pub struct HelixTraceLimits {
 pub struct HelixTraceBounds {
     /// Achieved outward same-parameter L1 position error in model units.
     pub position_error_upper: f64,
-    /// Strict positive lower bound on the actual spline's world-axis derivative per native parameter.
+    /// Outward lower bound on the actual spline's world-axis derivative, including zero for flats or ramps.
     pub axial_derivative_lower: f64,
     /// Number of distinct original polynomial knot spans.
     pub native_spans: usize,
@@ -126,6 +160,8 @@ pub enum HelixTraceFailure {
     },
     /// A strictly advancing actual native axial coordinate could not be established.
     AxialProgress,
+    /// The retained flat is outside one axial plane or cannot prove directed planar progress.
+    FlatProgress,
     /// Refused native polynomial knot insertion.
     Spline(Box<NativeSplineFailure>),
     /// Outward arithmetic stopped before the proof completed.
@@ -185,22 +221,85 @@ pub fn certify_polynomial_helix_trace(
     limits: HelixTraceLimits,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> ResultOf<HelixTraceBounds> {
-    let native_spans = admit(law, spline, limits)?;
+    if law
+        .lead
+        .values()
+        .into_iter()
+        .chain(law.radii)
+        .chain([law.parameter_end])
+        .any(|value| !value.is_finite() || value <= 0.)
+    {
+        return Err(HelixTraceFailure::InvalidLaw);
+    }
+    let extent = TraceExtent::new(law.origin, law.basis, [0., law.parameter_end]);
+    certify(
+        extent,
+        spline,
+        limits,
+        HelixSpanProgress::Advancing,
+        &mut cancelled,
+        |arithmetic| PreparedLaw::prepare(law, arithmetic),
+    )
+}
+
+/// Prove one actual native polynomial span against exact ordered cylindrical stations.
+/// Use `certify_cylindrical_helix_span(law, source, limits, || false)?` for an uncancellable caller.
+pub fn certify_cylindrical_helix_span(
+    law: HelixCylindricalSpanLaw<'_>,
+    spline: HelixSplineSource<'_>,
+    limits: HelixTraceLimits,
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> ResultOf<HelixTraceBounds> {
+    let controls = match law.progress {
+        HelixSpanProgress::Advancing => 2,
+        HelixSpanProgress::Ramp => 5,
+        HelixSpanProgress::Flat => 1,
+    };
+    if !law.radius.is_finite()
+        || law.radius <= 0.
+        || law.turns[0] >= law.turns[1]
+        || law.axial_controls.len() != controls
+        || law.axial_controls.windows(2).any(|pair| pair[0] > pair[1])
+    {
+        return Err(HelixTraceFailure::InvalidLaw);
+    }
+    let extent = TraceExtent::new(law.origin, law.basis, law.native_parameter);
+    certify(
+        extent,
+        spline,
+        limits,
+        law.progress,
+        &mut cancelled,
+        |arithmetic| PreparedLaw::prepare_cylindrical(law, arithmetic),
+    )
+}
+
+fn certify(
+    extent: TraceExtent,
+    spline: HelixSplineSource<'_>,
+    limits: HelixTraceLimits,
+    mode: HelixSpanProgress,
+    cancelled: &mut (impl FnMut() -> bool + Send),
+    prepare: impl FnOnce(&mut Arithmetic<'_>) -> ResultOf<PreparedLaw>,
+) -> ResultOf<HelixTraceBounds> {
+    let native_spans = admit(extent, spline, limits)?;
     let policy = ArithmeticPolicy {
         fractional_bits: 128,
         max_operations: limits.max_operations,
     };
-    let mut arithmetic = Arithmetic::new(policy, &mut cancelled);
+    let mut arithmetic = Arithmetic::new(policy, cancelled);
     arithmetic.check_cancelled()?;
-    let model = PreparedLaw::prepare(law, &mut arithmetic)?;
+    let model = prepare(&mut arithmetic)?;
     let pieces =
         spatial_polynomial_pieces(spline.degree, spline.knots, spline.poles, &mut arithmetic)
             .map_err(insertion_failure)?;
+    let progress = Progress::new(mode, spline, &model, &mut arithmetic)?;
     let mut proof = Proof {
         limits,
         model,
         arithmetic,
         cells: 0,
+        progress,
         position: 0.,
     };
     let axial = proof.verify(pieces)?;
@@ -214,25 +313,39 @@ pub fn certify_polynomial_helix_trace(
     })
 }
 
+#[derive(Clone, Copy)]
+struct TraceExtent {
+    origin: [f64; 3],
+    basis: [[f64; 3]; 3],
+    parameter: [f64; 2],
+}
+impl TraceExtent {
+    fn new(origin: [f64; 3], basis: [[f64; 3]; 3], parameter: [f64; 2]) -> Self {
+        Self {
+            origin,
+            basis,
+            parameter,
+        }
+    }
+}
+
 fn admit(
-    law: HelixTraceLaw,
+    extent: TraceExtent,
     spline: HelixSplineSource<'_>,
     limits: HelixTraceLimits,
 ) -> ResultOf<usize> {
-    if law
-        .lead
-        .values()
-        .into_iter()
-        .chain(law.radii)
-        .chain([law.parameter_end])
-        .any(|value| !value.is_finite() || value <= 0.)
+    let [first, last] = extent.parameter;
+    if !first.is_finite()
+        || !last.is_finite()
+        || first < 0.
+        || last <= first
         || !limits.max_position_error.is_finite()
         || limits.max_position_error < 0.
     {
         return Err(HelixTraceFailure::InvalidLaw);
     }
-    let [x, y, z] = law.origin;
-    let [x_axis, y_axis, z_axis] = law.basis;
+    let [x, y, z] = extent.origin;
+    let [x_axis, y_axis, z_axis] = extent.basis;
     if crate::gp::Axis2::from_stored_coefficients(
         crate::gp::Point3::new(x, y, z),
         z_axis,
@@ -246,9 +359,9 @@ fn admit(
     if !(1..=8).contains(&spline.degree)
         || spline.poles.len() <= spline.degree
         || spline.poles.len().checked_add(spline.degree + 1) != Some(spline.knots.len())
-        || spline.trim != [0., law.parameter_end]
-        || spline.knots.first() != Some(&0.)
-        || spline.knots.last() != Some(&law.parameter_end)
+        || spline.trim != extent.parameter
+        || spline.knots.first() != Some(&first)
+        || spline.knots.last() != Some(&last)
     {
         return Err(HelixTraceFailure::InvalidSpline);
     }
@@ -280,6 +393,7 @@ struct Proof<'a> {
     arithmetic: Arithmetic<'a>,
     cells: u32,
     position: f64,
+    progress: Progress,
 }
 
 impl Proof<'_> {
@@ -297,34 +411,18 @@ impl Proof<'_> {
                 self.model.fraction(&b, &mut self.arithmetic)?,
             ];
             let poles = self.model.centered(xyz, &mut self.arithmetic)?;
-            axial = axial.min(self.axial_rate(&poles, &width)?);
+            axial = axial.min(self.progress.check(
+                &poles,
+                &width,
+                &self.model,
+                &mut self.arithmetic,
+            )?);
             self.check_cell(poles, parameters, 0)?;
         }
-        if !axial.is_finite() || axial <= 0. {
+        if !axial.is_finite() || axial < 0. {
             return Err(HelixTraceFailure::AxialProgress);
         }
         Ok(axial)
-    }
-
-    fn axial_rate(&mut self, poles: &Poles, width: &Interval) -> ResultOf<f64> {
-        let mut projection = vec![self.arithmetic.zero(); poles[0].len()];
-        for (axis, factor) in poles.iter().zip(self.model.z_axis()) {
-            let scaled = polynomial::scale(axis, factor, &mut self.arithmetic)?;
-            projection = polynomial::sum(&projection, &scaled, &mut self.arithmetic)?;
-        }
-        let rates = derivative(&projection, &mut self.arithmetic)?;
-        let lower = polynomial::lower(&rates);
-        if lower.sign() != Sign::Plus {
-            return Err(HelixTraceFailure::AxialProgress);
-        }
-        let enclosed = self.arithmetic.divide(
-            &Interval {
-                lower: lower.clone(),
-                upper: lower,
-            },
-            width,
-        )?;
-        Ok(-self.arithmetic.upper_f64(-enclosed.lower)?)
     }
 
     fn check_cell(&mut self, poles: Poles, parameters: [Interval; 2], level: u8) -> ResultOf<()> {

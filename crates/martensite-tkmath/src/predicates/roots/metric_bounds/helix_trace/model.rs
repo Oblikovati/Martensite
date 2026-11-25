@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Bernstein hulls of the ideal source at the same native parameter.
 use super::{
-    Arithmetic, HelixTraceLaw, HelixTraceLead, Interval, Poles, ResultOf, algebra, polynomial,
+    Arithmetic, HelixCylindricalSpanLaw, HelixTraceLaw, HelixTraceLead, Interval, Poles, ResultOf,
+    algebra, polynomial,
 };
 use crate::predicates::roots::{
-    certificate_arithmetic::circular_constants, metric_bounds::cylindrical_profile::trigonometric,
+    certificate_arithmetic::{ExactRatio, bernstein_curve::restrict_enclosed, circular_constants},
+    metric_bounds::cylindrical_profile::trigonometric,
 };
 
 pub(super) struct PreparedLaw {
@@ -12,10 +14,17 @@ pub(super) struct PreparedLaw {
     basis: [[Interval; 3]; 3],
     first_radius: Interval,
     radial_change: Interval,
-    height: Interval,
+    axial: Axial,
+    first_angle: Option<Interval>,
     angle: Interval,
-    parameter_end: Interval,
+    parameter_start: Option<Interval>,
+    parameter_width: Interval,
     positive_rotation: bool,
+}
+
+enum Axial {
+    LinearRise(Interval),
+    Controls(Vec<Interval>),
 }
 
 impl PreparedLaw {
@@ -34,9 +43,46 @@ impl PreparedLaw {
             ],
             radial_change: arithmetic.subtract(&final_radius, &initial)?,
             first_radius: initial,
-            height,
+            axial: Axial::LinearRise(height),
+            first_angle: None,
             angle: arithmetic.multiply(&period, &turns)?,
-            parameter_end: arithmetic.scalar(law.parameter_end)?,
+            parameter_start: None,
+            parameter_width: arithmetic.scalar(law.parameter_end)?,
+            positive_rotation: law.positive_rotation,
+        })
+    }
+
+    pub(super) fn prepare_cylindrical(
+        law: HelixCylindricalSpanLaw<'_>,
+        arithmetic: &mut Arithmetic<'_>,
+    ) -> ResultOf<Self> {
+        let [first, last] = law.native_parameter;
+        let parameter_start = arithmetic.scalar(first)?;
+        let parameter_end = arithmetic.scalar(last)?;
+        let turn = arithmetic.rational(&ExactRatio::from_dyadic(law.turns[0]))?;
+        let width = law.turns[1].difference(law.turns[0]);
+        let turns = arithmetic.rational(&ExactRatio::from_dyadic(&width))?;
+        let period = circular_constants::pi(arithmetic)?;
+        let period = arithmetic.fraction(&period, 2, 1)?;
+        Ok(Self {
+            origin: point(law.origin, arithmetic)?,
+            basis: [
+                point(law.basis[0], arithmetic)?,
+                point(law.basis[1], arithmetic)?,
+                point(law.basis[2], arithmetic)?,
+            ],
+            first_radius: arithmetic.scalar(law.radius)?,
+            radial_change: arithmetic.zero(),
+            axial: Axial::Controls(
+                law.axial_controls
+                    .iter()
+                    .map(|coefficient| arithmetic.rational(&ExactRatio::from_dyadic(coefficient)))
+                    .collect::<Result<_, _>>()?,
+            ),
+            first_angle: Some(arithmetic.multiply(&period, &turn)?),
+            angle: arithmetic.multiply(&period, &turns)?,
+            parameter_width: arithmetic.subtract(&parameter_end, &parameter_start)?,
+            parameter_start: Some(parameter_start),
             positive_rotation: law.positive_rotation,
         })
     }
@@ -50,7 +96,11 @@ impl PreparedLaw {
         parameter: &Interval,
         arithmetic: &mut Arithmetic<'_>,
     ) -> ResultOf<Interval> {
-        Ok(arithmetic.divide(parameter, &self.parameter_end)?)
+        let offset = match &self.parameter_start {
+            Some(start) => arithmetic.subtract(parameter, start)?,
+            None => parameter.clone(),
+        };
+        Ok(arithmetic.divide(&offset, &self.parameter_width)?)
     }
 
     pub(super) fn centered(
@@ -72,7 +122,10 @@ impl PreparedLaw {
         parameters: &[Interval; 2],
         arithmetic: &mut Arithmetic<'_>,
     ) -> ResultOf<Poles> {
-        let phase = polynomial::scale(parameters, &self.angle, arithmetic)?;
+        let mut phase = polynomial::scale(parameters, &self.angle, arithmetic)?;
+        if let Some(first) = &self.first_angle {
+            phase = algebra::sum(&phase, std::slice::from_ref(first), arithmetic)?;
+        }
         let [cosine, sine] = trigonometric::enclose(&phase, arithmetic)?;
         let radii = polynomial::scale(parameters, &self.radial_change, arithmetic)?;
         let radii = algebra::sum(&radii, std::slice::from_ref(&self.first_radius), arithmetic)?;
@@ -84,7 +137,7 @@ impl PreparedLaw {
         let local = [
             polynomial::product(&radii, &cosine, arithmetic)?,
             polynomial::product(&signed_radius, &sine, arithmetic)?,
-            polynomial::scale(parameters, &self.height, arithmetic)?,
+            self.axial.ideal(parameters, arithmetic)?,
         ];
         Ok([
             self.world(0, &local, arithmetic)?,
@@ -107,7 +160,27 @@ impl PreparedLaw {
     }
 }
 
-fn point([x, y, z]: [f64; 3], arithmetic: &mut Arithmetic<'_>) -> ResultOf<[Interval; 3]> {
+impl Axial {
+    fn ideal(
+        &self,
+        [first, last]: &[Interval; 2],
+        arithmetic: &mut Arithmetic<'_>,
+    ) -> ResultOf<Vec<Interval>> {
+        match self {
+            Self::LinearRise(height) => Ok(polynomial::scale(
+                &[first.clone(), last.clone()],
+                height,
+                arithmetic,
+            )?),
+            Self::Controls(poles) => Ok(restrict_enclosed(poles, [first, last], arithmetic)?),
+        }
+    }
+}
+
+pub(super) fn point(
+    [x, y, z]: [f64; 3],
+    arithmetic: &mut Arithmetic<'_>,
+) -> ResultOf<[Interval; 3]> {
     Ok([
         arithmetic.scalar(x)?,
         arithmetic.scalar(y)?,

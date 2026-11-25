@@ -116,3 +116,6 @@ fn exact_authored_pitch_product_cannot_be_replaced_with_its_rounded_height() {
         Err(HelixTraceFailure::PositionError { .. })
     ));
 }
+
+#[path = "tests_ordered.rs"]
+mod ordered;

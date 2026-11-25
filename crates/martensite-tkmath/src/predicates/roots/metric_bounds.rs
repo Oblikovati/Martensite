@@ -356,6 +356,7 @@ pub use directed_line::{
 
 mod helix_trace;
 pub use helix_trace::{
-    HelixSplineSource, HelixTraceBounds, HelixTraceFailure, HelixTraceLaw, HelixTraceLead,
-    HelixTraceLimits, certify_polynomial_helix_trace,
+    HelixCylindricalSpanLaw, HelixSpanProgress, HelixSplineSource, HelixTraceBounds,
+    HelixTraceFailure, HelixTraceLaw, HelixTraceLead, HelixTraceLimits,
+    certify_cylindrical_helix_span, certify_polynomial_helix_trace,
 };

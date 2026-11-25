@@ -91,7 +91,9 @@ impl DyadicBound {
     pub(super) fn scale_pow2(&self, power: u8) -> Self {
         Self::new(self.significand.clone(), self.exponent + i32::from(power))
     }
-    pub(super) fn midpoint(&self, other: &Self) -> Self {
+    /// Compute the exact midpoint before any binary64 rounding.
+    /// Use `start.midpoint(&end)` for a shared Bernstein control.
+    pub fn midpoint(&self, other: &Self) -> Self {
         let (left, right, exponent) = self.aligned(other);
         Self::new(left + right, exponent - 1)
     }
