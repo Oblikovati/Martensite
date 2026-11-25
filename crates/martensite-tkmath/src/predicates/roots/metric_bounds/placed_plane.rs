@@ -195,7 +195,7 @@ mod tests {
             exact_placed_point(point, placement).unwrap(),
             Some([3., 2., 3.])
         );
-        placement[0][3] = 2_f64.powi(53);
+        placement[0][3] = 9_007_199_254_740_992.;
         assert_eq!(exact_placed_point(point, placement).unwrap(), None);
     }
 
