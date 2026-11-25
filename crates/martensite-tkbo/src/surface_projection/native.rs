@@ -16,10 +16,12 @@ use martensite_tkernel::message::ProgressRange;
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 use martensite_tkmath::predicates::roots::metric_bounds::cylindrical_projection::{
     AxialProjectionWitness, NativeProjectionCurve, NativeProjectionEdge, ProjectionEdgeCertificate,
-    ProjectionSweep, ProjectionTrimEndpoint,
+    ProjectionPrismChart, ProjectionSweep, ProjectionTrimEndpoint,
 };
 
-use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
+use martensite_tktopalgo::{
+    brep_builder_api::BRepBuilderAPIMakeShape, brep_lib::build_pcurve_for_edge_on_plane,
+};
 
 mod operands;
 mod sweep;
@@ -37,21 +39,22 @@ pub(super) fn publish(
     let private_source = operands::copy_source(source, &original)?;
     let (private_target, copied_target) =
         operands::copy_target(target, &target_read, options.limits.spatial, progress)?;
-    let tool = sweep::build(&private_source, sweep, witness, progress)?;
+    let (tool, prism) = sweep::build(&private_source, sweep, progress)?;
+    let prism_proof = witness.verify_planar_prism(sweep, prism)?;
     let section = build_section(&private_target, &tool, progress)?;
-    let (candidates, common_seams) = candidates(
+    let (candidates, native_flags) = candidates(
         &section,
         &private_target,
         &tool,
         &copied_target.seam_edge,
         progress,
     )?;
-    let certificates = witness
-        .certify_native_edges(sweep, &candidates, options.limits, || progress.user_break())?;
+    let certificates =
+        prism_proof.certify_edges(&candidates, options.limits, || progress.user_break())?;
     let checked_edges = certificates.len();
     let edges = publish_edges(
         candidates,
-        common_seams,
+        native_flags,
         certificates,
         &target_read,
         progress,
@@ -60,6 +63,7 @@ pub(super) fn publish(
         source_orientation: original.orientation,
         target_orientation: target_read.orientation,
         sweep,
+        prism,
         branches: witness.branch_plans()?,
         edges,
         checked_edges,
@@ -94,30 +98,39 @@ fn build_section(
     }
 }
 
+struct NativeEdgeFlags {
+    common_seam: bool,
+    materialized_prism_pcurve: bool,
+}
+
 fn candidates(
     section: &BRepAlgoAPISection,
     target: &Face,
     tool: &Face,
     seam: &Edge,
     progress: &ProgressRange,
-) -> Checked<(Vec<NativeProjectionEdge>, Vec<bool>)> {
+) -> Checked<(Vec<NativeProjectionEdge>, Vec<NativeEdgeFlags>)> {
     let result = section.shape();
     storage::kind(result, ShapeEnum::Compound)?;
     let children = storage::direct(result, ShapeEnum::Edge, [1, 4])?;
     let mut candidates = Vec::with_capacity(children.len());
-    let mut common_seam = Vec::with_capacity(children.len());
+    let mut flags = Vec::with_capacity(children.len());
     for edge in children {
         poll(progress)?;
         require_ancestors(section, &edge, [target, tool])?;
-        common_seam.push(
-            section
-                .builder()
-                .and_then(|builder| builder.origins().seek(&edge))
-                .is_some_and(|origins| origins.iter().any(|origin| origin.is_same(seam))),
-        );
-        candidates.push(read_edge(&topods::edge(&edge)?, target, tool)?);
+        let common_seam = section
+            .builder()
+            .and_then(|builder| builder.origins().seek(&edge))
+            .is_some_and(|origins| origins.iter().any(|origin| origin.is_same(seam)));
+        let edge = topods::edge(&edge)?;
+        let (readback, materialized_prism_pcurve) = read_edge(&edge, target, tool)?;
+        candidates.push(readback);
+        flags.push(NativeEdgeFlags {
+            common_seam,
+            materialized_prism_pcurve,
+        });
     }
-    Ok((candidates, common_seam))
+    Ok((candidates, flags))
 }
 
 fn require_ancestors(
@@ -140,28 +153,42 @@ fn require_ancestors(
     Ok(())
 }
 
-fn read_edge(edge: &Edge, target: &Face, tool: &Face) -> Checked<NativeProjectionEdge> {
+fn read_edge(edge: &Edge, target: &Face, tool: &Face) -> Checked<(NativeProjectionEdge, bool)> {
     storage::reversed(edge.orientation())?;
     let forward = Edge::unchecked(edge.oriented(Orientation::Forward));
     storage::require_spatial(&forward)?;
     let space = BRepTool::curve_with_location(&forward)?;
     let range = [space.first, space.last];
     let (target, second_target) = chart_curves(&forward, target, range)?;
+    let materialized = materialize_planar_pcurve(&forward, tool)?;
     let (prism, second_prism) = chart_curves(&forward, tool, range)?;
     if second_prism.is_some() {
         return Err(Scope::Representation.into());
     }
     let witnesses = storage::vertices(&forward)?;
     let vertices = storage::vertex_coefficients(&witnesses)?;
-    Ok(NativeProjectionEdge {
-        range,
-        spatial: storage::curve3d(&space.curve, range)?,
-        placement: storage::placement(&space.location)?,
-        target,
-        second_target,
-        prism,
-        vertices,
-    })
+    Ok((
+        NativeProjectionEdge {
+            range,
+            spatial: storage::curve3d(&space.curve, range)?,
+            placement: storage::placement(&space.location)?,
+            target,
+            second_target,
+            prism,
+            vertices,
+        },
+        materialized,
+    ))
+}
+
+fn materialize_planar_pcurve(edge: &Edge, tool: &Face) -> Checked<bool> {
+    let stored = BRepTool::curve_on_face(edge, tool)?.is_stored;
+    if !stored {
+        // Native planar sweep borders and a Section seam can carry implicit pcurves.
+        // Store the standard native projection on private topology before readback.
+        build_pcurve_for_edge_on_plane(edge, tool)?;
+    }
+    Ok(!stored)
 }
 
 fn chart_curves(
@@ -187,7 +214,7 @@ fn chart_curves(
 
 fn publish_edges(
     candidates: Vec<NativeProjectionEdge>,
-    seam_ancestry: Vec<bool>,
+    native_flags: Vec<NativeEdgeFlags>,
     certificates: Vec<(usize, ProjectionEdgeCertificate)>,
     target: &TargetRead,
     progress: &ProgressRange,
@@ -196,7 +223,8 @@ fn publish_edges(
     let mut result = Vec::new();
     for (index, certificate) in certificates {
         poll(progress)?;
-        let common = seam_ancestry[index];
+        let flags = &native_flags[index];
+        let common = flags.common_seam;
         if (certificate.branch == CylinderProjectionBranch::PositiveU) != common {
             return Err(Scope::Ancestry(1).into());
         }
@@ -207,6 +235,7 @@ fn publish_edges(
             result.push(SurfaceProjectionEdge {
                 native,
                 certificate,
+                materialized_prism_pcurve: flags.materialized_prism_pcurve,
                 seam: common.then_some(target.seam),
                 endpoints,
             });

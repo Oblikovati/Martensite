@@ -103,9 +103,10 @@ pub(super) fn finite<const N: usize>(values: &[f64; N]) -> Checked<[Ratio; N]> {
     Ok(values.map(Ratio::from_finite))
 }
 
-pub(super) struct NativeSample {
+pub(super) struct NativeBreakpoint {
     pub parameter: Ratio,
     pub position: Vector,
+    /// Original source parameter and signed travel after exact native chart transport.
     pub prism: [Ratio; 2],
     pub target: [Ratio; 2],
     pub second_target: Option<[Ratio; 2]>,

@@ -28,6 +28,13 @@ pub enum SurfaceProjectionScope {
     BoundaryIdentity,
     /// Missing, ambiguous, or unsupported stored curve or support.
     Representation,
+    /// Native edge representation inventory exceeded the supported limit.
+    CurveRepresentations {
+        /// Actual number of records before capture.
+        count: usize,
+        /// Maximum number the operation can consume.
+        maximum: usize,
+    },
     /// A native location chain exhausted the finite bound.
     LocationDepth,
     /// Private native operands changed a relevant original value or shared a mutable owner.

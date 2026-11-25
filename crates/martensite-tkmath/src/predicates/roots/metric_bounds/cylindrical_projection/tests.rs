@@ -121,9 +121,36 @@ fn qualified_root_checks_the_prism_and_whole_retained_native_span() {
         AxialProjectionMode::Forward(Direction3::X.reversed()),
     );
     let sweep = witness.sweep().unwrap();
-    witness
-        .verify_prism(sweep, line(2., 0.), Direction3::X, [-sweep.length, 0.])
-        .unwrap();
+    let chart = ProjectionPrismChart {
+        origin: [2., 0., 1.],
+        axes: [[0., 0., 1.], [1., 0., 0.], [0., 1., 0.]],
+        placement: IDENTITY,
+        trim: [[0., 2.], [-sweep.length, 0.]],
+    };
+    let prism = witness.verify_planar_prism(sweep, chart).unwrap();
+    assert_eq!(
+        prism.source_coordinates([0.5, -6.]).unwrap(),
+        [[1.5; 2], [6.; 2]]
+    );
+    for bad in [
+        ProjectionPrismChart {
+            origin: [2., 0.01, 1.],
+            ..chart
+        },
+        ProjectionPrismChart {
+            trim: [[0., 2.1], [-sweep.length, 0.]],
+            ..chart
+        },
+        ProjectionPrismChart {
+            axes: [chart.axes[0], chart.axes[1], chart.axes[0]],
+            ..chart
+        },
+    ] {
+        assert!(matches!(
+            witness.verify_planar_prism(sweep, bad),
+            Err(CylinderProjectionError::Prism)
+        ));
+    }
     let exact = NativeProjectionEdge {
         range: [1., 3.],
         spatial: NativeProjectionCurve::Line {
@@ -132,7 +159,7 @@ fn qualified_root_checks_the_prism_and_whole_retained_native_span() {
         },
         placement: IDENTITY,
         prism: NativeProjectionCurve::Line {
-            origin: [0., -6.],
+            origin: [-1., -6.],
             direction: [1., 0.],
         },
         target: NativeProjectionCurve::Line {
@@ -150,8 +177,8 @@ fn qualified_root_checks_the_prism_and_whole_retained_native_span() {
         source_parameter: 1e-9,
         angle: 1e-9,
     };
-    let proof = witness
-        .certify_native_edges(sweep, std::slice::from_ref(&exact), cap, || false)
+    let proof = prism
+        .certify_edges(std::slice::from_ref(&exact), cap, || false)
         .unwrap();
     assert_eq!(proof[0].1.selected[0].source, interval(1., 3.));
     assert_eq!(
@@ -166,8 +193,8 @@ fn qualified_root_checks_the_prism_and_whole_retained_native_span() {
         ..exact
     };
     assert_eq!(
-        witness
-            .certify_native_edges(sweep, &[distorted], cap, || false)
+        prism
+            .certify_edges(&[distorted], cap, || false)
             .unwrap_err(),
         CylinderProjectionError::Coverage
     );

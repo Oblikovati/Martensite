@@ -93,6 +93,9 @@ fn rectangles(
     progress: &ProgressRange,
 ) -> Checked<(Rectangle, Option<Rectangle>)> {
     let direct = storage::direct(face, ShapeEnum::Wire, [1, 2])?;
+    if bindings.len() != 4 * direct.len() - 1 {
+        return Err(Scope::BoundaryIdentity.into());
+    }
     let mut outer = None;
     let mut hole = None;
     for wire in direct {
@@ -123,9 +126,6 @@ fn require_bindings(
         .iter()
         .chain(hole.into_iter().flat_map(|ring| &ring.uses))
         .collect();
-    if bindings.len() != uses.len() - 1 {
-        return Err(Scope::BoundaryIdentity.into());
-    }
     for (index, binding) in bindings.iter().enumerate() {
         if !uses.iter().any(|side| side.edge.is_same(binding.edge))
             || bindings[..index]

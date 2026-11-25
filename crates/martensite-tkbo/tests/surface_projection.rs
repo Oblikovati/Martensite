@@ -25,6 +25,26 @@ use std::{
     num::NonZeroU64,
 };
 
+static_assertions::assert_impl_all!((
+    SurfaceProjectionSource<'static>,
+    SurfaceProjectionTarget<'static>,
+    ProjectionBoundaryBinding<'static>,
+    ProjectionBoundaryId,
+    ProjectionBoundaryUse,
+    ProjectionEndpointLineage,
+    SurfaceProjectionParents,
+    SurfaceProjectionStamp,
+    SurfaceProjectionBehavior,
+    SurfaceProjectionOptions,
+    SurfaceProjectionFailure,
+    SurfaceProjectionCause,
+    SurfaceProjectionScope,
+    SurfaceProjectionResult,
+    SurfaceProjectionOutcome,
+    SurfaceProjectionGeometry,
+    SurfaceProjectionEdge,
+): Send, Sync);
+
 const OPTIONS: SurfaceProjectionOptions = SurfaceProjectionOptions {
     behavior: SurfaceProjectionBehavior::AxialCardinalV1,
     limits: ProjectionProofLimits {
@@ -97,10 +117,11 @@ fn actual_located_reversed_occurrences_preserve_original_parametric_direction() 
     let edge = &geometry.edges[0];
     assert_eq!(edge.certificate.retained, interval(1., 3.));
     assert_eq!(edge.certificate.signed_travel, [6.; 2]);
-    let NativeProjectionCurve::DegreeOne { poles, .. } = &edge.native.spatial else {
-        panic!("expected actual translated native degree-one Section");
+    let NativeProjectionCurve::Line { origin, direction } = &edge.native.spatial else {
+        panic!("expected actual translated analytic Section");
     };
-    assert!(poles.iter().all(|p| p[0] == 6. && p[1] == 12.));
+    assert_eq!([origin[0], origin[1]], [6., 12.]);
+    assert_eq!([direction[0], direction[1]], [0.; 2]);
 }
 
 fn stamp(id: u64) -> SurfaceProjectionStamp {
@@ -193,16 +214,11 @@ fn assert_generator(
     let assert_radial = |[actual_x, y, _]: [f64; 3]| {
         assert!((actual_x - x).abs() <= 1e-13 && y.abs() <= 1e-13);
     };
-    match &edge.native.spatial {
-        NativeProjectionCurve::Line { origin, direction } => {
-            assert_radial(*origin);
-            assert_eq!([direction[0], direction[1]], [0.; 2]);
-        }
-        NativeProjectionCurve::DegreeOne { poles, .. } => {
-            assert!(poles.len() > 4);
-            poles.iter().copied().for_each(assert_radial);
-        }
-    }
+    let NativeProjectionCurve::Line { origin, direction } = &edge.native.spatial else {
+        panic!("expected an actual analytic native Section line");
+    };
+    assert_radial(*origin);
+    assert_eq!([direction[0], direction[1]], [0.; 2]);
     let proof = &edge.certificate;
     assert_eq!(proof.signed_travel, [travel; 2]);
     assert_eq!(proof.retained, region);
@@ -227,6 +243,10 @@ fn actual_forward_two_sided_closest_and_normal_own_the_native_roots() {
         branches = &checked(&both).edges;
         assert_generator(&branches[0], 4., -2., interval(1., 3.));
         assert_eq!(branches[0].seam.is_some(), radial == Direction3::X);
+        assert_eq!(
+            branches[0].materialized_prism_pcurve,
+            radial == Direction3::X
+        );
         assert_eq!(checked(&both).checked_edges, 2);
         let closest = project(&source, &face, Closest).unwrap();
         assert_generator(&checked(&closest).edges[0], 4., 2., interval(1., 3.));
@@ -341,6 +361,37 @@ impl ProgressIndicatorHooks for Cancel {
     fn user_break(&self) -> bool {
         true
     }
+}
+
+#[test]
+fn original_boundary_and_edge_representation_inventories_are_bounded() {
+    use martensite_tkbrep::brep::BRepTEdge;
+    let face = target(Direction3::X, false);
+    let selected = source(2., 0.);
+    let mode = AxialProjectionMode::Forward(Direction3::X.reversed());
+    let mut bound = boundary(&face);
+    let extra = bound[0].clone();
+    bound.push(extra);
+    let err = run(&selected, &face, &bound, mode, &ProgressRange::default()).unwrap_err();
+    assert!(matches!(
+        err.cause,
+        SurfaceProjectionCause::Scope(SurfaceProjectionScope::BoundaryIdentity)
+    ));
+
+    let native = selected.tshape().downcast::<BRepTEdge>();
+    let storage = native.get().unwrap();
+    let records = storage.curves_within_limit(1).unwrap();
+    assert_eq!(records.len(), 1);
+    storage.change_curves(|items| items.resize(17, records[0].clone()));
+    assert_eq!(storage.curves().len(), 17);
+    let error = project(&selected, &face, mode).unwrap_err();
+    assert!(matches!(
+        error.cause,
+        SurfaceProjectionCause::Scope(SurfaceProjectionScope::CurveRepresentations {
+            count: 17,
+            maximum: 16
+        })
+    ));
 }
 
 #[test]

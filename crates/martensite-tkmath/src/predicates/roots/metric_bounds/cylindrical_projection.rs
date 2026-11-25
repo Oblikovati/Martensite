@@ -4,11 +4,13 @@ mod affine;
 mod boundary;
 mod evidence;
 mod native_net;
+mod prism;
 mod roots;
 mod trim;
 mod verify;
 
 pub use boundary::{check_projection_line_vertices, check_projection_meridian};
+pub use prism::{ProjectionPrismChart, VerifiedProjectionPrism};
 pub use verify::*;
 
 use self::affine::{AxialSource, Chart, Vector, bounds};
@@ -134,12 +136,6 @@ pub struct AxialProjectionWitness {
 }
 
 impl AxialProjectionWitness {
-    /// The original signed direction to be applied by the native prism.
-    /// Example: `witness.prism_direction()`.
-    pub fn prism_direction(&self) -> Direction3 {
-        self.signed_direction
-    }
-
     /// Outward certified native branch summaries with the selected source intervals.
     /// Example: `witness.branch_plans()?`.
     pub fn branch_plans(&self) -> Result<Vec<ProjectionBranchPlan>, CylinderProjectionError> {

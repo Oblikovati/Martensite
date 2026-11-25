@@ -1,19 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0-only
-//! Actual noncanonized finite sweep and its original signed parameter map.
-use super::{AxialProjectionWitness, Checked, ProjectionSweep, Scope, poll, storage};
+//! Actual canonized finite sweep with a retained planar UV chart.
+use super::{
+    Checked, ProjectionPrismChart, ProjectionSweep, Scope, materialize_planar_pcurve, poll, storage,
+};
 use crate::surface_projection::target::line_uv;
 use martensite_tkbrep::{
     brep::BRepTool,
     topods::{self, Edge, Face, Shape},
 };
 use martensite_tkernel::message::ProgressRange;
-use martensite_tkg3d::{
-    geom::{GeomLine, GeomSurfaceOfLinearExtrusion, GeomSweptSurface},
-    top_abs::ShapeEnum,
-};
+use martensite_tkg3d::{geom::GeomPlane, top_abs::ShapeEnum};
 use martensite_tkmath::{
     gp::{Transform3, Vector3},
-    predicates::roots::metric_bounds::cylindrical_projection::AxialProjectionLine,
     toploc::Location,
 };
 use martensite_tkprim::brep_sweep::BRepSweepPrism;
@@ -21,21 +19,20 @@ use martensite_tkprim::brep_sweep::BRepSweepPrism;
 pub(super) fn build(
     source: &Edge,
     sweep: ProjectionSweep,
-    witness: &AxialProjectionWitness,
     progress: &ProgressRange,
-) -> Checked<Face> {
+) -> Checked<(Face, ProjectionPrismChart)> {
     poll(progress)?;
     let generator = start_edge(source, sweep)?;
     let vector = Vector3::from(sweep.direction) * sweep.length;
-    let mut prism = BRepSweepPrism::new(&generator, vector, true, false)?;
+    let mut prism = BRepSweepPrism::new(&generator, vector, true, true)?;
     let raw = prism.shape()?;
     if !raw.is_same(&prism.shape_of(&generator)?) {
         return Err(Scope::Ancestry(2).into());
     }
     let face = topods::face(&raw)?;
-    verify(&face, sweep, witness)?;
+    let chart = capture(&face)?;
     poll(progress)?;
-    Ok(face)
+    Ok((face, chart))
 }
 
 fn start_edge(source: &Edge, sweep: ProjectionSweep) -> Checked<Shape> {
@@ -47,29 +44,20 @@ fn start_edge(source: &Edge, sweep: ProjectionSweep) -> Checked<Shape> {
     Ok(source.moved(&location, false)?)
 }
 
-fn verify(face: &Face, sweep: ProjectionSweep, witness: &AxialProjectionWitness) -> Checked<()> {
+fn capture(face: &Face) -> Checked<ProjectionPrismChart> {
     let (surface, location) = BRepTool::surface_with_location(face)?;
-    let extrusion = surface
-        .downcast_ref::<GeomSurfaceOfLinearExtrusion>()
-        .ok_or(Scope::Representation)?;
-    let basis = extrusion.basis_curve();
-    let line = basis
-        .downcast_ref::<GeomLine>()
+    let frame = surface
+        .downcast_ref::<GeomPlane>()
         .ok_or(Scope::Representation)?
-        .lin();
-    let [u, v] = rectangle(face)?;
-    let placement = storage::placement(&location)?;
-    witness.verify_prism(
-        sweep,
-        AxialProjectionLine {
-            line,
-            placement,
-            range: u,
-        },
-        extrusion.direction(),
-        v,
-    )?;
-    Ok(())
+        .pln()
+        .position();
+    let axes = [frame.x_direction(), frame.y_direction(), frame.direction()];
+    Ok(ProjectionPrismChart {
+        origin: *frame.location().coordinates(),
+        axes: axes.map(|axis| *axis.coordinates()),
+        placement: storage::placement(&location)?,
+        trim: rectangle(face)?,
+    })
 }
 
 fn rectangle(face: &Face) -> Checked<[[f64; 2]; 2]> {
@@ -79,6 +67,8 @@ fn rectangle(face: &Face) -> Checked<[[f64; 2]; 2]> {
     let mut sides = Vec::with_capacity(4);
     for raw in storage::direct(&wire, ShapeEnum::Edge, [4, 4])? {
         let edge = topods::edge(&raw)?;
+        storage::require_spatial(&edge)?;
+        materialize_planar_pcurve(&edge, face)?;
         let (pcurve, seam) = storage::pcurve(&edge, face)?;
         if seam {
             return Err(Scope::Topology.into());

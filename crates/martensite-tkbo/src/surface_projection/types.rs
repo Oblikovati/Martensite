@@ -4,7 +4,8 @@ use super::{Checked, SurfaceProjectionCause};
 use martensite_tkbrep::topods::{Edge, Face};
 use martensite_tkg3d::top_abs::Orientation;
 pub use martensite_tkmath::predicates::roots::metric_bounds::cylindrical_projection::{
-    AxialProjectionMode, CylinderProjectionBranch, CylinderProjectionEmpty, ProjectionProofLimits,
+    AxialProjectionMode, CylinderProjectionBranch, CylinderProjectionEmpty, ProjectionPrismChart,
+    ProjectionProofLimits,
 };
 use martensite_tkmath::predicates::roots::metric_bounds::cylindrical_projection::{
     CylinderProjectionError, NativeProjectionEdge, ProjectionBranchPlan, ProjectionEdgeCertificate,
@@ -129,6 +130,8 @@ pub struct SurfaceProjectionEdge {
     pub native: NativeProjectionEdge,
     /// Checked signed travel, actual native parameters, and selected original intervals.
     pub certificate: ProjectionEdgeCertificate,
+    /// Whether the private result needed its implicit planar pcurve stored before proof.
+    pub materialized_prism_pcurve: bool,
     /// The original periodic target edge when native common incidence proved it.
     pub seam: Option<[ProjectionBoundaryUse; 2]>,
     /// Proven original endpoint incidences in increasing source parameter order.
@@ -144,6 +147,8 @@ pub struct SurfaceProjectionGeometry {
     pub target_orientation: Orientation,
     /// Effective projection range, direction and extent.
     pub sweep: ProjectionSweep,
+    /// Actual prism carrier and trim for the published native pcurves.
+    pub prism: ProjectionPrismChart,
     /// Certified root and trim decisions, including roots not selected.
     pub branches: Vec<ProjectionBranchPlan>,
     /// Only native edges with a selected source interval.

@@ -21,6 +21,7 @@ use martensite_tkmath::{
 };
 
 const LOCATION_STEPS: usize = 64;
+const REPRESENTATION_LIMIT: usize = 16;
 
 pub(super) struct SourceLine {
     pub line: AxialProjectionLine,
@@ -130,10 +131,12 @@ fn records(edge: &Edge) -> Checked<Vec<Handle<dyn BRepCurveRepresentation>>> {
     if !stored.tolerance().is_finite() || stored.tolerance() < 0. {
         return Err(Scope::Representation.into());
     }
-    let records = stored.curves();
-    if records.len() > 16 {
-        return Err(Scope::Representation.into());
-    }
+    let records = stored
+        .curves_within_limit(REPRESENTATION_LIMIT)
+        .map_err(|count| Scope::CurveRepresentations {
+            count,
+            maximum: REPRESENTATION_LIMIT,
+        })?;
     for record in &records {
         let repr = record.get().ok_or(Scope::Representation)?;
         placement(&repr.location())?;

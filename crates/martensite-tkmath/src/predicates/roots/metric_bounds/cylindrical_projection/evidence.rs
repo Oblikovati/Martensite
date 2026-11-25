@@ -3,10 +3,11 @@
 use super::{
     AxialProjectionWitness, Checked, CylinderProjectionBranch as Branch,
     CylinderProjectionError as Failure, NativeProjectionEdge, ProjectionEdgeCertificate,
-    ProjectionSweep, ProjectionTrimEndpoint, SelectedProjectionInterval,
+    ProjectionTrimEndpoint, SelectedProjectionInterval,
     affine::{Ratio, Vector, bounds, sub},
-    native_net::NativeSample,
+    native_net::NativeBreakpoint,
     poll,
+    prism::PrismMap,
     roots::RadialRoot,
     trim::{SourceInterval, angle},
     verify::{Limits, Readback, abs, sqrt_bound},
@@ -21,7 +22,7 @@ struct Expected<'a> {
 
 pub(super) fn certify(
     witness: &AxialProjectionWitness,
-    sweep: ProjectionSweep,
+    prism: &PrismMap,
     candidates: &[NativeProjectionEdge],
     limits: &Limits,
     cancelled: &mut impl FnMut() -> bool,
@@ -33,8 +34,8 @@ pub(super) fn certify(
     let mut covered = vec![None; expected.len()];
     for (index, candidate) in candidates.iter().enumerate() {
         poll(cancelled)?;
-        let readback = Readback::capture(candidate, limits, cancelled)?;
-        let claim = bind(witness, sweep, &readback, limits, &expected, cancelled)?;
+        let readback = Readback::capture(candidate, prism, limits, cancelled)?;
+        let claim = bind(witness, &readback, limits, &expected, cancelled)?;
         if covered[claim.slot]
             .replace((index, claim.certificate))
             .is_some()
@@ -71,7 +72,6 @@ struct Claim {
 
 fn bind(
     witness: &AxialProjectionWitness,
-    sweep: ProjectionSweep,
     readback: &Readback,
     limits: &Limits,
     expected: &[Expected<'_>],
@@ -80,8 +80,7 @@ fn bind(
     let mut found = None;
     for (slot, expected) in expected.iter().enumerate() {
         poll(cancelled)?;
-        let Some(certificate) = check(witness, sweep, readback, limits, expected, cancelled)?
-        else {
+        let Some(certificate) = check(witness, readback, limits, expected, cancelled)? else {
             continue;
         };
         if found.replace(Claim { slot, certificate }).is_some() {
@@ -93,7 +92,6 @@ fn bind(
 
 fn check(
     witness: &AxialProjectionWitness,
-    sweep: ProjectionSweep,
     readback: &Readback,
     limits: &Limits,
     expected: &Expected<'_>,
@@ -104,7 +102,7 @@ fn check(
     if source_error > limits.source {
         return Ok(None);
     }
-    let Some(metric) = transport(witness, sweep, readback, &map, expected.root, cancelled)? else {
+    let Some(metric) = transport(witness, readback, &map, expected.root, cancelled)? else {
         return Ok(None);
     };
     if Ratio::from_finite(metric.spatial) > limits.spatial || metric.angle > limits.angle {
@@ -151,8 +149,12 @@ struct EndpointMap<'a> {
 
 impl<'a> EndpointMap<'a> {
     fn from(readback: &'a Readback, retained: &'a SourceInterval) -> Checked<Self> {
-        let mut a = &readback.samples.first().ok_or(Failure::Candidate)?.prism[0];
-        let mut b = &readback.samples.last().ok_or(Failure::Candidate)?.prism[0];
+        let mut a = &readback
+            .breakpoints
+            .first()
+            .ok_or(Failure::Candidate)?
+            .prism[0];
+        let mut b = &readback.breakpoints.last().ok_or(Failure::Candidate)?.prism[0];
         if !readback.forward {
             std::mem::swap(&mut a, &mut b);
         }
@@ -192,29 +194,19 @@ struct Achieved {
 
 fn transport(
     witness: &AxialProjectionWitness,
-    sweep: ProjectionSweep,
     readback: &Readback,
     map: &EndpointMap<'_>,
     root: &RadialRoot,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Checked<Option<Achieved>> {
-    let first = readback.samples.first().ok_or(Failure::Candidate)?;
+    let first = readback.breakpoints.first().ok_or(Failure::Candidate)?;
     let Some(angle_chart) = resolve_charts(first, root.branch) else {
         return Ok(None);
     };
-    let origin_travel = Ratio::from_finite(sweep.start);
     let mut worst = Worst::new();
-    for sample in &readback.samples {
+    for point in &readback.breakpoints {
         poll(cancelled)?;
-        measure(
-            witness,
-            root,
-            &origin_travel,
-            sample,
-            map,
-            &angle_chart,
-            &mut worst,
-        );
+        measure(witness, root, point, map, &angle_chart, &mut worst);
     }
     worst.finish(&readback.vertex_error).map(Some)
 }
@@ -253,35 +245,30 @@ impl Worst {
 fn measure(
     witness: &AxialProjectionWitness,
     root: &RadialRoot,
-    origin_travel: &Ratio,
-    sample: &NativeSample,
+    point: &NativeBreakpoint,
     map: &EndpointMap<'_>,
     angular: &AngularCharts,
     worst: &mut Worst,
 ) {
-    let [raw_source, raw_sweep] = &sample.prism;
+    let [raw_source, travel] = &point.prism;
     let source = map.source(raw_source);
-    let actual_travel = origin_travel.subtract(raw_sweep);
     add_max(
         &mut worst.spatial_squared,
-        squared(&sample.position, &witness.position(&source, &root.travel)),
+        squared(&point.position, &witness.position(&source, &root.travel)),
     );
     add_max(
         &mut worst.prism_squared,
-        squared(
-            &sample.position,
-            &witness.position(raw_source, &actual_travel),
-        ),
+        squared(&point.position, &witness.position(raw_source, travel)),
     );
     let height = witness.source.height_at(&source);
     measure_target(
-        &sample.target,
+        &point.target,
         &angular.first,
         &height,
         &witness.chart.radius,
         worst,
     );
-    if let (Some(target), Some(chart)) = (&sample.second_target, &angular.second) {
+    if let (Some(target), Some(chart)) = (&point.second_target, &angular.second) {
         measure_target(target, chart, &height, &witness.chart.radius, worst);
     }
 }
@@ -291,7 +278,7 @@ struct AngularCharts {
     second: Option<[Ratio; 2]>,
 }
 
-fn resolve_charts(first: &NativeSample, branch: Branch) -> Option<AngularCharts> {
+fn resolve_charts(first: &NativeBreakpoint, branch: Branch) -> Option<AngularCharts> {
     let a = chart_angle(&first.target[0], branch);
     let b = first
         .second_target
@@ -377,7 +364,7 @@ fn selected_range(
 }
 
 fn parameter_at(readback: &Readback, source: &Ratio) -> Checked<Ratio> {
-    for pair in readback.samples.windows(2) {
+    for pair in readback.breakpoints.windows(2) {
         let [a, b] = [&pair[0], &pair[1]];
         let [u, v] = [&a.prism[0], &b.prism[0]];
         if (u <= source && source <= v) || (v <= source && source <= u) {

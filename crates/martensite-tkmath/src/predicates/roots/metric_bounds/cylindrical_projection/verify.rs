@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Full active-interval readback for native prism and Section representations.
 use super::{
-    AxialProjectionLine, AxialProjectionWitness, Checked, CylinderProjectionBranch as Branch,
+    AxialProjectionWitness, Checked, CylinderProjectionBranch as Branch,
     CylinderProjectionError as Failure, ProjectionPlacement, ProjectionSourceInterval,
     affine::{Ratio, Vector, bounds, sub, zero},
-    native_net::{NativeSample, Net, finite},
+    native_net::{NativeBreakpoint, Net, finite},
     poll,
+    prism::PrismMap,
 };
 use crate::{
     gp::Direction3,
     predicates::roots::{
         certificate_arithmetic::rounding::outward_sqrt,
-        metric_bounds::placed_plane::{ExactPlacement, dot, exact_point, exact_vector},
+        metric_bounds::placed_plane::{ExactPlacement, dot},
     },
 };
 use std::cmp::Ordering;
@@ -78,7 +79,7 @@ pub struct NativeProjectionEdge {
     pub spatial: NativeProjectionCurve<3>,
     /// The effective location of the spatial representation.
     pub placement: ProjectionPlacement,
-    /// Actual retained pcurve on the ruled prism (U is the original source parameter).
+    /// Actual retained pcurve in the verified native prism plane chart.
     pub prism: NativeProjectionCurve<2>,
     /// Actual first retained pcurve on the target cylinder.
     pub target: NativeProjectionCurve<2>,
@@ -161,48 +162,6 @@ impl AxialProjectionWitness {
         })
     }
 
-    /// Verify the actual retained extrusion basis and its two native parameter domains.
-    /// Example: `witness.verify_prism(sweep, basis, ruled_direction, native_v)?`.
-    pub fn verify_prism(
-        &self,
-        sweep: ProjectionSweep,
-        basis: AxialProjectionLine,
-        ruled_direction: Direction3,
-        native_v: [f64; 2],
-    ) -> Checked<()> {
-        let placement = ExactPlacement::capture(basis.placement)?;
-        let origin = placement.point(exact_point(basis.line.location(), 0)?);
-        let slope = placement.vector(exact_vector(*basis.line.direction().coordinates(), 1)?);
-        let direction = placement.vector(exact_vector(*ruled_direction.coordinates(), 2)?);
-        if sweep != self.sweep()?
-            || !basis.range.into_iter().all(f64::is_finite)
-            || basis.range.map(Ratio::from_finite) != self.source.range
-            || slope != self.source.slope
-            || origin != self.position(&Ratio::from_finite(0.), &Ratio::from_finite(sweep.start))
-            || direction != self.direction.each_ref().map(Ratio::negated)
-            || native_v != [-sweep.length, 0.]
-        {
-            return Err(Failure::Prism);
-        }
-        Ok(())
-    }
-
-    /// Bind native Section edges to unique source intervals and return each actual input index.
-    /// Example: `witness.certify_native_edges(sweep, &edges, limits, || false)?`.
-    pub fn certify_native_edges(
-        &self,
-        sweep: ProjectionSweep,
-        candidates: &[NativeProjectionEdge],
-        limits: ProjectionProofLimits,
-        mut cancelled: impl FnMut() -> bool,
-    ) -> Checked<Vec<(usize, ProjectionEdgeCertificate)>> {
-        let limits = Limits::capture(limits)?;
-        if sweep != self.sweep()? {
-            return Err(Failure::Prism);
-        }
-        super::evidence::certify(self, sweep, candidates, &limits, &mut cancelled)
-    }
-
     pub(super) fn position(&self, t: &Ratio, travel: &Ratio) -> Vector {
         std::array::from_fn(|axis| {
             self.source.origin[axis]
@@ -219,7 +178,7 @@ pub(super) struct Limits {
 }
 
 impl Limits {
-    fn capture(limits: ProjectionProofLimits) -> Checked<Self> {
+    pub(super) fn capture(limits: ProjectionProofLimits) -> Checked<Self> {
         let values = [limits.spatial, limits.source_parameter, limits.angle];
         if values
             .into_iter()
@@ -237,7 +196,7 @@ impl Limits {
 }
 
 pub(super) struct Readback {
-    pub samples: Vec<NativeSample>,
+    pub breakpoints: Vec<NativeBreakpoint>,
     pub vertex_error: Ratio,
     pub forward: bool,
 }
@@ -245,6 +204,7 @@ pub(super) struct Readback {
 impl Readback {
     pub fn capture(
         candidate: &NativeProjectionEdge,
+        prism_map: &PrismMap,
         limits: &Limits,
         cancelled: &mut impl FnMut() -> bool,
     ) -> Checked<Self> {
@@ -254,18 +214,19 @@ impl Readback {
         }
         let nets = ReadbackNets::capture(candidate)?;
         let cuts = nets.cuts(&range)?;
-        let mut samples = Vec::with_capacity(cuts.len());
+        // On each joint span, every captured representation and chart map is affine.
+        let mut breakpoints = Vec::with_capacity(cuts.len());
         for parameter in cuts {
             poll(cancelled)?;
-            samples.push(nets.sample(parameter)?);
+            breakpoints.push(nets.breakpoint(parameter, prism_map)?);
         }
         let [first, last] = [
-            samples.first().ok_or(Failure::Candidate)?,
-            samples.last().ok_or(Failure::Candidate)?,
+            breakpoints.first().ok_or(Failure::Candidate)?,
+            breakpoints.last().ok_or(Failure::Candidate)?,
         ];
         let direction = first.prism[0].cmp(&last.prism[0]);
         if direction == Ordering::Equal
-            || samples
+            || breakpoints
                 .windows(2)
                 .any(|pair| pair[0].prism[0].cmp(&pair[1].prism[0]) != direction)
         {
@@ -276,7 +237,7 @@ impl Readback {
             return Err(Failure::Candidate);
         }
         Ok(Self {
-            samples,
+            breakpoints,
             vertex_error,
             forward: direction == Ordering::Less,
         })
@@ -319,10 +280,10 @@ impl ReadbackNets {
         Ok(cuts)
     }
 
-    fn sample(&self, parameter: Ratio) -> Checked<NativeSample> {
-        Ok(NativeSample {
+    fn breakpoint(&self, parameter: Ratio, prism_map: &PrismMap) -> Checked<NativeBreakpoint> {
+        Ok(NativeBreakpoint {
             position: self.spatial.at(&parameter)?,
-            prism: self.prism.at(&parameter)?,
+            prism: prism_map.coordinates(self.prism.at(&parameter)?)?,
             target: self.target.at(&parameter)?,
             second_target: self
                 .second_target
@@ -335,11 +296,11 @@ impl ReadbackNets {
 }
 
 fn vertex_error(
-    first: &NativeSample,
-    last: &NativeSample,
+    first: &NativeBreakpoint,
+    last: &NativeBreakpoint,
     vertices: &[ProjectionVertex; 2],
 ) -> Checked<Ratio> {
-    let metric = |sample: &NativeSample, vertex: ProjectionVertex| -> Checked<Ratio> {
+    let metric = |sample: &NativeBreakpoint, vertex: ProjectionVertex| -> Checked<Ratio> {
         let p = ExactPlacement::capture(vertex.placement)?.point(finite(&vertex.point)?);
         let delta = sub(&sample.position, &p);
         Ok(dot(&delta, &delta))
