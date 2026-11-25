@@ -64,6 +64,42 @@ impl CertifiedCylindricalSlice {
         self.operations
     }
 
+    /// Transfer this exact signed radial bound to the unit-depth patch in both depth directions.
+    /// The complete unit interval must lie inside the original proved interval. The present
+    /// query must retain the identical rails, chart and direction. Reversing the depth parameter
+    /// and the signed sense together preserves the bound: d|S(1-s)|²/ds = -d|S|²/ds at 1-s.
+    /// Example: `let [from_near, from_far] = proof.unit_radial_sweeps(query)?;`.
+    pub fn unit_radial_sweeps(
+        &self,
+        query: CylindricalSliceQuery<'_>,
+    ) -> Option<[CertifiedCylindricalRadialSweep; 2]> {
+        if query.depth[0] > 0. || query.depth[1] < 1. || !self.matches_source(query) {
+            return None;
+        }
+        let first = CylindricalRadialSweepQuery {
+            rails: query.rails,
+            axis_origin: [0.; 2],
+            sense: query.sense,
+            minimum: 0.,
+            options: self.options,
+        };
+        let last = CylindricalRadialSweepQuery {
+            rails: [query.rails[1], query.rails[0]],
+            sense: match query.sense {
+                CylindricalRadialSense::Outward => CylindricalRadialSense::Inward,
+                CylindricalRadialSense::Inward => CylindricalRadialSense::Outward,
+            },
+            ..first
+        };
+        Some([first, last].map(|source| {
+            CertifiedCylindricalRadialSweep::new(
+                source,
+                self.signed_squared_radius_derivative_lower(),
+                self.operations,
+            )
+        }))
+    }
+
     /// Compare exact source words independently of proof work. Example: `proof.matches_source(query)`.
     pub fn matches_source(&self, query: CylindricalSliceQuery<'_>) -> bool {
         admit(CylindricalSliceQuery {

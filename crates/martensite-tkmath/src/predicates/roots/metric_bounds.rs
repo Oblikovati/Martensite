@@ -152,7 +152,7 @@ pub use cylindrical_storage::{
     CylindricalStorageLimits, CylindricalStorageOptions, CylindricalStorageQuery,
     CylindricalStorageResidual, certify_cylindrical_contact_prefix,
     certify_cylindrical_radial_sweep, certify_cylindrical_slice_direction,
-    certify_cylindrical_storage,
+    certify_cylindrical_slice_with_joins, certify_cylindrical_storage,
 };
 use num_bigint::BigInt;
 pub use types::*;

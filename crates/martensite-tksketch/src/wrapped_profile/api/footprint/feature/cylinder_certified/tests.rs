@@ -92,6 +92,9 @@ fn certified_cylinder_checks_both_normals_and_inherited_stock_bindings() {
             .apply_certified_wrapped_profile(REVISION, kind, &sketch, planar())
             .unwrap();
         assert_ordered(feature.validation());
+        let coverage = feature.attachment_report();
+        assert!(coverage.authored_to_stored_upper <= sketch.options.spatial_error);
+        assert!(coverage.seam_residual_upper <= stock.record().resolution.sew);
         let native = feature.export_native().unwrap();
         let exact = 400. * std::f64::consts::PI + (radius * radius - 100.) / 40.;
         assert!((volume(&native.body) - exact).abs() < 1e-4);

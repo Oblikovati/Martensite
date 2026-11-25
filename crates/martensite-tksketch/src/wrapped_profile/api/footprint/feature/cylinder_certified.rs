@@ -110,6 +110,8 @@ pub struct CertifiedCylinderAttachmentReport {
     pub authored_fit_upper: f64,
     /// Maximum certified spatial discrepancy of the retained normal sweep under its depth budgets.
     pub normal_storage_upper: f64,
+    /// Full-domain upper error on the ruled walls and both physical cap boundaries.
+    pub authored_to_stored_upper: f64,
     /// Full-interval upper residual of the attached stock pcurves.
     pub seam_residual_upper: f64,
     /// Full-interval upper residual of the exposed cap pcurves.
@@ -205,12 +207,21 @@ fn execute(
     complete(Phase::Archive);
     let (validation, spatial) =
         proof::validate(attempt, &input, &tool, &candidate, cancelled, &mut complete)?;
+    let authored_to_stored_upper = realized_boundary_bound(&tool, input.support.radius);
+    require(
+        attempt,
+        CylinderFeatureStage::Validation,
+        authored_to_stored_upper.is_finite()
+            && authored_to_stored_upper <= request.options.spatial_error,
+        "same-parameter authored-to-stored wall and cap boundary error within the requested spatial budget",
+    )?;
     let coverage = CertifiedCylinderAttachmentReport {
         requested_spatial_error: request.options.spatial_error,
         requested_sew_limit: input.resolution.sew,
         effective_fit_ceiling: input.fit_ceiling(),
         authored_fit_upper: tool.authored_fit_upper(),
         normal_storage_upper: tool.normal_storage_upper(),
+        authored_to_stored_upper,
         seam_residual_upper: spatial[0],
         exposed_cap_residual_upper: spatial[1],
         stock_boundary_residual_upper: candidate.native_stock_error,
@@ -228,6 +239,35 @@ fn execute(
         authored: tool.authored,
         coverage,
     })
+}
+
+fn realized_boundary_bound(tool: &material::Tool, support_radius: f64) -> f64 {
+    tool.spans
+        .values()
+        .map(|span| {
+            let stored = &span.storage;
+            let nominal = stored.certificate.stored_radii()[1];
+            let outer = (nominal + stored.depths.radius_rounding_bounds()[1]).next_up();
+            let developed = stored.profile.developed_position_bound();
+            // The cylindrical lift scales the chart angle by r/R. The depth
+            // receipt binds the additional discrepancy of the stored ruled wall.
+            let scale = (outer / support_radius).next_up().max(1.);
+            let boundary = (developed * scale).next_up();
+            let wall = (boundary + stored.depths.normal_sweep_error_bound()).next_up();
+            let cap = stored
+                .trims
+                .cap_residuals
+                .iter()
+                .map(|proof| proof.spatial_residual_bound())
+                .fold(0_f64, f64::max);
+            let combined = (wall + cap).next_up();
+            if combined.is_finite() {
+                combined
+            } else {
+                f64::INFINITY
+            }
+        })
+        .fold(0_f64, f64::max)
 }
 
 const _: fn() = || {
