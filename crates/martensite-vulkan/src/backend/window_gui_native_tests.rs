@@ -152,7 +152,7 @@ fn render_native_probe(
     let readback = renderer.render_window_with_probe(
         &frame,
         presenter,
-        false,
+        crate::driver_options::WindowFrameQueue::Unrestricted,
         RenderGuiSurfacePolicy::CheckedV2,
         probe,
     )?;
@@ -251,7 +251,7 @@ fn present_orientation_frame(
         .render_window(
             &orientation_frame(extent),
             presenter,
-            false,
+            crate::driver_options::WindowFrameQueue::Unrestricted,
             RenderGuiSurfacePolicy::CheckedV2,
         )
         .unwrap();
@@ -329,7 +329,7 @@ fn uploads_on_the_dedicated_queue_before_native_presentation() {
         .render_window(
             &frame,
             &mut presenter,
-            false,
+            crate::driver_options::WindowFrameQueue::Unrestricted,
             RenderGuiSurfacePolicy::CheckedV2,
         )
         .unwrap();
