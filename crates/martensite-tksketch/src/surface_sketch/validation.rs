@@ -58,7 +58,11 @@ pub(super) fn check_one_periodic_hole(
     finish(report, bindings, admitted)
 }
 
-fn finish(report: ValidationReport, bindings: &Bindings, admitted: &Sweep) -> Checked<CheckedBody> {
+pub(super) fn finish<K>(
+    report: ValidationReport,
+    bindings: &[(K, topods::Shape)],
+    admitted: &Sweep,
+) -> Checked<CheckedBody> {
     let achieved = tolerances(bindings)?;
     let diagnostics = cap_diagnostics(achieved, admitted.options.resolution.cap)?;
     Ok(CheckedBody {
@@ -77,7 +81,7 @@ fn verify_band_census(report: &ValidationReport) -> Checked<()> {
         format!("{:?}", report.census),
     ))
 }
-fn ordered_report(solid: &topods::Shape, admitted: &Sweep) -> Checked<ValidationReport> {
+pub(super) fn ordered_report(solid: &topods::Shape, admitted: &Sweep) -> Checked<ValidationReport> {
     let mut resolution = admitted.options.resolution;
     if matches!(resolution.cap, ToleranceCap::Report(_)) {
         resolution.cap = ToleranceCap::NoLimit;

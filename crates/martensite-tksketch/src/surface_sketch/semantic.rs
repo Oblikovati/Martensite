@@ -155,7 +155,11 @@ fn check_face(
         bindings,
     )
 }
-fn check_face_carrier(admitted: &Admitted, key: HistoryKey, shape: &topods::Shape) -> Checked<()> {
+pub(super) fn check_face_carrier(
+    admitted: &Admitted,
+    key: HistoryKey,
+    shape: &topods::Shape,
+) -> Checked<()> {
     let face = topods::face(shape).map_err(|error| native("semantic face", error))?;
     let surface = BRepAdaptorSurface::with_face(&face, true)
         .map_err(|error| native("semantic surface", error))?;

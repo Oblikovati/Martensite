@@ -19,7 +19,10 @@ use martensite_tkmath::{
 };
 use std::f64::consts::TAU;
 
+mod periodic_cut;
 mod trim;
+
+pub(super) use periodic_cut::validate_crossed;
 
 pub(super) fn validate(
     section: &BandSection,

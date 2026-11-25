@@ -8,7 +8,7 @@ mod hole;
 mod verification;
 
 pub(super) use history::collect;
-pub use hole::{CylinderBandHole, normal_extrude_cylinder_band_with_hole};
+pub use hole::*;
 
 /// Support and meridian bounds of a full-turn band.
 #[derive(Clone, Copy, Debug, PartialEq)]

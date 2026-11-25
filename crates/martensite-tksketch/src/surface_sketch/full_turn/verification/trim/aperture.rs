@@ -99,7 +99,11 @@ fn verify_aperture_edge(
     Ok(direction)
 }
 
-fn increasing(edge: &topods::Edge, pcurve: &EdgePCurve, axis: usize) -> Checked<bool> {
+pub(in crate::surface_sketch::full_turn::verification) fn increasing(
+    edge: &topods::Edge,
+    pcurve: &EdgePCurve,
+    axis: usize,
+) -> Checked<bool> {
     let line = pcurve.pcurve.downcast_ref::<Geom2dLine>().ok_or_else(|| {
         incomplete(
             "analytic iso-parametric aperture line",

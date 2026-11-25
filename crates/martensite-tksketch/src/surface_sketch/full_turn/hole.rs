@@ -9,7 +9,10 @@ use super::{
 use martensite_tkbrep::topods;
 use std::f64::consts::{PI, TAU};
 
+mod crossed;
 mod images;
+pub(super) use crossed::seam_endpoints;
+pub use crossed::*;
 
 /// One authored rectangular through hole on a cylinder, expressed in the band's chart.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -45,18 +48,20 @@ pub(super) fn build(
     options: NormalExtrusionOptions,
     seam: Option<f64>,
 ) -> Result<NormalExtrusionResult, SurfaceSketchFailure> {
-    let prepared =
-        Cutout::admit(band, hole, depths, options, seam).map_err(|cause| SurfaceSketchFailure {
-            region: band.region,
-            stage: SurfaceStage::Admission,
-            cause,
-        })?;
+    let prepared = Cutout::admit(band, hole, depths, options, |aperture| {
+        interior_cut(aperture, seam)
+    })
+    .map_err(|cause| SurfaceSketchFailure {
+        region: band.region,
+        stage: SurfaceStage::Admission,
+        cause,
+    })?;
     prepared.publish(band.rims)
 }
 
-struct Cutout {
-    stock: band_admission::BandSection,
-    aperture: cylinder_admission::Admitted,
+pub(super) struct Cutout {
+    pub(super) stock: band_admission::BandSection,
+    pub(super) aperture: cylinder_admission::Admitted,
 }
 
 impl Cutout {
@@ -65,14 +70,14 @@ impl Cutout {
         hole: &CylinderBandHole,
         depths: [f64; 2],
         options: NormalExtrusionOptions,
-        seam: Option<f64>,
+        choose_seam: impl FnOnce(&cylinder_admission::Admitted) -> Checked<f64>,
     ) -> Checked<Self> {
         let (support, axial) = cylinder(band.support)?;
         let aperture =
             cylinder_admission::admit(&hole.source(band.region, support), depths, options)?;
         require_rim_clearance(axial, hole.axial, options)?;
         require_distinct_sources(band.rims, hole.boundaries)?;
-        let chart_origin = interior_cut(&aperture, seam)?;
+        let chart_origin = choose_seam(&aperture)?;
         let support = CylinderSupport {
             chart_origin,
             ..support
@@ -89,22 +94,28 @@ impl Cutout {
         mut self,
         rims: [SurfaceCurveId; 2],
     ) -> Result<NormalExtrusionResult, SurfaceSketchFailure> {
-        let candidate = self.candidate(rims)?;
+        let (proposal, stock, hole) = self.proposal(rims)?;
+        let candidate = images::bind(proposal, stock, hole)
+            .map_err(|cause| self.stock.sweep.failure(SurfaceStage::History, cause))?;
         let keys: Vec<_> = candidate.1.iter().map(|(key, _)| *key).collect();
+        self.subtract_analytic_measure();
+        let bytes = encoding::encode(&candidate.0, &candidate.1)
+            .map_err(|cause| self.stock.sweep.failure(SurfaceStage::Encoding, cause))?;
+        self.validate_archive(rims, bytes, keys)
+    }
+
+    fn subtract_analytic_measure(&mut self) {
         let sweep = &mut self.stock.sweep;
         let cutter = cylinder_sweep::prepare(&self.aperture);
         sweep.expected_volume -= cutter.expected_volume;
         sweep.surface_area += cutter.surface_area;
         sweep.coordinate_error = sweep.coordinate_error.max(cutter.coordinate_error);
-        let bytes = encoding::encode(&candidate.0, &candidate.1)
-            .map_err(|cause| sweep.failure(SurfaceStage::Encoding, cause))?;
-        self.validate_archive(rims, bytes, keys)
     }
 
-    fn candidate(
+    fn proposal(
         &self,
         rims: [SurfaceCurveId; 2],
-    ) -> Result<(topods::Shape, Bindings), SurfaceSketchFailure> {
+    ) -> Result<(images::Candidate, Bindings, Bindings), SurfaceSketchFailure> {
         let sweep = &self.stock.sweep;
         let stock = pipeline::build(sweep, &|bindings| {
             verification::validate(&self.stock, rims, bindings)
@@ -117,8 +128,7 @@ impl Cutout {
         let aperture = aperture.export_brep()?;
         let proposal = images::subtract(&stock.solid, &aperture.solid)
             .map_err(|cause| sweep.failure(SurfaceStage::Construction, cause))?;
-        images::bind(proposal, stock.entities, aperture.entities)
-            .map_err(|cause| sweep.failure(SurfaceStage::History, cause))
+        Ok((proposal, stock.entities, aperture.entities))
     }
 
     fn validate_archive(

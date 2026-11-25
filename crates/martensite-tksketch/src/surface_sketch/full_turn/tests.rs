@@ -3,6 +3,11 @@ use super::*;
 use martensite_tkbo::profile_extrusion::{DisplayTolerance, Resolution, ToleranceCap};
 use std::f64::consts::{FRAC_PI_6, PI, TAU};
 
+static_assertions::assert_impl_all!(FullTurnBand: Send, Sync);
+static_assertions::assert_impl_all!(CylinderBandHole: Send, Sync);
+static_assertions::assert_impl_all!(CrossedBandResult: Send, Sync);
+static_assertions::assert_impl_all!(PeriodicImageKey: Send, Sync);
+
 fn options() -> NormalExtrusionOptions {
     NormalExtrusionOptions {
         resolution: Resolution::new(
@@ -362,4 +367,119 @@ fn authored_hole_cannot_erase_a_band_rim_or_force_an_unqualified_native_cut() {
             ..
         }
     ));
+}
+
+#[test]
+fn actual_native_seam_cut_publishes_two_lifts_with_signed_source_addresses() {
+    let band = cylinder(NormalSense::Outward, 0.);
+    let hole = seam_crossing_hole();
+    let run = || {
+        normal_extrude_cylinder_band_at_authored_seam(&band, &hole, [-1., 2.], options()).unwrap()
+    };
+    let first = run();
+    let second = std::thread::scope(|scope| scope.spawn(run).join().unwrap());
+    let geometry = first.geometry();
+    assert_eq!(geometry.bytes, second.geometry().bytes);
+    assert_eq!(geometry.history(), second.geometry().history());
+    assert_eq!(
+        first
+            .crossings()
+            .iter()
+            .map(|crossing| crossing.id.transition)
+            .collect::<Vec<_>>(),
+        [SheetTransition::Increasing, SheetTransition::Decreasing,]
+    );
+    assert_crossed(&first, 99. * PI - 33. / 8., [0.5, 0.5]);
+}
+
+#[test]
+fn asymmetric_crossing_preserves_the_entire_oriented_source_interval() {
+    let band = cylinder(NormalSense::Inward, 0.);
+    let hole = CylinderBandHole {
+        arc_length: [-0.25, 0.75],
+        ..seam_crossing_hole()
+    };
+    let result =
+        normal_extrude_cylinder_band_at_authored_seam(&band, &hole, [-1., 2.], options()).unwrap();
+    assert_crossed(&result, 81. * PI - 2.7, [0.25, 0.75]);
+}
+
+#[test]
+fn rotated_crossing_keeps_non_dyadic_source_roots() {
+    let band = cylinder(NormalSense::Outward, 0.2);
+    let hole = CylinderBandHole {
+        arc_length: [-1., 2.],
+        ..seam_crossing_hole()
+    };
+    let result =
+        normal_extrude_cylinder_band_at_authored_seam(&band, &hole, [-1., 2.], options()).unwrap();
+    assert_crossed(&result, 99. * PI - 9.9, [1. / 3., 2. / 3.]);
+}
+
+#[test]
+fn touching_or_disjoint_aperture_cannot_claim_a_transverse_crossing() {
+    let band = cylinder(NormalSense::Outward, 0.);
+    for interval in [[-0.625, 0.], [0.1, 1.]] {
+        let hole = CylinderBandHole {
+            arc_length: interval,
+            ..seam_crossing_hole()
+        };
+        let error =
+            normal_extrude_cylinder_band_at_authored_seam(&band, &hole, [-1., 2.], options())
+                .unwrap_err();
+        assert!(matches!(
+            error.cause,
+            SurfaceFailureCause::InvalidInput {
+                field: "authored seam crossing clearance",
+                ..
+            }
+        ));
+    }
+}
+
+fn assert_crossed(result: &CrossedBandResult, expected: f64, ratios: [f64; 2]) {
+    let geometry = result.geometry();
+    let volume = geometry.volume();
+    assert!((volume.value - expected).abs() <= volume.error_bound);
+    let [census] = geometry.validation().census.as_slice() else {
+        panic!("one periodic solid expected");
+    };
+    assert_eq!(
+        [
+            census.vertices,
+            census.edges,
+            census.faces,
+            census.loops,
+            census.shells
+        ],
+        [16, 24, 8, 10, 1]
+    );
+    assert_eq!(census.genus, Some(2));
+    for (root, ratio) in result.crossings().iter().zip(ratios) {
+        let [a, b] = root.normalized_parameter;
+        assert!(a <= ratio && ratio <= b);
+        assert_history_interval(geometry.history(), root.id);
+    }
+}
+
+fn assert_history_interval(keys: &[PeriodicImageKey], id: PeriodicCrossingId) {
+    let cut = PeriodicSourceEnd::Cut(id);
+    for depth in [PeriodicDepth::First, PeriodicDepth::Last] {
+        let root = PeriodicImageKey::CrossingVertex {
+            depth,
+            crossing: id,
+        };
+        assert!(keys.binary_search(&root).is_ok());
+        for interval in [
+            [PeriodicSourceEnd::Start, cut],
+            [cut, PeriodicSourceEnd::End],
+        ] {
+            let piece = PeriodicImageKey::AperturePiece {
+                curve: id.curve,
+                depth,
+                interval,
+            };
+            assert!(keys.binary_search(&piece).is_ok());
+        }
+    }
 }

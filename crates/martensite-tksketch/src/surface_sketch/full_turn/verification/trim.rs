@@ -10,7 +10,7 @@ use std::f64::consts::{FRAC_PI_2, PI};
 mod aperture;
 mod partition;
 
-pub(super) use aperture::verify_aperture_walls;
+pub(super) use aperture::{increasing, verify_aperture_walls};
 
 pub(super) fn verify(
     section: &BandSection,
@@ -92,7 +92,7 @@ fn hole_bindings(
     Ok(Some([a?, b?, c?, d?]))
 }
 
-fn verify_rim_trim(
+pub(super) fn verify_rim_trim(
     section: &BandSection,
     face: &topods::Face,
     surface: &BRepAdaptorSurface,
@@ -134,13 +134,30 @@ fn verify_seam(
     second: topods::Edge,
     index: usize,
 ) -> Checked<()> {
-    opposite(&first, &second)?;
-    verify_seam_line(section, &first, index)?;
-    let left = seam_trim(face, &first)?;
-    let right = seam_trim(face, &second)?;
+    let points = section.sweep.points;
+    verify_seam_fragment(
+        section,
+        face,
+        surface,
+        [&first, &second],
+        [points[index], points[(index + 1) % 4]],
+    )
+}
+
+pub(super) fn verify_seam_fragment(
+    section: &BandSection,
+    face: &topods::Face,
+    surface: &BRepAdaptorSurface,
+    [first, second]: [&topods::Edge; 2],
+    endpoints: [[f64; 3]; 2],
+) -> Checked<()> {
+    opposite(first, second)?;
+    verify_seam_line(section, first, endpoints)?;
+    let left = seam_trim(face, first)?;
+    let right = seam_trim(face, second)?;
     verify_period_pair(section, surface, &left, &right)?;
-    verify_representation(section, surface, &first, &left)?;
-    verify_representation(section, surface, &second, &right)
+    verify_representation(section, surface, first, &left)?;
+    verify_representation(section, surface, second, &right)
 }
 
 fn opposite(first: &topods::Edge, second: &topods::Edge) -> Checked<()> {
@@ -158,11 +175,13 @@ fn opposite(first: &topods::Edge, second: &topods::Edge) -> Checked<()> {
     Ok(())
 }
 
-fn verify_seam_line(section: &BandSection, edge: &topods::Edge, index: usize) -> Checked<()> {
+fn verify_seam_line(
+    section: &BandSection,
+    edge: &topods::Edge,
+    [a, b]: [[f64; 3]; 2],
+) -> Checked<()> {
     let curve = BRepAdaptorCurve::with_edge(edge).map_err(|e| native("full-turn seam curve", e))?;
     check_curve_kind(&curve, false)?;
-    let a = section.sweep.points[index];
-    let b = section.sweep.points[(index + 1) % 4];
     let middle = std::array::from_fn(|i| a[i] * 0.5 + b[i] * 0.5);
     check_edge_samples(&curve, [a, b, middle], tolerance(section))
 }
@@ -205,7 +224,7 @@ fn verify_period_pair(
     Ok(())
 }
 
-fn verify_representation(
+pub(super) fn verify_representation(
     section: &BandSection,
     surface: &BRepAdaptorSurface,
     edge: &topods::Edge,
@@ -279,7 +298,7 @@ fn norm(x: [f64; 3]) -> f64 {
     frame::dot(x, x).sqrt()
 }
 
-fn trim_uv(trim: &EdgePCurve, parameter: f64) -> Checked<Point2> {
+pub(super) fn trim_uv(trim: &EdgePCurve, parameter: f64) -> Checked<Point2> {
     trim.pcurve
         .get()
         .ok_or_else(|| incomplete("analytic full-turn trim", "null pcurve"))?

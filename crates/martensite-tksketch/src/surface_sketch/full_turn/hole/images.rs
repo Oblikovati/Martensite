@@ -8,7 +8,7 @@ use martensite_tkg3d::top_abs::ShapeEnum;
 use std::collections::BTreeMap;
 
 pub(super) struct Candidate {
-    body: topods::Shape,
+    pub(super) body: topods::Shape,
     cut: BRepAlgoAPIBooleanOperation,
     members: BTreeMap<ShapeEnum, IndexedMapOfShape>,
 }
@@ -70,7 +70,7 @@ pub(super) fn bind(
 }
 
 impl Candidate {
-    fn image(
+    pub(super) fn image(
         &self,
         key: HistoryKey,
         parent: &topods::Shape,
@@ -111,7 +111,7 @@ impl Candidate {
         Ok(())
     }
 
-    fn deleted_cap(&self, key: HistoryKey, image: &topods::Shape) -> Checked<()> {
+    pub(super) fn deleted_cap(&self, key: HistoryKey, image: &topods::Shape) -> Checked<()> {
         if self
             .cut
             .is_deleted(image)
@@ -123,6 +123,67 @@ impl Candidate {
             "consumed aperture tool cap or solid",
             format!("{key:?}"),
         ))
+    }
+
+    pub(super) fn split_edges(
+        &self,
+        parent: &topods::Shape,
+        key: HistoryKey,
+    ) -> Checked<[topods::Shape; 2]> {
+        let modified = self
+            .cut
+            .modified(parent)
+            .map_err(|e| native("periodic split edges", e))?;
+        self.rooted_images(modified, ShapeEnum::Edge, key)
+    }
+
+    pub(super) fn crossing_vertices<const N: usize>(
+        &self,
+        parent: &topods::Shape,
+        key: HistoryKey,
+    ) -> Checked<[topods::Shape; N]> {
+        let generated = self
+            .cut
+            .generated(parent)
+            .map_err(|e| native("periodic split vertices", e))?;
+        self.rooted_images(generated, ShapeEnum::Vertex, key)
+    }
+
+    fn rooted_images<const N: usize>(
+        &self,
+        images: Vec<topods::Shape>,
+        kind: ShapeEnum,
+        key: HistoryKey,
+    ) -> Checked<[topods::Shape; N]> {
+        let members = self.members.get(&kind).ok_or_else(|| {
+            incomplete("indexed periodic split kind", format!("{key:?}: {kind:?}"))
+        })?;
+        let mut report = IndexedMapOfShape::default();
+        for image in images {
+            if members.find_index(&image) != 0 {
+                report.add(image);
+            }
+        }
+        if report.extent() != N {
+            return Err(incomplete(
+                "complete periodic split images",
+                format!("{key:?}: {} {kind:?} images, expected {N}", report.extent()),
+            ));
+        }
+        let ordered = (1..=N)
+            .map(|i| {
+                report
+                    .find_key(i)
+                    .cloned()
+                    .map_err(|e| native("bound periodic split image", e))
+            })
+            .collect::<Checked<Vec<_>>>()?;
+        ordered.try_into().map_err(|items: Vec<_>| {
+            incomplete(
+                "complete periodic split history",
+                format!("{} images", items.len()),
+            )
+        })
     }
 }
 
