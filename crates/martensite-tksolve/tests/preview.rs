@@ -4,6 +4,9 @@
 
 #![cfg(feature = "sketch3d-preview")]
 
+#[path = "preview/rebind.rs"]
+mod rebind;
+
 use martensite_tksolve::{
     ad::DualNumber as Dual,
     nonlinear::SolveOptions,

@@ -2,6 +2,11 @@
 
 TKSolve evaluates residual equations, analyzes numerical rank and solves constraints and coordinate preferences. The toolkit depends on the equation interface and works without a document or geometry kernel. The caller owns model units, equation domains and geometric acceptance.
 
+A prepared preview can replace immutable row evaluators while sharing the
+compiled layout. Replacement checks row count, units and warm feasibility at
+the supplied coordinates. Within a preview tick it keeps the existing work
+charge and checks sparse rank in the affected components.
+
 ## Provenance
 
 The initial Rust source and tests came from Oblikovati `crates/solve` at `76f5e59a6fdff73500d1f977f0f5cbd46f7f51e6`. The latest source change at that revision was `8976d39fc802f692ed5a5a5fe8e32aabbc43db43`. The existing app can retain its solver import paths by re-exporting the same public modules.

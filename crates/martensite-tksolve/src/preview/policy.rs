@@ -128,6 +128,25 @@ impl<'a> Meter<'a> {
         }
     }
 
+    pub(super) fn resume(
+        limits: Limits,
+        spent: Work,
+        cancelled: &'a mut dyn FnMut() -> bool,
+    ) -> Result<Self, PreviewError> {
+        bounded(Limit::GramTerms, limits.gram_terms, spent.gram_terms)?;
+        bounded(
+            Limit::FactorUpdates,
+            limits.factor_updates,
+            spent.factor_updates,
+        )?;
+        bounded(Limit::Work, limits.work, spent.work)?;
+        Ok(Self {
+            cancelled,
+            limits,
+            spent,
+        })
+    }
+
     pub(super) fn poll(&mut self) -> Result<(), PreviewError> {
         if (self.cancelled)() {
             return Err(PreviewError::Incomplete(Incomplete::Cancelled));

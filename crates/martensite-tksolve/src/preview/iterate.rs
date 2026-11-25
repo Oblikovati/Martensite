@@ -15,7 +15,7 @@ pub(super) fn run(
         rejected: 0,
     };
     run.check_warm_state(&accepted)?;
-    for component in &program.components {
+    for component in program.components.iter() {
         run.meter.charge(component.free.len())?;
         let targets = component
             .free
@@ -58,7 +58,7 @@ struct Run<'a> {
 impl Run<'_> {
     fn check_warm_state(&mut self, values: &[f64]) -> Result<(), PreviewError> {
         self.meter.poll()?;
-        for component in &self.program.components {
+        for component in self.program.components.iter() {
             let rows = self.evaluate(component, values)?;
             if rows.maximum > self.program.options.relative_tolerance {
                 return Err(PreviewError::Incomplete(Incomplete::InfeasibleWarmState));
@@ -256,7 +256,7 @@ impl Run<'_> {
         let mut rank = self.program.fixed.iter().flatten().count();
         let mut hard_error = 0.0_f64;
         let tolerance = self.program.options.relative_tolerance;
-        for component in &self.program.components {
+        for component in self.program.components.iter() {
             let rows = self.evaluate(component, &values)?;
             hard_error = hard_error.max(rows.maximum);
             if hard_error > tolerance {
