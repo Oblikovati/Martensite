@@ -53,7 +53,7 @@ fn an_enumerated_member_does_not_admit_a_foreign_checker_or_context() {
     }
 }
 
-fn triangle() -> Shape {
+pub(super) fn triangle() -> Shape {
     let polygon = BRepBuilderAPIMakePolygon::from_three_points(
         Point3::new(0., 0., 0.),
         Point3::new(1., 0., 0.),

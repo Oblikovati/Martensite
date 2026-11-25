@@ -53,6 +53,7 @@ fn assert_replay(
     assert_eq!(serial.history(), concurrent.history());
     assert_eq!(serial.authored_history(), concurrent.authored_history());
     assert_eq!(serial.validation(), concurrent.validation());
+    assert_eq!(serial.attachment_report(), concurrent.attachment_report());
     assert!(
         concurrent
             .history()

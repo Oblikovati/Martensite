@@ -2,6 +2,7 @@
 //! Share the ordinary checks before and after an operation's intersection proof.
 use super::ledger::{checker_failure, stage_report};
 use super::*;
+use std::num::NonZeroUsize;
 
 /// Outcome of raw tolerance admission, topology, and geometry.
 pub enum BodyGeometryValidation<'a> {
@@ -40,13 +41,34 @@ pub fn begin_body_validation_with_curve_bounds<'a>(
     resolution: &Resolution,
     bounds: &CylindricalCurveBounds,
 ) -> Result<BodyGeometryValidation<'a>, ResolutionRejected> {
-    begin(shape, resolution, Some(bounds))
+    begin_body_validation_with_scoped_curve_checks(shape, resolution, bounds, NonZeroUsize::MIN)
+}
+
+/// Run the ordinary ordered body checks with a per-invocation geometry worker limit.
+///
+/// Distinct face contexts may be checked after the serial topology stage. Refusals and
+/// incomplete contexts are reported by the ordinary serial geometry checker.
+/// Example: `begin_body_validation_with_scoped_curve_checks(&decoded, &resolution, &bounds, limit)?`.
+pub fn begin_body_validation_with_scoped_curve_checks<'a>(
+    shape: &'a Shape,
+    resolution: &Resolution,
+    bounds: &CylindricalCurveBounds,
+    worker_limit: NonZeroUsize,
+) -> Result<BodyGeometryValidation<'a>, ResolutionRejected> {
+    begin(
+        shape,
+        resolution,
+        Some(CurveChecks {
+            bounds,
+            worker_limit,
+        }),
+    )
 }
 
 fn begin<'a>(
     shape: &'a Shape,
     resolution: &Resolution,
-    bounds: Option<&CylindricalCurveBounds>,
+    bounds: Option<CurveChecks<'_>>,
 ) -> Result<BodyGeometryValidation<'a>, ResolutionRejected> {
     let budget = tolerance_budget(resolution)?;
     let names = match TopologyNames::of(shape) {
@@ -69,7 +91,7 @@ fn check_geometry<'a>(
     names: TopologyNames,
     root: TopologyRef,
     budget: Option<f64>,
-    bounds: Option<&CylindricalCurveBounds>,
+    bounds: Option<CurveChecks<'_>>,
 ) -> BodyGeometryValidation<'a> {
     let mut stages = Stages {
         shape,

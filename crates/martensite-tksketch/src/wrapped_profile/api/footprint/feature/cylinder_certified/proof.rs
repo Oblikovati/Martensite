@@ -6,10 +6,10 @@ use super::{
 };
 use martensite_tkbo::body_check::{
     BodyGeometryValidation, CheckMode, StageReport, StageVerdict, ValidationStage,
-    begin_body_validation_with_curve_bounds,
+    begin_body_validation_with_scoped_curve_checks,
 };
 use martensite_tktopalgo::brep_check::CylindricalCurveBounds;
-use std::{collections::BTreeSet, sync::Arc};
+use std::{collections::BTreeSet, num::NonZeroUsize, sync::Arc};
 
 mod contact;
 mod sides;
@@ -18,6 +18,7 @@ mod trims;
 pub(super) use trims::Trims;
 
 const VALIDATION: CylinderFeatureStage = CylinderFeatureStage::Validation;
+const NATIVE_FACE_WORKERS: NonZeroUsize = NonZeroUsize::MIN.saturating_add(7);
 
 fn entity(
     attempt: Attempt,
@@ -53,9 +54,13 @@ pub(super) fn validate(
         .as_ref()
         .map(PreparedTrims::native_bounds)
         .unwrap_or_default();
-    let ready =
-        begin_body_validation_with_curve_bounds(&candidate.native.body, &input.resolution, &bounds)
-            .map_err(|cause| attempt.fail(VALIDATION, CylinderFeatureCause::Resolution(cause)))?;
+    let ready = begin_body_validation_with_scoped_curve_checks(
+        &candidate.native.body,
+        &input.resolution,
+        &bounds,
+        NATIVE_FACE_WORKERS,
+    )
+    .map_err(|cause| attempt.fail(VALIDATION, CylinderFeatureCause::Resolution(cause)))?;
     let ordered = match ready {
         BodyGeometryValidation::Ready(ordered) => ordered,
         BodyGeometryValidation::Stopped(report) => return Err(rejected(attempt, report)),

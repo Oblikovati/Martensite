@@ -6,12 +6,11 @@
 use super::naming::TopologyNames;
 use super::report::{Finding, FindingKind, Severity};
 use crate::sketch_region_validation::{
-    AnalyticGap, BodyKind, OrderedCoverage, StageCoverage, ValidationCause, ValidationFinding,
-    ValidationStage, inspect_self_intersection, inspect_stage_with_curve_bounds,
+    AnalyticGap, BodyKind, CurveChecks, OrderedCoverage, StageCoverage, ValidationCause,
+    ValidationFinding, ValidationStage, inspect_self_intersection, inspect_stage_with_curve_bounds,
 };
 use martensite_tkbrep::topods::Shape;
 use martensite_tkg3d::top_abs::ShapeEnum;
-use martensite_tktopalgo::brep_check::CylindricalCurveBounds;
 
 /// The mapped BRepCheck findings of the topology or geometry stage.
 /// Example: `checker_findings(&solid, ValidationStage::Geometry, &names, None)`.
@@ -19,7 +18,7 @@ pub(super) fn checker_findings(
     shape: &Shape,
     stage: ValidationStage,
     names: &TopologyNames,
-    bounds: Option<&CylindricalCurveBounds>,
+    bounds: Option<CurveChecks<'_>>,
 ) -> Vec<Finding> {
     let mut coverage = OrderedCoverage::pending();
     inspect_stage_with_curve_bounds(shape, BodyKind::Any, &[], stage, &mut coverage, bounds);

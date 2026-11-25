@@ -41,7 +41,7 @@ mod raw_admission_tests;
 pub use ledger::ValidationReport;
 pub use ordered::{
     BodyGeometryValidation, OrderedBodyGeometry, begin_body_validation,
-    begin_body_validation_with_curve_bounds,
+    begin_body_validation_with_curve_bounds, begin_body_validation_with_scoped_curve_checks,
 };
 pub use report::{
     CheckMode, EulerCensus, Finding, FindingKind, Severity, StageReport, StageVerdict, TopologyRef,
@@ -49,7 +49,7 @@ pub use report::{
 };
 
 use crate::profile_extrusion::{Resolution, ToleranceCap};
-use crate::sketch_region_validation::ValidationStage as CheckerStage;
+use crate::sketch_region_validation::{CurveChecks, ValidationStage as CheckerStage};
 use ledger::Ledger;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::Failure;
@@ -154,7 +154,7 @@ impl Stages<'_> {
         (passed, census)
     }
 
-    fn geometry(&mut self, bounds: Option<&CylindricalCurveBounds>) -> bool {
+    fn geometry(&mut self, bounds: Option<CurveChecks<'_>>) -> bool {
         let findings =
             native::checker_findings(self.shape, CheckerStage::Geometry, self.names, bounds);
         self.ledger

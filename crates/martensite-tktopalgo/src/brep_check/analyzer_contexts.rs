@@ -17,6 +17,9 @@ use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::predicates::roots::metric_bounds::CertifiedCylindricalTrim;
 use std::sync::Mutex;
 
+mod scoped_faces;
+pub(super) use scoped_faces::run as check_scoped_faces;
+
 /// One child occurrence already enumerated by this analyzer invocation.
 pub(super) struct EnumeratedContext<'a> {
     context: &'a Shape,

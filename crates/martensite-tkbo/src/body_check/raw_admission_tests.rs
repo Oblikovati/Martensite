@@ -3,11 +3,18 @@ use super::*;
 use crate::profile_extrusion::DisplayTolerance;
 use martensite_tkbrep::{
     bintools::{BinShapeSet, BinShapeSetBase},
-    brep::access,
+    brep::{BRepTool, access},
+    topods::{edge, face},
 };
 use martensite_tkernel::{message::ProgressRange, storage::IoStream};
+use martensite_tkg3d::geom::GeomCylindricalSurface;
+use martensite_tkmath::predicates::roots::metric_bounds::{
+    CylindricalTrimQuery, MetricBezier, certify_cylindrical_trim,
+};
 use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeCylinder;
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
+use martensite_tktopalgo::brep_check::BRepCheckAnalyzer;
+use std::{num::NonZeroUsize, sync::Arc};
 
 fn cylinder() -> Shape {
     BRepPrimAPIMakeCylinder::new(10., 4.)
@@ -155,6 +162,81 @@ fn curve_bounds_preserve_ordered_modes_and_raw_refusal() {
     let report = provisioned();
     assert_eq!(report, normal());
     assert_admission_report(&report, names.name(&edge), -1.);
+}
+
+fn scoped_fixture_bounds(body: &Shape) -> (CylindricalCurveBounds, Shape) {
+    let lateral = TopologyNames::of(body)
+        .unwrap()
+        .all(ShapeEnum::Face)
+        .into_iter()
+        .filter_map(|shape| face(&shape).ok())
+        .find(|face| {
+            BRepTool::surface(face)
+                .unwrap()
+                .downcast_ref::<GeomCylindricalSurface>()
+                .is_some()
+        })
+        .unwrap();
+    let member = TopologyNames::of(&lateral)
+        .unwrap()
+        .all(ShapeEnum::Edge)
+        .into_iter()
+        .filter_map(|shape| edge(&shape).ok())
+        .find(|edge| BRepTool::is_closed_on_face(edge, &lateral).unwrap())
+        .unwrap();
+    let mut bounds = CylindricalCurveBounds::default();
+    // The analytic native seam is ineligible for this Bézier receipt. It still
+    // exercises the same native cap-table route as a foreseen cache miss.
+    let proof = certify_cylindrical_trim(
+        CylindricalTrimQuery {
+            curve: MetricBezier {
+                poles: &[[10., 0., 0.], [10., 0., 4.]],
+                weights: Some(&[1., 1.]),
+            },
+            pcurve: &[[0., 0.], [0., 4.]],
+            radius: 10.,
+            spatial_limit: 1e-7,
+            options: Default::default(),
+        },
+        || false,
+    )
+    .unwrap();
+    bounds.insert(member.clone(), lateral, Arc::new(proof));
+    (bounds, member.into_shape())
+}
+
+#[test]
+fn scoped_native_faces_preserve_passes_and_serial_finding_order() {
+    let body = cylinder();
+    let (bounds, member) = scoped_fixture_bounds(&body);
+    let names = TopologyNames::of(&body).unwrap();
+    let limit = NonZeroUsize::MIN.saturating_add(1);
+    let read = |worker_limit| {
+        native::checker_findings(
+            &body,
+            CheckerStage::Geometry,
+            &names,
+            Some(CurveChecks {
+                bounds: &bounds,
+                worker_limit,
+            }),
+        )
+    };
+    assert!(
+        BRepCheckAnalyzer::try_scoped_cylindrical_checks(&body, &bounds, NonZeroUsize::MIN)
+            .is_none()
+    );
+    if std::thread::available_parallelism().is_ok_and(|count| count >= limit) {
+        assert!(BRepCheckAnalyzer::try_scoped_cylindrical_checks(&body, &bounds, limit).is_some());
+    }
+    assert!(read(limit).is_empty());
+    assert_eq!(read(limit), read(NonZeroUsize::MIN));
+    access::edge_tshape(&member, "fixture")
+        .unwrap()
+        .set_same_parameter(false);
+    let ordinary = read(NonZeroUsize::MIN);
+    assert!(!ordinary.is_empty());
+    assert_eq!(read(limit), ordinary);
 }
 #[test]
 fn admitted_cylinder_retains_all_four_required_checks() {

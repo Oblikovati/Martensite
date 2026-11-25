@@ -48,6 +48,10 @@ impl CylindricalCurveBounds {
             .push(BoundUse { edge, face, proof });
     }
 
+    pub(super) fn is_empty(&self) -> bool {
+        self.by_edge.is_empty()
+    }
+
     pub(super) fn find(&self, edge: &Shape, face: &Shape) -> Option<&CertifiedCylindricalTrim> {
         self.by_edge
             .get(&edge.tshape_address())?

@@ -1,6 +1,6 @@
 //! `BRepCheck_Analyzer`: the checkers of a shape and of all its sub-shapes, run in
 //! their contexts (the functor is in `analyzer_contexts.rs`), and the validity queries.
-use super::analyzer_contexts::check_in_contexts;
+use super::analyzer_contexts::{check_in_contexts, check_scoped_faces};
 use super::cylindrical_curve_bounds::CylindricalCurveBounds;
 use super::edge::BRepCheckEdge;
 use super::errors::null_object;
@@ -17,6 +17,7 @@ use martensite_tkernel::ncollection::IndexedDataMap;
 use martensite_tkernel::osd::ThreadPool;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::ShapeEnum;
+use std::num::NonZeroUsize;
 
 /// `NCollection_IndexedDataMap<TopoDS_Shape, Handle(BRepCheck_Result)>` with the default
 /// hasher: a sub-shape met with two orientations has two checkers.
@@ -63,6 +64,41 @@ impl BRepCheckAnalyzer {
         bounds: &CylindricalCurveBounds,
     ) -> Result<Self, Failure> {
         Self::build(shape, true, false, true, Some(bounds))
+    }
+
+    /// Attempt native geometry checks with exact edge checking and the requested worker cap.
+    /// Returns a provisional analyzer only for a solid with distinct face and wire contexts.
+    /// The caller must inspect all required statuses and use the serial checker for any defect
+    /// or incomplete context.
+    /// Example: `BRepCheckAnalyzer::try_scoped_cylindrical_checks(&shape, &bounds, worker_limit)`.
+    pub fn try_scoped_cylindrical_checks(
+        shape: &Shape,
+        bounds: &CylindricalCurveBounds,
+        worker_limit: NonZeroUsize,
+    ) -> Option<Self> {
+        if worker_limit.get() == 1
+            || bounds.is_empty()
+            || shape.shape_type().ok()? != ShapeEnum::Solid
+        {
+            return None;
+        }
+        Self::try_scoped_faces(shape, bounds, worker_limit)
+    }
+
+    fn try_scoped_faces(
+        shape: &Shape,
+        bounds: &CylindricalCurveBounds,
+        worker_limit: NonZeroUsize,
+    ) -> Option<Self> {
+        let mut analyzer = Self {
+            shape: shape.clone(),
+            map: CheckerMap::default(),
+            is_parallel: false,
+            is_exact: true,
+        };
+        analyzer.put(shape, true).ok()?;
+        check_scoped_faces(&analyzer.map, bounds, worker_limit)?;
+        Some(analyzer)
     }
 
     fn build(
