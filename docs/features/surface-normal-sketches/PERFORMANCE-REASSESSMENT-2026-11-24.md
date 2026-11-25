@@ -592,3 +592,29 @@ The time ends before stock attachment and final ordered validation.
 The new issuer still needs production policy admission, cumulative work
 and refusal receipts. The attachment proof must also cover the final
 stock and tool contacts on the same decoded body.
+
+### Live source binding on the attached solid
+
+The hardened cap issuer and the next exact interval arithmetic revision
+were measured together in 20 fresh processes per sense. The live tool
+and its existing exact family check took 552 ms at p95 for the boss and
+557 ms for the pocket. Actual span storage took 68–69 ms, selected cap
+material 39–40 ms, and the exact family check 166–167 ms at p95. All
+40 runs reproduced the independently constructed tool archives and
+authored bindings.
+
+A separate attachment trial used the live tool's own canonical archive
+and proved its retained subset on the freshly decoded solid. It
+replayed the original stock, all 339 installed seam uses and all 20
+changed stock loops. The exact incidence check took about 5.5 ms per
+sense. It found a closed shell with 362 faces, 1,020 edges and 680
+vertices, and a connected manifold link at each vertex. The stock
+loops were issued on that same decoded body. The timed attachment
+steps through the loop proof took 160 ms for the boss and 158 ms for
+the pocket in one run per sense, after live tool construction and
+pre-sew capture.
+
+The ordinary ordered validator then ran on the same body as an
+independent comparison. Both senses reproduced the reference
+800,459-byte archives, history and validation reports. Contact coverage
+and an ordered publication path within one second remain open.
