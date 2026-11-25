@@ -107,7 +107,7 @@ impl ConstrainedSketch {
     /// A Fixed or captured point must retain its coordinates, and every authored relation
     /// must still pass its physical check. The policy's length tolerance caps the placement
     /// error against the exact translation or the native binary64 rotation coefficients.
-    /// Example: `sketch.transform_points(&ids, motion, || false)?`.
+    /// An exact axis point retains its position. Example: `sketch.transform_points(&ids, motion, || false)?`.
     pub fn transform_points(
         &self,
         points: &[PointId],
@@ -143,6 +143,7 @@ impl ConstrainedSketch {
 
 #[derive(Clone, Copy)]
 enum PreparedMotion {
+    Identity,
     Translation(Transform3),
     Rotation { axis: Axis1, local: Transform3 },
 }
@@ -153,6 +154,9 @@ impl RigidMotion {
             Self::Translate(offset) if finite(offset.xyz().coordinates()) => Ok(
                 PreparedMotion::Translation(Transform3::translation_vector(offset)),
             ),
+            Self::Rotate { axis, radians } if radians == 0. && valid_axis(axis) => {
+                Ok(PreparedMotion::Identity)
+            }
             Self::Rotate { axis, radians } if radians.is_finite() && valid_axis(axis) => {
                 let local_axis = Axis1::new(Point3::default(), axis.direction());
                 let local = Transform3::rotation(local_axis, radians)
@@ -172,6 +176,7 @@ impl PreparedMotion {
         limit: MinimumLength,
     ) -> Result<Point3, RigidMotionFailure> {
         match self {
+            Self::Identity => Ok(source),
             Self::Translation(translation) => checked_affine(
                 point,
                 source,

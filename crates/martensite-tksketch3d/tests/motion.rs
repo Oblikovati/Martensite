@@ -341,3 +341,20 @@ fn an_unconstrained_line_refuses_a_translation_that_would_double_its_length() {
     );
     assert_eq!(sketch.geometry().line(lid(4)).unwrap().length_estimate, 1.);
 }
+
+#[test]
+fn a_signed_zero_rotation_keeps_an_off_axis_point_exactly_at_large_pivots() {
+    let sketch = source();
+    let large = f64::from_bits(1077_u64 << 52);
+    let pivot = Axis1::new(point([large, 2., 0.]), Direction3::Z);
+    for radians in [0., -0.] {
+        let motion = RigidMotion::Rotate {
+            axis: pivot,
+            radians,
+        };
+        let unchanged = sketch
+            .transform_points(&[pid(1), pid(2)], motion, || false)
+            .unwrap();
+        assert_eq!(unchanged.geometry(), sketch.geometry());
+    }
+}

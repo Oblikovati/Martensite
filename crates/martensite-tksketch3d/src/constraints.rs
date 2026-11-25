@@ -88,7 +88,7 @@ pub enum RelationEdit {
 pub struct ConstraintPolicy {
     /// Scale for model length residuals and spatial variable steps, in model units.
     pub length_scale: MinimumLength,
-    /// Inclusive spatial tolerance for coincidence and driving length, in model units.
+    /// Inclusive tolerance in model units for coincidence, driving length and rigid placement.
     pub length_tolerance: MinimumLength,
     /// Maximum sine of the deviation from the parallel or antiparallel branch, in (0, 1).
     pub parallel_sine_tolerance: f64,
