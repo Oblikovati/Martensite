@@ -66,14 +66,15 @@ impl BRepCheckAnalyzer {
         Self::build(shape, true, false, true, Some(bounds))
     }
 
-    /// Attempt native geometry checks with exact edge checking and the requested worker cap.
+    /// Attempt one native checker stage with the same geometry flag as `Self::new`.
     /// Returns a provisional analyzer only for a solid with distinct face and wire contexts.
     /// The caller must inspect all required statuses and use the serial checker for any defect
     /// or incomplete context.
-    /// Example: `BRepCheckAnalyzer::try_scoped_cylindrical_checks(&shape, &bounds, worker_limit)`.
+    /// Example: `BRepCheckAnalyzer::try_scoped_cylindrical_checks(&shape, &bounds, true, limit)`.
     pub fn try_scoped_cylindrical_checks(
         shape: &Shape,
         bounds: &CylindricalCurveBounds,
+        geom_controls: bool,
         worker_limit: NonZeroUsize,
     ) -> Option<Self> {
         if worker_limit.get() == 1
@@ -82,12 +83,19 @@ impl BRepCheckAnalyzer {
         {
             return None;
         }
-        Self::try_scoped_faces(shape, bounds, worker_limit)
+        // The table qualifies this operation for scheduling. Only geometry uses its bounds.
+        Self::try_scoped_faces(
+            shape,
+            geom_controls,
+            geom_controls.then_some(bounds),
+            worker_limit,
+        )
     }
 
     fn try_scoped_faces(
         shape: &Shape,
-        bounds: &CylindricalCurveBounds,
+        geom_controls: bool,
+        bounds: Option<&CylindricalCurveBounds>,
         worker_limit: NonZeroUsize,
     ) -> Option<Self> {
         let mut analyzer = Self {
@@ -96,7 +104,7 @@ impl BRepCheckAnalyzer {
             is_parallel: false,
             is_exact: true,
         };
-        analyzer.put(shape, true).ok()?;
+        analyzer.put(shape, geom_controls).ok()?;
         check_scoped_faces(&analyzer.map, bounds, worker_limit)?;
         Some(analyzer)
     }

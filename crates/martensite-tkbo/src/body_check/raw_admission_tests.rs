@@ -209,34 +209,57 @@ fn scoped_fixture_bounds(body: &Shape) -> (CylindricalCurveBounds, Shape) {
 fn scoped_native_faces_preserve_passes_and_serial_finding_order() {
     let body = cylinder();
     let (bounds, member) = scoped_fixture_bounds(&body);
-    let names = TopologyNames::of(&body).unwrap();
+    for stage in [CheckerStage::Topology, CheckerStage::Geometry] {
+        assert_scoped_passes_and_findings(&body, &bounds, &member, stage);
+    }
+}
+
+fn assert_scoped_passes_and_findings(
+    body: &Shape,
+    bounds: &CylindricalCurveBounds,
+    member: &Shape,
+    stage: CheckerStage,
+) {
+    let names = TopologyNames::of(body).unwrap();
     let limit = NonZeroUsize::MIN.saturating_add(1);
+    assert_worker_scope(body, bounds, stage == CheckerStage::Geometry, limit);
     let read = |worker_limit| {
         native::checker_findings(
-            &body,
-            CheckerStage::Geometry,
+            body,
+            stage,
             &names,
             Some(CurveChecks {
-                bounds: &bounds,
+                bounds,
                 worker_limit,
             }),
         )
     };
-    assert!(
-        BRepCheckAnalyzer::try_scoped_cylindrical_checks(&body, &bounds, NonZeroUsize::MIN)
-            .is_none()
-    );
-    if std::thread::available_parallelism().is_ok_and(|count| count >= limit) {
-        assert!(BRepCheckAnalyzer::try_scoped_cylindrical_checks(&body, &bounds, limit).is_some());
-    }
     assert!(read(limit).is_empty());
     assert_eq!(read(limit), read(NonZeroUsize::MIN));
-    access::edge_tshape(&member, "fixture")
-        .unwrap()
-        .set_same_parameter(false);
+    let bad_edge = access::edge_tshape(member, "fixture").unwrap();
+    bad_edge.set_same_parameter(false);
     let ordinary = read(NonZeroUsize::MIN);
     assert!(!ordinary.is_empty());
     assert_eq!(read(limit), ordinary);
+    bad_edge.set_same_parameter(true);
+}
+
+fn assert_worker_scope(
+    body: &Shape,
+    bounds: &CylindricalCurveBounds,
+    geometry: bool,
+    limit: NonZeroUsize,
+) {
+    assert!(
+        BRepCheckAnalyzer::try_scoped_cylindrical_checks(body, bounds, geometry, NonZeroUsize::MIN)
+            .is_none()
+    );
+    if std::thread::available_parallelism().is_ok_and(|count| count >= limit) {
+        assert!(
+            BRepCheckAnalyzer::try_scoped_cylindrical_checks(body, bounds, geometry, limit)
+                .is_some()
+        );
+    }
 }
 #[test]
 fn admitted_cylinder_retains_all_four_required_checks() {

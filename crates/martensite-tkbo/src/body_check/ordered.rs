@@ -44,10 +44,10 @@ pub fn begin_body_validation_with_curve_bounds<'a>(
     begin_body_validation_with_scoped_curve_checks(shape, resolution, bounds, NonZeroUsize::MIN)
 }
 
-/// Run the ordinary ordered body checks with a per-invocation geometry worker limit.
+/// Run the ordinary ordered body checks with a per-invocation worker limit.
 ///
-/// Distinct face contexts may be checked after the serial topology stage. Refusals and
-/// incomplete contexts are reported by the ordinary serial geometry checker.
+/// Each native stage checks its own distinct face contexts after serial preparation.
+/// Refusals and incomplete contexts are reported by the ordinary serial checker.
 /// Example: `begin_body_validation_with_scoped_curve_checks(&decoded, &resolution, &bounds, limit)?`.
 pub fn begin_body_validation_with_scoped_curve_checks<'a>(
     shape: &'a Shape,
@@ -99,7 +99,7 @@ fn check_geometry<'a>(
         root,
         ledger: Ledger::new(),
     };
-    let (passed, census) = stages.topology();
+    let (passed, census) = stages.topology(bounds);
     if !passed || !stages.geometry(bounds) {
         return BodyGeometryValidation::Stopped(stages.ledger.finish(census, budget));
     }

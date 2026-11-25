@@ -9,7 +9,7 @@ use std::thread::{self, Scope, ScopedJoinHandle};
 
 pub(in super::super) fn run(
     map: &CheckerMap,
-    bounds: &CylindricalCurveBounds,
+    bounds: Option<&CylindricalCurveBounds>,
     worker_limit: NonZeroUsize,
 ) -> Option<()> {
     let available = thread::available_parallelism()
@@ -27,7 +27,7 @@ pub(in super::super) fn run(
     // Edge polygon status, edge vertex contexts and solid shell contexts finish
     // before any worker can record a face context.
     for shape in plan.serial {
-        check_shape(map, shape, Some(bounds)).ok()?;
+        check_shape(map, shape, bounds).ok()?;
     }
     plan.faces
         .sort_by_key(|job| (Reverse(job.edges), job.ordinal));
@@ -94,7 +94,7 @@ fn admit_face(shape: &Shape, faces: &mut MapOfShape, wires: &mut MapOfShape) -> 
 
 struct FaceChecks<'a> {
     map: &'a CheckerMap,
-    bounds: &'a CylindricalCurveBounds,
+    bounds: Option<&'a CylindricalCurveBounds>,
     faces: &'a [FaceJob<'a>],
     next: AtomicUsize,
     failed: AtomicBool,
@@ -137,7 +137,7 @@ impl FaceChecks<'_> {
             let Some(job) = self.faces.get(index) else {
                 break;
             };
-            if check_shape(self.map, job.shape, Some(self.bounds)).is_err() {
+            if check_shape(self.map, job.shape, self.bounds).is_err() {
                 self.failed.store(true, Relaxed);
                 break;
             }

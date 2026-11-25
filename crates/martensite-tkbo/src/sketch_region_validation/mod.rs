@@ -35,13 +35,13 @@ mod traversal_tests;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::Failure;
 use martensite_tktopalgo::brep_check::{BRepCheckAnalyzer, CylindricalCurveBounds};
-use std::num::NonZeroUsize;
 pub(crate) use outcome::{
     AnalyticGap, BodyKind, OrderedCoverage, SourceRelation, StageCoverage, ValidationCause,
     ValidationFinding, ValidationStage,
 };
 pub(crate) use self_check::inspect_self_intersection;
 pub(crate) use source_relations::source_relations;
+use std::num::NonZeroUsize;
 pub(crate) use tolerance::inspect_planar_edge_residual;
 
 /// Inspect an already-owned candidate without exposing diagnostic geometry as success.
@@ -85,8 +85,10 @@ pub(crate) fn inspect_stage_with_curve_bounds(
     report: &mut OrderedCoverage,
     curve_checks: Option<CurveChecks<'_>>,
 ) {
-    if let (ValidationStage::Geometry, Some(checks)) = (stage, curve_checks) {
-        let findings = inspect_curves(shape, kind, sources, checks);
+    if let (ValidationStage::Topology | ValidationStage::Geometry, Some(checks)) =
+        (stage, curve_checks)
+    {
+        let findings = inspect_curves(shape, kind, sources, stage, checks);
         report.record(stage, findings);
         return;
     }
@@ -104,11 +106,16 @@ fn inspect_curves(
     shape: &Shape,
     kind: BodyKind,
     sources: &[SourceRelation],
+    stage: ValidationStage,
     checks: CurveChecks<'_>,
 ) -> Vec<ValidationFinding> {
-    let stage = ValidationStage::Geometry;
-    let scoped =
-        BRepCheckAnalyzer::try_scoped_cylindrical_checks(shape, checks.bounds, checks.worker_limit);
+    let geom_controls = stage == ValidationStage::Geometry;
+    let scoped = BRepCheckAnalyzer::try_scoped_cylindrical_checks(
+        shape,
+        checks.bounds,
+        geom_controls,
+        checks.worker_limit,
+    );
     if let Some(analyzer) = scoped {
         let findings = inspection::inspect_candidate(&analyzer, shape, kind, sources, stage);
         if findings.is_empty() {
@@ -116,7 +123,11 @@ fn inspect_curves(
         }
     }
     // Incomplete contexts and defects retain the ordinary serial diagnostic order.
-    let outcome = BRepCheckAnalyzer::with_cylindrical_curve_bounds(shape, checks.bounds);
+    let outcome = if geom_controls {
+        BRepCheckAnalyzer::with_cylindrical_curve_bounds(shape, checks.bounds)
+    } else {
+        BRepCheckAnalyzer::new(shape, false, false, true)
+    };
     inspect_outcome(outcome, shape, kind, sources, stage)
 }
 

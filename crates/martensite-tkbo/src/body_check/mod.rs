@@ -133,7 +133,7 @@ struct Stages<'a> {
 
 impl Stages<'_> {
     /// Census and mapped topology: whether the stage passed, and every computed census.
-    fn topology(&mut self) -> (bool, Vec<EulerCensus>) {
+    fn topology(&mut self, checks: Option<CurveChecks<'_>>) -> (bool, Vec<EulerCensus>) {
         let (mut findings, census) = match census::topology_census(self.shape, self.names) {
             Ok(found) => found,
             Err(failure) => {
@@ -146,7 +146,7 @@ impl Stages<'_> {
             self.shape,
             CheckerStage::Topology,
             self.names,
-            None,
+            checks,
         ));
         let passed = self
             .ledger
