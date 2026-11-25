@@ -88,6 +88,14 @@ impl RationalWrappedResult {
     pub fn validation(&self) -> &ValidationReport {
         &self.validation
     }
+    /// Executed chart and body proof policy for a conical result.
+    /// Example: `assert_eq!(result.cone_execution_selection(), Some(selection));`.
+    pub fn cone_execution_selection(&self) -> Option<WrappedConeExecutionSelection> {
+        match &self.retained {
+            retained::Retained::Cylinder(_) => None,
+            retained::Retained::Cone(result) => Some(result.execution_selection()),
+        }
+    }
     /// Original rational material area evidence. Example: `let area = result.authored_area();`.
     pub fn authored_area(&self) -> WrappedCertifiedRange {
         area_range(&self.source.area)
@@ -175,6 +183,21 @@ pub fn normal_extrude_rational_cylinder(
 pub fn normal_extrude_rational_cone(
     request: &WrappedConeNormalRequest,
     reference_level: u8,
+    cancelled: impl FnMut() -> bool + Send,
+) -> Checked<RationalWrappedResult> {
+    let selection = WrappedConeExecutionSelection::RoundedProxyNativeSearchV1 {
+        domain: WrappedConeDomainPolicy::LegacySectorV1,
+    };
+    normal_extrude_rational_cone_with_selection(request, reference_level, selection, cancelled)
+}
+
+/// Extrude a rational source on a cone with an explicitly selected native proof policy.
+/// The result reports the ordered checks executed by the selected policy.
+/// Example: `normal_extrude_rational_cone_with_selection(&request, 3, selection, || false)?`.
+pub fn normal_extrude_rational_cone_with_selection(
+    request: &WrappedConeNormalRequest,
+    reference_level: u8,
+    selection: WrappedConeExecutionSelection,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Checked<RationalWrappedResult> {
     super::input::poll(&mut cancelled, WrappedStage::Admission).map_err(wrapped_failure)?;
@@ -188,8 +211,9 @@ pub fn normal_extrude_rational_cone(
         &mut cancelled,
     )?;
     let native = prepared.proxy.cone(request);
-    let retained = normal_extrude_cone_profile_with_cancel(&native, &mut cancelled)
-        .map_err(|cause| prepared.proxy.geometry_failure(cause))?;
+    let retained =
+        normal_extrude_cone_profile_with_selection_and_cancel(&native, selection, &mut cancelled)
+            .map_err(|cause| prepared.proxy.geometry_failure(cause))?;
     prepared.finish(retained.into(), request.options.volume, &mut cancelled)
 }
 
@@ -224,7 +248,7 @@ fn prepare(
 ) -> Checked<Prepared> {
     let (area, planar_work) = original_area(options, &source, cancelled)?;
     let scale = support.scale();
-    let limit = (options.spatial_error / (4. * scale)).next_down();
+    let limit = (options.spatial_error / (2. * scale)).next_down();
     let reference = fit::cover(reference_level, &source, limit, cancelled)?;
     support.check(&source, &reference)?;
     let proxy_options = reference_options(options, planar_work)?;
@@ -298,7 +322,7 @@ fn original_area(
     let partition = source
         .curves
         .iter()
-        .any(|curve| curve.spans.len() > 1)
+        .any(|curve| curve.ends.is_some() && curve.spans.len() > 1)
         .then(|| proxy::native_partition(source, options))
         .transpose()?;
     let (profile, selection) = partition

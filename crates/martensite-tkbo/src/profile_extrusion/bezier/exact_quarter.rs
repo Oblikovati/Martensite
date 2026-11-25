@@ -30,19 +30,63 @@ pub fn exact_conic_quarter(
     }) {
         return Ok(None);
     }
+    Ok(checked_quarter(admitted_geometry(
+        profile, curve_id, resolution,
+    )?))
+}
+
+/// Reuse the closed conic carrier and certify all four exact quarter controls.
+/// Each quarter has its own original angle map and shares the endpoint with its neighbor.
+/// Example: `let quarters = exact_closed_conic(&profile, curve_id, resolution)?;`.
+pub fn exact_closed_conic(
+    profile: &SketchProfile,
+    curve_id: ProfileCurveId,
+    resolution: Resolution,
+) -> Result<Option<[ExactConicQuarter; 4]>, OperationDecline> {
+    if !profile.curves.iter().any(|curve| {
+        matches!(curve,
+        ProfileCurve::Circle { id, .. } | ProfileCurve::Ellipse { id, .. } if *id == curve_id)
+    }) {
+        return Ok(None);
+    }
+    let UseGeometry::Arc { carrier, .. } = admitted_geometry(profile, curve_id, resolution)? else {
+        return Ok(None);
+    };
+    let pieces: Option<Vec<_>> = (0..4).map(|index| closed_quarter(carrier, index)).collect();
+    Ok(pieces.and_then(|pieces| pieces.try_into().ok()))
+}
+
+fn admitted_geometry(
+    profile: &SketchProfile,
+    curve: ProfileCurveId,
+    resolution: Resolution,
+) -> Result<UseGeometry, OperationDecline> {
     let admitted = admit_profile(profile, resolution).map_err(|cause| OperationDecline {
         operation: OperationKind::BuildPlanarRegions,
         stage: OperationStage::Admission,
         cause,
     })?;
-    let geometry = use_geometry(
+    Ok(use_geometry(
         &admitted,
         LoopUse {
-            curve: curve_id,
+            curve,
             reversed: false,
         },
-    );
-    Ok(checked_quarter(geometry))
+    ))
+}
+
+fn closed_quarter(carrier: Conic, index: i8) -> Option<ExactConicQuarter> {
+    let start_angle = f64::from(index) * FRAC_PI_2;
+    let end_angle = f64::from(index + 1) * FRAC_PI_2;
+    let start = carrier.image(quarter_axis(start_angle)?);
+    let end = carrier.image(quarter_axis(end_angle)?);
+    checked_quarter(UseGeometry::Arc {
+        carrier,
+        start_angle,
+        sweep: FRAC_PI_2,
+        start,
+        end,
+    })
 }
 
 fn checked_quarter(geometry: UseGeometry) -> Option<ExactConicQuarter> {

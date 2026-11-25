@@ -50,9 +50,10 @@ transport with the original parameter identity.
 
 The rational normal entries accept lines, polynomial or positive-weight splines
 with monotone Bernstein spans, and exact circular or axis-aligned elliptic
-quarters. The directed outer and hole loops may mix those curve types. The
-entries require increasing signed depths and one angular chart. The cone additionally requires the profile in
-the positive developed halfplane, clear of the apex. The rational cylinder
+quarters, plus closed circles and axis-aligned ellipses with exact coefficients.
+The outer and hole loops may mix those curves. The entries require increasing
+signed depths and one angular chart. The cone also requires the profile to
+lie in the positive developed halfplane, clear of the apex. The rational cylinder
 uses `GeometricCompositeV6` for its reference planar proof. The tested cone
 request selects the same version for its UV cap proof. The reference level splits
 each native span into equal dyadic intervals. An authored multipart spline
@@ -61,20 +62,31 @@ intervals. It may close at a shared authored vertex.
 
 The operation verifies the original planar region and integrates its signed
 boundary for area. For multipart splines, the planar proof uses the exact
-Bernstein partition and the retained proof uses the remaining pair-work budget. It bounds the position and derivative error between the
-rational curve and each cubic reference span. Both curves stay strictly
+Bernstein partition. The retained proof uses the remaining pair-work budget
+and bounds position and derivative error for each cubic reference span. Both curves stay strictly
 inside the straight boundary halfplanes except at shared authored endpoints.
 At a shared authored vertex, the proof separates curved uses with an exact
 halfplane test. It separates nonincident curves using outward bounds on their
-reference error tubes. The normal map then bounds the error in world coordinates. History records the
-original curve and its dyadic parameter intervals. For an analytic quarter it
-also records how the stereographic parameter maps to the native angle. The result includes the
-authored area and sweep-volume enclosures, the retained boundary flux, the
+reference error tubes. The normal map bounds the error in world coordinates.
+History records the original curve and its dyadic parameter intervals. For an analytic quarter it
+also records how the stereographic parameter maps to the native angle. Closed
+conics record a native-angle key at each quarter, including the seam at zero.
+The result includes the authored area and sweep-volume enclosures, the retained boundary flux, the
 spatial bound, and the ordered native validation report. The volume proof uses
 the original area and the signed depth Jacobian. For asymmetric cone depths,
 it also bounds the change in the inverse-slant integral as the rational boundary
 moves to the polynomial reference. The resulting volume width must fit the
 requested cone policy.
+
+`normal_extrude_rational_cone_with_selection` takes an explicit cone proof policy.
+`DirectedTransportedAuthoredPlanarV8` with `PositiveXFamilyChartV3` checks the
+stored solid's self-intersection independently. The legacy rounded entry retains
+its native-search coverage label. The full ellipse with semi-axes `1/16` and
+`1/32` at `[4, 0]`, signed depths `[-0.1, 0.1]`, and a `1e-4` spatial limit
+passes the directed proof with 16 reference cubics. Subdividing the residual
+bound, without changing those cubics, leaves space for the retained geometry
+within the same tolerance. Its 32-cubic execution under the same one-million
+arithmetic limit returns a typed `WorkLimit` for an actual side pair.
 
 ## Verification
 

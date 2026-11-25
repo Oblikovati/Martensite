@@ -174,3 +174,45 @@ fn point_rate(t: f64) -> ([f64; 2], [f64; 2]) {
         [-4. * t / squared, 2. * (1. - t * t) / squared],
     )
 }
+
+#[test]
+fn residual_refinement_tightens_the_original_cubics_without_adding_reference_spans() {
+    let poles = [[4.0625, 0.], [4.0625, 0.03125], [4., 0.03125]];
+    let request = RationalReferenceRequest {
+        source: MetricBezier {
+            poles: &poles,
+            weights: Some(&[1., 1., 2.]),
+        },
+        level: 2,
+        limits: [4e-5, 1e-3],
+        direction: [-0.0625, 0.03125],
+        options: Default::default(),
+    };
+    let legacy = fit_rational_bezier_reference(request, || false)
+        .err()
+        .unwrap();
+    assert!(matches!(legacy, Refusal::Exceeds { .. }));
+    let refined = fit_rational_bezier_reference_with_proof(
+        request,
+        RationalReferenceProof::BisectResidualV2,
+        || false,
+    )
+    .unwrap();
+    let relaxed = fit_rational_bezier_reference(
+        RationalReferenceRequest {
+            limits: [1e-3; 2],
+            ..request
+        },
+        || false,
+    )
+    .unwrap();
+    assert_eq!(refined.len(), 4);
+    for (actual, same) in refined.iter().zip(relaxed) {
+        assert_eq!(actual.interval, same.interval);
+        assert_eq!(
+            actual.poles.map(|p| p.map(f64::to_bits)),
+            same.poles.map(|p| p.map(f64::to_bits))
+        );
+        assert!(actual.bounds.position <= request.limits[0]);
+    }
+}

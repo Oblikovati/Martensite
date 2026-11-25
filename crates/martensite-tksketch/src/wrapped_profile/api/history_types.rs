@@ -63,6 +63,13 @@ pub enum WrappedEntitySource {
         /// Exact conversion to the authored angular parameter.
         map: WrappedConicParameterMap,
     },
+    /// Exact native quarter angle on a closed or multipart analytic conic.
+    ConicAnchor {
+        /// Original authored curve identity.
+        curve: SurfaceCurveId,
+        /// Signed native angle in multiples of pi/2; closed seam is zero.
+        quarter: i8,
+    },
     /// A caller-authored endpoint.
     Vertex(SurfaceVertexId),
     /// A new vertex derived from an exact original curve parameter.

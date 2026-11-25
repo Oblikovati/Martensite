@@ -71,8 +71,8 @@ impl Proxy {
             WrappedEntitySource::Vertex(vertex) => self
                 .joins
                 .get(&vertex)
-                .map_or(WrappedEntitySource::Vertex(vertex), |&(origin, point)| {
-                    origin.authored_point(point)
+                .map_or(WrappedEntitySource::Vertex(vertex), |&(origin, anchor)| {
+                    origin.authored_anchor(anchor)
                 }),
             other => other,
         };
@@ -114,6 +114,16 @@ impl Proxy {
 }
 
 impl CurveOrigin {
+    fn authored_anchor(self, anchor: NativeJoint) -> WrappedEntitySource {
+        match anchor {
+            NativeJoint::Interior(point) => self.authored_point(point),
+            NativeJoint::ConicQuarter(quarter) => WrappedEntitySource::ConicAnchor {
+                curve: self.curve,
+                quarter,
+            },
+        }
+    }
+
     fn authored_point(self, point: WrappedSourcePoint) -> WrappedEntitySource {
         let curve = self.curve;
         match self.map {

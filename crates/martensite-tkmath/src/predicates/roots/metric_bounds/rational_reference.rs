@@ -10,6 +10,7 @@ use crate::predicates::roots::certificate_arithmetic::{
     bounded_dyadic::{Arithmetic, ArithmeticPolicy, Interval},
     bounded_failure::BoundedArithmeticFailure,
 };
+mod bound_refinement;
 mod monotone;
 mod reference_fit;
 
@@ -134,6 +135,16 @@ pub struct RationalReferenceRequest<'a> {
     pub options: CylindricalProfileOptions,
 }
 
+/// The bound policy for a fixed set of fitted cubic spans.
+#[non_exhaustive]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RationalReferenceProof {
+    /// Whole-span Bernstein bound used by the original fit.
+    WholeSpanV1,
+    /// Bisect the residual proof, without adding a geometry span, if the whole-span bound exceeds a limit.
+    BisectResidualV2,
+}
+
 pub use reference_fit::RationalReferenceSpan;
 
 /// Fit and certify a same-parameter cubic reference over the full source.
@@ -142,7 +153,22 @@ pub fn fit_rational_bezier_reference(
     request: RationalReferenceRequest<'_>,
     cancelled: impl FnMut() -> bool + Send,
 ) -> Checked<Vec<RationalReferenceSpan>> {
-    reference_fit::fit(request, cancelled)
+    fit_rational_bezier_reference_with_proof(
+        request,
+        RationalReferenceProof::WholeSpanV1,
+        cancelled,
+    )
+}
+
+/// Fit the same cubic controls under the selected versioned residual proof.
+/// The bisected proof charges every operation to the request's original arithmetic allowance.
+/// Example: `fit_rational_bezier_reference_with_proof(request, RationalReferenceProof::BisectResidualV2, || false)?`.
+pub fn fit_rational_bezier_reference_with_proof(
+    request: RationalReferenceRequest<'_>,
+    proof: RationalReferenceProof,
+    cancelled: impl FnMut() -> bool + Send,
+) -> Checked<Vec<RationalReferenceSpan>> {
+    reference_fit::fit(request, proof, cancelled)
 }
 
 #[cfg(test)]
@@ -281,6 +307,16 @@ fn axis_bounds(
     arithmetic: &mut Arithmetic<'_>,
 ) -> Checked<[Interval; 2]> {
     // Subtract pointwise in the source parameter before evaluating either norm bound.
+    let [position, rate] = residual_terms(reference, numerator, weight, arithmetic)?;
+    Ok([algebra::magnitude(&position), algebra::magnitude(&rate)])
+}
+
+fn residual_terms(
+    reference: &[Interval],
+    numerator: &[Interval],
+    weight: &[Interval],
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<[Vec<Interval>; 2]> {
     let reference = bernstein::product(reference, weight, arithmetic)?;
     let residual = algebra::difference(&reference, numerator, arithmetic)?;
     let dp = derivative(&residual, arithmetic)?;
@@ -288,7 +324,7 @@ fn axis_bounds(
     let left = bernstein::product(&dp, weight, arithmetic)?;
     let right = bernstein::product(&residual, &dw, arithmetic)?;
     let rate = algebra::difference(&left, &right, arithmetic)?;
-    Ok([algebra::magnitude(&residual), algebra::magnitude(&rate)])
+    Ok([residual, rate])
 }
 
 #[cfg(test)]

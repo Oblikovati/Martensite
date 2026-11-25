@@ -261,7 +261,8 @@ pub use rational_integrals::{
 };
 pub use rational_reference::{
     RationalReferenceBounds, RationalReferenceFailure, RationalReferenceRequest,
-    RationalReferenceSpan, fit_rational_bezier_reference,
+    RationalReferenceProof, RationalReferenceSpan, fit_rational_bezier_reference,
+    fit_rational_bezier_reference_with_proof,
 };
 
 mod polynomial_side;
