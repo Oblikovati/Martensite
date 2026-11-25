@@ -27,7 +27,7 @@ fn an_oblique_cut_retains_the_exact_ratio_and_binary64_enclosure() {
         [cut.parameter, [two_thirds, two_thirds.next_up()], [0.; 2]]
     );
     assert_eq!(cut.position, [third, two_thirds, 0.]);
-    let one_gap = 2_f64.powi(-54) / 3.;
+    let one_gap = f64::from_bits(969_u64 << 52) / 3.;
     assert!(cut.error_upper >= one_gap * 5_f64.sqrt());
     assert!(cut.error_upper < 5e-17);
     assert_eq!(
@@ -73,7 +73,7 @@ fn original_endpoint_signs_survive_overflow_and_exact_midpoint_rounding() {
         );
         assert_eq!(cut.position[1], expected);
         assert_eq!(cut.coordinates[1], [start, end]);
-        assert_eq!(cut.error_upper, 2_f64.powi(-53));
+        assert_eq!(cut.error_upper, f64::from_bits(970_u64 << 52));
     }
 }
 

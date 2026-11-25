@@ -173,7 +173,7 @@ fn near_endpoint_exact_hit_survives_and_collapsed_nominal_fragment_refuses() {
     assert_eq!(result.cut.parameter, [0., tiny]);
     assert_eq!(result.cut.position, [tiny, 0., 0.]);
 
-    let large = 2_f64.powi(53);
+    let large = f64::from_bits(1076_u64 << 52);
     let input = source([[large, 0., 0.], [large + 2., tiny, 0.]], 1e-9);
     let cut = plane([large, 0.5, 0.], [1., 1., 0.]);
     assert!(matches!(
