@@ -72,6 +72,7 @@ pub struct PartingOptions<'a> {
     /// Omit candidates that require any of these faces in this source scope.
     pub exclude_faces: &'a [PartingFaceId],
     /// Optional operation-local stop flag. Set it to true to request cancellation.
+    /// Native validation can run to completion before the next poll.
     pub cancelled: Option<&'a AtomicBool>,
 }
 
@@ -133,6 +134,7 @@ pub enum PartingOrigin {
         /// The contributing face.
         face: PartingFaceUse,
         /// The UV endpoints in increasing order of the published native line parameter.
+        /// U is the binary64 angular estimate. V is the original stored axial interval.
         uv_ends: [[f64; 2]; 2],
     },
 }
@@ -156,12 +158,28 @@ pub enum PartingCarrier {
     Circle(Circle3),
 }
 
+/// Position evidence for the published carrier evaluated over its complete trim.
+#[derive(Clone, Copy, Debug, PartialEq)]
+#[non_exhaustive]
+pub enum PartingPositionEvidence {
+    /// Uses the existing native 3D carrier at its located source interval.
+    NativeCarrier,
+    /// The detached line is uniformly bounded against its exact isolated chart root.
+    CylindricalGenerator {
+        /// Certified upper bound on Euclidean same-parameter distance.
+        upper_bound: f64,
+        /// Original stored face tolerance used as the acceptance limit.
+        source_tolerance: f64,
+    },
+}
+
 /// A detached carrier, finite native parameter interval and trace to its source.
 #[derive(Clone, Copy, Debug)]
 pub struct PartingCurve {
     pub(super) carrier: PartingCarrier,
     pub(super) range: [f64; 2],
     pub(super) origin: PartingOrigin,
+    pub(super) position: PartingPositionEvidence,
 }
 
 impl PartingCurve {
@@ -178,6 +196,11 @@ impl PartingCurve {
     /// Read the source binding of this curve. Example: `curve.origin()`.
     pub fn origin(&self) -> PartingOrigin {
         self.origin
+    }
+
+    /// Read the carrier's position evidence. Example: `curve.position_evidence()`.
+    pub fn position_evidence(&self) -> PartingPositionEvidence {
+        self.position
     }
 
     /// Evaluate its two endpoints in increasing parameter order. Example: `curve.endpoints()`.

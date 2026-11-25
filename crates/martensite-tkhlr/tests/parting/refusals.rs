@@ -194,3 +194,107 @@ fn unit_direct_placement_is_an_explicit_admission_boundary() {
         "{kind:?}"
     );
 }
+
+#[test]
+fn large_origin_refuses_lost_contour_translation_bits() {
+    use martensite_tkbrep::topods::Solid;
+    use martensite_tkmath::{gp::Transform3, toploc::Location};
+    let body = fixtures::cylinder(1.5, 10.);
+    let transform = Transform3::translation([2f64.powi(53), 0., 0.]);
+    let located = Solid::unchecked(body.moved(&Location::new(transform), true).unwrap());
+    let model = Model::new(located);
+    let kind = refuse(&model, Direction3::Y);
+    assert!(
+        matches!(kind, PartingFailureKind::Cylinder {
+        problem: PartingCylinderProblem::Position { generator: 1, upper_bound: 0.5, source_tolerance }, ..
+    } if 0. <= source_tolerance && source_tolerance < 0.5),
+        "{kind:?}"
+    );
+}
+
+#[test]
+fn diagonal_generator_uses_the_literal_native_face_allowance() {
+    use martensite_tkbrep::{brep::BRepTFace, brep_adaptor::BRepAdaptorSurface};
+    use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
+    let model = Model::new(fixtures::cylinder(5., 10.));
+    let pull = Direction3::new(1., 1., 0.).unwrap();
+    let curves = super::selected(&model, pull, PartingOptions::default());
+    assert_eq!(curves.len(), 2);
+    let wall = model
+        .faces
+        .iter()
+        .find(|face| {
+            BRepAdaptorSurface::with_face(face, false)
+                .unwrap()
+                .get_type()
+                .unwrap()
+                == SurfaceType::Cylinder
+        })
+        .unwrap();
+    let owner = wall.tshape().cast::<BRepTFace>();
+    owner.get().unwrap().set_tolerance(1e-20);
+    let kind = refuse(&model, pull);
+    assert!(
+        matches!(kind, PartingFailureKind::Cylinder {
+        problem: PartingCylinderProblem::Position { generator: 1, upper_bound, source_tolerance: 1e-20 }, ..
+    } if upper_bound > 1e-20 && upper_bound < 1e-12),
+        "{kind:?}"
+    );
+}
+
+#[test]
+fn unchecked_solid_wrapper_does_not_admit_a_compound_root() {
+    use martensite_tkbrep::{
+        brep::BRepBuilder,
+        topods::{Compound, ShapeIterator, Solid},
+    };
+    use martensite_tkg3d::top_abs::ShapeEnum;
+    use martensite_tkhlr::parting::PartingTopologyProblem;
+    let block = fixtures::block();
+    let shell = ShapeIterator::new(&block, true, true)
+        .value()
+        .unwrap()
+        .clone();
+    let builder = BRepBuilder::default();
+    let mut compound = Compound::default();
+    builder.make_compound(&mut compound);
+    builder.add(&mut compound, &shell).unwrap();
+    let model = Model::new(Solid::unchecked(compound.into_shape()));
+    let kind = refuse(&model, Direction3::Z);
+    assert!(
+        matches!(
+            kind,
+            PartingFailureKind::Topology {
+                entity: PartingEntity::Solid,
+                problem: PartingTopologyProblem::ChildKind {
+                    expected: ShapeEnum::Solid,
+                    actual: ShapeEnum::Compound
+                }
+            }
+        ),
+        "{kind:?}"
+    );
+}
+
+#[test]
+fn rebuilt_world_center_does_not_hide_placement_rounding() {
+    use martensite_tkbrep::topods::{self, Solid};
+    use martensite_tkmath::{
+        gp::{Axis2, Transform3},
+        toploc::Location,
+    };
+    use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeCylinder;
+    use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
+    let local_axes = Axis2::new(Point3::new(1., 0., 0.), Direction3::Z).unwrap();
+    let mut maker = BRepPrimAPIMakeCylinder::with_axes(local_axes, 4., 10.);
+    let body = topods::solid(maker.shape().unwrap()).unwrap();
+    let transform = Transform3::translation([2f64.powi(53), 0., 0.]);
+    let located = Solid::unchecked(body.moved(&Location::new(transform), true).unwrap());
+    let kind = refuse(&Model::new(located), Direction3::Y);
+    assert!(
+        matches!(kind, PartingFailureKind::Cylinder {
+        problem: PartingCylinderProblem::Position { generator: 1, upper_bound: 1., source_tolerance }, ..
+    } if 0. <= source_tolerance && source_tolerance < 1.),
+        "{kind:?}"
+    );
+}

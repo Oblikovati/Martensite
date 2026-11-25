@@ -2,7 +2,7 @@
 //! Certified constant planar signs and checked detached native edge carriers.
 use super::{
     PartingCarrier, PartingCurve, PartingEntity, PartingFaceUse, PartingFailureKind, PartingOrigin,
-    cylinder,
+    PartingPositionEvidence, cylinder,
     failure::{Checked, native},
     topology::SourceFace,
 };
@@ -117,19 +117,27 @@ pub(super) fn edge_curve(
         CurveType::Circle => PartingCarrier::Circle(adaptor.circle().map_err(native(entity))?),
         curve => return Err(PartingFailureKind::UnsupportedEdge { edge: id, curve }),
     };
-    checked_curve(carrier, range, origin, entity)
+    checked_curve(
+        carrier,
+        range,
+        origin,
+        PartingPositionEvidence::NativeCarrier,
+        entity,
+    )
 }
 
 pub(super) fn checked_curve(
     carrier: PartingCarrier,
     range: [f64; 2],
     origin: PartingOrigin,
+    position: PartingPositionEvidence,
     entity: PartingEntity,
 ) -> Checked<PartingCurve> {
     let curve = PartingCurve {
         carrier,
         range,
         origin,
+        position,
     };
     if !range.into_iter().all(f64::is_finite) || range[0] >= range[1] || !regular(carrier) {
         return Err(PartingFailureKind::CurveDomain { entity, range });

@@ -32,6 +32,7 @@ pub(super) struct SourceTopology<'a> {
     pub faces: Vec<SourceFace>,
     pub shells: Vec<Vec<usize>>,
     pub edges: Vec<BoundEdge<'a>>,
+    pub excluded: HashSet<PartingFaceId>,
 }
 
 pub(super) fn capture_topology<'a>(
@@ -41,11 +42,12 @@ pub(super) fn capture_topology<'a>(
     let (faces, shells) = bind_faces(source, options)?;
     let edges = bind_edges(source, options, &faces)?;
     check_connectivity(&shells, &edges, faces.len(), options)?;
-    check_exclusions(source, options)?;
+    let excluded = check_exclusions(&faces, options)?;
     Ok(SourceTopology {
         faces,
         shells,
         edges,
+        excluded,
     })
 }
 
@@ -54,7 +56,11 @@ fn bind_faces(
     options: PartingOptions<'_>,
 ) -> Checked<(Vec<SourceFace>, Vec<Vec<usize>>)> {
     let solid = PartingEntity::Solid;
-    if source.solid.is_null() || source.solid.nb_children() == 0 {
+    if source.solid.is_null() {
+        return Err(topology(solid, Topology::ChildCount { actual: 0 }));
+    }
+    require_kind(source.solid, ShapeEnum::Solid, solid)?;
+    if source.solid.nb_children() == 0 {
         return Err(topology(solid, Topology::ChildCount { actual: 0 }));
     }
     require_sense(source.solid.orientation(), solid)?;
@@ -298,16 +304,30 @@ fn check_connectivity(
     Ok(())
 }
 
-fn check_exclusions(source: PartingSource<'_>, options: PartingOptions<'_>) -> Checked<()> {
+fn check_exclusions(
+    faces: &[SourceFace],
+    options: PartingOptions<'_>,
+) -> Checked<HashSet<PartingFaceId>> {
+    if options.exclude_faces.is_empty() {
+        return Ok(HashSet::new());
+    }
+    let mut known = HashSet::with_capacity(faces.len());
+    for face in faces {
+        observe_stop(options)?;
+        known.insert(face.id);
+    }
+    let mut excluded = HashSet::with_capacity(options.exclude_faces.len());
     for id in options.exclude_faces {
-        if source.faces.iter().all(|binding| binding.id != *id) {
+        observe_stop(options)?;
+        if !known.contains(id) {
             return Err(invalid_binding(
                 PartingEntity::Face(*id),
                 Binding::UnknownExclusion,
             ));
         }
+        excluded.insert(*id);
     }
-    Ok(())
+    Ok(excluded)
 }
 
 fn key(shape: &Shape) -> Shape {

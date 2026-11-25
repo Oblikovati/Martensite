@@ -9,6 +9,10 @@ mod affine_support;
 mod curve_identity_tests;
 mod mapped;
 pub use affine_coordinate::exact_affine_coordinate;
+mod cylindrical_generators;
+pub use cylindrical_generators::{
+    CylindricalGeneratorChart, CylindricalGeneratorError, CylindricalPullKind,
+};
 mod parameter;
 mod prism_jacobian;
 pub use prism_jacobian::affine_prism_jacobian;

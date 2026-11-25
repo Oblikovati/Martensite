@@ -8,7 +8,7 @@ use martensite_tkbrep::{
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkhlr::parting::{
     self, PartingCarrier, PartingCurve, PartingEdgeKind, PartingFailureKind, PartingOptions,
-    PartingOrigin, PartingShell,
+    PartingOrigin, PartingPositionEvidence, PartingShell,
 };
 use martensite_tkmath::gp::{Direction3, Point3, Transform3};
 use martensite_tkmath::toploc::Location;
@@ -81,6 +81,11 @@ fn assert_generators(curves: &[PartingCurve]) {
         assert_eq!(face.shell, PartingShell::Exterior);
         assert_eq!(uv_ends[0][0], uv_ends[1][0]);
         assert_eq!(abs_uv_height(uv_ends), [0., 10.]);
+        assert!(
+            matches!(curve.position_evidence(), PartingPositionEvidence::CylindricalGenerator {
+            upper_bound: 0., source_tolerance,
+        } if source_tolerance.is_finite() && source_tolerance >= 0.)
+        );
         let mut ends = curve.endpoints().map(coords);
         ends.sort_by(|a, b| a[2].total_cmp(&b[2]));
         let y = ends[0][1].signum() * 5.;
@@ -332,6 +337,10 @@ fn require_edge_parents(model: &Model, curves: &[PartingCurve], expected: Partin
         };
         assert!(retained.insert(edge));
         assert_eq!(kind, expected);
+        assert_eq!(
+            curve.position_evidence(),
+            PartingPositionEvidence::NativeCarrier
+        );
         let native = edge_bindings
             .iter()
             .find(|binding| binding.id == edge)

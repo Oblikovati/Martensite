@@ -7,6 +7,7 @@
 //! walls, with strict orthogonal cavity proofs for multi-shell solids.
 //! Shared edges require a stored 3D line or circle. Cylindrical generators use the
 //! existing binary64 Contap construction and the stored axial trim interval.
+//! Their whole-line distance to the source chart root is bounded before publication.
 mod cylinder;
 mod failure;
 mod geometry;
@@ -27,7 +28,7 @@ use martensite_tktopalgo::{
     brep_builder_api::{BRepBuilderAPICopy, BRepBuilderAPIMakeShape},
     brep_check::BRepCheckAnalyzer,
 };
-use std::{collections::HashSet, sync::atomic::Ordering};
+use std::sync::atomic::Ordering;
 
 /// Select the parting curves of one stable, located source revision.
 ///
@@ -141,7 +142,6 @@ fn evaluate_faces(
     pull: Direction3,
     options: PartingOptions<'_>,
 ) -> Checked<Vec<EvaluatedFace>> {
-    let explicit: HashSet<_> = options.exclude_faces.iter().copied().collect();
     topology
         .faces
         .iter()
@@ -154,7 +154,7 @@ fn evaluate_faces(
                 orientation: face.face.orientation(),
                 shell,
             };
-            let excluded = explicit.contains(&face.id)
+            let excluded = topology.excluded.contains(&face.id)
                 || (options.exclude_straight && geometry.kind == SurfaceType::Plane)
                 || (options.exclude_internal && shell == PartingShell::Cavity);
             if excluded {

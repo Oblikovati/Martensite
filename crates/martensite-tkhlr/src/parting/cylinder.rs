@@ -2,13 +2,13 @@
 //! Full cylindrical trim admission and native Contap generators.
 use super::{
     PartingCarrier, PartingCurve, PartingCylinderProblem as CylinderProblem, PartingEntity,
-    PartingFaceUse, PartingFailureKind, PartingOrigin,
+    PartingFaceUse, PartingFailureKind, PartingOrigin, PartingPositionEvidence,
     failure::{Checked, native},
-    geometry::{FaceSign, checked_curve, parallel, plane_sign},
+    geometry::{FaceSign, checked_curve},
 };
 use crate::contap::ContapContAna;
 use martensite_tkbrep::{
-    brep::BRepTool,
+    brep::{BRepTFace, BRepTool},
     brep_adaptor::{BRepAdaptorCurve, BRepAdaptorSurface},
     topods::{self, Edge, Face, ShapeIterator},
 };
@@ -20,8 +20,10 @@ use martensite_tkg3d::{
 use martensite_tkmath::{
     elslib,
     geom_abs::CurveType,
-    gp::{Cylinder3, Direction3, Line3, Plane3},
-    predicates::roots::metric_bounds::exact_affine_coordinate,
+    gp::{Cylinder3, Direction3, Line3},
+    predicates::roots::metric_bounds::{
+        CylindricalGeneratorChart, CylindricalPullKind, exact_affine_coordinate,
+    },
 };
 use std::f64::consts::{FRAC_PI_2, TAU};
 
@@ -36,19 +38,44 @@ pub(super) fn evaluate(
     let cylinder = surface.cylinder().map_err(native(entity))?;
     let bounds = wall_bounds(&surface, trace, cylinder.radius())?;
     check_rectangle(&face, trace, bounds)?;
-    let axis = cylinder.axis().direction();
-    let plane = Plane3::from_position(cylinder.position());
-    if plane_sign(plane, axis, Orientation::Forward, entity)? == FaceSign::Zero {
-        return Err(problem(trace, CylinderProblem::Frame));
+    let chart = capture_chart(&surface, trace, pull)?;
+    match chart.kind() {
+        CylindricalPullKind::Axial => return Ok((FaceSign::Zero, Vec::new())),
+        CylindricalPullKind::Skew => return Err(problem(trace, CylinderProblem::SkewPull)),
+        CylindricalPullKind::Radial => (),
     }
-    if parallel(axis, pull, entity)? {
-        return Ok((FaceSign::Zero, Vec::new()));
-    }
-    if plane_sign(plane, pull, Orientation::Forward, entity)? != FaceSign::Zero {
-        return Err(problem(trace, CylinderProblem::SkewPull));
-    }
-    let curves = generators(cylinder, trace, pull, bounds)?;
+    let allowance = source_tolerance(&face, trace)?;
+    let curves = generators(cylinder, trace, pull, bounds, allowance, &chart)?;
     Ok((FaceSign::Varying, curves))
+}
+
+fn capture_chart(
+    surface: &BRepAdaptorSurface,
+    trace: PartingFaceUse,
+    pull: Direction3,
+) -> Checked<CylindricalGeneratorChart> {
+    let entity = PartingEntity::Face(trace.id);
+    let placed = surface.transformed_surface();
+    let local = placed.adaptor_surface_original();
+    let local = local
+        .get()
+        .ok_or_else(|| problem(trace, CylinderProblem::Trim))?;
+    let cylinder = local.cylinder().map_err(native(entity))?;
+    let transform = placed.trsf();
+    let mut rows = [[0.; 4]; 3];
+    for (row, values) in rows.iter_mut().enumerate() {
+        for (column, element) in values.iter_mut().enumerate() {
+            *element = transform
+                .value(row as i32 + 1, column as i32 + 1)
+                .map_err(native(entity))?;
+        }
+    }
+    CylindricalGeneratorChart::capture(cylinder, rows, pull).map_err(|cause| {
+        PartingFailureKind::CylinderPosition {
+            face: trace.id,
+            cause,
+        }
+    })
 }
 
 fn wall_bounds(
@@ -152,11 +179,26 @@ fn affine_ends(
     Ok([endpoint(parameters[0])?, endpoint(parameters[1])?])
 }
 
+fn source_tolerance(face: &Face, trace: PartingFaceUse) -> Checked<f64> {
+    // The BRepTool accessor applies a confusion floor. Admission uses the literal stored value.
+    let owner = face.tshape().cast::<BRepTFace>();
+    let stored = owner
+        .get()
+        .ok_or_else(|| problem(trace, CylinderProblem::Trim))?;
+    let tolerance = stored.tolerance();
+    if tolerance.is_finite() && tolerance >= 0. {
+        return Ok(tolerance);
+    }
+    Err(problem(trace, CylinderProblem::Tolerance(tolerance)))
+}
+
 fn generators(
     cylinder: Cylinder3,
     trace: PartingFaceUse,
     pull: Direction3,
     bounds: [f64; 4],
+    source_tolerance: f64,
+    chart: &CylindricalGeneratorChart,
 ) -> Checked<Vec<PartingCurve>> {
     let entity = PartingEntity::Face(trace.id);
     let mut contour = ContapContAna::new();
@@ -169,15 +211,35 @@ fn generators(
     {
         return Err(problem(trace, CylinderProblem::Contour));
     }
-    let make = |index| {
-        generator(
-            contour.line(index).map_err(native(entity))?,
-            cylinder,
-            trace,
-            bounds,
-        )
+    let lines = [
+        contour.line(1).map_err(native(entity))?,
+        contour.line(2).map_err(native(entity))?,
+    ];
+    let upper = chart
+        .enclose(lines, [bounds[2], bounds[3]])
+        .map_err(|cause| PartingFailureKind::CylinderPosition {
+            face: trace.id,
+            cause,
+        })?;
+    let make = |index: usize| {
+        let upper_bound = upper[index];
+        if upper_bound > source_tolerance {
+            return Err(problem(
+                trace,
+                CylinderProblem::Position {
+                    generator: index + 1,
+                    upper_bound,
+                    source_tolerance,
+                },
+            ));
+        }
+        let position = PartingPositionEvidence::CylindricalGenerator {
+            upper_bound,
+            source_tolerance,
+        };
+        generator(lines[index], cylinder, trace, bounds, position)
     };
-    order_generators([make(1)?, make(2)?], trace)
+    order_generators([make(0)?, make(1)?], trace)
 }
 
 fn generator(
@@ -185,6 +247,7 @@ fn generator(
     cylinder: Cylinder3,
     trace: PartingFaceUse,
     [u0, u1, v0, v1]: [f64; 4],
+    position: PartingPositionEvidence,
 ) -> Checked<(f64, PartingCurve)> {
     let entity = PartingEntity::Face(trace.id);
     let (u, _) =
@@ -192,14 +255,20 @@ fn generator(
     if !(u0..=u1).contains(&u) || line.direction() != cylinder.axis().direction() {
         return Err(problem(trace, CylinderProblem::Contour));
     }
-    // Contap's origin is on the cylinder's V=0 section, with the same axial
-    // parameter direction. The proved rectangular trim supplies both endpoints.
+    // Contap uses the rebuilt world's V=0 section and axial line direction.
+    // The full-interval comparison above binds this line to the stored source chart.
     let u = u.rem_euclid(TAU);
     let origin = PartingOrigin::Smooth {
         face: trace,
         uv_ends: [[u, v0], [u, v1]],
     };
-    let curve = checked_curve(PartingCarrier::Line(line), [v0, v1], origin, entity)?;
+    let curve = checked_curve(
+        PartingCarrier::Line(line),
+        [v0, v1],
+        origin,
+        position,
+        entity,
+    )?;
     Ok((u, curve))
 }
 

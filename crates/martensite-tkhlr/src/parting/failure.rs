@@ -5,7 +5,7 @@ use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 use martensite_tkmath::{
     geom_abs::{CurveType, SurfaceType},
-    predicates::NonFiniteCoordinate,
+    predicates::{NonFiniteCoordinate, roots::metric_bounds::CylindricalGeneratorError},
 };
 use std::fmt;
 
@@ -97,6 +97,13 @@ pub enum PartingFailureKind {
         /// The cylinder admission check that failed.
         problem: PartingCylinderProblem,
     },
+    /// Exact carrier transport could not establish a finite bound.
+    CylinderPosition {
+        /// Affected face identity.
+        face: PartingFaceId,
+        /// Original numerical failure.
+        cause: CylindricalGeneratorError,
+    },
     /// The selected edge cannot be exported as a detached analytic carrier.
     UnsupportedEdge {
         /// Affected edge identity.
@@ -161,14 +168,23 @@ pub enum PartingTopologyProblem {
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[non_exhaustive]
 pub enum PartingCylinderProblem {
-    /// The native cylindrical frame has a degenerate basis.
-    Frame,
     /// The native angular and axial bounds do not describe one complete finite band.
     Bounds([f64; 4]),
     /// The native wall must have two circular rims and a two-use seam bounding one UV rectangle.
     Trim,
     /// An exactly radial or axial pull is required by this version.
     SkewPull,
+    /// The cylinder's original spatial tolerance is invalid.
+    Tolerance(f64),
+    /// A detached line exceeds the original source face tolerance.
+    Position {
+        /// One-based Contap generator index.
+        generator: usize,
+        /// Certified upper bound for the full axial interval.
+        upper_bound: f64,
+        /// Original stored tolerance.
+        source_tolerance: f64,
+    },
     /// The native contour result failed the complete generator check.
     Contour,
 }
@@ -195,6 +211,9 @@ impl fmt::Display for PartingFailure {
             }
             PartingFailureKind::Coordinate { entity, cause } => {
                 write!(formatter, "{entity:?}: {cause}")
+            }
+            PartingFailureKind::CylinderPosition { face, cause } => {
+                write!(formatter, "{face:?}: {cause}")
             }
             PartingFailureKind::UnsupportedFace { face, surface } => {
                 write!(
@@ -224,6 +243,7 @@ impl std::error::Error for PartingFailure {
         match &self.kind {
             PartingFailureKind::Native { cause, .. } => Some(cause.as_ref()),
             PartingFailureKind::Coordinate { cause, .. } => Some(cause),
+            PartingFailureKind::CylinderPosition { cause, .. } => Some(cause),
             _ => None,
         }
     }
