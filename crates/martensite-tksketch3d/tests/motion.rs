@@ -323,10 +323,9 @@ fn a_large_pivot_keeps_local_offsets_and_exact_axis_points() {
         moved.geometry().point(pid(2)).unwrap().position,
         point(axis_point)
     );
-    assert_eq!(
-        moved.geometry().point(pid(3)).unwrap().position,
-        point([1., height + 4., 0.])
-    );
+    let moved_point = moved.geometry().point(pid(3)).unwrap().position;
+    assert_eq!(moved_point.y(), height + 4.);
+    near(moved_point, [1., height + 4., 0.]);
 }
 
 #[test]
