@@ -157,17 +157,19 @@ axially or meridionally separated apertures whose combined angular coverage
 leaves no clear cut. Moving the native seam changes its split occurrences
 while preserving the authored curves and material volume.
 
-The curved cylinder and cone entries accept a simply connected aperture
-with line and polynomial quadratic boundaries, exact circular and
-elliptic quarters, and short conic arcs whose stereographic controls are
-exactly representable. The rational entries also accept positive-weight
-quadratic spline boundaries. An aperture can occupy one clear sheet or
-cross the selected cut transversely twice. A conical aperture on either
-neighboring sheet uses the explicit recentered chart proof. Each crossing
-has an ordinal in the original curve's parameter order. The result retains
-the authored curve keys, original parameter maps, crossing intervals and
-split images. The decoded native trims and ruled walls must satisfy the
-original bounds before the operation returns a solid.
+The curved batch entries accept simply connected apertures with line and
+polynomial quadratic boundaries. The rational cylinder and cone entries
+accept one simply connected aperture. They also support positive-weight
+quadratic splines, circular and elliptic quarters, and short conic arcs
+with exactly representable stereographic controls.
+
+An aperture can occupy one clear sheet or cross the selected cut
+transversely twice. A conical aperture on either neighboring sheet uses
+the explicit recentered chart proof. Each crossing has an ordinal in the
+original curve's parameter order. The result retains the authored curve
+keys, original parameter maps, crossing intervals and split images. The
+decoded trims and ruled walls must satisfy the original bounds before the
+operation returns a solid.
 
 ## General wrapped profiles
 
