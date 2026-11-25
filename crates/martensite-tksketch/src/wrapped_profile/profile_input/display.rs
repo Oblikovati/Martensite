@@ -31,6 +31,17 @@ impl ProfileInputFailure {
             Self::Unsupported(curve) => write!(f, "unsupported curve={curve:?}"),
             Self::Spline { .. } => self.spline_message(f),
             Self::Weight { .. } | Self::Knot { .. } => self.coefficient_message(f),
+            Self::NonPolynomial {
+                curve,
+                coordinate,
+                coefficient,
+            } => write!(
+                f,
+                "curve={curve:?}, first differing coordinate={coordinate}, coefficient={coefficient}"
+            ),
+            Self::WeightedProof { curve, cause } => {
+                write!(f, "curve={curve:?}, weighted identity: {cause}")
+            }
             _ => self.endpoint_message(f),
         }
     }

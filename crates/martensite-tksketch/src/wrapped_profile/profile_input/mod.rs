@@ -7,6 +7,7 @@ use martensite_tkbo::profile_extrusion::{
 use std::collections::BTreeMap;
 mod curves;
 mod error;
+pub(super) use curves::WeightedBezierSource;
 pub(super) use error::ProfileInputFailure;
 type Checked<T> = Result<T, ProfileInputFailure>;
 
@@ -45,13 +46,29 @@ impl<'a> ProfileReader<'a> {
     pub(super) fn new(profile: &'a SketchProfile) -> Checked<Self> {
         ProfileIndex::new(profile).map(Self)
     }
+    #[cfg(test)]
     pub(super) fn select(&self, selection: &ProfileSelection) -> Checked<OrientedRegion> {
+        self.select_with_cancel(selection, &mut || false)
+    }
+
+    pub(super) fn select_with_cancel(
+        &self,
+        selection: &ProfileSelection,
+        cancelled: &mut CancelPoll<'_>,
+    ) -> Checked<OrientedRegion> {
         let mut directions = BTreeMap::new();
         let loops = std::iter::once(&selection.outer)
             .chain(&selection.holes)
             .enumerate()
             .map(|(contour, uses)| {
-                read_loop(uses, selection.region, contour, &self.0, &mut directions)
+                read_loop(
+                    uses,
+                    selection.region,
+                    contour,
+                    &self.0,
+                    &mut directions,
+                    cancelled,
+                )
             })
             .collect::<Checked<_>>()?;
         Ok(OrientedRegion {
@@ -94,6 +111,7 @@ fn read_loop(
     contour_index: usize,
     index: &ProfileIndex<'_>,
     directions: &mut BTreeMap<SurfaceCurveId, bool>,
+    cancelled: &mut CancelPoll<'_>,
 ) -> Checked<Vec<AuthoredPiece>> {
     if contour.uses.is_empty() {
         return Err(ProfileInputFailure::EmptyLoop {
@@ -104,7 +122,7 @@ fn read_loop(
     contour
         .uses
         .iter()
-        .map(|use_| read_use(use_, index, directions))
+        .map(|use_| read_use(use_, index, directions, cancelled))
         .collect()
 }
 
@@ -112,6 +130,7 @@ fn read_use(
     use_: &LoopUse,
     index: &ProfileIndex<'_>,
     directions: &mut BTreeMap<SurfaceCurveId, bool>,
+    cancelled: &mut CancelPoll<'_>,
 ) -> Checked<AuthoredPiece> {
     let id = SurfaceCurveId(use_.curve.0);
     if directions.insert(id, use_.reversed).is_some() {
@@ -121,7 +140,7 @@ fn read_use(
         .curves
         .get(&use_.curve)
         .ok_or(ProfileInputFailure::MissingCurve(use_.curve))?;
-    curves::read(curve, use_.reversed, index)
+    curves::read(curve, use_.reversed, index, cancelled)
 }
 
 impl ProfileIndex<'_> {
@@ -236,3 +255,5 @@ fn mapped_interval(span: CurveSpan, reversed: bool) -> Checked<SourceParameterIn
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod weighted_tests;

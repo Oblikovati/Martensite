@@ -16,6 +16,7 @@ pub(super) use cylinder::{construct_budgeted_with_work, construct_controlled};
 type Checked<T> = Result<T, WrappedNormalFailure>;
 
 /// Extrude selected polynomial profiles along cylinder normals and retain achieved evidence.
+/// Weighted spans are admitted when a same-parameter polynomial identity is exact.
 /// The physical frame is normalized/projected from the requested axis and radial vectors.
 /// Example: `let result = normal_extrude_profile(&request)?;`.
 pub fn normal_extrude_profile(request: &WrappedNormalRequest) -> Checked<WrappedNormalResult> {

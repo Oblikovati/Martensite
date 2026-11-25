@@ -86,7 +86,9 @@ fn capture_admitted(request: &ConeRun<'_>, cancelled: &mut CancelPoll<'_>) -> Ch
         request.profile,
         request.selections,
         cancelled,
-        |selection, reader| push_region(&mut inputs, request, selection, reader),
+        |selection, reader, cancelled| {
+            push_region(&mut inputs, request, selection, reader, cancelled)
+        },
     )?;
     Ok(inputs)
 }
@@ -95,11 +97,12 @@ fn push_region(
     request: &ConeRun<'_>,
     selection: &WrappedRegionSelection,
     reader: &profile_input::ProfileReader<'_>,
+    cancelled: &mut CancelPoll<'_>,
 ) -> Checked<()> {
     if inputs.directions.contains_key(&selection.region) {
         return Err(duplicate_region(selection.region).public());
     }
-    let oriented = super::super::input::selected(reader, selection)?;
+    let oriented = super::super::input::selected_with_cancel(reader, selection, cancelled)?;
     let (source, directions) = oriented.into_developed(
         physical_depths(request),
         request.options.spatial_error,

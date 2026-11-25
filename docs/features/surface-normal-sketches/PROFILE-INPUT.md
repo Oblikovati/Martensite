@@ -23,9 +23,13 @@ curve, an out-of-domain index or a level of 64 or above refuses.
 
 ## Current admission
 
-This adapter reads lines and single polynomial Bezier spans of degree one through
-three. A spline must have exactly `degree+1` poles, absent or unit weights, and
-`degree+1` zero knots followed by `degree+1` unit knots. Selected coordinates must
+This adapter reads lines and single Bézier spans of degree one through three.
+A spline must have exactly `degree+1` poles, positive weights if supplied, and
+`degree+1` zero knots followed by `degree+1` unit knots. A weighted span needs
+an exact identity with a binary64 polynomial in the same parameter. Both the
+planar proof and the wrapped fit use that polynomial. The owned source binding
+retains the original poles and weights and checks their bits when evidence is
+reused. Selected coordinates must
 be finite, and endpoint pole bits must equal their authored vertex bits. The
 adapter does not snap endpoints or reinterpret an internal knot as a single span.
 Extreme degree values are checked before count arithmetic can overflow.
