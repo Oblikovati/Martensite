@@ -101,6 +101,25 @@ bound, without changing those cubics, leaves space for the retained geometry
 within the same tolerance. Its 32-cubic execution under the same one-million
 arithmetic limit returns a typed `WorkLimit` for an actual side pair.
 
+### Degree-16 spline controls
+
+A cylindrical extrusion published an open degree-16 spline with positive
+weights and the native range `[-2, 6]`. Its interior knot `2` retains one
+authored key. The control uses an exact degree-elevated parabola and an
+independent area integral. It completed in 1.90 seconds in a Linux x86_64
+debug run, excluding compilation.
+
+The varying-weight fixture in
+`degree_sixteen_varying_weights_fit_the_original_native_knot` also certifies
+native knot insertion within the original arithmetic allowance. Its complete
+cylindrical extrusion used radius `10`, signed depths `[-0.1, 0.1]`, a
+`1e-4` spatial limit, and reference level `2`. The authored planar
+`CarrierV2` run was stopped after 333 seconds. An exact
+`GeometricCompositeV6` source comparison was stopped after 126 seconds. Both
+runs were still in the planar pair census. The geometric filter reached the
+same integer polynomial elimination as the carrier proof. These timings are
+incomplete debug observations for the same input.
+
 ## Verification
 
 Fifteen input controls cover mixed curves and holes, reversed authored traversal,
