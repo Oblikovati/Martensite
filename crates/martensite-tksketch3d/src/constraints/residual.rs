@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
-use super::{AxisDirection, CoordinateAxis, ParallelDirection};
+use super::{AxisDirection, CoordinateAxis, LineAngle, ParallelDirection, metric};
+use martensite_tkmath::gp::Point3;
 use martensite_tksolve::{
     ad::{DualNumber, DualVector},
     residual::{ResidualError, ResidualSource, ResidualTolerance},
@@ -10,7 +11,8 @@ type Vector = DualVector<3>;
 // The parallel path uses fewer than 100 elementary dual operations and copies, including
 // both vector normalizations, the two basis vectors and the branch dot product. Charging
 // 256 per existing per-lane structural unit also covers fixed-dimensional seeding and row
-// collection. All bounds are on abstract scalar work, independent of allocator or libm time.
+// collection, and the fixed-size outward trial guard for Angle. All bounds are on abstract
+// scalar work, independent of allocator or libm time.
 const SCALAR_WORK_PER_UNIT: usize = 256;
 
 pub(super) fn numeric_budget(residual_work: usize) -> usize {
@@ -39,6 +41,10 @@ pub(super) enum Equation {
     EqualLength {
         scale: f64,
     },
+    Angle {
+        target: LineAngle,
+        minimum_sine: f64,
+    },
 }
 
 impl Equation {
@@ -48,14 +54,18 @@ impl Equation {
             Self::Length { .. }
             | Self::Plane(_)
             | Self::Perpendicular
-            | Self::EqualLength { .. } => 1,
+            | Self::EqualLength { .. }
+            | Self::Angle { .. } => 1,
             Self::Parallel { .. } | Self::Axis(..) => 2,
         }
     }
 
     fn width(self) -> usize {
         match self {
-            Self::Parallel { .. } | Self::Perpendicular | Self::EqualLength { .. } => 12,
+            Self::Parallel { .. }
+            | Self::Perpendicular
+            | Self::EqualLength { .. }
+            | Self::Angle { .. } => 12,
             _ => 6,
         }
     }
@@ -95,8 +105,30 @@ impl ResidualSource for Equation {
                     .minus(&checked_length(&displacement(v, 6)?)?)?
                     .scaled(scale)?,
             ]),
+            Self::Angle {
+                target,
+                minimum_sine,
+            } => angle_row(v, &first, target, minimum_sine),
         }
     }
+}
+
+fn angle_row(
+    v: &[DualNumber],
+    first: &Vector,
+    target: LineAngle,
+    minimum_sine: f64,
+) -> Result<Vec<DualNumber>, ResidualError> {
+    let point = |i: usize| Point3::new(v[i].value(), v[i + 1].value(), v[i + 2].value());
+    let points = [[point(0), point(3)], [point(6), point(9)]];
+    if !metric::angle::nonsingular_coordinates(points, minimum_sine) {
+        return Err(ResidualError::Domain(format!(
+            "angle trial needs a line direction sine above {minimum_sine}"
+        )));
+    }
+    let (sine, cosine) = target.sin_cos();
+    let projection = unit(first)?.dot(&unit(&displacement(v, 6)?)?)?;
+    Ok(vec![projection.shifted(-cosine)?.scaled(sine.recip())?])
 }
 
 fn displacement(v: &[DualNumber], start: usize) -> Result<Vector, ResidualError> {

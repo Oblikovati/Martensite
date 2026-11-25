@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Independent physical admission from the accepted endpoint coordinates.
+pub(super) mod angle;
 use super::{AxisDirection, ConstraintPolicy, ParallelDirection, Relation};
 use crate::{LineGeometry, LineId, Snapshot};
 use martensite_tkmath::{
@@ -85,6 +86,9 @@ pub(super) fn feasible(snapshot: &Snapshot, relation: Relation, policy: Constrai
                 Ok(Ordering::Less | Ordering::Equal)
             )
         }),
+        Relation::Angle(lines, target) => pair(snapshot, lines)
+            .and_then(|lines| angle::matches(lines, target, policy.parallel_sine_tolerance))
+            .unwrap_or(false),
     }
 }
 
@@ -143,9 +147,12 @@ fn within_angular_limit(
     squared_numerator: Interval,
     tolerance: f64,
 ) -> Option<bool> {
+    Some(squared_numerator.hi <= angular_bound(a, b, tolerance)?.lo)
+}
+
+fn angular_bound(a: [Interval; 3], b: [Interval; 3], tolerance: f64) -> Option<Interval> {
     let sine = Interval::point(tolerance);
-    let rhs = sine.mul(sine)?.mul(dot(a, a)?)?.mul(dot(b, b)?)?;
-    Some(squared_numerator.hi <= rhs.lo)
+    sine.mul(sine)?.mul(dot(a, a)?)?.mul(dot(b, b)?)
 }
 
 fn scaled_vector(values: [f64; 3]) -> Option<[Interval; 3]> {

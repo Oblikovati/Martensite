@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Immutable spatial point and line constraints with separate apply and drag paths.
 mod adopt;
+mod angle;
 mod binding;
 mod error;
 mod metric;
@@ -17,6 +18,7 @@ use std::{
     sync::Arc,
 };
 
+pub use angle::{InvalidLineAngle, LineAngle};
 pub use error::{ConstraintFailure, PolicyQuantity};
 pub use martensite_tksolve::{nonlinear::SolveOptions, preview::Limits as SolverLimits};
 pub use motion::{RigidMotion, RigidMotionFailure};
@@ -97,6 +99,8 @@ pub enum RelationSpec {
     Perpendicular([LineId; 2]),
     /// Constrain two lines to equal physical lengths.
     EqualLength([LineId; 2]),
+    /// Drive the angle between two directed lines in radians. Their positions stay free.
+    Angle([LineId; 2], LineAngle),
 }
 
 /// The persisted relation value, with the anchors captured for Fix relations.
@@ -120,6 +124,8 @@ pub enum Relation {
     Perpendicular([LineId; 2]),
     /// Two line identities whose physical lengths agree.
     EqualLength([LineId; 2]),
+    /// Two directed line identities and their open-interval angle in radians.
+    Angle([LineId; 2], LineAngle),
 }
 
 /// A relation edit in an atomic authoring batch.
@@ -139,6 +145,7 @@ pub struct ConstraintPolicy {
     /// Inclusive tolerance in model units for coincidence, length relations and rigid placement.
     pub length_tolerance: MinimumLength,
     /// Maximum sine of the deviation from the required angular condition, in (0, 1).
+    /// Angle relations also use this value as the exclusive minimum sine at seeds and trials.
     pub parallel_sine_tolerance: f64,
     /// The solver's dimensionless tolerances and iteration limits.
     pub solve: SolveOptions,

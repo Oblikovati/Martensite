@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-use super::{AxisDirection, CoordinateAxis, Relation, RelationId};
+use super::{AxisDirection, CoordinateAxis, LineAngle, Relation, RelationId};
 use crate::{EditFailure, EntityId, FrozenPointSource, LineId, PointId};
 use martensite_tksolve::{
     nonlinear::{SolveError, SolveTermination},
@@ -58,6 +58,10 @@ pub enum ConstraintFailure {
     AxisSeedBranch(RelationId, LineId, CoordinateAxis, AxisDirection),
     /// The supplied plane normal is nonfinite or vanishes.
     InvalidPlaneNormal(RelationId, [f64; 3]),
+    /// The initial endpoint directions could be parallel or antiparallel at the requested guard.
+    AngleSeedSingular(RelationId, [LineId; 2], f64),
+    /// The target sine could reach the singular guard or has an unrepresentable reciprocal.
+    AngleTargetSingular(RelationId, LineAngle, f64),
     /// A numeric relation trial or preview did not complete.
     Preview(Option<RelationId>, PreviewError),
     /// The noninteractive solve encountered a typed numerical refusal.

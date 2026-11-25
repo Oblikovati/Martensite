@@ -1124,6 +1124,7 @@ dependencies = [
 name = "martensite-tksketch3d"
 version = "0.1.0"
 dependencies = [
+ "martensite-cmath",
  "martensite-tkbo",
  "martensite-tkbrep",
  "martensite-tkernel",

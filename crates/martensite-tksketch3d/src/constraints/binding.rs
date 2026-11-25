@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Bind authored relations to solver columns and exact fixed coordinates.
 use super::{
-    ConstraintFailure as Failure, ConstraintPolicy, Relation, RelationId, RelationSpec,
+    ConstraintFailure as Failure, ConstraintPolicy, LineAngle, Relation, RelationId, RelationSpec,
+    metric,
     residual::{Equation, axis_branch},
 };
 use crate::{EntityId, LineGeometry, LineId, PointId, Snapshot};
@@ -34,6 +35,7 @@ pub(super) fn bind(
         blocks: Vec::new(),
         authored_rows: 0,
         scale: 1. / policy.length_scale.value(),
+        angular_sine: policy.parallel_sine_tolerance,
     };
     for (&id, &start) in point_columns {
         if geometry.frozen_source(id).is_some() {
@@ -64,6 +66,7 @@ struct Layout<'a> {
     blocks: Vec<EquationBlock>,
     authored_rows: usize,
     scale: f64,
+    angular_sine: f64,
 }
 
 impl Layout<'_> {
@@ -116,7 +119,33 @@ impl Layout<'_> {
                 let lines = pair_of(self.geometry, id, lines)?;
                 self.pair_equation(id, lines, Equation::EqualLength { scale: self.scale })
             }
+            Relation::Angle(lines, angle) => self.angle(id, lines, angle),
         }
+    }
+
+    fn angle(
+        &mut self,
+        id: RelationId,
+        lines: [LineId; 2],
+        target: LineAngle,
+    ) -> Result<(), Failure> {
+        let tolerance = self.angular_sine;
+        let sine = target.sin_cos().0;
+        if sine.next_down() <= tolerance || !sine.recip().is_finite() {
+            return Err(Failure::AngleTargetSingular(id, target, tolerance));
+        }
+        let geometry = pair_of(self.geometry, id, lines)?;
+        if !metric::angle::nonsingular(geometry, tolerance) {
+            return Err(Failure::AngleSeedSingular(id, lines, tolerance));
+        }
+        self.pair_equation(
+            id,
+            geometry,
+            Equation::Angle {
+                target,
+                minimum_sine: tolerance,
+            },
+        )
     }
 
     fn pair_equation(
@@ -238,6 +267,10 @@ pub(super) fn capture(
         RelationSpec::EqualLength(lines) => {
             pair_of(geometry, id, lines)?;
             Ok(Relation::EqualLength(lines))
+        }
+        RelationSpec::Angle(lines, target) => {
+            pair_of(geometry, id, lines)?;
+            Ok(Relation::Angle(lines, target))
         }
     }
 }
