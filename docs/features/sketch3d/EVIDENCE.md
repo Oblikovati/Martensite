@@ -320,3 +320,15 @@ numerical work. Each admitted residual evaluator also needs a work contract. The
 headless latency target. They leave desktop timing, model-space and parameter tolerances, fit-point distortion,
 and the app solver migration for their own verification. Bind all equation inputs and tolerance policy to the
 immutable request and validate final geometry before adoption.
+
+The extracted `martensite-tksolve` converted the math call sites to Martensite CMath. In three more paired runs
+against the pinned app solver, the extracted `Prepared` route accepted all 2,100 updates. The 120-variable
+preview was `0.523–0.570 ms` p95 versus `27.835–29.530 ms` in the app baseline. At 240 variables it was
+`1.009–1.389 ms` versus `121.823–144.576 ms`. The candidate used no wide dense factorization. Its peak process
+RSS was 6,036–6,292 KiB, versus 7,684–7,780 KiB in the dense baseline. The measured run used CPU 3. Its SMT
+sibling was about 7.4% busy. The Linux CPU pressure counter increased by 0.139 s over roughly 46 s.
+
+Rust `1.98.1` tests, package verification, dependency checks and strict Clippy passed. The isolated app re-export
+of the extracted default API reproduced the 1,960 model outcomes after correcting the two baseline assertions
+in #4191. Nine diagnostic rank groups and the bounded preview controls are separate evidence. Sketch3D still needs
+a typed evaluator with bounded curve and trim work, revision-bound publication and native desktop timings.

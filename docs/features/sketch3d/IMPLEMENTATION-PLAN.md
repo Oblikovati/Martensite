@@ -1,6 +1,6 @@
 # Sketch3D kernel implementation plan
 
-The maintainer resolved the Phase 0 decisions on 2026-11-25. Phase 0 experiments are underway. Owned fixtures define outcomes missing from the application tooling corpus. Martensite tracks the kernel capability in [#611](https://github.com/Oblikovati/Martensite/issues/611) and Oblikovati tracks desktop integration in [#4190](https://github.com/Oblikovati/Oblikovati/issues/4190).
+The maintainer resolved the Phase 0 decisions on 2026-11-25. The four experiments have recorded results and the first implementation is underway. Owned fixtures define outcomes missing from the application tooling corpus. Martensite tracks the kernel capability in [#611](https://github.com/Oblikovati/Martensite/issues/611) and Oblikovati tracks desktop integration in [#4190](https://github.com/Oblikovati/Oblikovati/issues/4190).
 
 Supporting documents:
 
@@ -84,18 +84,18 @@ The candidate core (`oblikovati-solve`) needs these changes before a spatial cal
 
 ## Phase 0 decisions
 
-The maintainer approved D1 to D4 and set the scope for D5 to D8 on 2026-11-25. X2 established the shared query boundaries. X1 still needs to establish the solver migration and numerical limits.
+The maintainer approved D1 to D4 and set the scope for D5 to D8 on 2026-11-25. X1 qualified a Martensite-owned numerical core for implementation and established the initial preview work limits. X2 established the shared query boundaries.
 
 | ID | Topic | Decision | Applies to |
 | --- | --- | --- | --- |
-| D1 | Solver ownership and toolchain | If X1 meets its latency and planar/assembly parity gates, Martensite owns one shared numerical core. Update the app's ADR-0015 ownership clause and record the Martensite decision. Verify Rust `1.98.1`, `missing_docs`, `cargo package`, `cargo deny --all-features check` and `cargo audit` for the extracted core and any added dependencies. If X1 misses those gates, keep the numerical solver in the app and ship kernel evaluators and edit validation. | Phase 1 |
+| D1 | Solver ownership and toolchain | Use the Martensite-owned `martensite-tksolve` core. The extracted crate met the X1 latency target and the isolated app re-export reproduced existing results after the two baseline diagnostic corrections (E14). Native assembly has no numerical solver caller. Update the ownership clause in app ADR-0015 when switching its dependency. Keep the typed spatial preview evaluator and its immutable request above the numerical crate. | Phase 1 |
 | D2 | Solver license and provenance | The maintainer confirmed authorization to reuse GPL-2.0-only `oblikovati-solve` code under Martensite's Apache-2.0 option for official release binaries. Record that authorization and the source revisions with the transfer. Identify Go-derived code and fixtures, and record known defects. | D1 |
 | D3 | Crate boundaries | Add `martensite-tksketch3d`. The geometry and topology split follows E12. Keep the solver core free of BRep or sketch dependencies. Verify the Cargo graph when adding those dependencies. | Phase 1 |
 | D4 | Public tolerances and ownership | Proceed while [#21](https://github.com/Oblikovati/Martensite/issues/21) and [#65](https://github.com/Oblikovati/Martensite/issues/65) are open. The first public API uses typed tolerances, explicit tolerance-cap modes and owned immutable snapshots. | Phase 1 interface freeze |
 | D5 | Inventor interop and line validity | Connect Corliss imports to native Sketch3D when Inventor interop lands in `oblikovati-rust`. Track the legacy Go `model.sketches3D` refusal in [Oblikovati #4004](https://github.com/Oblikovati/Oblikovati/issues/4004). Reject identical endpoint IDs in the native line contract and its app adapter. | Phase 1 line validation and future app interop |
 | D6 | Downstream Sweep and Loft | Both desktop features must accept live Sketch3D references. Prove Sweep paths and Loft sections through the existing kernel builders, then through the app's creation, rebuild and persistence paths. Baseline each operation on its own fixtures. | Phases 1 and 6 |
 | D7 | Scenario ownership | Keep end-to-end scenarios in `oblikovati-rust` and use MCAD-Scenarios as an Oblikovati tooling reference. Derive and version kernel fixtures in Martensite with their source scenario IDs and independent expected results. | All acceptance gates |
-| D8 | Numerical limits | Use quiet-host experiments to set tolerance, refusal, fit-point chord-ratio and component-size limits. Measure large-component preview deadlines and record the accepted behavior alongside the results. | Phase 1 |
+| D8 | Numerical limits | Start with the measured X1 preview work limits in E14 and typed incomplete results for exhausted work or deferred rank recovery. Keep model-space, parameter and angular tolerances separate and explicit in each consuming operation. Measure geometric refusal sets and the fit-point chord-ratio guard with the corresponding curve and attachment fixtures. | Phases 1 to 3 |
 
 ## Phase 0 experiments
 
@@ -112,13 +112,32 @@ These experiments are throwaway work. Each has an owner, a proposed timebox, and
 
 On 2026-11-25 the maintainer chose to define Oblikovati behavior with [owned fixtures](OWNED-FIXTURES.md) where the end-to-end tooling reference is incomplete. Use each fixture's authored input, independent expected geometry and undo outcome for acceptance. App-only observations still need app tests.
 
+## Desktop integration path
+
+Begin with the native session transaction and the existing spatial recipe. Reserve document and entity IDs through
+`RecipeReservations`, adopt one checked private candidate, and use the app history for undo and redo. Validate
+spatial edit entry and finish against the sketch ID and revision. The planar entry points still resolve a sketch
+plane for their existing commands. Add spatial role and reference data through the existing recipe reader and
+verify older files reopen through its normal package path.
+
+Route Start and Finish 3D Sketch through the Part command owner. A spatial browser row can reopen the sketch by
+its stable identity. Publish XYZ geometry in a spatial packet through the sketch-scene update path, with picking
+based on model rays and world geometry. Tag each checked preview packet with its request generation and source
+revisions. Cancelled or refused edits return to the accepted scene and preserve its recipe.
+
+For Extrude, resolve a typed spatial sketch and selected loop to a certified planar profile through the existing
+feature validation and replay path. Sweep consumes a path and section, and Loft consumes ordered section
+references. Record the sketch dependencies in feature reads so source edits invalidate and rebuild the downstream
+feature. Exercise creation, edit, undo, saved references and rebuilt output in the native BDD runner. Measure both
+the GPU fence and the revision in the rendered result during timed drag.
+
 ## Implementation sequence
 
 Each kernel phase closes against native fixtures derived from the K and I entries in [SCENARIO-MAP.md](SCENARIO-MAP.md). A class K fixture needs an independent expected result. The app runs the end-to-end scenarios, including class A assertions. Every pull request targets `main` (per `be97080d6` on `origin/main`), tracks a typed GitHub feature issue under the active milestone, adds `CHANGELOG.md` entries under `## [Unreleased]`, and runs the `humanizer` skill on new or rewritten prose before commit.
 
 | Phase and owner | Scenarios (K, I) | Deliverable and exit evidence |
 | --- | ---: | --- |
-| 0. Kernel and app maintainers | none | Start from current `origin/main`. File a typed feature issue mapped to Martensite milestones (`Q1` to `X2`, `T1`) with phase acceptance and traceability. Finish X1 to X4, review owned fixture behavior, and run the `humanizer` pass on the plan docs. Review [RELATION-EQUATIONS.md](RELATION-EQUATIONS.md) and [SCENARIO-MAP.md](SCENARIO-MAP.md). Baseline native spatial persistence and #610 regressions. Before Phase 1, record the D1 path selected by X1, confirm the D3 dependency graph, set the D8 numerical limits and pass X3. |
+| 0. Kernel and app maintainers | none | Start from current `origin/main`. File a typed feature issue mapped to Martensite milestones (`Q1` to `X2`, `T1`) with phase acceptance and traceability. Finish X1 to X4, review owned fixture behavior, and run the `humanizer` pass on the plan docs. Review [RELATION-EQUATIONS.md](RELATION-EQUATIONS.md) and [SCENARIO-MAP.md](SCENARIO-MAP.md). Baseline native spatial persistence and #610 regressions. Before Phase 1, record the D1 path and initial D8 preview limits selected by X1, confirm the D3 dependency graph, and pass X3. |
 | 1. First slice: spatial sketch and host integration | 25, 3 and two shared outlines | Add Point roles (`Defining`, `SketchMarker`, `CenterMarker`) and ADR-0017 deletion closure, connected Line with endpoint validation, Fix and release for points and lines, Coincident, Parallel, driving length and one frozen external point reference. Deliver immutable snapshots, preview and commit, stable identities and native Rust recipe persistence. Raise the app's Martensite pin before integration. The `fix` and `dimension` fixtures use points and straight segments here. Their full multi-entity app scenarios close in Phase 2. Verify XYZ placement, station-to-station geometry, cancel isolation, conflict refusal and desktop save/reopen. Check spatial wire orientation, vertex tolerance, `Send`/`Sync` and cancellation. Exercise `BRepOffsetAPIMakePipeShell` with a Sketch3D path and `BRepOffsetAPIThruSections` with ordered Sketch3D sections. |
 | 2. Curves and relations: solver and spatial sketch | 24, 7 | Add both Arc constructions, control-pole and fit-point splines, construction roles, and the remaining relations and dimensions of [RELATION-EQUATIONS.md](RELATION-EQUATIONS.md). Verify G2 with the owned fixtures, ADR-0034 Colinear shared-endpoint cases, normalized axis and plane parallel, Angle singularities, and the full `fix` and `dimension` app setups. Check rank and DOF, branch selection, dimension edits, fixed drag, curved and underconstrained motion, and conflict refusal. Run planar and assembly regression suites for a shared solver migration. Benchmark loaded drag before adding body-derived operations. |
 | 3. Sources and attachment: spatial sketch and geometry/topology toolkits | 9, 1 | Common trim and incidence queries and source rebinding, then On Face, Curve On Face, Include Geometry, section and directional projection. Start on a planar solid face, then add curved trimmed hosts, holes, seams and multiple roots. Declared dependencies: [#294](https://github.com/Oblikovati/Martensite/issues/294) (planar-spline section takes 161 to 164 ms against its 100 ms limit; close it or record an approved spline-section budget), [#406](https://github.com/Oblikovati/Martensite/issues/406) (conic extrema), [#457](https://github.com/Oblikovati/Martensite/issues/457) (Boolean source-vertex isolation), [#550](https://github.com/Oblikovati/Martensite/issues/550) (`Direction3` overflow), and [#20](https://github.com/Oblikovati/Martensite/issues/20) and [#495](https://github.com/Oblikovati/Martensite/issues/495) (persistent reference history). |
