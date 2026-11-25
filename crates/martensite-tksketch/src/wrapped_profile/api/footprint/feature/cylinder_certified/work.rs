@@ -97,19 +97,23 @@ impl<I: Sync, F: Sync> Queue<'_, I, F> {
         })
     }
 
-    fn worker<O>(&self, send: Sender<Findings<O>>)
+    fn worker<O>(&self, send: Sender<Vec<Findings<O>>>)
     where
         F: Fn(&I, &mut CancelPoll<'_>) -> Checked<O>,
     {
+        let mut completed = Vec::new();
         while !self.stop.load(Relaxed) {
             let index = self.next.fetch_add(1, Relaxed);
             let Some(input) = self.inputs.get(index) else {
                 break;
             };
             let result = (self.check)(input, &mut || self.stop.load(Relaxed));
-            if send.send((index, result)).is_err() {
-                break;
-            }
+            completed.push((index, result));
+        }
+        if !completed.is_empty() {
+            // Certificates are independent. Return one batch per worker so that a
+            // large boundary does not wake the cancel coordinator for every span.
+            let _ = send.send(completed);
         }
     }
 }
@@ -119,16 +123,18 @@ fn receive_ordered<O>(
     stage: CylinderFeatureStage,
     count: usize,
     cancelled: &mut CancelPoll<'_>,
-    receive: &Receiver<Findings<O>>,
+    receive: &Receiver<Vec<Findings<O>>>,
 ) -> Checked<Vec<O>> {
     let mut ordered: Vec<_> = std::iter::repeat_with(|| None).take(count).collect();
     let mut collected = 0;
     while collected < count {
         attempt.poll(cancelled, stage)?;
         match receive.recv_timeout(CANCEL_POLL) {
-            Ok((index, result)) => {
-                ordered[index] = Some(result);
-                collected += 1;
+            Ok(batch) => {
+                collected += batch.len();
+                for (index, result) in batch {
+                    ordered[index] = Some(result);
+                }
             }
             Err(RecvTimeoutError::Timeout) => (),
             Err(RecvTimeoutError::Disconnected) => {
