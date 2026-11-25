@@ -328,3 +328,27 @@ fn a_rounded_oblique_frame_preserves_the_exact_antipodal_branch() {
     assert_eq!(arc.points(), placements.map(point));
     assert!(arc.deviation_estimate() < 1e-8);
 }
+
+#[test]
+fn arc_cache_refreshes_when_an_authored_coordinate_changes_only_its_zero_sign() {
+    fn assert_send_sync<T: Send + Sync>() {}
+    assert_send_sync::<ArcGeometry>();
+    let before = create([[0.; 3], [10., 0., 0.], [5., 5., 0.]], through(), 1e-9).unwrap();
+    let after = before
+        .apply(
+            &[Edit::MovePoint {
+                point: pid(1),
+                position: point([0., -0., 0.]),
+            }],
+            || false,
+        )
+        .unwrap();
+    assert_eq!(
+        before.arc(aid()).unwrap().points()[0].y().to_bits(),
+        0.0_f64.to_bits()
+    );
+    assert_eq!(
+        after.arc(aid()).unwrap().points()[0].y().to_bits(),
+        (-0.0_f64).to_bits()
+    );
+}

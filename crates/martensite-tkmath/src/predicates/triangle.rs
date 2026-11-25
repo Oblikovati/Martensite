@@ -37,7 +37,7 @@ pub fn compare_triangle_altitude_3d(
     Ok(square_norm(&cross).cmp(&(&limit * &limit * square_norm(&first))))
 }
 
-/// Compare the angle of two radii projected onto a plane with a right angle.
+/// Compare the projected dot product of two radii with zero.
 ///
 /// `Less` means their projected dot product is negative. The plane normal
 /// need not be unit length. A zero normal or radial projection yields `Equal`.
