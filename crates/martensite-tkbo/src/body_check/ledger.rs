@@ -72,14 +72,13 @@ impl Ledger {
         mode: CheckMode,
         findings: Vec<Finding>,
     ) -> bool {
-        let verdict = verdict(&findings);
-        self.stages.push(StageReport {
-            stage,
-            verdict,
-            mode,
-            findings,
-        });
-        verdict == StageVerdict::Passed
+        self.record_stage(stage_report(stage, mode, findings))
+    }
+
+    pub(super) fn record_stage(&mut self, report: StageReport) -> bool {
+        let passed = report.verdict == StageVerdict::Passed;
+        self.stages.push(report);
+        passed
     }
 
     /// Records a stage whose own computation failed as inconclusive about `root`.
@@ -89,21 +88,20 @@ impl Ledger {
         root: TopologyRef,
         failure: &Failure,
     ) {
-        let kind = FindingKind::CheckerFailure {
-            message: failure.message().to_owned(),
-        };
-        let finding = Finding {
-            severity: Severity::Inconclusive,
-            kind,
-            subject: root,
-            context: None,
-        };
-        self.record(stage, CheckMode::Exact, vec![finding]);
+        self.record_stage(checker_failure(stage, root, failure));
     }
 
     /// The four reports, the unrun ones `NotRun`; `ledger.finish(census, budget)`.
     pub(super) fn finish(
         self,
+        census: Vec<EulerCensus>,
+        tolerance_budget: Option<f64>,
+    ) -> ValidationReport {
+        self.report(census, tolerance_budget)
+    }
+
+    pub(super) fn report(
+        &self,
         census: Vec<EulerCensus>,
         tolerance_budget: Option<f64>,
     ) -> ValidationReport {
@@ -117,6 +115,35 @@ impl Ledger {
             tolerance_budget,
         }
     }
+}
+
+pub(super) fn stage_report(
+    stage: ValidationStage,
+    mode: CheckMode,
+    findings: Vec<Finding>,
+) -> StageReport {
+    StageReport {
+        stage,
+        verdict: verdict(&findings),
+        mode,
+        findings,
+    }
+}
+
+pub(super) fn checker_failure(
+    stage: ValidationStage,
+    root: TopologyRef,
+    failure: &Failure,
+) -> StageReport {
+    let finding = Finding {
+        severity: Severity::Inconclusive,
+        kind: FindingKind::CheckerFailure {
+            message: failure.message().to_owned(),
+        },
+        subject: root,
+        context: None,
+    };
+    stage_report(stage, CheckMode::Exact, vec![finding])
 }
 
 fn not_run(stage: ValidationStage) -> StageReport {
