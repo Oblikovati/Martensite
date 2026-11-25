@@ -72,7 +72,7 @@ impl RenderSurfacePlatform {
 }
 
 /// Pure Linux preference selector: Wayland always beats XWayland when `WAYLAND_DISPLAY` is set.
-#[cfg(any(target_os = "linux", test))]
+#[cfg(target_os = "linux")]
 pub(crate) fn preferred_linux_platform(
     wayland_display: Option<&str>,
     x11_display: Option<&str>,

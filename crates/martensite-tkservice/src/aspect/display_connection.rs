@@ -64,6 +64,7 @@ struct ConnectionState {
 
 /// Selects the preferred Linux backend from environment values; Wayland always takes
 /// precedence over XWayland when `WAYLAND_DISPLAY` is non-empty.
+#[cfg(target_os = "linux")]
 pub(crate) fn select_linux_backend(
     wayland_display: Option<&str>,
     x11_display: Option<&str>,
