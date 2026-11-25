@@ -2,9 +2,8 @@
 //! Explicit certified mode replaces only the ordered self-intersection stage.
 use super::*;
 use crate::body_check::{
-    CheckMode, Finding, FindingKind, Ledger, ResolutionRejected, Severity, Stages,
-    ValidationReport, ValidationStage, admission, naming::TopologyNames, tolerance_budget,
-    unindexable,
+    BodyGeometryValidation, CheckMode, Finding, FindingKind, ResolutionRejected, Severity, Stages,
+    ValidationReport, ValidationStage, begin_body_validation,
 };
 use crate::profile_extrusion::Resolution;
 
@@ -36,41 +35,19 @@ pub fn validate_body_with_transported_conical(
 fn validate_member(
     member: &ConicalNativeMember,
     resolution: &Resolution,
-    mut rebind: impl FnMut() -> Result<(), ConicalBindingError>,
+    rebind: impl FnOnce() -> Result<(), ConicalBindingError>,
 ) -> Result<ValidationReport, ResolutionRejected> {
-    let budget = tolerance_budget(resolution)?;
-    let names = match TopologyNames::of(&member.shape) {
-        Ok(names) => names,
-        Err(cause) => return Ok(unindexable(&member.shape, &cause, budget)),
-    };
-    let root = names.name(&member.shape);
-    if let Some(report) = admission::inspect(&names, root, budget) {
-        return Ok(report);
-    }
-    Ok(check(member, &names, budget, &mut rebind))
-}
-fn check(
-    member: &ConicalNativeMember,
-    names: &TopologyNames,
-    budget: Option<f64>,
-    mut rebind: impl FnMut() -> Result<(), ConicalBindingError>,
-) -> ValidationReport {
-    let mut stages = Stages {
-        shape: &member.shape,
-        names,
-        root: names.name(&member.shape),
-        ledger: Ledger::new(),
-    };
-    let (passed, census) = stages.topology();
-    if passed && stages.geometry() && certified_stage(&mut stages, member, &mut rebind) {
-        stages.tolerance(budget);
-    }
-    stages.ledger.finish(census, budget)
+    Ok(match begin_body_validation(&member.shape, resolution)? {
+        BodyGeometryValidation::Stopped(report) => report,
+        BodyGeometryValidation::Ready(ordered) => {
+            ordered.finish_ordered(|stages| certified_stage(stages, member, rebind))
+        }
+    })
 }
 fn certified_stage(
     stages: &mut Stages<'_>,
     member: &ConicalNativeMember,
-    rebind: &mut impl FnMut() -> Result<(), ConicalBindingError>,
+    rebind: impl FnOnce() -> Result<(), ConicalBindingError>,
 ) -> bool {
     let findings = match rebind() {
         Ok(()) => Vec::new(),

@@ -29,6 +29,7 @@ mod census;
 mod ledger;
 mod naming;
 mod native;
+mod ordered;
 mod report;
 mod tolerance;
 
@@ -38,6 +39,7 @@ mod ledger_tests;
 mod raw_admission_tests;
 
 pub use ledger::ValidationReport;
+pub use ordered::{BodyGeometryValidation, OrderedBodyGeometry, begin_body_validation};
 pub use report::{
     CheckMode, EulerCensus, Finding, FindingKind, Severity, StageReport, StageVerdict, TopologyRef,
     ValidationStage,
@@ -83,36 +85,12 @@ pub fn validate_body(
     shape: &Shape,
     resolution: &Resolution,
 ) -> Result<ValidationReport, ResolutionRejected> {
-    let budget = tolerance_budget(resolution)?;
-    let names = match TopologyNames::of(shape) {
-        Ok(names) => names,
-        Err(failure) => return Ok(unindexable(shape, &failure, budget)),
-    };
-    let root = names.name(shape);
-    if let Some(report) = admission::inspect(&names, root, budget) {
-        return Ok(report);
-    }
-    Ok(check_admitted_body(shape, &names, root, budget))
-}
-
-fn check_admitted_body(
-    shape: &Shape,
-    names: &TopologyNames,
-    root: TopologyRef,
-    budget: Option<f64>,
-) -> ValidationReport {
-    let ledger = Ledger::new();
-    let mut stages = Stages {
-        shape,
-        names,
-        root,
-        ledger,
-    };
-    let (passed, census) = stages.topology();
-    if passed && stages.geometry() && stages.self_intersection() {
-        stages.tolerance(budget);
-    }
-    stages.ledger.finish(census, budget)
+    Ok(match begin_body_validation(shape, resolution)? {
+        BodyGeometryValidation::Stopped(report) => report,
+        BodyGeometryValidation::Ready(ordered) => {
+            ordered.finish_ordered(|stages| stages.self_intersection())
+        }
+    })
 }
 
 /// The admitted resolution's cap as the tolerance budget (`NoLimit` checks none).
@@ -184,18 +162,5 @@ impl Stages<'_> {
             CheckMode::NativeSearch,
             findings,
         )
-    }
-
-    fn tolerance(&mut self, budget: Option<f64>) {
-        match tolerance::tolerance_findings(self.names, budget) {
-            Ok((findings, mode)) => self
-                .ledger
-                .record(ValidationStage::Tolerance, mode, findings),
-            Err(failure) => {
-                self.ledger
-                    .record_failure(ValidationStage::Tolerance, self.root, &failure);
-                false
-            }
-        };
     }
 }
