@@ -119,6 +119,11 @@ and consumed work. Zero work can refuse as incomplete; it is not a no-limit mode
 
 ## Certified full-cylinder attachment
 
+`apply_certified_wrapped_profile_with_worker_limit` accepts a nonzero,
+operation-local limit for applications that share CPU time with interactive
+work. A limit of one runs certificate work on the calling thread. Every
+limit preserves canonical output and diagnostic order.
+
 The explicit cylindrical entry binds the selected face and support revision
 before construction. The stock is a single solid with one full lateral
 cylinder and two planar end disks. Use the chart returned by the attachment.

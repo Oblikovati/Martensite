@@ -14,6 +14,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added certified cylindrical bosses and pockets for selected full cylinders, including multiline glyph contours and source-bound seam and topology history, and typed proof refusals with authored identities (#420, #425).
 
+- Added a per-operation worker limit for certified cylinder attachments so applications could reserve CPU time for interactive edits (#425).
+
 - Added source-bound radial motion and stock-contact bounds for stored cylindrical ruled sides (#420).
 
 - Added checked cylindrical and conical normal extrusions for mixed line, clamped spline, circular and elliptic boundaries, including rotated axes and sewn endpoints, with directed holes, signed normal depths, original parameter history and certified material measurements (#418).

@@ -2,6 +2,7 @@
 use super::*;
 use crate::surface_sketch::{HistorySource, WrappedHistoryRecord};
 use martensite_tkbo::profile_extrusion::PlanarProofVersion;
+use std::num::NonZeroUsize;
 
 mod assembly;
 mod material;
@@ -12,6 +13,23 @@ mod tests;
 mod work;
 
 type Checked<T> = FeatureChecked<T>;
+
+const DEFAULT_WORKER_LIMIT: NonZeroUsize = NonZeroUsize::MIN.saturating_add(11);
+
+#[derive(Clone, Copy)]
+struct Execution {
+    attempt: Attempt,
+    worker_limit: NonZeroUsize,
+}
+
+impl Execution {
+    fn new(attempt: Attempt, worker_limit: NonZeroUsize) -> Self {
+        Self {
+            attempt,
+            worker_limit: worker_limit.min(DEFAULT_WORKER_LIMIT),
+        }
+    }
+}
 
 fn require(
     attempt: Attempt,
@@ -179,6 +197,29 @@ impl CylinderFaceAttachment {
         kind: CylinderFeatureKind,
         request: &WrappedNormalRequest,
         planar: PlanarProofVersion,
+        cancelled: impl FnMut() -> bool + Send,
+    ) -> Checked<CertifiedCylinderFeatureResult> {
+        self.apply_certified_wrapped_profile_with_worker_limit(
+            revision,
+            kind,
+            request,
+            planar,
+            DEFAULT_WORKER_LIMIT,
+            cancelled,
+        )
+    }
+
+    /// Apply the certified feature with an upper bound on operation-local certificate workers.
+    /// A limit of one runs the certificates on the calling thread. Output and
+    /// diagnostic order follow the same canonical source keys for every limit.
+    /// Example: `attachment.apply_certified_wrapped_profile_with_worker_limit(revision, kind, &request, proof, std::num::NonZeroUsize::MIN, || false)?`.
+    pub fn apply_certified_wrapped_profile_with_worker_limit(
+        &self,
+        revision: SupportRevision,
+        kind: CylinderFeatureKind,
+        request: &WrappedNormalRequest,
+        planar: PlanarProofVersion,
+        worker_limit: NonZeroUsize,
         mut cancelled: impl FnMut() -> bool + Send,
     ) -> Checked<CertifiedCylinderFeatureResult> {
         let attempt = Attempt {
@@ -186,25 +227,33 @@ impl CylinderFaceAttachment {
             revision,
             kind,
         };
-        execute(self, attempt, request, planar, &mut cancelled, |_| {})
+        let execution = Execution::new(attempt, worker_limit);
+        execute(self, execution, request, planar, &mut cancelled, |_| {})
     }
 }
 
 fn execute(
     attachment: &CylinderFaceAttachment,
-    attempt: Attempt,
+    execution: Execution,
     request: &WrappedNormalRequest,
     planar: PlanarProofVersion,
     cancelled: &mut CancelPoll<'_>,
     mut complete: impl FnMut(Phase),
 ) -> Checked<CertifiedCylinderFeatureResult> {
+    let attempt = execution.attempt;
     let input = material::admit(attachment, attempt, request, planar, cancelled)?;
     complete(Phase::Admission);
-    let tool = material::prepare(attempt, request, &input, planar, cancelled, &mut complete)?;
+    let tool = material::prepare(execution, request, &input, planar, cancelled, &mut complete)?;
     let candidate = assembly::build(attempt, &input, &tool, cancelled)?;
     complete(Phase::Archive);
-    let (validation, spatial) =
-        proof::validate(attempt, &input, &tool, &candidate, cancelled, &mut complete)?;
+    let (validation, spatial) = proof::validate(
+        execution,
+        &input,
+        &tool,
+        &candidate,
+        cancelled,
+        &mut complete,
+    )?;
     let authored_to_stored_upper = realized_boundary_bound(&tool, input.support.radius);
     require(
         attempt,

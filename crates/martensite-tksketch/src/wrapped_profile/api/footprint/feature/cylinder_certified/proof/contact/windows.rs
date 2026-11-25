@@ -61,13 +61,14 @@ impl Boundary {
 
     pub(super) fn certify(
         &self,
-        attempt: Attempt,
+        execution: Execution,
         support_radius: f64,
         cap: usize,
         tubes: &BTreeMap<WrappedHistoryKey, Tube<'_>>,
         joins: &BTreeMap<[WrappedHistoryKey; 2], [f64; 2]>,
         cancelled: &mut CancelPoll<'_>,
     ) -> Checked<()> {
+        let attempt = execution.attempt;
         let pad = self.projected_reach().ok_or_else(|| {
             missing(
                 attempt,
@@ -85,7 +86,7 @@ impl Boundary {
         )?;
         let adjacent: Vec<_> = joins.iter().collect();
         work::ordered(
-            attempt,
+            execution,
             VALIDATION,
             &adjacent,
             cancelled,

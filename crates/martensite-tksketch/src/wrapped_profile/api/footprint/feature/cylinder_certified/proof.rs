@@ -34,13 +34,14 @@ fn entity(
 }
 
 pub(super) fn validate(
-    attempt: Attempt,
+    execution: Execution,
     input: &Admitted,
     tool: &Tool,
     candidate: &Candidate,
     cancelled: &mut CancelPoll<'_>,
     complete: &mut impl FnMut(Phase),
 ) -> Checked<(ValidationReport, [f64; 2])> {
+    let attempt = execution.attempt;
     attempt.poll(cancelled, VALIDATION)?;
     // The checker independently rebinds metric evidence to each live use. Keep any
     // prepared failure pending until the native raw, topology and geometry stages finish.
@@ -60,7 +61,7 @@ pub(super) fn validate(
         BodyGeometryValidation::Stopped(report) => return Err(rejected(attempt, report)),
     };
     complete(Phase::OrderedGeometry);
-    let checked = Cover::verify(attempt, input, tool, candidate, &prepared?, cancelled)?;
+    let checked = Cover::verify(execution, input, tool, candidate, &prepared?, cancelled)?;
     complete(Phase::ExactContact);
     attempt.poll(cancelled, VALIDATION)?;
     let mut report = ordered.report();
@@ -123,16 +124,17 @@ struct Cover {
 
 impl Cover {
     fn verify(
-        attempt: Attempt,
+        execution: Execution,
         input: &Admitted,
         tool: &Tool,
         candidate: &Candidate,
         prepared: &PreparedTrims,
         cancelled: &mut CancelPoll<'_>,
     ) -> Checked<Self> {
+        let attempt = execution.attempt;
         let traces = &prepared.traces;
         let contact = sides::validate(
-            attempt,
+            execution,
             input,
             tool,
             candidate,

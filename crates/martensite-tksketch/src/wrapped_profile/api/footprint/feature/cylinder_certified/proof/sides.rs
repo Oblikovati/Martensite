@@ -14,7 +14,7 @@ mod separation;
 pub(super) type CapTraces = [BTreeMap<WrappedHistoryKey, Trace>; 2];
 
 pub(super) fn validate(
-    attempt: Attempt,
+    execution: Execution,
     input: &Admitted,
     tool: &Tool,
     candidate: &Candidate,
@@ -22,6 +22,7 @@ pub(super) fn validate(
     caps: &CapTraces,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<f64> {
+    let attempt = execution.attempt;
     let images = Images::read(attempt, candidate)?;
     let common = separation::Cover::read(attempt, input.support, tool, candidate)?;
     let sense = match attempt.kind {
@@ -30,7 +31,7 @@ pub(super) fn validate(
     };
     let parts: Vec<_> = tool.spans.iter().collect();
     let checked = work::ordered(
-        attempt,
+        execution,
         VALIDATION,
         &parts,
         cancelled,
@@ -50,7 +51,7 @@ pub(super) fn validate(
     let actual = boundary.pairs(attempt)?;
     separation::validate(attempt, tool, common, &actual)?;
     contact::certify(
-        attempt,
+        execution,
         input.support,
         common.contact,
         &tubes,

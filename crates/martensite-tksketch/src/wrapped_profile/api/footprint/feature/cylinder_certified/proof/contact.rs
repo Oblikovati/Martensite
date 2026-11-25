@@ -32,13 +32,14 @@ pub(super) struct Tube<'a> {
 }
 
 pub(super) fn certify(
-    attempt: Attempt,
+    execution: Execution,
     support: CylinderSupport,
     contact_upper: f64,
     tubes: &BTreeMap<WrappedHistoryKey, Tube<'_>>,
     joins: &BTreeMap<[WrappedHistoryKey; 2], [f64; 2]>,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<()> {
+    let attempt = execution.attempt;
     let first = tubes
         .values()
         .next()
@@ -55,7 +56,7 @@ pub(super) fn certify(
         .map(|cap| Boundary::new(cap.query.radius, contact_upper));
     let sources: Vec<_> = tubes.iter().collect();
     let bounds = work::ordered(
-        attempt,
+        execution,
         VALIDATION,
         &sources,
         cancelled,
@@ -79,7 +80,7 @@ pub(super) fn certify(
         }
     }
     for (cap, boundary) in boundaries.into_iter().enumerate() {
-        boundary.certify(attempt, support.radius, cap, tubes, joins, cancelled)?;
+        boundary.certify(execution, support.radius, cap, tubes, joins, cancelled)?;
     }
     Ok(())
 }

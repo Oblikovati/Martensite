@@ -8,11 +8,10 @@ use std::sync::{
 use std::thread;
 use std::time::Duration;
 
-const MAX_WORKERS: usize = 12;
 const CANCEL_POLL: Duration = Duration::from_millis(4);
 
 pub(super) fn ordered<I, O, F>(
-    attempt: Attempt,
+    execution: Execution,
     stage: CylinderFeatureStage,
     inputs: &[I],
     cancelled: &mut CancelPoll<'_>,
@@ -23,11 +22,11 @@ where
     O: Send,
     F: Fn(&I, &mut CancelPoll<'_>) -> Checked<O> + Sync,
 {
-    execute(attempt, stage, inputs, None, cancelled, check)
+    execute(execution, stage, inputs, None, cancelled, check)
 }
 
 pub(super) fn prioritized<I, O, F>(
-    attempt: Attempt,
+    execution: Execution,
     stage: CylinderFeatureStage,
     inputs: &[I],
     cost: fn(&I) -> usize,
@@ -39,11 +38,11 @@ where
     O: Send,
     F: Fn(&I, &mut CancelPoll<'_>) -> Checked<O> + Sync,
 {
-    execute(attempt, stage, inputs, Some(cost), cancelled, check)
+    execute(execution, stage, inputs, Some(cost), cancelled, check)
 }
 
 fn execute<I, O, F>(
-    attempt: Attempt,
+    execution: Execution,
     stage: CylinderFeatureStage,
     inputs: &[I],
     cost: Option<fn(&I) -> usize>,
@@ -55,8 +54,11 @@ where
     O: Send,
     F: Fn(&I, &mut CancelPoll<'_>) -> Checked<O> + Sync,
 {
-    let available = thread::available_parallelism().map_or(1, std::num::NonZeroUsize::get);
-    let workers = available.min(MAX_WORKERS).min(inputs.len().div_ceil(2));
+    let attempt = execution.attempt;
+    let available = thread::available_parallelism().map_or(1, NonZeroUsize::get);
+    let workers = available
+        .min(execution.worker_limit.get())
+        .min(inputs.len().div_ceil(2));
     if workers < 2 {
         return inputs
             .iter()
@@ -205,12 +207,16 @@ mod tests {
         revision: SupportRevision(7),
         kind: CylinderFeatureKind::Boss,
     };
+    const EXECUTION: Execution = Execution {
+        attempt: ATTEMPT,
+        worker_limit: DEFAULT_WORKER_LIMIT,
+    };
 
     #[test]
     fn preserves_input_order_and_first_typed_failure() {
         let values: Vec<_> = (0..48).collect();
         let results = ordered(
-            ATTEMPT,
+            EXECUTION,
             CylinderFeatureStage::Tool,
             &values,
             &mut || false,
@@ -219,7 +225,7 @@ mod tests {
         .unwrap();
         assert_eq!(results, values.iter().map(|i| i * i).collect::<Vec<_>>());
         let fault = ordered(
-            ATTEMPT,
+            EXECUTION,
             CylinderFeatureStage::Tool,
             &values,
             &mut || false,
@@ -248,7 +254,7 @@ mod tests {
     fn prioritized_results_and_failures_use_source_order() {
         let values = [1, 30, 2, 30, 5, 9];
         let results = prioritized(
-            ATTEMPT,
+            EXECUTION,
             CylinderFeatureStage::Tool,
             &values,
             |&weight| weight,
@@ -258,7 +264,7 @@ mod tests {
         .unwrap();
         assert_eq!(results, values);
         let fault = prioritized(
-            ATTEMPT,
+            EXECUTION,
             CylinderFeatureStage::Tool,
             &values,
             |&weight| weight,
@@ -280,9 +286,10 @@ mod tests {
 
     #[test]
     fn prioritized_serial_work_keeps_source_order_without_estimating_cost() {
-        let values = [1, 30];
+        let values = [1, 30, 2, 30, 5, 9];
+        let execution = Execution::new(ATTEMPT, NonZeroUsize::MIN);
         let result = prioritized(
-            ATTEMPT,
+            execution,
             CylinderFeatureStage::Tool,
             &values,
             |_| panic!("serial work must not estimate dispatch cost"),
@@ -296,7 +303,7 @@ mod tests {
     fn never_publishes_partial_work_after_cancellation() {
         let values = [0; 48];
         let error = ordered(
-            ATTEMPT,
+            EXECUTION,
             CylinderFeatureStage::Validation,
             &values,
             &mut || true,

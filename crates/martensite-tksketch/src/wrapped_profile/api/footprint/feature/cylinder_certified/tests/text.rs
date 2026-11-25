@@ -130,7 +130,8 @@ fn timed_issue(
     };
     let start = Instant::now();
     let mut previous = start;
-    let feature = execute(stock, attempt, sketch, planar(), &mut || false, |stage| {
+    let execution = Execution::new(attempt, DEFAULT_WORKER_LIMIT);
+    let feature = execute(stock, execution, sketch, planar(), &mut || false, |stage| {
         let now = Instant::now();
         eprintln!(
             "workload={workload} operation={kind:?} stage={stage:?} stage_seconds={:.6}",

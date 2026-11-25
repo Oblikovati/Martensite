@@ -111,6 +111,29 @@ fn certified_cylinder_checks_both_normals_and_inherited_stock_bindings() {
 }
 
 #[test]
+fn configured_worker_limit_replays_the_accepted_cylinder() {
+    let stock = indirect_extruded_circle();
+    let mut sketch = request(&stock, [-0.25, 0.25], [1., 2.]);
+    sketch.support.normal = NormalSense::Outward;
+    let kind = CylinderFeatureKind::Boss;
+    let default = stock
+        .apply_certified_wrapped_profile(REVISION, kind, &sketch, planar())
+        .unwrap();
+    let limited = stock
+        .apply_certified_wrapped_profile_with_worker_limit(
+            REVISION,
+            kind,
+            &sketch,
+            planar(),
+            NonZeroUsize::MIN,
+            || false,
+        )
+        .unwrap();
+    assert_eq!(default.attachment_report(), limited.attachment_report());
+    assert_replay(&default, &limited, &limited.export_native().unwrap());
+}
+
+#[test]
 fn a_certified_cylinder_refusal_preserves_the_original_archive() {
     let stock = indirect_extruded_circle();
     let source = stock.record().brep.clone();

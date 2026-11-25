@@ -122,13 +122,14 @@ pub(super) struct Span {
 }
 
 pub(super) fn prepare(
-    attempt: Attempt,
+    execution: Execution,
     request: &WrappedNormalRequest,
     input: &Admitted,
     planar: PlanarProofVersion,
     cancelled: &mut CancelPoll<'_>,
     complete: &mut impl FnMut(Phase),
 ) -> Checked<Tool> {
+    let attempt = execution.attempt;
     let originals = &input.inputs.requests;
     let (selected, observed) = observe_cancellation(cancelled, |poll| {
         selection::prepare_attachment(
@@ -148,7 +149,7 @@ pub(super) fn prepare(
     };
     complete(Phase::AuthoredPlan);
     let prepared = &selected.prepared;
-    let work = build_members(attempt, originals, prepared, cancelled)?;
+    let work = build_members(execution, originals, prepared, cancelled)?;
     complete(Phase::ToolStorage);
     let keys: Vec<_> = work.bindings.iter().map(|(key, _)| *key).collect();
     let lineages = certify(
@@ -226,11 +227,12 @@ struct Working {
 }
 
 fn build_members(
-    attempt: Attempt,
+    execution: Execution,
     originals: &[Request],
     prepared: &[Request],
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<Working> {
+    let attempt = execution.attempt;
     let mut compound = Compound::default();
     Builder.make_compound(&mut compound);
     let mut working = Working {
@@ -244,7 +246,7 @@ fn build_members(
     ordered.sort_by_key(|(source, _)| source.region);
     // Fitted span count approximates the cost of each region’s storage certificates.
     let members = work::prioritized(
-        attempt,
+        execution,
         TOOL,
         &ordered,
         |(_, request)| request.loops.iter().map(Vec::len).sum(),
