@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-only
-//! Round-corner sheet through the native PipeShell builder.
+//! Bounded rounded sheets and solids through the native PipeShell builder.
 mod admission;
 mod failure;
 mod geometry;
 mod lineage;
 mod result;
+mod solid;
+mod trim_proof;
 
 pub use failure::{SweepFailure, SweepInput, SweepStage};
 pub use result::{
@@ -12,11 +14,19 @@ pub use result::{
     SweepResult, SweepSupportEvidence,
 };
 
+pub use solid::{
+    DetachedSolidSweep, SolidSweepHistory, SolidSweepImage, SolidSweepOptions, SolidSweepResult,
+    sweep_rounded_solid,
+};
+
 use martensite_tkbo::{
     body_check::validate_body,
     profile_extrusion::{AchievedTolerance, Finding, Resolution, ToleranceCap},
 };
-use martensite_tkbrep::{brep::BRepTool, topods};
+use martensite_tkbrep::{
+    brep::BRepTool,
+    topods::{self, Shape, Shell},
+};
 use martensite_tkernel::message::ProgressRange;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkoffset::brep_offset_api::BRepOffsetAPIMakePipeShell;
@@ -33,7 +43,7 @@ pub struct SweepOptions {
     pub resolution: Resolution,
     /// Native boundary approximation tolerance.
     pub boundary_tolerance: f64,
-    /// Allowed bound for selected terminal and carrier source correspondence.
+    /// Allowed spatial error of the actual trims and terminals against their source spans.
     pub source_trace_limit: f64,
     /// Largest accepted native approximation estimate.
     pub approximation_limit: f64,
@@ -48,28 +58,23 @@ pub fn sweep_rounded_shell(
     options: SweepOptions,
     mut cancelled: impl FnMut() -> bool,
 ) -> Result<SweepResult, SweepFailure> {
-    let admitted = admission::admit(path, section, options, &mut cancelled)?;
-    let wires = [
-        materialize(path, SweepInput::Spine, options, &mut cancelled)?,
-        materialize(section, SweepInput::Profile, options, &mut cancelled)?,
-    ];
-    let mut pipe = build_pipe(&wires, admitted.stations[0].point, options, &mut cancelled)?;
-    let first = native(pipe.first_shape(), SweepStage::Binding)?;
-    let last = native(pipe.last_shape(), SweepStage::Binding)?;
-    let shell = native(
-        topods::shell(native(pipe.shape(), SweepStage::Construction)?),
-        SweepStage::Construction,
-    )?;
+    let Prepared {
+        admission,
+        wires,
+        mut pipe,
+        shell,
+        terminals: [first, last],
+    } = prepare(path, section, options, &mut cancelled)?;
     let validation = validate(&shell, options, &mut cancelled)?;
-    let (images, evidence) = lineage::bind(
+    let pending = lineage::snapshot(
         &mut pipe,
         &shell,
         &wires,
         [&first, &last],
-        &admitted,
-        options,
+        &admission,
         &mut cancelled,
     )?;
+    let (images, evidence) = pending.complete(&admission, options, &mut cancelled)?;
     poll(&mut cancelled, SweepStage::Publication)?;
     Ok(SweepResult::new(
         shell,
@@ -79,6 +84,41 @@ pub fn sweep_rounded_shell(
         evidence,
         pipe.error_on_surface(),
     ))
+}
+
+struct Prepared {
+    admission: admission::Admission,
+    wires: [DetachedWire; 2],
+    pipe: BRepOffsetAPIMakePipeShell,
+    shell: Shell,
+    terminals: [Shape; 2],
+}
+
+fn prepare(
+    path: &WireRecipe,
+    section: &WireRecipe,
+    options: SweepOptions,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<Prepared, SweepFailure> {
+    let admission = admission::admit(path, section, options, cancelled)?;
+    let wires = [
+        materialize(path, SweepInput::Spine, options, cancelled)?,
+        materialize(section, SweepInput::Profile, options, cancelled)?,
+    ];
+    let mut pipe = build_pipe(&wires, admission.stations[0].point, options, cancelled)?;
+    let first = native(pipe.first_shape(), SweepStage::Binding)?;
+    let last = native(pipe.last_shape(), SweepStage::Binding)?;
+    let shell = native(
+        topods::shell(native(pipe.shape(), SweepStage::Construction)?),
+        SweepStage::Construction,
+    )?;
+    Ok(Prepared {
+        admission,
+        wires,
+        pipe,
+        shell,
+        terminals: [first, last],
+    })
 }
 
 fn materialize(
@@ -155,7 +195,7 @@ struct Validation {
 }
 
 fn validate(
-    shell: &topods::Shell,
+    shell: &Shape,
     options: SweepOptions,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<Validation, SweepFailure> {

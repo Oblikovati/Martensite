@@ -180,7 +180,7 @@ impl SweepResult {
     }
 }
 
-fn copy_failure(failure: CopyFailure) -> SweepFailure {
+pub(super) fn copy_failure(failure: CopyFailure) -> SweepFailure {
     match failure {
         CopyFailure::SharedRoot => SweepFailure::Binding("a fresh copied sheet"),
         CopyFailure::MissingMember => {

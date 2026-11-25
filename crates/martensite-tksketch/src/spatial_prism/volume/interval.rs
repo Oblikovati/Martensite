@@ -190,7 +190,7 @@ pub(crate) fn l1_difference(a: Point, b: Point) -> f64 {
         .hi
 }
 
-pub(super) fn determinant(a: Point, b: Point, c: Point) -> Span {
+pub(crate) fn determinant(a: Point, b: Point, c: Point) -> Span {
     (0..3).fold(Span::ZERO, |total, i| {
         let j = (i + 1) % 3;
         let k = (i + 2) % 3;

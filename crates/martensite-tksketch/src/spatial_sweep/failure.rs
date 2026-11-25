@@ -29,6 +29,8 @@ pub enum SweepStage {
     Validation,
     /// Output geometry, correspondence and history.
     Binding,
+    /// Complete native trim correspondence and integration of solid face flux.
+    Integration,
     /// Immutable publication.
     Publication,
     /// Detached native export.
@@ -105,6 +107,26 @@ pub enum SweepFailure {
         /// Original requested tolerance.
         limit: f64,
     },
+    /// The actual shell ends could not be closed into a solid.
+    SolidClosure,
+    /// A retained face trim cannot be certified against its declared carrier or source.
+    FaceTrim {
+        /// Face ordinal in stable retained ancestry.
+        face: usize,
+        /// Missing geometric evidence.
+        expected: &'static str,
+    },
+    /// Physical volume evidence did not establish a positive bounded volume.
+    Volume(&'static str),
+    /// The computed cubic-model-unit error exceeds the requested bound.
+    VolumeErrorBound {
+        /// Achieved outward volume error.
+        bound: f64,
+        /// Caller volume error limit.
+        limit: f64,
+    },
+    /// Trigonometric endpoint enclosure did not complete.
+    Trigonometry(Box<martensite_tkmath::predicates::roots::metric_bounds::FrameRotationError>),
     /// An original native error.
     Native {
         /// Stage that failed.
@@ -176,6 +198,19 @@ impl fmt::Display for SweepFailure {
                 f,
                 "sweep trace for {description} has bound {bound}, exceeding {limit}"
             ),
+            Self::SolidClosure => write!(f, "rounded sweep requires two native closing cap faces"),
+            Self::FaceTrim { face, expected } => {
+                write!(f, "sweep retained face {face} requires {expected}")
+            }
+            Self::Volume(expected) => {
+                write!(f, "bounded physical sweep volume requires {expected}")
+            }
+            Self::VolumeErrorBound { bound, limit } => {
+                write!(f, "sweep volume error {bound} must not exceed {limit}")
+            }
+            Self::Trigonometry(source) => {
+                write!(f, "sweep volume trigonometry is incomplete ({source})")
+            }
             Self::Native { stage, source } => write!(f, "sweep {stage:?} failed ({source})"),
             Self::Cancelled(stage) => write!(f, "sweep cancelled during {stage:?}"),
         }
@@ -189,6 +224,7 @@ impl Error for SweepFailure {
             Self::Predicate(source) => Some(source),
             Self::Wire { source, .. } => Some(source),
             Self::Native { source, .. } => Some(source.as_ref()),
+            Self::Trigonometry(source) => Some(source.as_ref()),
             _ => None,
         }
     }

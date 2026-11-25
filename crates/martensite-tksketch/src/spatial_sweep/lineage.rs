@@ -24,32 +24,81 @@ pub(super) struct Face {
     pub corner: bool,
 }
 
-pub(super) fn bind(
+pub(super) struct PendingShell {
+    faces: Vec<Face>,
+    edges: Vec<Edge>,
+    vertices: Vec<SweepImage>,
+    terminals: Vec<TerminalVertex>,
+}
+
+pub(super) fn snapshot(
     pipe: &mut BRepOffsetAPIMakePipeShell,
     shell: &Shell,
     wires: &[DetachedWire; 2],
     terminals: [&Shape; 2],
     admitted: &Admission,
-    options: SweepOptions,
     cancelled: &mut impl FnMut() -> bool,
-) -> Result<(Vec<SweepImage>, SweepSupportEvidence), Failure> {
+) -> Result<PendingShell, Failure> {
     let owned = Sources::read(pipe, wires, admitted, cancelled)?;
     let faces = owned.bind_faces(shell, wires, admitted, cancelled)?;
     let edges = owned.bind_edges(shell, &faces, wires, admitted, cancelled)?;
     let vertices = bind_vertices(shell, &edges, cancelled)?;
-    let terminal_vertices = terminal_bindings(shell, terminals, &edges, &faces, admitted)?;
-    let evidence = geometry::verify(admitted, &faces, &terminal_vertices, options, cancelled)?;
-    let mut images = Vec::with_capacity(faces.len() + edges.len() + vertices.len());
-    images.extend(faces.into_iter().map(|face| SweepImage {
-        shape: face.shape.into_shape(),
-        history: SweepHistory::Face(face.history),
-    }));
-    images.extend(edges.into_iter().map(|edge| SweepImage {
-        shape: edge.shape,
-        history: SweepHistory::Edge(edge.history),
-    }));
-    images.extend(vertices);
-    Ok((images, evidence))
+    let terminals = terminal_bindings(shell, terminals, &edges, &faces, admitted)?;
+    Ok(PendingShell {
+        faces,
+        edges,
+        vertices,
+        terminals,
+    })
+}
+
+impl PendingShell {
+    pub(super) fn retain_faces(
+        &mut self,
+        body: &Shape,
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<(), Failure> {
+        let faces = members(body, ShapeEnum::Face)?;
+        for source in &mut self.faces {
+            poll(cancelled, Stage::Binding)?;
+            let i = faces.find_index(&source.shape);
+            if i == 0 {
+                return Err(Failure::Binding(
+                    "every source face retained in the final sweep",
+                ));
+            }
+            let image = native(faces.find_key(i), Stage::Binding)?;
+            source.shape = native(topods::face(image), Stage::Binding)?;
+        }
+        Ok(())
+    }
+
+    pub(super) fn complete(
+        self,
+        admitted: &Admission,
+        options: SweepOptions,
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<(Vec<SweepImage>, SweepSupportEvidence), Failure> {
+        let Self {
+            faces,
+            edges,
+            vertices,
+            terminals,
+        } = self;
+        let evidence = geometry::verify(admitted, &faces, &terminals, options, cancelled)?;
+        let mut images = Vec::with_capacity(faces.len() + edges.len() + vertices.len());
+        images.extend(faces.into_iter().map(|face| SweepImage {
+            shape: face.shape.into_shape(),
+            history: SweepHistory::Face(face.history),
+        }));
+        images.extend(edges.into_iter().map(|edge| SweepImage {
+            shape: edge.shape,
+            history: SweepHistory::Edge(edge.history),
+        }));
+        images.extend(vertices);
+        poll(cancelled, Stage::Binding)?;
+        Ok((images, evidence))
+    }
 }
 
 struct Sources {
@@ -414,3 +463,7 @@ fn terminal_points(
     }
     Ok(bound)
 }
+
+#[cfg(test)]
+#[path = "trim_proof/tests.rs"]
+mod trim_tests;

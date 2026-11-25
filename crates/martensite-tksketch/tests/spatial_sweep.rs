@@ -11,7 +11,8 @@ use martensite_tkbrep::{
     topods::{self, Shape},
 };
 use martensite_tkernel::{message::ProgressRange, storage::IoStream};
-use martensite_tkg3d::top_abs::ShapeEnum;
+use martensite_tkg3d::{geom::GeomPlane, top_abs::ShapeEnum};
+use martensite_tkgeombase::gprop::GProps;
 use martensite_tkmath::gp::Point3;
 use martensite_tksketch::spatial_sweep::{
     DetachedSweep, SweepEdgeHistory, SweepFaceHistory, SweepFailure, SweepHistory, SweepImage,
@@ -22,6 +23,7 @@ use martensite_tksketch3d::{
     Edit, LineId, MinimumLength, PointId, PointRole, SketchLine, SketchPoint, Snapshot,
     wire::{DirectedLineUse, LineDirection, WireClosure, WireRecipe},
 };
+use martensite_tktopalgo::brep_gprop::BRepGProp;
 use std::num::NonZeroU64;
 
 static_assertions::assert_impl_all!(SweepResult: Send, Sync);
@@ -169,6 +171,7 @@ fn e10_sweep_binds_all_native_sheet_members_and_both_directed_sources() {
     );
     assert_members(&detached);
     assert_faces(&detached);
+    assert_corner_area(&detached);
     assert_terminal_points(&detached, [[0., 0., 0.], [4., 4., 4.]]);
 }
 
@@ -235,6 +238,26 @@ fn assert_faces(detached: &DetachedSweep) {
             3
         );
     }
+}
+
+fn assert_corner_area(detached: &DetachedSweep) {
+    let mut witnesses = 0;
+    for image in &detached.images {
+        if !matches!(&image.history, SweepHistory::Face(h) if matches!(h.path, SweepPathPart::Corner { .. }))
+        {
+            continue;
+        }
+        let face = topods::face(&image.shape).unwrap();
+        let (surface, _) = BRepTool::surface_with_location(&face).unwrap();
+        if surface.downcast_ref::<GeomPlane>().is_none() {
+            continue;
+        }
+        let mut area = GProps::default();
+        BRepGProp::surface_properties(&face, &mut area, false, false).unwrap();
+        assert!((area.mass() - std::f64::consts::PI / 16.).abs() <= 1e-10);
+        witnesses += 1;
+    }
+    assert_eq!(witnesses, 4);
 }
 
 fn assert_terminal_points(detached: &DetachedSweep, stations: [[f64; 3]; 2]) {
@@ -416,3 +439,6 @@ fn emit_sweep_receipt() {
     println!("SWEEP_ARCHIVE={bytes}");
     println!("SWEEP_HISTORY={:?}", result.history().collect::<Vec<_>>());
 }
+
+#[path = "spatial_sweep/solid.rs"]
+mod solid;
