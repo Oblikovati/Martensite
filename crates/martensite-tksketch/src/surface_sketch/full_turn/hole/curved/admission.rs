@@ -24,6 +24,7 @@ pub(super) struct Aperture {
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub(super) enum Scope {
+    One,
     OneCrossed,
     Batch,
 }
@@ -86,6 +87,12 @@ impl AperturePlan {
         {
             return Err(incomplete(
                 "one curved aperture with two transverse seam crossings",
+                format!("{} apertures", contours.len()),
+            ));
+        }
+        if scope == Scope::One && contours.len() != 1 {
+            return Err(incomplete(
+                "one selected fitted aperture",
                 format!("{} apertures", contours.len()),
             ));
         }

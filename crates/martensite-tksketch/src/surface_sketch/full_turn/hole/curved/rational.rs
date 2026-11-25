@@ -4,7 +4,7 @@ use super::*;
 
 type Completed = CurvedBandResult<RationalWrappedResult>;
 
-/// Cut a rational quadratic aperture through a full cylindrical band and its periodic seam.
+/// Cut one rational aperture through a full cylindrical band, clear of or crossing its seam.
 /// Accepts one closed boundary of explicit lines, exact short analytic conics, and open, clamped positive-rational quadratics.
 /// Analytic arcs require exactly representable stereographic controls.
 /// The reference level controls exact dyadic subdivision of the original curve parameter.
@@ -19,7 +19,7 @@ pub fn normal_extrude_cylinder_band_with_rational_hole(
         band,
         request,
         options,
-        Scope::OneCrossed,
+        Scope::One,
         SourceModel::Rational(options.resolution),
     )
     .map_err(|cause| admission_failure(band, cause))?;
@@ -28,9 +28,9 @@ pub fn normal_extrude_cylinder_band_with_rational_hole(
     finish_rational(plan, tool)
 }
 
-/// Cut a rational quadratic aperture through a full conical band and its periodic seam.
+/// Cut one rational aperture through a full conical band, clear of or crossing its seam.
 /// Accepts one closed boundary of explicit lines, exact short analytic conics, and open, clamped positive-rational quadratics
-/// crossing one lift of the zero ray of a positive-X developed chart.
+/// in a positive-X developed chart. Any seam crossing uses one lift of its zero ray.
 /// Analytic arcs require exactly representable stereographic controls.
 /// A nonzero lift requires an explicit certified V5 or V6 planar proof.
 /// Example: `let cut = normal_extrude_cone_band_with_rational_hole(&band, &profile, options, 3)?;`.
@@ -44,7 +44,7 @@ pub fn normal_extrude_cone_band_with_rational_hole(
         band,
         request,
         options,
-        Scope::OneCrossed,
+        Scope::One,
         SourceModel::Rational(options.resolution),
     )
     .map_err(|cause| admission_failure(band, cause))?;

@@ -194,7 +194,10 @@ fn fitted_apertures_without_meridian_separation_refuse_before_boolean() {
     ));
 }
 
-fn add_rectangle(profile: &mut SketchProfile, points: [[f64; 2]; 4]) -> WrappedRegionSelection {
+pub(in crate::surface_sketch::full_turn) fn add_rectangle(
+    profile: &mut SketchProfile,
+    points: [[f64; 2]; 4],
+) -> WrappedRegionSelection {
     profile.vertices.extend(
         points
             .into_iter()
@@ -344,7 +347,11 @@ fn assert_clear(result: &CrossedBandResult, contour: &WrappedRegionSelection) {
     }
 }
 
-fn count_cap_wires(result: &CrossedBandResult, owner: SurfaceRegionId, expected: usize) {
+pub(in crate::surface_sketch::full_turn) fn count_cap_wires(
+    result: &CrossedBandResult,
+    owner: SurfaceRegionId,
+    expected: usize,
+) {
     use martensite_tkg3d::top_abs::ShapeEnum;
     let detached = result.geometry().export_brep().unwrap();
     for role in [HistoryRole::FirstDepthFace, HistoryRole::LastDepthFace] {

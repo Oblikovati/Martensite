@@ -208,10 +208,17 @@ impl Cap<'_> {
     }
 
     fn clear_contour_edges(&self, hole: &admission::Aperture) -> Checked<Vec<&topods::Shape>> {
-        self.tool.entities.keys().filter(|key| {
-            key.role == roles::edge_role(self.depth.index())
-                && matches!(key.source, WrappedEntitySource::Curve { curve, .. } if hole.curves.contains(&curve))
-        }).map(|&key| binding::resolve(self.bindings, PeriodicImageKey::WrappedRetained(key))).collect()
+        let role = roles::edge_role(self.depth.index());
+        self.tool
+            .entities
+            .keys()
+            .filter(|key| {
+                key.role == role
+                    && curve_span_owner(key.source)
+                        .is_some_and(|curve| hole.curves.contains(&curve))
+            })
+            .map(|&key| binding::resolve(self.bindings, PeriodicImageKey::WrappedRetained(key)))
+            .collect()
     }
 
     fn verify_rims(
@@ -271,6 +278,16 @@ impl Cap<'_> {
     }
 }
 
+fn curve_span_owner(source: WrappedEntitySource) -> Option<SurfaceCurveId> {
+    match source {
+        WrappedEntitySource::Curve { curve, .. }
+        | WrappedEntitySource::MappedCurve { curve, .. }
+        | WrappedEntitySource::AnalyticArcCurve { curve, .. }
+        | WrappedEntitySource::NativeSplineCurve { curve, .. } => Some(curve),
+        _ => None,
+    }
+}
+
 fn vertex_position(shape: &topods::Shape) -> Checked<[f64; 3]> {
     let vertex = topods::vertex(shape).map_err(|e| native("curved aperture endpoint", e))?;
     let point =
@@ -307,6 +324,9 @@ fn coedges(face: &topods::Face) -> Checked<Vec<topods::Edge>> {
     }
     Ok(edges)
 }
+
+#[cfg(test)]
+mod clear_wire_tests;
 
 #[cfg(test)]
 mod tests {

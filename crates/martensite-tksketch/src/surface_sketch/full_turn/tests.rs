@@ -2,10 +2,10 @@
 use super::*;
 use martensite_tkbo::profile_extrusion::{DisplayTolerance, Resolution, ToleranceCap};
 mod cone_aperture;
-mod conic_aperture;
+pub(super) mod conic_aperture;
 pub(super) mod curved_aperture;
-mod curved_batch;
-mod curved_cone_aperture;
+pub(super) mod curved_batch;
+pub(super) mod curved_cone_aperture;
 mod lifted_cone;
 mod multiple;
 mod placed;
