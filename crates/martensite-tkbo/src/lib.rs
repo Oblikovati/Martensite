@@ -7,6 +7,7 @@ pub mod bop_tools;
 pub mod brep_algo_api;
 pub mod int_tools;
 pub mod measured;
+pub mod planar_section;
 pub mod profile_extrusion;
 
 #[allow(dead_code)]

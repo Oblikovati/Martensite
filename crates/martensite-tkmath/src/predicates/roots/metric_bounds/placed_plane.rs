@@ -157,7 +157,7 @@ pub(super) fn triple(a: &ExactVector, b: &ExactVector, c: &ExactVector) -> Exact
     dot(a, &cross(b, c))
 }
 
-fn cross(b: &ExactVector, c: &ExactVector) -> ExactVector {
+pub(super) fn cross(b: &ExactVector, c: &ExactVector) -> ExactVector {
     std::array::from_fn(|i| {
         let [j, k] = [(i + 1) % 3, (i + 2) % 3];
         b[j].multiply(&c[k]).subtract(&b[k].multiply(&c[j]))
