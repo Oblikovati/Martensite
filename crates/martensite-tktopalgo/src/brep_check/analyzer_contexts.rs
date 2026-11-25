@@ -8,6 +8,7 @@ use super::explore::sub_shapes;
 use super::face::BRepCheckFace;
 use super::result::BRepCheckResult;
 use super::status::BRepCheckStatus;
+use super::{vertex::BRepCheckVertex, wire::BRepCheckWire};
 use martensite_tkbrep::topods::{Edge, Shape};
 use martensite_tkbrep::toptools::MapOfShape;
 use martensite_tkernel::osd::Parallel;
@@ -15,6 +16,18 @@ use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::predicates::roots::metric_bounds::CertifiedCylindricalTrim;
 use std::sync::Mutex;
+
+/// One child occurrence already enumerated by this analyzer invocation.
+pub(super) struct EnumeratedContext<'a> {
+    context: &'a Shape,
+    member: &'a Shape,
+}
+
+impl EnumeratedContext<'_> {
+    pub(super) fn includes(&self, context: &Shape, member: &Shape) -> bool {
+        self.context.is_equal(context) && self.member.is_same(member)
+    }
+}
 
 /// The checker of `shape` in the map (Standard_NoSuchObject when it is missing).
 fn checker_of(map: &CheckerMap, shape: &Shape) -> Result<Handle<dyn BRepCheckResult>, Failure> {
@@ -31,13 +44,11 @@ fn sub_in_context(
     curve_bound: Option<&CertifiedCylindricalTrim>,
 ) -> Result<bool, Failure> {
     let checker = checker_of(map, sub)?;
-    let outcome = match (checker.get(), curve_bound) {
-        (Some(_), Some(bound)) => edge_with_curve_bound(&checker, context, bound),
-        (Some(c), None) => c.in_context(context),
-        (None, _) => Err(super::errors::null_object(
-            "BRepCheck_Analyzer: null checker",
-        )),
+    let member = EnumeratedContext {
+        context,
+        member: sub,
     };
+    let outcome = check_enumerated(&checker, &member, curve_bound);
     if outcome.is_err() {
         mark_failed(context_checker, context);
         if let Some(c) = checker.get() {
@@ -48,16 +59,30 @@ fn sub_in_context(
     Ok(outcome.is_ok())
 }
 
-fn edge_with_curve_bound(
+fn check_enumerated(
     checker: &Handle<dyn BRepCheckResult>,
-    face: &Shape,
-    bound: &CertifiedCylindricalTrim,
+    member: &EnumeratedContext<'_>,
+    curve_bound: Option<&CertifiedCylindricalTrim>,
 ) -> Result<(), Failure> {
-    let edge = checker.downcast::<BRepCheckEdge>();
-    let edge = edge
-        .get()
-        .ok_or_else(|| super::errors::null_object("BRepCheck_Analyzer: not an edge checker"))?;
-    edge.check_in_context_with_bound(face, Some(bound))
+    let Some(fallback) = checker.get() else {
+        return Err(super::errors::null_object(
+            "BRepCheck_Analyzer: null checker",
+        ));
+    };
+    let parent = member.context;
+    let checked = match member.member.shape_type()? {
+        ShapeEnum::Edge => checker
+            .downcast_ref::<BRepCheckEdge>()
+            .map(|edge| edge.check_in_context_with_bound(parent, curve_bound, Some(member))),
+        ShapeEnum::Vertex => checker
+            .downcast_ref::<BRepCheckVertex>()
+            .map(|vertex| vertex.check_context(parent, Some(member))),
+        ShapeEnum::Wire => checker
+            .downcast_ref::<BRepCheckWire>()
+            .map(|wire| wire.check_context(parent, Some(member))),
+        _ => None,
+    };
+    checked.unwrap_or_else(|| fallback.in_context(parent))
 }
 
 fn mark_failed(checker: &Handle<dyn BRepCheckResult>, shape: &Shape) {
@@ -250,3 +275,6 @@ pub(super) fn check_in_contexts(
         None => Ok(()),
     }
 }
+
+#[cfg(test)]
+mod tests;

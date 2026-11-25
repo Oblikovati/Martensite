@@ -1,5 +1,6 @@
 //! `BRepCheck_Edge::InContext`: the edge in a face (its curves on the face surface
 //! against its reference curve) and in a solid (shared by two faces).
+use super::analyzer_contexts::EnumeratedContext;
 use super::cylindrical_curve_bounds::CylinderMetricSource;
 use super::edge::{BRepCheckEdge, pcurve_range_fits};
 use super::edge_bezier_boundary::{identical_boundary, identical_located_boundary};
@@ -302,20 +303,23 @@ impl BRepCheckEdge {
     /// the flags and the curves on the face surface; in a solid, free and
     /// multi-connected edges.
     pub(super) fn check_in_context(&self, context: &Shape) -> Result<(), Failure> {
-        self.check_in_context_with_bound(context, None)
+        self.check_in_context_with_bound(context, None, None)
     }
 
     pub(super) fn check_in_context_with_bound(
         &self,
         context: &Shape,
         cylindrical_bound: Option<&CertifiedCylindricalTrim>,
+        member: Option<&EnumeratedContext<'_>>,
     ) -> Result<(), Failure> {
         let Some(list) = self.result_base().bind_context_list(context) else {
             return Ok(());
         };
         let shape = self.edge();
         let tol: f64 = BRepTool::edge_tolerance(&shape)?;
-        if !holds_same(context, ShapeEnum::Edge, &shape)? {
+        if !member.is_some_and(|entry| entry.includes(context, &shape))
+            && !holds_same(context, ShapeEnum::Edge, &shape)?
+        {
             add_status(&list, BRepCheckStatus::SubshapeNotInShape);
             return Ok(());
         }
