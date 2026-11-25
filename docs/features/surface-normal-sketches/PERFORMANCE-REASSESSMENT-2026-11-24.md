@@ -793,6 +793,16 @@ seam-crossing boss reached the next completed frame in 564.03 ms p95.
 In the same run, the ordinary new boss took 431.24 ms p95 and the edited
 boss 631.29 ms p95.
 
+App revision `fbca2566d` uses the same SDK pin and lets the Extrude dialog
+cut an inward pocket with the Flipped direction. On the same Linux/RADV
+setup, 30 first previews reached a completed native frame in 17.41 ms
+p95. Twenty cold exact pockets took 408.22 ms p95 through commit and
+429.17 ms p95 through the next completed frame. The correctness tests
+checked the cut against the analytic volume through undo, redo, sketch
+re-edit, and save and reopen. A cut past the cylinder axis left the
+original solid intact.
+
 [Oblikovati #4187](https://github.com/Oblikovati/Oblikovati/issues/4187),
 [Oblikovati #4188](https://github.com/Oblikovati/Oblikovati/issues/4188),
+[Oblikovati #4189](https://github.com/Oblikovati/Oblikovati/issues/4189),
 [Martensite #600](https://github.com/Oblikovati/Martensite/issues/600).
