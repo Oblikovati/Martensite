@@ -47,13 +47,18 @@ pub(super) fn cone(
 
 fn validate_request(depths: [f64; 2], spatial: f64) -> Checked<f64> {
     let [first, last] = depths;
-    if !(last.is_finite() && last > 0. && first == -last && spatial.is_finite() && spatial > 0.) {
+    if !(first.is_finite()
+        && last.is_finite()
+        && first < last
+        && spatial.is_finite()
+        && spatial > 0.)
+    {
         return Err(invalid(
             format!("depths={depths:?}, spatial limit={spatial}"),
-            "a finite positive spatial limit and symmetric increasing depths",
+            "a finite positive spatial limit and finite increasing depths",
         ));
     }
-    Ok(last)
+    Ok(first.abs().max(last.abs()))
 }
 
 fn check_radius(radius: f64, depth: f64) -> Checked<()> {
@@ -80,6 +85,13 @@ impl Support {
         // angular tangent scales by 1 + d cos(alpha)/rho for the cone and
         // 1 + d/radius for the cylinder. The other tangent is unchanged.
         (1. + (depth / radius).next_up()).next_up()
+    }
+
+    pub(super) fn inverse_slant_error(&self, spans: &[RationalReferenceSpan]) -> f64 {
+        match *self {
+            Self::Cylinder { .. } => 0.,
+            Self::Cone { x_lower, .. } => measure::inverse_slant_error(x_lower, spans),
+        }
     }
 
     pub(super) fn check(

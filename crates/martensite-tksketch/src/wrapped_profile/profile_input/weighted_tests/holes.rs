@@ -26,7 +26,8 @@ fn rational_reference_cone_preserves_a_directed_hole() {
 
 fn assert_hole(result: &RationalWrappedResult) {
     let outer = std::f64::consts::FRAC_PI_4 * QUARTER_RADIUS * QUARTER_RADIUS;
-    let opening = 0.5 * (QUARTER_RADIUS / 4.).powi(2);
+    let leg = QUARTER_RADIUS / 4.;
+    let opening = 0.5 * leg * leg;
     let expected = outer - opening;
     let area = result.authored_area();
     assert!(area.lower <= expected && expected <= area.upper);

@@ -19,6 +19,18 @@ impl From<WrappedConeNormalResult> for Retained {
 }
 
 impl Retained {
+    pub(super) fn authored_volume(
+        &self,
+        area: WrappedCertifiedRange,
+        region: SurfaceRegionId,
+        inverse_error: f64,
+    ) -> Checked<WrappedCertifiedRange> {
+        match self {
+            Self::Cylinder(result) => measure::cylinder(area, result.support(), result.depths()),
+            Self::Cone(result) => measure::cone(area, result, region, inverse_error),
+        }
+    }
+
     pub(super) fn history(&self) -> &[WrappedHistoryRecord] {
         match self {
             Self::Cylinder(result) => result.history(),

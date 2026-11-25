@@ -52,8 +52,7 @@ are unchanged.
 The rational normal entries accept one positive-weight spline with monotone
 Bernstein spans or one exact circular or axis-aligned elliptic quarter. The
 curve may bound the outside or a hole. The other selected uses are straight
-edges. The entries require symmetric signed
-depths and one angular chart. The cone additionally requires the profile in
+edges. The entries require increasing signed depths and one angular chart. The cone additionally requires the profile in
 the positive developed halfplane, clear of the apex. The rational cylinder
 uses `GeometricCompositeV6` for its reference planar proof. The tested cone
 request selects the same version for its UV cap proof. The reference level splits
@@ -71,7 +70,11 @@ loops. The normal map then bounds the error in world coordinates. History record
 original curve and its dyadic parameter intervals. For an analytic quarter it
 also records how the stereographic parameter maps to the native angle. The result includes the
 authored area and sweep-volume enclosures, the retained boundary flux, the
-spatial bound, and the ordered native validation report.
+spatial bound, and the ordered native validation report. The volume proof uses
+the original area and the signed depth Jacobian. For asymmetric cone depths,
+it also bounds the change in the inverse-slant integral as the rational boundary
+moves to the polynomial reference. The resulting volume width must fit the
+requested cone policy.
 
 ## Verification
 
