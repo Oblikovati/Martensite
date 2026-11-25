@@ -1,0 +1,215 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//! A located affine chart with a strictly convex outer trim and one convex hole.
+mod chart;
+mod trim;
+
+use self::{chart::Chart, trim::Loop};
+use super::super::certificate_arithmetic::{ExactRatio, rounding::outward_binary64};
+use crate::gp::{Axis2d, Axis3, Line3};
+use crate::predicates::NonFiniteCoordinate;
+use std::{cmp::Ordering, error::Error, fmt};
+
+/// Maximum number of edge uses in each of the two admitted loops.
+pub const PLANAR_ATTACHMENT_MAX_LOOP_EDGES: usize = 32;
+
+/// Actual finite affine representations of one directed source trim.
+#[derive(Clone, Copy, Debug)]
+pub struct PlanarAttachmentEdge {
+    /// 3D carrier before the common face placement.
+    pub line: Line3,
+    /// The stored increasing range on the 3D carrier.
+    pub range: [f64; 2],
+    /// Endpoints in directed topological order before the common placement.
+    pub vertices: [[f64; 3]; 2],
+    /// Whether to traverse from the 3D carrier's upper parameter.
+    pub reversed: bool,
+    /// The actual stored affine pcurve on this support, when present.
+    pub pcurve: Option<(Axis2d, [f64; 2])>,
+}
+
+/// Exact trim position of the orthogonal projection onto the source support.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PlanarAttachmentLocation {
+    /// Strictly inside the material.
+    Material,
+    /// On a closed outer boundary.
+    OuterBoundary,
+    /// On a closed hole boundary.
+    HoleBoundary,
+    /// Strictly outside the outer boundary.
+    OutsideOuter,
+    /// Strictly inside the hole.
+    HoleInterior,
+}
+
+/// A classified projection and outward bounds before nominal coordinate conversion.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct PlanarAttachmentQuery {
+    /// Location of the exact projected UV in the complete trimmed domain.
+    pub location: PlanarAttachmentLocation,
+    /// Inclusive lower and upper UV bounds in the original face chart.
+    pub uv: [[f64; 2]; 2],
+    /// Inclusive lower and upper world-coordinate bounds of the projected point.
+    pub projected: [[f64; 2]; 3],
+    /// Upper bound on world Euclidean distance from the exact L1 residual.
+    pub distance_bound: f64,
+}
+
+/// Why exact planar trim preparation or classification could not complete.
+#[derive(Clone, Copy, Debug, PartialEq)]
+#[non_exhaustive]
+pub enum PlanarAttachmentError {
+    /// An input coordinate must be finite.
+    Coordinate(NonFiniteCoordinate),
+    /// The original stored frame is inconsistent.
+    Frame,
+    /// The affine chart tangents lack a positive Gram determinant.
+    DegenerateChart,
+    /// A loop is outside the supported edge count.
+    LoopSize(usize),
+    /// Directed edge endpoints disagree with the carrier, vertices, or actual pcurve.
+    Edge(usize),
+    /// A directed loop does not close as an exact strictly convex polygon.
+    Loop,
+    /// The loops require opposite winding and a strictly nested, disjoint hole.
+    Hole,
+    /// The requested inclusive model distance must be finite and nonnegative.
+    DistanceLimit(f64),
+    /// The exact L1 residual exceeds the requested model distance.
+    OffSupport {
+        /// Certified upper bound when representable.
+        bound: Option<f64>,
+        /// Caller-supplied acceptance limit.
+        limit: f64,
+    },
+    /// The query has no finite outward interval.
+    Unrepresentable,
+    /// The remaining computation was cancelled.
+    Cancelled,
+}
+
+impl fmt::Display for PlanarAttachmentError {
+    fn fmt(&self, output: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Coordinate(cause) => write!(output, "{cause}"),
+            Self::Frame => output.write_str("attachment requires a consistent stored planar frame"),
+            Self::DegenerateChart => {
+                output.write_str("planar attachment requires independent chart tangents")
+            }
+            Self::LoopSize(count) => write!(
+                output,
+                "attachment loop with {count} edges requires 3 to {PLANAR_ATTACHMENT_MAX_LOOP_EDGES}"
+            ),
+            Self::Edge(index) => write!(
+                output,
+                "attachment edge {index} requires one consistent finite affine trim"
+            ),
+            Self::Loop => {
+                output.write_str("attachment loop requires a closed strictly convex polygon")
+            }
+            Self::Hole => {
+                output.write_str("attachment requires a strictly contained opposite-wound hole")
+            }
+            Self::DistanceLimit(limit) => write!(
+                output,
+                "attachment distance limit {limit} must be finite and nonnegative"
+            ),
+            Self::OffSupport { bound, limit } => write!(
+                output,
+                "attachment residual with upper bound {bound:?} exceeds {limit}"
+            ),
+            Self::Unrepresentable => {
+                output.write_str("attachment requires finite outward intervals")
+            }
+            Self::Cancelled => output.write_str("planar attachment was cancelled"),
+        }
+    }
+}
+
+impl Error for PlanarAttachmentError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::Coordinate(cause) => Some(cause),
+            _ => None,
+        }
+    }
+}
+
+impl From<NonFiniteCoordinate> for PlanarAttachmentError {
+    fn from(error: NonFiniteCoordinate) -> Self {
+        Self::Coordinate(error)
+    }
+}
+
+/// Immutable source chart and complete directed linear trim proof.
+#[derive(Clone, Debug)]
+pub struct CertifiedPlanarAttachment {
+    world: Chart,
+    outer: Loop,
+    hole: Loop,
+}
+
+impl CertifiedPlanarAttachment {
+    /// Prove two opposite-wound linear loops against their exact source representations.
+    /// Example: CertifiedPlanarAttachment::capture(frame, map, [&a, &b], || false).
+    pub fn capture(
+        frame: Axis3,
+        placement: [[f64; 4]; 3],
+        [a, b]: [&[PlanarAttachmentEdge]; 2],
+        mut cancelled: impl FnMut() -> bool,
+    ) -> Result<Self, PlanarAttachmentError> {
+        poll(&mut cancelled)?;
+        let frame = chart::retained_frame(frame)?;
+        let local = Chart::local(frame)?;
+        let world = Chart::placed(frame, placement)?;
+        let a = Loop::capture(&local, a, &mut cancelled)?;
+        let b = Loop::capture(&local, b, &mut cancelled)?;
+        let (outer, hole) = match (a.sense, b.sense) {
+            (Ordering::Greater, Ordering::Less) => (a, b),
+            (Ordering::Less, Ordering::Greater) => (b, a),
+            _ => return Err(PlanarAttachmentError::Hole),
+        };
+        hole.require_inside(&outer, &mut cancelled)?;
+        Ok(Self { world, outer, hole })
+    }
+
+    /// Classify the exact projection if the point is within the model distance.
+    /// Example: trim.classify([0., 0., 0.], 0., || false).
+    pub fn classify(
+        &self,
+        point: [f64; 3],
+        limit: f64,
+        mut cancelled: impl FnMut() -> bool,
+    ) -> Result<PlanarAttachmentQuery, PlanarAttachmentError> {
+        use PlanarAttachmentError as Error;
+        poll(&mut cancelled)?;
+        if !limit.is_finite() || limit < 0. {
+            return Err(Error::DistanceLimit(limit));
+        }
+        let projection = self.world.project(point)?;
+        let distance_bound = outward_binary64(&projection.distance).map(|interval| interval[1]);
+        if projection.distance > ExactRatio::from_finite(limit) {
+            return Err(Error::OffSupport {
+                bound: distance_bound,
+                limit,
+            });
+        }
+        let location = trim::locate(&self.outer, &self.hole, &projection.uv, &mut cancelled)?;
+        let uv = chart::enclose(&projection.uv)?;
+        let projected = chart::enclose(&projection.world)?;
+        poll(&mut cancelled)?;
+        Ok(PlanarAttachmentQuery {
+            location,
+            uv,
+            projected,
+            distance_bound: distance_bound.ok_or(Error::Unrepresentable)?,
+        })
+    }
+}
+
+fn poll(cancelled: &mut impl FnMut() -> bool) -> Result<(), PlanarAttachmentError> {
+    if cancelled() {
+        return Err(PlanarAttachmentError::Cancelled);
+    }
+    Ok(())
+}

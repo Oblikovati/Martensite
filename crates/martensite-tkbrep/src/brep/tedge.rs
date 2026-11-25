@@ -14,7 +14,7 @@ use std::io;
 /// `ParameterMask`, `RangeMask` and `DegeneratedMask` of `myFlags`.
 const PARAMETER_MASK: i32 = 1;
 const RANGE_MASK: i32 = 2;
-const DEGENERATED_MASK: i32 = 4;
+pub(super) const DEGENERATED_MASK: i32 = 4;
 
 /// The private fields of `BRep_TEdge`.
 #[derive(Clone)]

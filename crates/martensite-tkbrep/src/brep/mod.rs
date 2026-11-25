@@ -16,6 +16,7 @@ mod dump;
 pub mod errors;
 pub mod face_input_capture;
 mod gcurve;
+pub mod planar_attachment;
 mod point_on_curve;
 mod point_representation;
 mod points_on_surface;

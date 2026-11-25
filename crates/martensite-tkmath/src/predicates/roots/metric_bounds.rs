@@ -11,6 +11,7 @@ mod mapped;
 pub use affine_coordinate::exact_affine_coordinate;
 mod cylindrical_generators;
 mod placed_plane;
+pub mod planar_attachment;
 pub use cylindrical_generators::{
     CylindricalGeneratorChart, CylindricalGeneratorError, CylindricalPullKind,
 };

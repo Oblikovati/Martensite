@@ -145,7 +145,7 @@ pub(super) fn exact_vector(
     Ok(coordinates.map(ExactRatio::from_finite))
 }
 
-fn dot(a: &ExactVector, b: &ExactVector) -> ExactRatio {
+pub(super) fn dot(a: &ExactVector, b: &ExactVector) -> ExactRatio {
     a.iter()
         .zip(b)
         .fold(ExactRatio::from_finite(0.), |sum, (a, b)| {
