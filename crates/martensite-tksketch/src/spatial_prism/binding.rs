@@ -5,7 +5,7 @@ use super::{
     poll,
 };
 use martensite_tkbo::profile_extrusion::{
-    LoopUse, Measured, PlanarRegion, PlanarRegionSet, ProfileCurveId, ProfileVertexId,
+    LoopUse, PlanarRegion, PlanarRegionSet, ProfileCurveId, ProfileVertexId,
 };
 use martensite_tkbrep::{
     brep::{BRepTool, access::vertex_tshape},
@@ -19,7 +19,7 @@ use martensite_tkg3d::{
 use martensite_tkmath::{
     gp::{Direction3, Point3},
     predicates::{
-        enclose_scalar_triple_product_3d, placed_affine_line_trace_bound,
+        compare_scalar_triple_product_3d, placed_affine_line_trace_bound,
         placed_point_distance_upper_bound,
     },
 };
@@ -221,11 +221,11 @@ fn affine_trace(segment: &WireSegment, edge: &Edge) -> Result<f64, Failure> {
     ))
 }
 
-pub(super) fn placed_volume(
+pub(super) fn require_sweep_sense(
     region: &PlanarRegion,
     direction: [f64; 3],
     expected: std::cmp::Ordering,
-) -> Result<Measured, Failure> {
+) -> Result<(), Failure> {
     let (surface, location) = native(
         BRepTool::surface_with_location(region.face()),
         Stage::Binding,
@@ -243,37 +243,15 @@ pub(super) fn placed_volume(
     let transform = location.transformation().vectorial_part();
     let x = *native(transform.column(1), Stage::Binding)?.coordinates();
     let y = *native(transform.column(2), Stage::Binding)?.coordinates();
-    let (sign, determinant) =
-        enclose_scalar_triple_product_3d(x, y, direction).map_err(|source| Failure::Predicate {
+    let sign =
+        compare_scalar_triple_product_3d(x, y, direction).map_err(|source| Failure::Predicate {
             point: None,
             source,
         })?;
     if sign != expected {
         return Err(mismatch(None, "the exact authored sweep direction sense"));
     }
-    bound_volume(region.area(), determinant)
-}
-
-fn bound_volume(area: Measured, [lo, hi]: [f64; 2]) -> Result<Measured, Failure> {
-    // Integrating the affine sweep in its actual UV basis multiplies the
-    // bounded UV area by the absolute Jacobian of the placed sweep.
-    let area_lo = (area.value - area.error_bound).next_down().max(0.);
-    let area_hi = (area.value + area.error_bound).next_up();
-    let lower = (area_lo * lo).next_down().max(0.);
-    let upper = (area_hi * hi).next_up();
-    if !upper.is_finite() || lower > upper {
-        return Err(Failure::VolumeEnclosure {
-            area,
-            determinant: [lo, hi],
-        });
-    }
-    let value = lower + (upper - lower) * 0.5;
-    let error_bound = (value - lower).max(upper - value).next_up();
-    Ok(Measured {
-        value,
-        error_bound,
-        method: area.method,
-    })
+    Ok(())
 }
 
 fn curve_id(segment: &WireSegment) -> ProfileCurveId {

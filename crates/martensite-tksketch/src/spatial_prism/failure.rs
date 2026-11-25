@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-use martensite_tkbo::profile_extrusion::{Measured, OperationDecline, PlanarRegionWorkFailure};
+use martensite_tkbo::profile_extrusion::{HistoryRole, OperationDecline, PlanarRegionWorkFailure};
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::predicates::NonFiniteCoordinate;
 use martensite_tksketch3d::{LineId, PointId};
@@ -68,12 +68,32 @@ pub enum SpatialPrismFailure {
         /// Unchanged caller limit.
         limit: f64,
     },
-    /// The placed affine volume did not yield a finite enclosure.
-    VolumeEnclosure {
-        /// Intrinsic region area and its bound.
-        area: Measured,
-        /// Bounds of the placed sweep's absolute Jacobian.
-        determinant: [f64; 2],
+    /// The retained native affine sweep could not be verified.
+    UnboundSweep {
+        /// Affected native face index, when available.
+        face: Option<usize>,
+        /// Required native evidence or correspondence.
+        expected: &'static str,
+    },
+    /// A retained cap vertex exceeds the exact authored translation trace limit.
+    SweepVertexTrace {
+        /// Authored point producing the vertex.
+        point: PointId,
+        /// Start or end image of that point.
+        role: HistoryRole,
+        /// Computed world trace enclosure.
+        bound: f64,
+        /// Unchanged source trace acceptance limit.
+        limit: f64,
+    },
+    /// A retained face trim exceeds its affine curve or vertex trace limit.
+    SweepFaceTrace {
+        /// Native face index in the ordinary extrusion.
+        face: usize,
+        /// Computed world trace enclosure.
+        bound: f64,
+        /// Unchanged acceptance limit.
+        limit: f64,
     },
     /// Existing planar-region failure with its work and provenance intact.
     Region(Box<PlanarRegionWorkFailure>),
@@ -132,9 +152,21 @@ impl fmt::Display for SpatialPrismFailure {
                 f,
                 "native line {line:?} has source trace bound {bound}; expected at most {limit}"
             ),
-            Cause::VolumeEnclosure { area, determinant } => write!(
+            Cause::UnboundSweep { face, expected } => {
+                write!(f, "retained sweep face {face:?} needs {expected}")
+            }
+            Cause::SweepVertexTrace {
+                point,
+                role,
+                bound,
+                limit,
+            } => write!(
                 f,
-                "intrinsic area {area:?} and sweep determinant {determinant:?} must give a finite volume enclosure"
+                "retained cap image {point:?} {role:?} has trace bound {bound}, above {limit}"
+            ),
+            Cause::SweepFaceTrace { face, bound, limit } => write!(
+                f,
+                "retained sweep face {face} has trim trace bound {bound}, above {limit}"
             ),
             Cause::Region(source) => write!(f, "spatial prism region failed ({source})"),
             Cause::Sweep(source) => write!(f, "spatial prism sweep failed ({source})"),

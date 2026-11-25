@@ -4,10 +4,8 @@ use martensite_tkbo::{
     body_check::{StageVerdict, ValidationStage},
     measured::Evidence,
     profile_extrusion::{
-        DeclineCause, DisplayTolerance, ExtrudeOptions, HistoryRole, PlanarProofWorkLimit,
-        ProfileCurve, ProfileCurveId, ProfilePlane, ProfileVertex, ProfileVertexId, Resolution,
-        SelfIntersectionEvidence, SketchProfile, ToleranceCap,
-        build_planar_line_regions_with_work_and_cancel, build_planar_regions, extrude,
+        DeclineCause, DisplayTolerance, HistoryRole, PlanarProofWorkLimit, Resolution,
+        SelfIntersectionEvidence, ToleranceCap,
     },
 };
 use martensite_tkbrep::{
@@ -147,7 +145,7 @@ fn exact_oblique_wire_extrudes_both_signed_directions_with_complete_history() {
         assert!(prism.findings().is_empty());
         assert_ordered_validation(&prism);
         let native = prism.export_brep(|| false).unwrap();
-        assert_complete_history(&native, direction, expected_volume);
+        assert_complete_history(&native, direction, expected_volume, &prism);
     }
 }
 
@@ -173,6 +171,7 @@ fn assert_complete_history(
     native: &DetachedSpatialPrism,
     direction: [f64; 3],
     expected_volume: f64,
+    prism: &SpatialPrismResult,
 ) {
     assert_eq!(native.solid.shape_type().unwrap(), ShapeEnum::Solid);
     assert_eq!(native.images.len(), 26);
@@ -188,6 +187,12 @@ fn assert_complete_history(
     let mut measure = GProps::default();
     BRepGProp::volume_properties(&native.solid, &mut measure, true, false, false).unwrap();
     assert!((measure.mass() - expected_volume).abs() <= 1e-11);
+    assert!(
+        prism.volume().encloses(measure.mass()),
+        "actual native mass {} outside {:?}",
+        measure.mass(),
+        prism.volume()
+    );
     check_caps(native);
     for (index, key) in POINT_KEYS.into_iter().enumerate() {
         check_point_images(native, pid(key), POINTS[index], direction);
@@ -449,50 +454,8 @@ fn archive(shape: &Shape) -> Vec<u8> {
     bytes
 }
 
-#[test]
-fn scoped_lines_preserve_default_planar_prism_body_and_history() {
-    let uv = [[0., 0.], [3., 0.], [3., 5.], [0., 5.]];
-    let profile = SketchProfile {
-        plane: ProfilePlane::world_xy(),
-        vertices: uv
-            .into_iter()
-            .enumerate()
-            .map(|(i, point)| ProfileVertex {
-                id: ProfileVertexId(i as u64),
-                point,
-            })
-            .collect(),
-        curves: (0..4)
-            .map(|i| ProfileCurve::Line {
-                id: ProfileCurveId(i + 10),
-                start: ProfileVertexId(i),
-                end: ProfileVertexId((i + 1) % 4),
-            })
-            .collect(),
-    };
-    let options = options();
-    let legacy = build_planar_regions(&profile, options.resolution).unwrap();
-    let scoped = build_planar_line_regions_with_work_and_cancel(
-        &profile,
-        options.resolution,
-        options.planar_work,
-        || false,
-    )
-    .unwrap();
-    let built = [&legacy, &scoped].map(|regions| {
-        extrude(
-            &regions.regions()[0],
-            [0., 0., 5.],
-            &ExtrudeOptions {
-                resolution: options.resolution,
-            },
-        )
-        .unwrap()
-    });
-    assert_eq!(built[0].history(), built[1].history());
-    assert_eq!(built[0].volume(), built[1].volume());
-    assert_eq!(archive(built[0].solid()), archive(built[1].solid()));
-}
+#[path = "spatial_prism/retained.rs"]
+mod retained;
 
 #[path = "spatial_prism/replay.rs"]
 mod replay;

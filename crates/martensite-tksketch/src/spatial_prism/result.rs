@@ -94,7 +94,7 @@ impl SpatialPrismResult {
         self.swept.achieved_tolerance()
     }
 
-    /// Bounded volume of the placed affine sweep. Example: `result.volume().encloses(75.)`.
+    /// Bounded volume of the retained planar sweep. Example: `result.volume().encloses(75.)`.
     pub fn volume(&self) -> Measured {
         self.evidence.volume
     }
@@ -124,7 +124,7 @@ impl SpatialPrismResult {
         self.sweep_sign
     }
 
-    /// Certified upper bound from the actual model-space start-region trace. Example: `result.source_trace_bound()`.
+    /// Certified upper bound for the start region and retained sweep boundary. Example: `result.source_trace_bound()`.
     pub fn source_trace_bound(&self) -> f64 {
         self.evidence.trace_bound
     }

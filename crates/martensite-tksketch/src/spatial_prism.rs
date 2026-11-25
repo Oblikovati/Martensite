@@ -4,6 +4,7 @@ mod binding;
 mod failure;
 mod plane;
 mod result;
+mod volume;
 
 pub use failure::{SpatialPrismFailure, SpatialPrismStage};
 pub use result::{
@@ -24,7 +25,7 @@ pub struct SpatialPrismOptions {
     pub resolution: Resolution,
     /// Finite bounded planar certification work.
     pub planar_work: PlanarProofWorkLimit,
-    /// Allowed certified deviation from original XYZ for actual planar edges.
+    /// Allowed certified deviation of native trims from authored XYZ and its affine sweep.
     pub source_trace_limit: f64,
 }
 
@@ -54,7 +55,7 @@ pub fn extrude_wire(
     )
     .map_err(|cause| SpatialPrismFailure::Region(Box::new(cause)))?;
     let (region, trace_bound) = binding::bind(wire, &planar, limit, &mut cancelled)?;
-    let volume = binding::placed_volume(region, direction, lowered.sweep_sign)?;
+    binding::require_sweep_sense(region, direction, lowered.sweep_sign)?;
     poll(&mut cancelled, SpatialPrismStage::Sweep)?;
     let swept = extrude(
         region,
@@ -65,13 +66,14 @@ pub fn extrude_wire(
     );
     poll(&mut cancelled, SpatialPrismStage::Sweep)?;
     let swept = swept.map_err(|cause| SpatialPrismFailure::Sweep(Box::new(cause)))?;
+    let (volume, result_trace) = volume::certify(&swept, wire, direction, limit, &mut cancelled)?;
     result::new(
         wire,
         lowered,
         region.id(),
         planar.proof_work(),
         result::SweepEvidence {
-            trace_bound,
+            trace_bound: trace_bound.max(result_trace),
             trace_limit: limit,
             volume,
         },
