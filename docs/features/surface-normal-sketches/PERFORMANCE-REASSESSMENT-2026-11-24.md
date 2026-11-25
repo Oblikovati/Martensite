@@ -515,3 +515,80 @@ validation assertions.
 | Cold text boss | 22.622 s | 23.058 s |
 | Cold text pocket | 22.533 s | 23.266 s |
 | Warm text depth edit | 21.044 s | 22.971 s |
+
+### Direct graph and full native validation
+
+The exact authored-cycle proof also ran inside the single-pass builder.
+In 20 alternating fresh-process pairs on a fixed core per sense, the
+placed-graph p95 fell from 719 to 348 ms for the boss and from 781 to
+368 ms for the pocket. Every run reproduced both tool archives, the
+typed history and the spatial allocation. This timer ends before the
+retained-family proof and stock attachment.
+
+The assembled final archive also passed the decoded support-loop
+proof. It traced 339 native edge uses through their directed vertex
+incidences and recovered 20 loops with 554 cubic pieces. The proof
+covered all 153,735 logical pair domains and inspected 1,117 residual
+and self domains. Issuance took about 63 ms per sense. A clean decode
+and rebind took about 15 ms. Exchanging the counter owners was refused.
+
+The original stock received its own independent proof. Both end
+disks, both rims and the periodic generator rebound byte for byte in
+the final archives. The original conical band stayed within
+`1.009e-14` model units of a closed analytic frustum, under the retained
+`1e-7` tolerance. The raw top-rim gap was `6.449e-15`. Five changed
+stock inputs were refused.
+
+| Complete direct prototype | Serial p95 | Four-worker p95 |
+| --- | ---: | ---: |
+| Cold boss | 13.449 s | 6.504 s |
+| Cold pocket | 13.955 s | 8.411 s |
+| Warm depth edit | | 6.804 s |
+
+The prototype runs all four ordinary validation stages and still uses
+the native self-intersection search. The cold measurements use 20
+matched pairs per sense. Every final archive, validation report and
+history record reproduced across both worker settings. Four workers
+added at most 8.83% peak RSS for the boss and 9.86% for the pocket
+across the paired samples. The boss workers shared one last-level
+cache. The pocket workers spanned both caches. A repeat of 20
+four-worker pocket runs on cores sharing one cache measured 5.651 s
+at p95 with matching output bytes. The warm p95 uses
+20 fresh four-worker processes, each of which validated an initial
+solid before timing the depth change. Its peak was 138,120 KiB.
+The warm archives and reports matched a separate serial trial, and
+every edit preserved the prior archive.
+
+The worker and direct-construction paths are scratch experiments.
+The existing public API timing is reported separately. The large
+fixtures still exceed the 1-second target.
+
+### Exact tool-family proof before attachment
+
+The direct tool can earn the existing opaque conical self-intersection
+certificate without publishing standalone member reports or calculating
+their volumes. A scratch path captured the stored span and join inputs,
+issued selected cap material through exact directed cycles, and ran the
+existing native-family binder and TKMath proof. In three paired tests
+per sense, the cap material stage dropped from 503 to 42 ms for the boss
+and from 513 to 40 ms for the pocket.
+
+Combining this issuer with the authored-cycle construction path gave the
+following p95 measurements from 20 fresh processes per sense.
+
+| Stage | Boss | Pocket |
+| --- | ---: | ---: |
+| Live tool and tool-family proof | 836 ms | 845 ms |
+| Actual span storage and source binding | 112 ms | 110 ms |
+| Selected cap material | 42 ms | 40 ms |
+| Existing exact family SI issuance | 379 ms | 395 ms |
+
+Each run verified 18 tool members, 339 sides, 36 caps, 40 cap wires and
+678 cap edge uses. The mathematical work and archive bytes matched the
+ordinary V8 comparison. The independently decoded canonical and placed
+archives rebound with their own issued cap material. A changed native
+cap pcurve and exchanged side identity both triggered typed refusals.
+The time ends before stock attachment and final ordered validation.
+The new issuer still needs production policy admission, cumulative work
+and refusal receipts. The attachment proof must also cover the final
+stock and tool contacts on the same decoded body.
