@@ -90,7 +90,7 @@ incidences before AD and rank analysis.
 | Colinear, 1 shared endpoint (ADR-0034) | `[e1(d1)·u(d2), e2(d1)·u(d2)]` (2, unitless) | 2 | zero-length line; pole `u(d1) = ±r` | stored sign of `d1·d2`; shared identity supplies incidence |
 | Colinear, 2 shared endpoints (ADR-0034) | none (0) | 0 | zero-length line | direction validity still checked |
 | Parallel, two lines | `[e1(d1)·u(d2), e2(d1)·u(d2)]` (2, unitless) | 2 | zero-length line; pole `u(d1) = ±r` | stored sign of `d1·d2`; full check `\|u(d1) × u(d2)\|` |
-| Parallel to X, Y or Z | the other two components of `u(d)` (2, unitless) | 2 | zero-length line | stored sign of the free component of `u(d)` |
+| Parallel to X, Y or Z | the other two components of `u(d)` (2, unitless) | 2 | zero-length line or a zero/opposite axial component relative to the requested seed sign | stored sign of the free component of `u(d)` |
 | Parallel to a plane | `n·u(d)` (1, unitless) | 1 | zero-length line | plane offset stays free |
 | Perpendicular | `u(d1)·u(d2)` (1, unitless) | 1 | zero-length line | none; lines need not intersect |
 | Length | `\|d\| − L` (1, length) | 1 | zero-length line, `L ≤ 0` | none |
@@ -102,6 +102,11 @@ incidences before AD and rank analysis.
 | G2 at a shared endpoint | Tangent (2, unitless) and `[e1(t1)·(κ1 − κ2), e2(t1)·(κ1 − κ2)] · L_ref` (2, unitless) | 4 | zero end derivative; pole `u(t1) = ±r`; inadmissible pairs `line/line` (identically zero curvature rows) and `arc/line` (`1/R ≠ 0` infeasible) | admit spline/spline and spline/line with a movable second curve for application. Zero curvature on spline/line is regular. See [the owned fixture](OWNED-FIXTURES.md#g2-continuity). |
 | On Face | attached-point rows `P − F(u, v) = 0` (3, length; 2 new variables) | 3 | singular surface point (`\|F_u × F_v\|` below limit, e.g. sphere pole) | trim classification after solve; requires variable-domain scaling for `(u, v)` |
 | Driven measurement | none (0) | 0 | as driving form | not applicable |
+
+For perpendicularity and plane parallelism, an aligned starting direction can make the normalized-dot row
+flat. Cold authoring tries a bounded set of seed positions on eligible free points before invoking the solver.
+Each candidate must preserve the admission of its incident lines and the domains of its incident equations.
+Fixed and frozen coordinates keep their bits. Warm drag uses the already prepared relation program.
 
 Curvature vector: `κ = ((C' × C'') × C') / |C'|⁴`.
 

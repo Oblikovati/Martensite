@@ -28,6 +28,11 @@ relation values. Restore checks the saved anchors and all physical relations
 before publishing the supplied coordinates. A captured point may carry its
 source incarnation and revision or its historical session generation.
 
+Spatial line relations include signed axis parallelism, plane parallelism,
+perpendicularity, equal length and driving angle. A plane-parallel relation
+leaves offset free. Perpendicular lines may be skew. Angle authoring requires
+a nonsingular starting angle, and the accepted branch remains in the recipe.
+
 Use `ConstrainedSketch::transform_points` for a rigid translation or rotation of
 owned points. The operation checks the resulting geometry and existing hard
 relations together before adopting. The length tolerance also caps each stored

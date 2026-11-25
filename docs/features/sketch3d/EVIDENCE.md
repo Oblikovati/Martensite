@@ -513,3 +513,24 @@ four-line recipe, ordinary extrusion, native trim checks, volume, and detached h
 fixture had boundary trace at most `2.032e-14` model units and an actual volume enclosure radius of
 `7.532e-13` around 75. All 10 focused native cases, two volume unit tests, strict Clippy and the concurrent
 detachment ThreadSanitizer control passed. Curved profiles and desktop timing have their own gates.
+
+## E26. Directed line relations
+
+`86b3a321` adds signed axis and plane parallelism, perpendicularity, equal length and driving angles.
+Equal length compares exact authored squared lengths within a closed spatial limit. Angular feasibility
+uses the original endpoint coordinates and checks the accepted branch. The Angle fixture covers radians
+near both open interval endpoints, and centered finite differences check all five new native equation
+families. A spin to a distant point on the same angular cone may defer while leaving the accepted sketch
+available.
+
+For flat perpendicular and plane-parallel seeds, cold initialization checks candidate moves against every
+incident native segment and compiled residual domain. The connected regressions cover a collapsed
+neighbor, an Angle singularity, shared endpoints, fixed and frozen inputs, and cancellation at every poll.
+The operation still invokes the solver once. Saved values go through the same structural and physical checks
+on restore, without moving the sketch.
+
+The Rust `1.98.1` fixture ran 1,500 updates per revision across three matched processes on a loaded Linux
+host. The final mixed-relation p95 at 240 coordinates was `0.597–0.607 ms`. The Angle p95 was
+`0.183–0.196 ms`. Every update adopted and charged work and scaled error matched the previous revision.
+The measured scope includes native geometry admission and independent relation checks. Root-to-display
+drag and the remaining curve relations have their own gates.

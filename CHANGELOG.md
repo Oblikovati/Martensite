@@ -30,6 +30,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added ordinary extrusion from certified coplanar Sketch3D line wires with detached history and volume bounded on the retained native trims (#611).
 
+- Added directed axis and plane parallelism, perpendicularity, equal length and driving angles for spatial lines (#611).
+
 - Added explicit full-turn cylinder and cone bands with authored rim history and paired native seams (#419).
 
 - Added rectangular and curved apertures across native seams in full-turn cylinder and cone bands, with exact authored split intervals and stable replay (#419).
