@@ -7,7 +7,7 @@ use martensite_tkbo::profile_extrusion::{
 
 static_assertions::assert_impl_all!(CurvedBandResult: Send, Sync);
 
-fn fixture() -> (FullTurnBand, WrappedNormalRequest) {
+pub(in crate::surface_sketch::full_turn) fn fixture() -> (FullTurnBand, WrappedNormalRequest) {
     let mut band = cylinder(NormalSense::Outward, 0.);
     let FullTurnSupport::Cylinder { support, axial } = &mut band.support else {
         panic!("cylindrical stock");

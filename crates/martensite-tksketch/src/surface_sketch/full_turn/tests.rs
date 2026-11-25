@@ -2,7 +2,7 @@
 use super::*;
 use martensite_tkbo::profile_extrusion::{DisplayTolerance, Resolution, ToleranceCap};
 mod cone_aperture;
-mod curved_aperture;
+pub(super) mod curved_aperture;
 mod multiple;
 mod placed;
 
@@ -14,7 +14,7 @@ static_assertions::assert_impl_all!(ConeBandHole: Send, Sync);
 static_assertions::assert_impl_all!(CrossedBandResult: Send, Sync);
 static_assertions::assert_impl_all!(PeriodicImageKey: Send, Sync);
 
-fn options() -> NormalExtrusionOptions {
+pub(super) fn options() -> NormalExtrusionOptions {
     NormalExtrusionOptions {
         resolution: Resolution::new(
             1e-6,
