@@ -103,15 +103,19 @@ fn approve(
     lattice: &CutLattice,
     scope: SeamScope,
 ) -> Checked<ApprovedHole> {
-    let crossings = lattice.classify(source)?;
-    if scope == SeamScope::CrossingsOnly && crossings.is_none() {
+    let placement = lattice.classify(source)?;
+    if scope == SeamScope::CrossingsOnly && placement.crossings.is_none() {
         return Err(placement::crossing_clearance(source.lift[0]));
     }
     let admitted = tool::ApertureOperand::admit(band, source, depths, options)?;
+    placement.check_linear(
+        admitted.minimum_radius(),
+        effective_limits(options).linear_separation,
+    )?;
     Ok(ApprovedHole {
         source,
         admitted,
-        crossings,
+        crossings: placement.crossings,
     })
 }
 
