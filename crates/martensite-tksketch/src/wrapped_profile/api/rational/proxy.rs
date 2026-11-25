@@ -15,6 +15,7 @@ pub(super) struct Proxy {
     pub options: WrappedNormalOptions,
     pub spatial_error: f64,
     source: SurfaceCurveId,
+    parameter_map: Option<WrappedConicParameterMap>,
     spans: BTreeMap<SurfaceCurveId, WrappedSourceSpan>,
     joins: BTreeMap<SurfaceVertexId, WrappedSourcePoint>,
 }
@@ -27,10 +28,49 @@ pub(super) fn build(
 ) -> Checked<Proxy> {
     prove_separation(original, reference)?;
     let allocated = allocate(options.spatial_error, reference, scale)?;
-    let mut proxy = begin(options, original, allocated);
-    let uses = compose(&mut proxy, original, reference)?;
+    let spans = reference.iter().map(|span| SpanControls {
+        poles: &span.poles,
+        weights: None,
+        domain: WrappedSourceSpan {
+            level: span.interval.level(),
+            index: span.interval.index(),
+            reversed: false,
+        },
+    });
+    expanded(begin(options, original, allocated), original, spans)
+}
+
+pub(super) fn native_partition(
+    original: &input::Source<'_>,
+    options: WrappedNormalOptions,
+) -> Checked<Proxy> {
+    let spans = original.spans.iter().map(|span| SpanControls {
+        poles: span.metric().poles,
+        weights: span.metric().weights,
+        domain: span.domain,
+    });
+    expanded(
+        begin(options, original, [options.spatial_error; 2]),
+        original,
+        spans,
+    )
+}
+
+fn expanded<'a>(
+    mut proxy: Proxy,
+    original: &input::Source<'_>,
+    spans: impl ExactSizeIterator<Item = SpanControls<'a>>,
+) -> Checked<Proxy> {
+    let uses = compose(&mut proxy, original, spans)?;
     proxy.selection.outer.uses = replace_uses(original, uses);
     Ok(proxy)
+}
+
+#[derive(Clone, Copy)]
+struct SpanControls<'a> {
+    poles: &'a [[f64; 2]],
+    weights: Option<&'a [f64]>,
+    domain: WrappedSourceSpan,
 }
 
 fn begin(
@@ -45,6 +85,7 @@ fn begin(
         options,
         spatial_error,
         source: SurfaceCurveId(original.occurrence.curve.0),
+        parameter_map: original.map,
         spans: BTreeMap::new(),
         joins: BTreeMap::new(),
     }
@@ -70,14 +111,32 @@ fn allocate(spatial: f64, reference: &[RationalReferenceSpan], scale: f64) -> Ch
 
 fn prove_separation(original: &input::Source<'_>, spans: &[RationalReferenceSpan]) -> Checked<()> {
     for line in &original.lines {
-        positive_controls(line, original.curve.poles, original.ends.map(Some))?;
-        for (index, span) in spans.iter().enumerate() {
-            let ends = [
-                (index == 0).then_some(original.ends[0]),
-                (index + 1 == spans.len()).then_some(original.ends[1]),
-            ];
-            positive_controls(line, &span.poles, ends)?;
-        }
+        check_controls(
+            line,
+            original,
+            original.spans.iter().map(|span| span.metric().poles),
+        )?;
+        check_controls(
+            line,
+            original,
+            spans.iter().map(|span| span.poles.as_slice()),
+        )?;
+    }
+    Ok(())
+}
+
+fn check_controls<'a>(
+    line: &input::Line,
+    original: &input::Source<'_>,
+    poles: impl ExactSizeIterator<Item = &'a [[f64; 2]]>,
+) -> Checked<()> {
+    let count = poles.len();
+    for (index, controls) in poles.enumerate() {
+        let ends = [
+            (index == 0).then_some(original.ends[0]),
+            (index + 1 == count).then_some(original.ends[1]),
+        ];
+        positive_controls(line, controls, ends)?;
     }
     Ok(())
 }
@@ -109,10 +168,10 @@ fn positive_controls(
     Ok(())
 }
 
-fn compose(
+fn compose<'a>(
     proxy: &mut Proxy,
     original: &input::Source<'_>,
-    spans: &[RationalReferenceSpan],
+    spans: impl ExactSizeIterator<Item = SpanControls<'a>>,
 ) -> Checked<Vec<LoopUse>> {
     let mut ids = Names::new(original);
     proxy
@@ -120,9 +179,10 @@ fn compose(
         .curves
         .retain(|c| c.id() != original.occurrence.curve);
     let mut start = original.ends[0];
-    let mut uses = Vec::with_capacity(spans.len());
-    for (index, span) in spans.iter().enumerate() {
-        let end = if index + 1 == spans.len() {
+    let count = spans.len();
+    let mut uses = Vec::with_capacity(count);
+    for (index, span) in spans.enumerate() {
+        let end = if index + 1 == count {
             original.ends[1]
         } else {
             proxy.joint(&mut ids, span)?
@@ -177,39 +237,35 @@ impl Proxy {
     fn curve(
         &mut self,
         ids: &mut Names,
-        span: &RationalReferenceSpan,
+        span: SpanControls<'_>,
         [start, end]: [ProfileVertexId; 2],
     ) -> Checked<ProfileCurveId> {
         let id = ProfileCurveId(ids.curve.name()?);
+        let count = span.poles.len();
         self.profile.curves.push(ProfileCurve::Spline {
             id,
             start,
             end,
-            degree: 3,
+            degree: (count - 1) as u32,
             poles: span.poles.to_vec(),
-            weights: None,
-            knots: vec![0., 0., 0., 0., 1., 1., 1., 1.],
+            weights: span.weights.map(<[f64]>::to_vec),
+            knots: std::iter::repeat_n(0., count)
+                .chain(std::iter::repeat_n(1., count))
+                .collect(),
         });
-        self.spans.insert(
-            SurfaceCurveId(id.0),
-            WrappedSourceSpan {
-                level: span.interval.level(),
-                index: span.interval.index(),
-                reversed: false,
-            },
-        );
+        self.spans.insert(SurfaceCurveId(id.0), span.domain);
         Ok(id)
     }
 
-    fn joint(&mut self, ids: &mut Names, span: &RationalReferenceSpan) -> Checked<ProfileVertexId> {
+    fn joint(&mut self, ids: &mut Names, span: SpanControls<'_>) -> Checked<ProfileVertexId> {
         let id = ProfileVertexId(ids.vertex.name()?);
         self.profile.vertices.push(ProfileVertex {
             id,
-            point: span.poles[3],
+            point: span.poles[span.poles.len() - 1],
         });
         self.joins.insert(
             SurfaceVertexId(id.0),
-            history::point(span.interval.index() + 1, span.interval.level()),
+            history::point(span.domain.index + 1, span.domain.level),
         );
         Ok(id)
     }

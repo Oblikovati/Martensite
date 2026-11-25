@@ -3,7 +3,7 @@
 //! Bézier pieces by knot insertion (Piegl and Tiller, "The NURBS Book", A5.6), in
 //! homogeneous coordinates for rational splines. Adjacent pieces share one computed
 //! junction control, so the pieces join bitwise.
-use super::bezier::BezierPiece;
+use super::{bernstein_partition::exact_bernstein_partition, bezier::BezierPiece};
 
 /// A checked clamped spline in plane coordinates; its end poles are the authored vertices.
 #[derive(Clone, Debug, PartialEq)]
@@ -33,6 +33,9 @@ impl AdmittedSpline {
 
     /// Bézier pieces in parameter order, one per nonempty knot span.
     pub(crate) fn bezier_pieces(&self) -> Vec<BezierPiece> {
+        if let Some(pieces) = self.original_partition() {
+            return pieces;
+        }
         let weights = |i: usize| self.weights.as_ref().map_or(1.0, |w| w[i]);
         let homogeneous: Vec<[f64; 3]> = (0..self.poles.len())
             .map(|i| {
@@ -48,6 +51,24 @@ impl AdmittedSpline {
         let last = pieces.last_mut().expect("a clamped spline has a span");
         *last.controls.last_mut().expect("degree >= 1") = *self.poles.last().expect("poles");
         pieces
+    }
+
+    fn original_partition(&self) -> Option<Vec<BezierPiece>> {
+        let spans = exact_bernstein_partition(
+            self.degree,
+            &self.poles,
+            self.weights.as_deref(),
+            &self.knots,
+        )?;
+        // Keep earlier proof behavior when a homogeneous round trip changed a pole.
+        spans
+            .map(|span| {
+                span.matches_homogeneous_roundtrip().then(|| BezierPiece {
+                    controls: span.poles.to_vec(),
+                    weights: span.weights.map(<[f64]>::to_vec),
+                })
+            })
+            .collect()
     }
 }
 

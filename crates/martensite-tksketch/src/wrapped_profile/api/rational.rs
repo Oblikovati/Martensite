@@ -2,15 +2,15 @@
 use super::*;
 use martensite_tkbo::body_check::ValidationReport;
 use martensite_tkbo::profile_extrusion::{
-    PlanarProofWorkReceipt, PlanarRegionWorkFailure, ProfileCurveId, SketchProfile,
-    build_planar_regions_with_work_and_cancel,
+    OperationDecline, PlanarProofWorkLimit, PlanarProofWorkReceipt, PlanarRegionWorkFailure,
+    ProfileCurveId, SketchProfile, build_planar_regions_with_work_and_cancel,
 };
 use martensite_tkmath::predicates::roots::metric_bounds::{
     CertifiedRationalMeasure, RationalIntegralError, RationalReferenceFailure,
-    RationalReferenceRequest, RationalReferenceSpan, certify_rational_face_area,
-    fit_rational_bezier_reference,
+    RationalReferenceSpan, certify_rational_face_area,
 };
 mod domain;
+mod fit;
 mod input;
 mod proxy;
 mod retained;
@@ -28,6 +28,8 @@ pub enum RationalWrappedFailure {
     },
     /// Original rational source did not produce certified planar material.
     Planar(Box<PlanarRegionWorkFailure>),
+    /// Source conic admission declined.
+    Analytic(Box<OperationDecline>),
     /// The original signed boundary area did not produce a bounded enclosure.
     Measure(Box<RationalIntegralError>),
     /// Reference geometry or its monotone proof remained unresolved.
@@ -40,6 +42,7 @@ impl std::fmt::Display for RationalWrappedFailure {
         match self {
             Self::Input { actual, expected } => write!(f, "{actual}; expected {expected}"),
             Self::Planar(cause) => cause.fmt(f),
+            Self::Analytic(cause) => cause.fmt(f),
             Self::Measure(cause) => cause.fmt(f),
             Self::Reference(cause) => cause.fmt(f),
             Self::Wrapped(cause) => cause.fmt(f),
@@ -51,6 +54,7 @@ impl std::error::Error for RationalWrappedFailure {
         match self {
             Self::Input { .. } => None,
             Self::Planar(cause) => Some(cause.as_ref()),
+            Self::Analytic(cause) => Some(cause.as_ref()),
             Self::Measure(cause) => Some(cause.as_ref()),
             Self::Reference(cause) => Some(cause.as_ref()),
             Self::Wrapped(cause) => Some(cause.as_ref()),
@@ -132,7 +136,7 @@ impl RationalWrappedResult {
     }
 }
 
-/// Extrude one monotone positive rational Bézier joined to straight outer edges.
+/// Extrude a rational spline or exact analytic quarter with optional straight outer edges.
 /// Requires one material region and symmetric depths away from the cylindrical axis.
 /// The reference level specifies the dyadic intervals used in the original curve parameter.
 /// Example: `let body = normal_extrude_rational_cylinder(&request, 4, || false)?;`.
@@ -142,7 +146,7 @@ pub fn normal_extrude_rational_cylinder(
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Checked<RationalWrappedResult> {
     super::input::poll(&mut cancelled, WrappedStage::Admission).map_err(wrapped_failure)?;
-    let source = input::read(&request.profile, &request.selections)?;
+    let source = input::read(&request.profile, &request.selections, request.options)?;
     let support = domain::cylinder(request)?;
     let prepared = prepare(
         source,
@@ -162,7 +166,7 @@ pub fn normal_extrude_rational_cylinder(
     )
 }
 
-/// Extrude one monotone positive rational Bézier joined to straight outer edges on a cone.
+/// Extrude a rational spline or exact analytic quarter with optional straight outer edges on a cone.
 /// Requires symmetric depths, one chart in the positive developed halfplane, and clearance
 /// from the apex throughout the sweep. Example: `normal_extrude_rational_cone(&request, 4, || false)?`.
 pub fn normal_extrude_rational_cone(
@@ -171,7 +175,7 @@ pub fn normal_extrude_rational_cone(
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Checked<RationalWrappedResult> {
     super::input::poll(&mut cancelled, WrappedStage::Admission).map_err(wrapped_failure)?;
-    let source = input::read(&request.profile, &request.selections)?;
+    let source = input::read(&request.profile, &request.selections, request.options)?;
     let support = domain::cone(request, &source)?;
     let prepared = prepare(
         source,
@@ -222,9 +226,10 @@ fn prepare(
     let (area, planar_work) = original_area(options, &source, cancelled)?;
     let scale = support.scale();
     let limit = (options.spatial_error / (4. * scale)).next_down();
-    let reference = fit(reference_level, &source, limit, cancelled)?;
+    let reference = fit::cover(reference_level, &source, limit, cancelled)?;
     support.check(&source, &reference)?;
-    let proxy = proxy::build(options, &source, &reference, scale)?;
+    let proxy_options = reference_options(options, planar_work)?;
+    let proxy = proxy::build(proxy_options, &source, &reference, scale)?;
     let source = AuthoredSource {
         profile: source.profile,
         selection: source.selection.clone(),
@@ -232,6 +237,23 @@ fn prepare(
         planar_work,
     };
     Ok(Prepared { proxy, source })
+}
+
+fn reference_options(
+    mut options: WrappedNormalOptions,
+    work: PlanarProofWorkReceipt,
+) -> Checked<WrappedNormalOptions> {
+    let available = u64::from(work.effective_pair_bisections);
+    let remaining = available
+        .checked_sub(work.consumed_pair_bisections)
+        .ok_or_else(|| {
+            invalid(
+                format!("authored planar work={work:?}"),
+                "consumed bisections within the requested allowance",
+            )
+        })?;
+    options.planar_work = PlanarProofWorkLimit::PairBisections(remaining as u16);
+    Ok(options)
 }
 
 impl Prepared {
@@ -261,30 +283,21 @@ impl Prepared {
     }
 }
 
-fn fit(
-    level: u8,
-    source: &input::Source<'_>,
-    limit: f64,
-    cancelled: &mut CancelPoll<'_>,
-) -> Checked<Vec<RationalReferenceSpan>> {
-    let query = RationalReferenceRequest {
-        source: source.curve,
-        level,
-        limits: [limit, limit],
-        direction: source.direction(),
-        options: Default::default(),
-    };
-    fit_rational_bezier_reference(query, cancelled)
-        .map_err(|cause| RationalWrappedFailure::Reference(Box::new(cause)))
-}
-
 fn original_area(
     options: WrappedNormalOptions,
     source: &input::Source<'_>,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<(CertifiedRationalMeasure, PlanarProofWorkReceipt)> {
+    let partition = (source.spans.len() > 1)
+        .then(|| proxy::native_partition(source, options))
+        .transpose()?;
+    let (profile, selection) = partition
+        .as_ref()
+        .map_or((&source.profile, source.selection), |p| {
+            (&p.profile, &p.selection)
+        });
     let regions = build_planar_regions_with_work_and_cancel(
-        &source.profile,
+        profile,
         pipeline::resolution(options.spatial_error),
         options.planar_work,
         &mut *cancelled,
@@ -296,7 +309,7 @@ fn original_area(
             "one certified original region",
         ));
     };
-    source.matches_boundary(region.outer(), region.holes())?;
+    input::matches_boundary(selection, region.outer(), region.holes())?;
     let area = certify_rational_face_area(&source.area_wire()?, &[], Default::default(), cancelled)
         .map_err(|cause| RationalWrappedFailure::Measure(Box::new(cause)))?;
     Ok((area, regions.proof_work()))

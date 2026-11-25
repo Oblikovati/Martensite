@@ -56,16 +56,12 @@ impl Proxy {
         key.source = match key.source {
             WrappedEntitySource::Curve { curve, span } => self.curve_key(curve, span)?,
             WrappedEntitySource::SplitVertex { curve, point } => self.split_key(curve, point)?,
-            WrappedEntitySource::Vertex(vertex) => {
-                self.joins
-                    .get(&vertex)
-                    .map_or(WrappedEntitySource::Vertex(vertex), |&point| {
-                        WrappedEntitySource::SplitVertex {
-                            curve: self.source,
-                            point,
-                        }
-                    })
-            }
+            WrappedEntitySource::Vertex(vertex) => self
+                .joins
+                .get(&vertex)
+                .map_or(WrappedEntitySource::Vertex(vertex), |&point| {
+                    self.authored_point(point)
+                }),
             other => other,
         };
         Ok(key)
@@ -80,13 +76,15 @@ impl Proxy {
             return Ok(WrappedEntitySource::Curve { curve, span });
         };
         let (index, level) = compose(*base, span.index, span.level)?;
-        Ok(WrappedEntitySource::Curve {
-            curve: self.source,
-            span: WrappedSourceSpan {
-                level,
-                index,
-                reversed: span.reversed,
-            },
+        let span = WrappedSourceSpan {
+            level,
+            index,
+            reversed: span.reversed,
+        };
+        let curve = self.source;
+        Ok(match self.parameter_map {
+            Some(map) => WrappedEntitySource::MappedCurve { curve, span, map },
+            None => WrappedEntitySource::Curve { curve, span },
         })
     }
 
@@ -99,10 +97,15 @@ impl Proxy {
             return Ok(WrappedEntitySource::SplitVertex { curve, point: old });
         };
         let (numerator, level) = compose(*base, old.numerator, old.level)?;
-        Ok(WrappedEntitySource::SplitVertex {
-            curve: self.source,
-            point: point(numerator, level),
-        })
+        Ok(self.authored_point(point(numerator, level)))
+    }
+
+    fn authored_point(&self, point: WrappedSourcePoint) -> WrappedEntitySource {
+        let curve = self.source;
+        match self.parameter_map {
+            Some(map) => WrappedEntitySource::MappedSplitVertex { curve, point, map },
+            None => WrappedEntitySource::SplitVertex { curve, point },
+        }
     }
 }
 
