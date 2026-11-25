@@ -328,3 +328,17 @@ fn a_large_pivot_keeps_local_offsets_and_exact_axis_points() {
         point([1., height + 4., 0.])
     );
 }
+
+#[test]
+fn an_unconstrained_line_refuses_a_translation_that_would_double_its_length() {
+    let accepted = source();
+    let sketch =
+        ConstrainedSketch::new(accepted.geometry().clone(), crate::constraints::policy()).unwrap();
+    let displacement = f64::from_bits(1076_u64 << 52);
+    let motion = RigidMotion::Translate(Vector3::new(displacement, 0., 0.));
+    let result = sketch.transform_points(&[pid(1), pid(2)], motion, || false);
+    assert!(
+        matches!(result, Err(RigidMotionFailure::PositionError { point, .. }) if point == pid(1))
+    );
+    assert_eq!(sketch.geometry().line(lid(4)).unwrap().length_estimate, 1.);
+}

@@ -2,6 +2,7 @@
 //! Exact signs of supplied binary64 coordinates, separate from metric tolerance.
 //! This extension does not change the metric decisions.
 
+mod affine_point;
 /// Exact injectivity certificates for supported bilinear patches.
 pub mod bilinear_patch;
 mod compare;
@@ -10,6 +11,7 @@ pub mod roots;
 mod segment_contact;
 mod triangle;
 mod triple_product;
+pub use affine_point::compare_affine_point_error_3d;
 pub use compare::{
     compare_line_projections_2d, compare_squared_distances_2d, compare_squared_length_3d,
 };

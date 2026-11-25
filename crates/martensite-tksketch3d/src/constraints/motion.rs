@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Apply a specified rigid motion without allowing a solver to move other points.
 use super::{ConstrainedSketch, ConstraintFailure, adopt::apply_checked, poll, program::Program};
-use crate::{Edit, PointId, Snapshot};
+use crate::{Edit, MinimumLength, PointId, Snapshot};
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::{
     gp::{Axis1, Direction3, Point3, Transform3, Vector3},
-    predicates::{NonFiniteCoordinate, point_on_anchored_direction_3d},
+    predicates::{
+        NonFiniteCoordinate, compare_affine_point_error_3d, point_on_anchored_direction_3d,
+    },
 };
-use std::{collections::BTreeSet, error::Error, fmt, sync::Arc};
+use std::{cmp::Ordering, collections::BTreeSet, error::Error, fmt, sync::Arc};
 
 /// Motion acting on the selected owned points in model coordinates.
 #[derive(Clone, Copy, Debug)]
@@ -35,8 +37,20 @@ pub enum RigidMotionFailure {
     InvalidMotion(RigidMotion),
     /// The native rotation constructor refused the supplied axis or angle.
     NativeRotation(Failure),
-    /// A coordinate is outside the exact on-axis test domain.
-    AxisInput(NonFiniteCoordinate),
+    /// A coordinate is outside a finite exact comparison domain.
+    MetricInput {
+        /// Selected point.
+        point: PointId,
+        /// Nonfinite operand of the calculation.
+        source: NonFiniteCoordinate,
+    },
+    /// The stored position misses the applied nominal motion by more than the length tolerance.
+    PositionError {
+        /// Selected point whose result exceeded the limit.
+        point: PointId,
+        /// Maximum discrepancy in model units.
+        limit: MinimumLength,
+    },
     /// A point, geometry check, relation check or cancellation declined adoption.
     Constraint(ConstraintFailure),
 }
@@ -57,7 +71,14 @@ impl fmt::Display for RigidMotionFailure {
             Self::NativeRotation(error) => {
                 write!(output, "rigid rotation construction failed: {error}")
             }
-            Self::AxisInput(error) => write!(output, "rigid rotation axis test failed: {error}"),
+            Self::MetricInput { point, source } => {
+                write!(output, "rigid motion point {point:?}: {source}")
+            }
+            Self::PositionError { point, limit } => write!(
+                output,
+                "rigid motion point {point:?} exceeds the position limit {}",
+                limit.value()
+            ),
             Self::Constraint(error) => error.fmt(output),
         }
     }
@@ -67,7 +88,7 @@ impl Error for RigidMotionFailure {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::NativeRotation(error) => Some(error),
-            Self::AxisInput(error) => Some(error),
+            Self::MetricInput { source, .. } => Some(source),
             Self::Constraint(error) => Some(error),
             _ => None,
         }
@@ -84,7 +105,9 @@ impl ConstrainedSketch {
     /// Translate or rotate a selection in one checked edit.
     /// The matching point IDs and all incident line recipes stay in the adopted snapshot.
     /// A Fixed or captured point must retain its coordinates, and every authored relation
-    /// must still pass its physical check. Example: `sketch.transform_points(&ids, motion, || false)?`.
+    /// must still pass its physical check. The policy's length tolerance caps the placement
+    /// error against the exact translation or the native binary64 rotation coefficients.
+    /// Example: `sketch.transform_points(&ids, motion, || false)?`.
     pub fn transform_points(
         &self,
         points: &[PointId],
@@ -93,7 +116,13 @@ impl ConstrainedSketch {
     ) -> Result<Self, RigidMotionFailure> {
         poll(&mut cancelled)?;
         let transform = motion.native_transform()?;
-        let edits = staged_moves(&self.geometry, points, transform, &mut cancelled)?;
+        let edits = staged_moves(
+            &self.geometry,
+            points,
+            transform,
+            self.policy.length_tolerance,
+            &mut cancelled,
+        )?;
         let geometry = apply_checked(
             &self.geometry,
             &self.relations,
@@ -136,38 +165,83 @@ impl RigidMotion {
 }
 
 impl PreparedMotion {
-    fn apply(self, point: Point3) -> Result<Point3, RigidMotionFailure> {
+    fn apply(
+        self,
+        point: PointId,
+        source: Point3,
+        limit: MinimumLength,
+    ) -> Result<Point3, RigidMotionFailure> {
         match self {
-            Self::Translation(translation) => Ok(point.transformed(translation)),
-            Self::Rotation { axis, local } => rotate_about_axis(point, axis, local),
+            Self::Translation(translation) => checked_affine(
+                point,
+                source,
+                source.transformed(translation),
+                [[0.; 3], *translation.translation_part().coordinates()],
+                translation,
+                limit,
+            ),
+            Self::Rotation { axis, local } => rotate_about_axis(point, source, axis, local, limit),
         }
     }
 }
 
 fn rotate_about_axis(
-    point: Point3,
+    point: PointId,
+    source: Point3,
     axis: Axis1,
     local: Transform3,
+    limit: MinimumLength,
 ) -> Result<Point3, RigidMotionFailure> {
     let pivot = axis.location();
     let on_axis = point_on_anchored_direction_3d(
         *pivot.coordinates(),
-        *point.coordinates(),
+        *source.coordinates(),
         *axis.direction().coordinates(),
     )
-    .map_err(RigidMotionFailure::AxisInput)?;
+    .map_err(|source| RigidMotionFailure::MetricInput { point, source })?;
     if on_axis {
-        return Ok(point);
+        return Ok(source);
     }
     // Work relative to the pivot so a large world-space offset does not erase local motion.
-    let offset = Point3::from(point.xyz() - pivot.xyz());
-    Ok(Point3::from(offset.transformed(local).xyz() + pivot.xyz()))
+    let offset = Point3::from(source.xyz() - pivot.xyz());
+    let target = Point3::from(offset.transformed(local).xyz() + pivot.xyz());
+    checked_affine(
+        point,
+        source,
+        target,
+        [*pivot.coordinates(); 2],
+        local,
+        limit,
+    )
+}
+
+fn checked_affine(
+    point: PointId,
+    source: Point3,
+    target: Point3,
+    anchors: [[f64; 3]; 2],
+    transform: Transform3,
+    limit: MinimumLength,
+) -> Result<Point3, RigidMotionFailure> {
+    let comparison = compare_affine_point_error_3d(
+        *source.coordinates(),
+        *target.coordinates(),
+        anchors,
+        *transform.matrix().coefficients(),
+        limit.value(),
+    )
+    .map_err(|source| RigidMotionFailure::MetricInput { point, source })?;
+    if comparison == Ordering::Greater {
+        return Err(RigidMotionFailure::PositionError { point, limit });
+    }
+    Ok(target)
 }
 
 fn staged_moves(
     geometry: &Snapshot,
     points: &[PointId],
     transform: PreparedMotion,
+    limit: MinimumLength,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<Vec<Edit>, RigidMotionFailure> {
     if points.is_empty() {
@@ -183,7 +257,7 @@ fn staged_moves(
         let current = geometry
             .point(point)
             .ok_or(ConstraintFailure::MissingPoint(point))?;
-        let position = transform.apply(current.position)?;
+        let position = transform.apply(point, current.position, limit)?;
         if position != current.position {
             edits.push(Edit::MovePoint { point, position });
         }
