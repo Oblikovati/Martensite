@@ -128,6 +128,7 @@ fn include_reversed_located_trim_and_independent_nominated_endpoint_names() {
         sketch
     );
     assert_immutable_candidate(&sketch, &source, revision);
+    println!("include-owned-receipt={accepted:?}");
 }
 
 fn assert_immutable_candidate(
@@ -199,6 +200,10 @@ fn rebind_changes_only_the_same_source_revision_and_preserves_named_ids() {
         Some(CurveRole::Construction)
     );
     assert!(!rebound.included_line(lid(3)).unwrap().is_affected_by(old));
+    println!(
+        "include-rebind-receipt={:?}",
+        rebound.included_line(lid(3)).unwrap()
+    );
     assert!(matches!(
         rebound.rebind_included_line(request, newer.resolve(next), || false),
         Err(IncludeGeometryError::StaleLink { .. })

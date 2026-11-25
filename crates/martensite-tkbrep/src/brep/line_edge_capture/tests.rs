@@ -22,7 +22,9 @@ fn fixture() -> (Edge, [Vertex; 2]) {
         .unwrap();
     builder.range(&edge, 2., 4., false).unwrap();
     for (i, (vertex, t)) in vertices.iter_mut().zip([2., 4.]).enumerate() {
-        builder.make_vertex_at(vertex, Point3::new(5., 2., t), 1e-7);
+        builder
+            .make_vertex_at(vertex, Point3::new(5., 2., t), 1e-7)
+            .unwrap();
         let orientation = [Orientation::Forward, Orientation::Reversed][i];
         Builder
             .add(&mut edge, &vertex.oriented(orientation))
