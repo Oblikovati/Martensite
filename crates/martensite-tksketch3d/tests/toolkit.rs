@@ -3,6 +3,7 @@
 mod admission;
 mod arcs;
 mod constraints;
+mod construction;
 mod fixture;
 mod frozen_point;
 mod values;

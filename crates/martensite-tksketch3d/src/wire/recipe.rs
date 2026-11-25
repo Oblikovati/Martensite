@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::{DirectedLineUse, WireClosure, WireFailure, WirePhase, poll};
-use crate::{LineGeometry, PointId, Snapshot};
+use crate::{CurveId, LineGeometry, PointId, Snapshot};
 use martensite_tkmath::predicates::{SegmentContact3d, exact_segment_contact_3d};
 use std::collections::BTreeSet;
 
@@ -96,6 +96,9 @@ fn resolve(
         let authored = snapshot
             .line(source.line)
             .ok_or(WireFailure::MissingLine(source.line))?;
+        if snapshot.construction.contains(&CurveId::Line(source.line)) {
+            return Err(WireFailure::ConstructionLine(source.line));
+        }
         segments.push(WireSegment { source, authored });
     }
     Ok(segments)

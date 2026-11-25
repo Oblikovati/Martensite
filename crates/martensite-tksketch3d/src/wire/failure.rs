@@ -26,6 +26,8 @@ pub enum WireFailure {
     Empty,
     /// A line occurrence is absent from the source snapshot.
     MissingLine(LineId),
+    /// A construction line was selected as a model wire occurrence.
+    ConstructionLine(LineId),
     /// Using one authored line more than once makes its occurrence identity ambiguous.
     RepeatedLine(LineId),
     /// Consecutive line uses have different terminal point identities.
@@ -99,6 +101,10 @@ impl fmt::Display for WireFailure {
         match self {
             Self::Empty => write!(f, "wire requires at least one directed line use, got zero"),
             Self::MissingLine(line) => write!(f, "wire line {line:?} must exist in the snapshot"),
+            Self::ConstructionLine(line) => write!(
+                f,
+                "wire line {line:?} has the construction role, expected model geometry"
+            ),
             Self::RepeatedLine(line) => write!(f, "wire line {line:?} must occur once"),
             Self::DisjointUses { lines, points } => {
                 write!(

@@ -12,7 +12,10 @@ pub use arc::{ArcDefinition, ArcFailure, ArcFitTolerance, ArcGeometry, ArcId, Sk
 pub use failure::{BatchPhase, EditFailure, InvalidMinimumLength};
 use martensite_tkmath::gp::{Line3, Point3};
 pub use source::FrozenPointSource;
-use std::{collections::BTreeMap, num::NonZeroU64};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    num::NonZeroU64,
+};
 
 /// Caller-reserved identity for one point. All entities share a numeric namespace.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -55,6 +58,33 @@ pub enum EntityId {
     Line(LineId),
     /// Circular arc identity.
     Arc(ArcId),
+}
+
+/// A sketch curve whose modelling participation can change without replacing its identity.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum CurveId {
+    /// A straight segment.
+    Line(LineId),
+    /// A circular arc.
+    Arc(ArcId),
+}
+
+impl CurveId {
+    fn entity(self) -> EntityId {
+        match self {
+            Self::Line(id) => EntityId::Line(id),
+            Self::Arc(id) => EntityId::Arc(id),
+        }
+    }
+}
+
+/// An authored curve's participation in modelling.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CurveRole {
+    /// A curve eligible for use in operations such as wire construction.
+    Model,
+    /// A reference curve available to the sketch and excluded from modelling wires.
+    Construction,
 }
 
 /// Authored role, independent of the number of lines using the point.
@@ -156,6 +186,13 @@ pub enum Edit {
     InsertLine(SketchLine),
     /// Add a circular arc. Its placement points must exist by the end of the batch.
     InsertArc(SketchArc),
+    /// Change a curve's modelling participation while retaining its authored geometry.
+    SetCurveRole {
+        /// Existing curve identity.
+        curve: CurveId,
+        /// Role to store in the accepted snapshot.
+        role: CurveRole,
+    },
     /// Make a frozen point editable while keeping its identity, coordinates and incident curves.
     DetachFrozenPoint(PointId),
     /// Remove a point and its incident curves. Cascaded curves cannot be removed again.
@@ -181,6 +218,13 @@ impl Entity {
             Self::Arc(arc) => EntityId::Arc(arc.id),
         }
     }
+    fn curve(self) -> Option<CurveId> {
+        match self {
+            Self::Point(_) => None,
+            Self::Line(line) => Some(CurveId::Line(line.id)),
+            Self::Arc(arc) => Some(CurveId::Arc(arc.id)),
+        }
+    }
 }
 
 impl EntityId {
@@ -203,6 +247,7 @@ pub struct Snapshot {
     entities: BTreeMap<NonZeroU64, Entity>,
     geometry: BTreeMap<LineId, LineGeometry>,
     arcs: BTreeMap<ArcId, ArcGeometry>,
+    construction: BTreeSet<CurveId>,
     frozen: BTreeMap<PointId, FrozenPointSource>,
 }
 
@@ -214,6 +259,7 @@ impl Snapshot {
             entities: BTreeMap::new(),
             geometry: BTreeMap::new(),
             arcs: BTreeMap::new(),
+            construction: BTreeSet::new(),
             frozen: BTreeMap::new(),
         }
     }
@@ -239,6 +285,20 @@ impl Snapshot {
     /// Return a validated circular arc value. Example: `snapshot.arc(arc_id)`.
     pub fn arc(&self, key: ArcId) -> Option<ArcGeometry> {
         self.arcs.get(&key).copied()
+    }
+
+    /// Return the authored role of an existing curve. Example: `snapshot.curve_role(curve_id)`.
+    pub fn curve_role(&self, curve: CurveId) -> Option<CurveRole> {
+        let entity = self.entities.get(&curve.entity().raw())?;
+        if entity.curve() != Some(curve) {
+            return None;
+        }
+        let role = if self.construction.contains(&curve) {
+            CurveRole::Construction
+        } else {
+            CurveRole::Model
+        };
+        Some(role)
     }
 
     /// Enumerate all owned IDs in ascending raw-key order. Example: `snapshot.owned_ids().count()`.

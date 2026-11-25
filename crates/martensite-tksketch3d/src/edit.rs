@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Stage values first so complete geometry, including shared endpoints, admits together.
 use crate::{
-    ArcGeometry, ArcId, BatchPhase, Edit, EditFailure, Entity, EntityId, LineId, PointId,
-    PointRole, SketchLine, SketchPoint, Snapshot, admission, arc,
+    ArcGeometry, ArcId, BatchPhase, CurveId, CurveRole, Edit, EditFailure, Entity, EntityId,
+    LineId, PointId, PointRole, SketchLine, SketchPoint, Snapshot, admission, arc,
 };
 use martensite_tkmath::gp::Point3;
 use std::{
@@ -30,6 +30,7 @@ impl Snapshot {
             entities: self.entities.clone(),
             geometry: Default::default(),
             arcs: Default::default(),
+            construction: self.construction.clone(),
             frozen: self.frozen.clone(),
         };
         let mut retired = RetiredIds::new();
@@ -65,12 +66,24 @@ impl Snapshot {
             }
             Edit::InsertLine(line) => self.insert(Entity::Line(line), retired),
             Edit::InsertArc(arc) => self.insert(Entity::Arc(arc), retired),
+            Edit::SetCurveRole { curve, role } => self.set_curve_role(curve, role),
             Edit::MovePoint { point, position } => self.move_point(point, position),
             Edit::DetachFrozenPoint(point) => self.detach_frozen_point(point),
             Edit::RemovePoint(point) => self.remove_point(point, retired, cancelled),
             Edit::RemoveLine(line) => self.remove(EntityId::Line(line), retired),
             Edit::RemoveArc(arc) => self.remove(EntityId::Arc(arc), retired),
         }
+    }
+
+    fn set_curve_role(&mut self, curve: CurveId, role: CurveRole) -> Result<(), EditFailure> {
+        if self.curve_role(curve).is_none() {
+            return Err(EditFailure::MissingEditTarget(curve.entity()));
+        }
+        match role {
+            CurveRole::Construction => self.construction.insert(curve),
+            CurveRole::Model => self.construction.remove(&curve),
+        };
+        Ok(())
     }
 
     fn insert_point(
@@ -165,7 +178,9 @@ impl Snapshot {
             && entry.get().id() == key
         {
             retired.insert(key.raw(), key);
-            entry.remove();
+            if let Some(curve) = entry.remove().curve() {
+                self.construction.remove(&curve);
+            }
             if let EntityId::Point(point) = key {
                 self.frozen.remove(&point);
             }

@@ -352,3 +352,26 @@ fn arc_cache_refreshes_when_an_authored_coordinate_changes_only_its_zero_sign() 
         (-0.0_f64).to_bits()
     );
 }
+
+#[test]
+fn a_construction_arc_keeps_its_trim_and_center_point_roles() {
+    use martensite_tksketch3d::{CurveId, CurveRole};
+
+    let original = create(
+        [[5., 0., 0.], [0., 5., 0.], [0.; 3]],
+        centered(Direction3::Z),
+        1e-9,
+    )
+    .unwrap();
+    let curve = CurveId::Arc(aid());
+    let edit = Edit::SetCurveRole {
+        curve,
+        role: CurveRole::Construction,
+    };
+    let marked = original.apply(&[edit], || false).unwrap();
+    assert_eq!(marked.curve_role(curve), Some(CurveRole::Construction));
+    assert_eq!(marked.arc(aid()), original.arc(aid()));
+    assert_eq!(marked.point(pid(3)), original.point(pid(3)));
+    let removed = marked.apply(&[Edit::RemoveArc(aid())], || false).unwrap();
+    assert_eq!(removed.curve_role(curve), None);
+}
