@@ -13,6 +13,26 @@ pub(in crate::surface_sketch::full_turn) struct SeamCrossings {
     pub angular_spans: [[f64; 2]; 2],
 }
 
+pub(super) struct CutPlacement {
+    pub crossings: Option<SeamCrossings>,
+    angular_clearance: f64,
+}
+
+impl CutPlacement {
+    pub(super) fn check_linear(&self, radius: f64, floor: f64) -> Checked<()> {
+        // For the nearest cut the physical angle is at most pi. Concavity
+        // gives 2r sin(angle/2) >= (2/pi) r angle over that interval.
+        let chord_factor = (2. / PI.next_up()).next_down();
+        let chord = ((self.angular_clearance * chord_factor).next_down() * radius).next_down();
+        cylinder_admission::require(
+            chord > floor,
+            "aperture seam fragment clearance",
+            chord,
+            "certified physical chord greater than effective spatial separation",
+        )
+    }
+}
+
 pub(super) struct CutLattice {
     developed: DevelopedPeriod,
     phase: f64,
@@ -46,21 +66,28 @@ impl CutLattice {
         })
     }
 
-    pub(super) fn classify(&self, contour: tool::Contour) -> Checked<Option<SeamCrossings>> {
+    pub(super) fn classify(&self, contour: tool::Contour) -> Checked<CutPlacement> {
         let [first, last] = contour.lift;
         cylinder_admission::finite("aperture angular endpoints", &contour.lift)?;
         let margin = self.margin(contour.lift);
         let width = self.width(first, last, margin)?;
-        let a = self.sheet(first, margin)?;
-        let b = self.sheet(last, margin)?;
-        match b - a {
-            0 => Ok(None),
-            1 => self.crossing(contour, b, width).map(Some),
-            _ => Err(incomplete(
-                "at most one transverse cut per aperture",
-                format!("sheets {a}..{b}"),
-            )),
-        }
+        let (a, clear_a) = self.sheet(first, margin)?;
+        let (b, clear_b) = self.sheet(last, margin)?;
+        let crossings = match b - a {
+            0 => None,
+            1 => Some(self.crossing(contour, b, width)?),
+            _ => {
+                return Err(incomplete(
+                    "at most one transverse cut per aperture",
+                    format!("sheets {a}..{b}"),
+                ));
+            }
+        };
+        let angular_clearance = (clear_a.min(clear_b) / self.developed.scale[1]).next_down();
+        Ok(CutPlacement {
+            crossings,
+            angular_clearance,
+        })
     }
 
     fn width(&self, first: f64, last: f64, margin: f64) -> Checked<[f64; 2]> {
@@ -105,7 +132,7 @@ impl CutLattice {
         ((self.angular_margin + rounding) * self.developed.scale[1]).next_up()
     }
 
-    fn sheet(&self, coordinate: f64, margin: f64) -> Checked<i64> {
+    fn sheet(&self, coordinate: f64, margin: f64) -> Checked<(i64, f64)> {
         let estimate = (coordinate / self.developed.period[0]).floor();
         cylinder_admission::require(
             estimate.abs() < EXACT_TURN_LIMIT,
@@ -115,17 +142,18 @@ impl CutLattice {
         )?;
         let estimate = estimate as i64;
         for candidate in [estimate, estimate - 1, estimate + 1] {
-            if self.in_sheet(coordinate, margin, candidate) {
-                return Ok(candidate);
+            let distance = self.sheet_boundary_distance(coordinate, candidate);
+            if distance > margin {
+                return Ok((candidate, distance));
             }
         }
         Err(crossing_clearance(coordinate))
     }
 
-    fn in_sheet(&self, coordinate: f64, margin: f64, sheet: i64) -> bool {
+    fn sheet_boundary_distance(&self, coordinate: f64, sheet: i64) -> f64 {
         let lo = (coordinate - self.cut(sheet)[1]).next_down();
         let hi = (self.cut(sheet + 1)[0] - coordinate).next_down();
-        lo.min(hi) > margin
+        lo.min(hi)
     }
 
     fn cut(&self, turn: i64) -> [f64; 2] {

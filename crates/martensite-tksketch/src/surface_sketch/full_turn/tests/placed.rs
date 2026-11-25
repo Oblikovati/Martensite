@@ -127,6 +127,62 @@ fn width_overlap_and_unresolved_lifted_contact_refuse_in_admission() {
     }
 }
 
+#[test]
+fn cylinder_cut_near_the_seam_requires_physical_fragment_clearance() {
+    let band = cylinder(NormalSense::Outward, 0.);
+    let near = CylinderBandHole {
+        arc_length: [-5e-8, 1.],
+        ..seam_crossing_hole()
+    };
+    let too_short =
+        normal_extrude_cylinder_band_at_authored_seam(&band, &near, [-1., 2.], options())
+            .unwrap_err();
+    check_fragment_refusal(too_short);
+    let resolved = CylinderBandHole {
+        arc_length: [-5e-6, 1.],
+        ..near
+    };
+    let result =
+        normal_extrude_cylinder_band_at_authored_seam(&band, &resolved, [-1., 2.], options())
+            .unwrap();
+    assert_eq!(result.crossings().len(), 2);
+}
+
+#[test]
+fn cone_cut_near_the_seam_requires_clearance_at_its_smallest_offset_rim() {
+    let mut band = cone(NormalSense::Outward, 0.);
+    let FullTurnSupport::Cone { slant, .. } = &mut band.support else {
+        panic!("conical stock");
+    };
+    *slant = [4., 8.];
+    let source = seam_crossing_hole();
+    let near = ConeBandHole {
+        developed_angle: [-5e-9, 0.125],
+        slant: [5., 7.],
+        corners: source.corners,
+        boundaries: source.boundaries,
+    };
+    let too_short =
+        normal_extrude_cone_band_at_authored_seam(&band, &near, [-0.25, 0.5], options())
+            .unwrap_err();
+    check_fragment_refusal(too_short);
+    let resolved = ConeBandHole {
+        developed_angle: [-1e-6, 0.125],
+        ..near
+    };
+    let result =
+        normal_extrude_cone_band_at_authored_seam(&band, &resolved, [-0.25, 0.5], options())
+            .unwrap();
+    assert_eq!(result.crossings().len(), 2);
+}
+
+fn check_fragment_refusal(error: SurfaceSketchFailure) {
+    assert_eq!(error.stage, SurfaceStage::Admission);
+    assert!(matches!(error.cause, SurfaceFailureCause::InvalidInput {
+        field: "aperture seam fragment clearance", value, ..
+    } if 0. < value && value < 1e-6));
+}
+
 fn cylinder_apertures(sign: f64) -> (FullTurnBand, [CylinderBandHole; 2]) {
     let mut band = cylinder(NormalSense::Outward, 0.);
     let FullTurnSupport::Cylinder { axial, .. } = &mut band.support else {

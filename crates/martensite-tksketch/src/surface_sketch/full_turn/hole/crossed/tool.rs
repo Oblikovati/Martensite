@@ -85,6 +85,18 @@ impl ApertureOperand {
         }
     }
 
+    pub(super) fn minimum_radius(&self) -> f64 {
+        let radius = [PeriodicDepth::First, PeriodicDepth::Last]
+            .into_iter()
+            .flat_map(|depth| [0, 1].map(|rim| self.meridian(depth, rim)[0]))
+            .fold(f64::INFINITY, f64::min);
+        let coordinate_error = match self {
+            Self::Cylinder(a) => a.coordinate_error,
+            Self::Cone(a) => a.sweep.coordinate_error,
+        };
+        (radius - coordinate_error).next_down()
+    }
+
     pub(in crate::surface_sketch::full_turn) fn meridian(
         &self,
         depth: PeriodicDepth,
