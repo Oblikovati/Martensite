@@ -5,7 +5,7 @@ use crate::{
 };
 use martensite_tkmath::gp::Direction3;
 use martensite_tksketch3d::{
-    Edit, FrozenPointSource, LineId, PointRole, SketchPoint, Snapshot,
+    Edit, FrozenPointSource, FrozenSourceRevision, LineId, PointRole, SketchPoint, Snapshot,
     constraints::{ConstrainedSketch, ConstraintFailure, RelationEdit, RelationSpec},
 };
 use std::num::NonZeroU64;
@@ -197,8 +197,10 @@ fn parallel_lines(
     let source = frozen.then(|| FrozenPointSource {
         document: [7; 16],
         sketch: NonZeroU64::new(50).unwrap(),
-        incarnation: 1,
-        revision: 3,
+        revision: FrozenSourceRevision::Snapshot {
+            incarnation: 1,
+            revision: 3,
+        },
         point: pid(32),
     });
     let third = source.map_or_else(
@@ -454,8 +456,10 @@ fn frozen_anchor(id: u64, location: [f64; 3]) -> Edit {
         source: FrozenPointSource {
             document: [8; 16],
             sketch: NonZeroU64::new(50).unwrap(),
-            incarnation: 2,
-            revision: 5,
+            revision: FrozenSourceRevision::Snapshot {
+                incarnation: 2,
+                revision: 5,
+            },
             point: pid(33),
         },
     }
