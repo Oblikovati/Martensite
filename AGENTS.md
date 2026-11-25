@@ -352,8 +352,9 @@ milestone and issue states its own scope, dependencies, and acceptance criteria.
 
 ## Integration workflow
 
-- Use `main` as the integration branch. Create each integration pull request with
-  `gh` and merge it with `gh` after all required checks are green.
+- Target `main` for every pull request, including features, fixes, and release
+  preparation. Open pull requests with `gh` and merge them with `gh` once
+  all required checks pass.
 - The coordinating agent serializes merges, resolves conflicts, and runs the
   relevant checks. A subagent's work is complete only after its committed changes
   are integrated into `main`.
@@ -462,23 +463,8 @@ milestone and issue states its own scope, dependencies, and acceptance criteria.
   subcommands, breaking MCP schema changes, big rewrites). Before 1.0.0 each
   level moves down one, as in CONTRIBUTING.md: additive changes ship in a patch
   release and breaking changes in a minor release (`0.Y.0`).
-- **Release cadence and ordering.** Batch tickets by semver impact and
-  ship fixes as a patch release promptly — never let a bug fix wait on
-  unreleased feature work. The `[Unreleased]` section signals the bump:
-  only `### Fixed` → patch; any `### Added` → minor; anything breaking →
-  major. Bucket incoming work at triage with the `breaking-change` label
-  and version milestones.
-- **Branch model.** `main` is the patch line: it takes fixes and docs only
-  (`[Unreleased]` holds only `### Fixed`), and patch tags are cut from it.
-  Additive work targets the standing release candidate branch. Check the
-  latest published tag and remote release branches before choosing a PR base;
-  do not infer the current release from a branch name. A candidate branch
-  does not authorize a version bump, tag or publication.
-  Keep `main` an ancestor of it by forward-merging
-  `main` into it after every fix lands, never the reverse; when a patch
-  release ships, rebuild the branch's `[Unreleased]` as only its own entries
-  so released sections stay identical to `main`'s. A fix lands on `main`
-  first. To ship the minor, merge the candidate branch into `main`, run the release
-  gates on that SHA and tag from `main`; that candidate branch then goes
-  dormant. A PR's base branch follows its semver bucket: fixes → `main`,
-  features → the standing candidate branch.
+- **Release cadence and ordering.** Ship fixes promptly. Determine the
+  release bump from all entries in `[Unreleased]` and the current version.
+  Use the `breaking-change` label and version milestones at triage.
+- **Release source.** Merge release preparation into `main`. Run the release
+  gates on the exact commit on `main` and tag that commit after approval.

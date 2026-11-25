@@ -449,9 +449,8 @@ phase 0 ──► phase 1 ──► phase 2 ──┬──► phase 3 ──┐
 | Phases 3 and 4 | + structures, transparent, text, highlight (all 13 slower cases) |
 | Phase 5 | the assembly cases faster than OCCT |
 
-Phases 3 and 4 do not depend on each other and can run in parallel lanes. Each phase is
-one or more pull requests to the standing release candidate branch, and each pull request
-reports its harness table.
+Phases 3 and 4 can run independently. Submit each phase in one or more pull requests
+to `main` and include the harness results in each pull request.
 
 ## Outside Martensite
 
