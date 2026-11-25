@@ -7,6 +7,7 @@
 mod analyzer;
 mod analyzer_contexts;
 mod edge;
+mod edge_bezier_boundary;
 mod edge_context;
 mod edge_tolerance;
 mod errors;
