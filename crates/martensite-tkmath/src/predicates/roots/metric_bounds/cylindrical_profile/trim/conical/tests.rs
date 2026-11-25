@@ -169,3 +169,32 @@ fn curved_quarter_circle_pays_same_parameter_error_between_endpoints() {
 
 #[path = "tests/requested_bounds.rs"]
 mod requested_bounds;
+
+#[test]
+fn cone_projected_degree_five_chart_and_space_parent_have_distinct_ranges() {
+    use crate::predicates::roots::metric_bounds::MetricBezier;
+    let semi_angle = std::f64::consts::FRAC_PI_6;
+    let carrier = ConicalTrimCarrier {
+        radius: 2.,
+        axial_origin: 3.,
+        semi_angle,
+    };
+    let points = [[2., 0., 3.], [2.5, 0., 3. + 3f64.sqrt() / 2.]];
+    let uv = [0.25, 0.35, 0.45, 0.55, 0.65, 0.75].map(|v| [0., v]);
+    let query = ConicalTrimQuery {
+        curve: MetricBezier {
+            poles: &points,
+            weights: None,
+        },
+        pcurve: &uv,
+        carrier,
+        spatial_limit: 1e-12,
+        options: Default::default(),
+    };
+    let ranges = [[0.25, 0.75], [0., 1.]];
+    let proof = certify_conical_trim_ranges(query, ranges, || false).unwrap();
+    assert!(proof.residual_bounds()[2] < 1e-12);
+    assert!(proof.matches_ranges(query, ranges));
+    assert!(!proof.matches_source(query));
+    assert!(certify_conical_trim(query, || false).is_err());
+}

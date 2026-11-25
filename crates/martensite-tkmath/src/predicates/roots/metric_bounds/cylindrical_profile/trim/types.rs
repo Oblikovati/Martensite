@@ -110,7 +110,7 @@ impl std::fmt::Display for CylindricalTrimError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "cylindrical cap trim radius={}, limit={}: {:?}; expected finite degree-1..=3 polynomial UV controls, degree-1..=9 space controls, positive weights/radius and a complete spatial bound",
+            "cylindrical cap trim radius={}, limit={}: {:?}; expected finite polynomial UV controls within the selected proof's degree limit, degree-1..=9 space controls, positive weights/radius and a complete spatial bound",
             self.radius, self.requested_spatial_limit, self.cause
         )
     }

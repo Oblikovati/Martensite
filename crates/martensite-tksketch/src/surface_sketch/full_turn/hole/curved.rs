@@ -10,21 +10,21 @@ use admission::AperturePlan;
 
 /// Immutable curved aperture body, split provenance and achieved fitting bounds.
 #[derive(Clone, Debug)]
-pub struct CurvedBandResult {
+pub struct CurvedBandResult<T = WrappedMemberReport> {
     publication: CrossedBandResult,
-    tool: WrappedMemberReport,
+    tool: T,
     trace_bound: f64,
     native_parameter_error: f64,
 }
 
-impl CurvedBandResult {
+impl<T> CurvedBandResult<T> {
     /// Geometry and exact authored crossing addresses. Example: `result.publication().crossings()`.
     pub fn publication(&self) -> &CrossedBandResult {
         &self.publication
     }
 
     /// The matched fitter and input evidence. Example: `result.tool().coverage.faces`.
-    pub fn tool(&self) -> &WrappedMemberReport {
+    pub fn tool(&self) -> &T {
         &self.tool
     }
 
@@ -51,22 +51,101 @@ pub fn normal_extrude_cylinder_band_with_curved_hole(
     request: &WrappedNormalRequest,
     options: NormalExtrusionOptions,
 ) -> Result<CurvedBandResult, SurfaceSketchFailure> {
-    let plan =
-        AperturePlan::admit(band, request, options).map_err(|cause| SurfaceSketchFailure {
-            region: band.region,
-            stage: SurfaceStage::Admission,
-            cause,
-        })?;
-    run(plan, request)
+    let plan = AperturePlan::admit(band, request, options)
+        .map_err(|cause| admission_failure(band, cause))?;
+    let cutter = fitted_cutter(&plan, request)?;
+    let report = report(&plan, cutter.reports())?;
+    let evidence = FitEvidence::cylinder(&plan, &report, request.support.radius)
+        .map_err(|cause| plan.stock.sweep.failure(SurfaceStage::Validation, cause))?;
+    let detached = cutter
+        .export_native()
+        .map_err(|cause| export_failure(&plan, cause))?;
+    finish(plan, report, evidence, &detached)
 }
 
-fn run(
+/// Make a curved aperture across the actual seam of a canonical full conical band.
+/// Admits one loop of lines and clamped polynomial quadratics in a positive-X developed
+/// chart, with two transverse crossings of the zero meridian ray.
+/// Example: `let cut = normal_extrude_cone_band_with_curved_hole(&band, &profile, options)?;`.
+pub fn normal_extrude_cone_band_with_curved_hole(
+    band: &FullTurnBand,
+    request: &WrappedConeNormalRequest,
+    options: NormalExtrusionOptions,
+) -> Result<CurvedBandResult<WrappedConeMemberReport>, SurfaceSketchFailure> {
+    let plan = AperturePlan::admit_cone(band, request, options)
+        .map_err(|cause| admission_failure(band, cause))?;
+    let cutter =
+        normal_extrude_cone_profile(request).map_err(|cause| tool_failure(&plan, cause))?;
+    let report = report(&plan, cutter.reports())?;
+    let evidence = FitEvidence::cone(&plan, &report)
+        .map_err(|cause| plan.stock.sweep.failure(SurfaceStage::Validation, cause))?;
+    let detached = cutter
+        .export_native()
+        .map_err(|cause| export_failure(&plan, cause))?;
+    finish(plan, report, evidence, &detached)
+}
+
+fn finish<T>(
     mut plan: AperturePlan,
-    request: &WrappedNormalRequest,
-) -> Result<CurvedBandResult, SurfaceSketchFailure> {
+    tool: T,
+    evidence: FitEvidence,
+    detached: &DetachedWrappedBodies,
+) -> Result<CurvedBandResult<T>, SurfaceSketchFailure> {
     let stock = export_stock(&plan.stock, plan.band.rims)?;
-    let cutter = fitted_cutter(&plan, request)?;
-    let tool = cutter.reports().get(&plan.region).cloned().ok_or_else(|| {
+    let bound = binding::bind(&plan, &stock, detached, evidence.angular_error)
+        .map_err(|cause| plan.stock.sweep.failure(SurfaceStage::History, cause))?;
+    let authored = evidence.authored_volume;
+    plan.stock.sweep.expected_volume -= authored.lower.midpoint(authored.upper);
+    publish(&plan, tool, evidence.angular_error, detached, bound)
+}
+
+struct FitEvidence {
+    authored_volume: WrappedCertifiedRange,
+    angular_error: f64,
+}
+
+impl FitEvidence {
+    fn cylinder(plan: &AperturePlan, report: &WrappedMemberReport, radius: f64) -> Checked<Self> {
+        let spatial = (report.spatial.profile_error.upper / radius).next_up();
+        let chart = (report.spatial.cap_angular_error.upper + spatial).next_up();
+        let trace = angle_from_chord(plan.minimum_radius(), report.spatial.cap_trace_error.upper)?;
+        let angular_error = (chart + trace).next_up();
+        Ok(Self {
+            authored_volume: report.measures.authored_volume,
+            angular_error,
+        })
+    }
+
+    fn cone(plan: &AperturePlan, report: &WrappedConeMemberReport) -> Checked<Self> {
+        let space = (report.boundary_error.upper + report.cap_trace_error.upper).next_up();
+        let storage = report.depth_storage_error[0]
+            .upper
+            .max(report.depth_storage_error[1].upper);
+        let angular_error = angle_from_chord(plan.minimum_radius(), (space + storage).next_up())?;
+        Ok(Self {
+            authored_volume: report.authored_volume,
+            angular_error,
+        })
+    }
+}
+
+fn angle_from_chord(radius: f64, distance: f64) -> Checked<f64> {
+    let lower = (radius - distance).next_down();
+    cylinder_admission::require(
+        lower > 0.,
+        "curved angular discrepancy reference radius",
+        lower,
+        "positive lower radius after the fit or trace discrepancy",
+    )?;
+    let ratio = (distance / lower).next_up();
+    Ok((ratio * (PI.next_up() / 2.)).next_up())
+}
+
+fn report<T: Clone>(
+    plan: &AperturePlan,
+    reports: &std::collections::BTreeMap<SurfaceRegionId, T>,
+) -> Result<T, SurfaceSketchFailure> {
+    reports.get(&plan.region).cloned().ok_or_else(|| {
         plan.stock.sweep.failure(
             SurfaceStage::Validation,
             incomplete(
@@ -74,38 +153,45 @@ fn run(
                 format!("{:?}", plan.region),
             ),
         )
-    })?;
-    let detached = cutter.export_native().map_err(|cause| {
-        plan.stock.sweep.failure(
-            SurfaceStage::Encoding,
-            incomplete("detached certified curved aperture", format!("{cause:?}")),
-        )
-    })?;
-    let bound = binding::bind(&plan, &stock, &detached, &tool)
-        .map_err(|cause| plan.stock.sweep.failure(SurfaceStage::History, cause))?;
-    let authored = &tool.measures.authored_volume;
-    plan.stock.sweep.expected_volume -= authored.lower.midpoint(authored.upper);
-    publish(&plan, tool, &detached, bound)
+    })
+}
+
+fn admission_failure(band: &FullTurnBand, cause: SurfaceFailureCause) -> SurfaceSketchFailure {
+    SurfaceSketchFailure {
+        region: band.region,
+        stage: SurfaceStage::Admission,
+        cause,
+    }
+}
+
+fn export_failure(plan: &AperturePlan, cause: WrappedNormalFailure) -> SurfaceSketchFailure {
+    plan.stock.sweep.failure(
+        SurfaceStage::Encoding,
+        incomplete("detached certified curved aperture", format!("{cause:?}")),
+    )
+}
+
+fn tool_failure(plan: &AperturePlan, cause: WrappedNormalFailure) -> SurfaceSketchFailure {
+    plan.stock.sweep.failure(
+        SurfaceStage::Construction,
+        incomplete("certified wrapped aperture", format!("{cause:?}")),
+    )
 }
 
 fn fitted_cutter(
     plan: &AperturePlan,
     request: &WrappedNormalRequest,
 ) -> Result<WrappedNormalResult, SurfaceSketchFailure> {
-    normal_extrude_profile(request).map_err(|cause| {
-        plan.stock.sweep.failure(
-            SurfaceStage::Construction,
-            incomplete("certified wrapped aperture", format!("{cause:?}")),
-        )
-    })
+    normal_extrude_profile(request).map_err(|cause| tool_failure(plan, cause))
 }
 
-fn publish(
+fn publish<T>(
     plan: &AperturePlan,
-    tool: WrappedMemberReport,
+    tool: T,
+    angular_error: f64,
     detached: &DetachedWrappedBodies,
     bound: binding::BoundCut,
-) -> Result<CurvedBandResult, SurfaceSketchFailure> {
+) -> Result<CurvedBandResult<T>, SurfaceSketchFailure> {
     let sweep = &plan.stock.sweep;
     let keys = bound
         .bindings
@@ -116,8 +202,15 @@ fn publish(
         .map_err(|cause| sweep.failure(SurfaceStage::Encoding, cause))?;
     let (decoded, entities) = encoding::decode(&bytes, &keys)
         .map_err(|cause| sweep.failure(SurfaceStage::Encoding, cause))?;
-    let checked = proof::validate(plan, &decoded, &entities, detached, &bound.sources, &tool)
-        .map_err(|cause| sweep.failure(SurfaceStage::Validation, cause))?;
+    let checked = proof::validate(
+        plan,
+        &decoded,
+        &entities,
+        detached,
+        &bound.sources,
+        angular_error,
+    )
+    .map_err(|cause| sweep.failure(SurfaceStage::Validation, cause))?;
     let (volume, errors) = volume::measure(&decoded, sweep)
         .map_err(|cause| sweep.failure(SurfaceStage::Volume, cause))?;
     let publication = CrossedBandResult {

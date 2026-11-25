@@ -9,7 +9,11 @@ use num_bigint::{BigInt, Sign};
 
 const MAX_INTEGER_BITS: u64 = 16_384;
 const BINARY64_DENOMINATOR_SHIFT: usize = 1074;
-static BINOMIALS: [[u64; 51]; 51] = binomial_table();
+// The degree-five projected cone trace combines a degree-40 trigonometric
+// enclosure, a degree-five meridian and degree-nine rational weights (#419).
+pub(super) const MAX_BERNSTEIN_PRODUCT_DEGREE: usize = 54;
+const BINOMIAL_SIDE: usize = MAX_BERNSTEIN_PRODUCT_DEGREE + 1;
+static BINOMIALS: [[u64; BINOMIAL_SIDE]; BINOMIAL_SIDE] = binomial_table();
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(in crate::predicates::roots) struct ArithmeticPolicy {
@@ -365,11 +369,12 @@ fn sign_definite_product_extrema<'a>(
     let upper = left[usize::from(hi.sign() != Sign::Minus)];
     Some([(lower, lo), (upper, hi)])
 }
-const fn binomial_table() -> [[u64; 51]; 51] {
-    // Choose(50,25) < 2^47; every admitted product has total degree at most 50.
-    let mut table = [[0; 51]; 51];
+const fn binomial_table() -> [[u64; BINOMIAL_SIDE]; BINOMIAL_SIDE] {
+    // Choose(54,27) < 2^51, and each product numerator is bounded by a single
+    // coefficient of the summed degree by Vandermonde's identity.
+    let mut table = [[0; BINOMIAL_SIDE]; BINOMIAL_SIDE];
     let mut n = 0;
-    while n <= 50 {
+    while n < BINOMIAL_SIDE {
         table[n][0] = 1;
         table[n][n] = 1;
         let mut k = 1;

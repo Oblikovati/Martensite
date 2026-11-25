@@ -137,7 +137,7 @@ pub(super) fn bind(
     plan: &AperturePlan,
     stock: &DetachedNormalBody,
     tool: &DetachedWrappedBodies,
-    report: &WrappedMemberReport,
+    angular_error: f64,
 ) -> Checked<BoundCut> {
     let tool_solid = WrappedHistoryKey {
         source: WrappedEntitySource::Region(plan.region),
@@ -147,7 +147,7 @@ pub(super) fn bind(
     let [lower, upper] = plan.crossings.map(|item| FittedCut::locate(item, tool));
     let sources = [lower?, upper?];
     for source in sources {
-        prove_fragment_clearance(plan, source, report)?;
+        prove_fragment_clearance(plan, source, angular_error)?;
     }
     let cut = images::subtract(&stock.solid, cutter)?;
     NativeOperands {
@@ -163,20 +163,16 @@ pub(super) fn bind(
 fn prove_fragment_clearance(
     plan: &AperturePlan,
     cut: FittedCut,
-    report: &WrappedMemberReport,
+    angular_error: f64,
 ) -> Checked<()> {
     let [lo, hi] = cut.crossing.report.normalized_parameter;
     let [first, last] = span_bounds(cut.span);
     let min_parameter = (lo - first).min(last - hi).next_down();
     let source_angle = (min_parameter * cut.crossing.angular_speed).next_down();
-    let (support, _) = cylinder(plan.band.support)?;
-    let fit_angle = report.spatial.cap_angular_error.upper
-        + report.spatial.profile_error.upper / support.radius;
-    let minimum = plan.stock.meridian[0][0] - plan.stock.sweep.coordinate_error;
     let floor = effective_limits(plan.stock.sweep.options).linear_separation;
     require_periodic_chord(
-        (source_angle - fit_angle.next_up()).next_down(),
-        minimum.next_down(),
+        (source_angle - angular_error).next_down(),
+        plan.minimum_radius(),
         floor,
     )
 }

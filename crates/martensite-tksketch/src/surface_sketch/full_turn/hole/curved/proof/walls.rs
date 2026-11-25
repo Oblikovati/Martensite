@@ -8,19 +8,39 @@ use martensite_tkg2d::geom2d::Geom2dBezierCurve;
 use martensite_tkg3d::geom::{GeomBezierCurve, GeomBezierSurface};
 
 pub(super) fn verify(
+    decoded: &topods::Shape,
     bindings: &binding::Bindings,
     tool: &DetachedWrappedBodies,
     sources: &[binding::FittedCut; 2],
 ) -> Checked<()> {
+    let before = rooted_faces(&tool.bodies)?;
+    let after = rooted_faces(decoded)?;
     for (key, source) in tool
         .entities
         .iter()
         .filter(|(key, _)| key.role == HistoryRole::SideFace)
     {
         let actual = binding::resolve(bindings, PeriodicImageKey::WrappedRetained(*key))?;
-        wall(bindings, tool, sources, source, actual)?;
+        let source = rooted_face(&before, source)?;
+        let result = rooted_face(&after, actual)?;
+        wall(bindings, tool, sources, source, result)?;
     }
     Ok(())
+}
+
+fn rooted_faces(root: &topods::Shape) -> Checked<IndexedMapOfShape> {
+    let mut faces = IndexedMapOfShape::default();
+    martensite_tkbrep::topexp::map_shapes_of_type(root, ShapeEnum::Face, &mut faces)
+        .map_err(|e| native("rooted curved aperture faces", e))?;
+    Ok(faces)
+}
+
+fn rooted_face<'a>(
+    map: &'a IndexedMapOfShape,
+    shape: &topods::Shape,
+) -> Checked<&'a topods::Shape> {
+    map.find_key(map.find_index(shape))
+        .map_err(|e| native("rooted ruled wall orientation", e))
 }
 
 fn wall(
@@ -33,7 +53,13 @@ fn wall(
     let before = topods::face(source).map_err(|e| native("fitted ruled wall", e))?;
     let after = topods::face(actual).map_err(|e| native("decoded ruled wall", e))?;
     one_wire(&after)?;
-    if before.orientation() == after.orientation() || surface(&before)? != surface(&after)? {
+    if surface(&before)? != surface(&after)? {
+        return Err(incomplete(
+            "exact retained ruled-wall coefficients",
+            "coefficient mismatch",
+        ));
+    }
+    if before.orientation() == after.orientation() {
         return Err(incomplete(
             "reversed cut wall with its original certified surface",
             format!("{:?} to {:?}", before.orientation(), after.orientation()),

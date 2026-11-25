@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::{
-    bounded_dyadic::{Arithmetic, Interval},
+    bounded_dyadic::{Arithmetic, Interval, MAX_BERNSTEIN_PRODUCT_DEGREE},
     bounded_failure::{BoundedArithmeticFailure, Checked},
 };
 
@@ -9,7 +9,14 @@ pub(in crate::predicates::roots) fn product(
     b: &[Interval],
     arithmetic: &mut Arithmetic<'_>,
 ) -> Checked<Vec<Interval>> {
-    let mut result = vec![arithmetic.zero(); a.len() + b.len() - 1];
+    let total = a.len().saturating_add(b.len());
+    if total == 0 || total > MAX_BERNSTEIN_PRODUCT_DEGREE + 2 {
+        return Err(BoundedArithmeticFailure::CoefficientCount {
+            left: a.len(),
+            right: b.len(),
+        });
+    }
+    let mut result = vec![arithmetic.zero(); total - 1];
     for (i, left) in a.iter().enumerate() {
         accumulate(&mut result, (a.len() - 1, i, left), b, arithmetic)?;
     }
@@ -99,4 +106,23 @@ pub(in crate::predicates::roots) fn lower(coefficients: &[Interval]) -> num_bigi
         .fold(coefficients[0].lower.clone(), |bound, coefficient| {
             bound.min(coefficient.lower.clone())
         })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn product_beyond_the_admitted_degree_refuses_before_table_lookup() {
+        let mut cancelled = || false;
+        let mut arithmetic = Arithmetic::new(Default::default(), &mut cancelled);
+        let left = vec![arithmetic.zero(); MAX_BERNSTEIN_PRODUCT_DEGREE + 1];
+        let right = vec![arithmetic.zero(); 2];
+        let failure = product(&left, &right, &mut arithmetic).unwrap_err();
+        assert!(matches!(
+            failure,
+            BoundedArithmeticFailure::CoefficientCount { .. }
+        ));
+        assert_eq!(arithmetic.operations(), 0);
+    }
 }

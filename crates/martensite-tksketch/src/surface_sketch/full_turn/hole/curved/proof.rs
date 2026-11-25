@@ -21,16 +21,16 @@ pub(super) fn validate(
     bindings: &binding::Bindings,
     tool: &DetachedWrappedBodies,
     sources: &[binding::FittedCut; 2],
-    report: &WrappedMemberReport,
+    angular_error: f64,
 ) -> Checked<CurvedCheck> {
     let walls = tool
         .entities
         .keys()
         .filter(|key| key.role == HistoryRole::SideFace)
         .count();
-    check_rooted(decoded, bindings, walls)?;
+    check_rooted(decoded, bindings, walls, plan.stock.cylinder)?;
     check_stock(plan, bindings)?;
-    walls::verify(bindings, tool, sources)?;
+    walls::verify(decoded, bindings, tool, sources)?;
     let mut trace_bound: f64 = 0.;
     let mut native_parameter_error: f64 = 0.;
     for depth in [PeriodicDepth::First, PeriodicDepth::Last] {
@@ -41,12 +41,12 @@ pub(super) fn validate(
             tool,
             sources,
         };
-        let [trace, parameter] = side.check(report)?;
+        let [trace, parameter] = side.check(angular_error)?;
         trace_bound = trace_bound.max(trace);
         native_parameter_error = native_parameter_error.max(parameter);
     }
     let native_report = validation::ordered_report(decoded, &plan.stock.sweep)?;
-    if !matches!(native_report.census.as_slice(), [census] if census.shells == 1 && census.loops == walls + 6 && census.genus == Some(2))
+    if !matches!(native_report.census.as_slice(), [census] if census.shells == 1 && census.loops == walls + 4 + 2 * usize::from(plan.stock.cylinder) && census.genus == Some(2))
     {
         return Err(incomplete(
             "single genus-two curved aperture body",
@@ -61,7 +61,12 @@ pub(super) fn validate(
     })
 }
 
-fn check_rooted(root: &topods::Shape, bindings: &binding::Bindings, walls: usize) -> Checked<()> {
+fn check_rooted(
+    root: &topods::Shape,
+    bindings: &binding::Bindings,
+    walls: usize,
+    cylinder: bool,
+) -> Checked<()> {
     if bindings.windows(2).any(|pair| pair[0].0 >= pair[1].0) {
         return Err(incomplete(
             "unique ordered curved cut keys",
@@ -71,7 +76,7 @@ fn check_rooted(root: &topods::Shape, bindings: &binding::Bindings, walls: usize
     for (kind, count) in [
         (ShapeEnum::Solid, 1),
         (ShapeEnum::Face, walls + 4),
-        (ShapeEnum::Edge, 3 * walls + 12),
+        (ShapeEnum::Edge, 3 * walls + 12 + 2 * usize::from(!cylinder)),
         (ShapeEnum::Vertex, 2 * walls + 8),
     ] {
         verification::unique_kind(root, bindings, kind, count)?;
@@ -120,20 +125,23 @@ struct Cap<'a> {
 }
 
 impl Cap<'_> {
-    fn check(&self, report: &WrappedMemberReport) -> Checked<[f64; 2]> {
+    fn check(&self, angular_error: f64) -> Checked<[f64; 2]> {
         let face = stock_face(self.plan, self.bindings, self.depth)?;
         walls::one_wire(&face)?;
         let surface = BRepAdaptorSurface::with_face(&face, true)
             .map_err(|e| native("curved aperture cap carrier", e))?;
         let stock = &self.plan.stock;
-        let (support, _) = cylinder(self.plan.band.support)?;
         let index = if self.depth.index() == stock.sweep.first_depth {
             3
         } else {
             1
         };
-        verification::verify_cylinder(stock, &surface, index)?;
-        let frame = canonical_carrier(&surface)?;
+        if stock.cylinder {
+            verification::verify_cylinder(stock, &surface, index)?;
+        } else {
+            verification::verify_cone(stock, &surface, index)?;
+        }
+        let frame = trim::CapFrame::capture(&surface, stock.cylinder)?;
         let [first, last] = [
             surface
                 .first_u_parameter()
@@ -164,12 +172,10 @@ impl Cap<'_> {
             bindings: self.bindings,
             tool: self.tool,
             sources: self.sources,
-            region: self.plan.region,
             stock,
-            report,
+            angular_error,
             sheet: [first, last],
             rims,
-            support_radius: support.radius,
             frame,
         })
     }
@@ -233,42 +239,6 @@ impl Cap<'_> {
     }
 }
 
-#[derive(Clone, Copy)]
-struct CapFrame {
-    z: f64,
-    sign: f64,
-    radius: f64,
-}
-
-fn canonical_carrier(surface: &BRepAdaptorSurface) -> Checked<CapFrame> {
-    let cylinder = surface
-        .cylinder()
-        .map_err(|e| native("curved cap carrier", e))?;
-    let radius = cylinder.radius();
-    let pos = cylinder.position();
-    let [x, y, z] = *pos.location().coordinates();
-    let axis = *pos.direction().coordinates();
-    if x == 0.
-        && y == 0.
-        && z.is_finite()
-        && radius.is_finite()
-        && radius > 0.
-        && *pos.x_direction().coordinates() == [1., 0., 0.]
-        && *pos.y_direction().coordinates() == [0., 1., 0.]
-        && (axis == [0., 0., 1.] || axis == [0., 0., -1.])
-    {
-        return Ok(CapFrame {
-            z,
-            sign: axis[2],
-            radius,
-        });
-    }
-    Err(incomplete(
-        "canonical decoded cap angular frame and signed axial datum",
-        format!("{pos:?}"),
-    ))
-}
-
 fn vertex_position(shape: &topods::Shape) -> Checked<[f64; 3]> {
     let vertex = topods::vertex(shape).map_err(|e| native("curved aperture endpoint", e))?;
     let point =
@@ -320,7 +290,8 @@ mod tests {
         let cutter = fitted_cutter(&plan, &request).unwrap();
         let report = &cutter.reports()[&plan.region];
         let tool = cutter.export_native().unwrap();
-        let bound = binding::bind(&plan, &stock, &tool, report).unwrap();
+        let fit = FitEvidence::cylinder(&plan, report, request.support.radius).unwrap();
+        let bound = binding::bind(&plan, &stock, &tool, fit.angular_error).unwrap();
         let keys = bound
             .bindings
             .iter()
@@ -342,7 +313,7 @@ mod tests {
             tool: &tool,
             sources: &bound.sources,
         };
-        let cause = cap.check(report).unwrap_err();
+        let cause = cap.check(fit.angular_error).unwrap_err();
         assert!(
             matches!(cause, SurfaceFailureCause::Incomplete {
             context: "decoded curved aperture cap image", ref actual,

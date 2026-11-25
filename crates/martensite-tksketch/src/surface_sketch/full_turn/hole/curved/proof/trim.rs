@@ -4,9 +4,10 @@ use super::*;
 use martensite_tkbrep::brep::EdgePCurve;
 use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dBezierCurve, Geom2dCurve};
 use martensite_tkg3d::geom::GeomBezierCurve;
-use martensite_tkmath::predicates::roots::metric_bounds::{
-    CylindricalTrimQuery, MetricBezier, certify_cylindrical_trim_ranges,
-};
+use martensite_tkmath::predicates::roots::metric_bounds::MetricBezier;
+
+mod frame;
+pub(super) use frame::CapFrame;
 
 pub(super) struct CapCheck<'a> {
     pub face: &'a topods::Face,
@@ -14,25 +15,21 @@ pub(super) struct CapCheck<'a> {
     pub bindings: &'a binding::Bindings,
     pub tool: &'a DetachedWrappedBodies,
     pub sources: &'a [binding::FittedCut; 2],
-    pub region: SurfaceRegionId,
     pub stock: &'a band_admission::BandSection,
-    pub report: &'a WrappedMemberReport,
+    pub angular_error: f64,
     pub sheet: [f64; 2],
     pub rims: [f64; 2],
-    pub support_radius: f64,
     pub frame: CapFrame,
 }
 
 pub(super) fn verify(check: CapCheck<'_>) -> Checked<[f64; 2]> {
-    let tool_face = source_face(check.tool, check.region, check.depth)?;
     let edges = coedges(check.face)?;
     let mut max_spatial: f64 = 0.;
     let mut max_parameter: f64 = 0.;
     for (key, source) in cap_edges(check.tool, check.depth) {
         let edge = as_edge(source)?;
         let original = space_curve(&edge)?;
-        let trim = curve_on(&edge, &tool_face)?;
-        let [space, parameter] = check.verify_images(*key, &edges, &original, &trim)?;
+        let [space, parameter] = check.verify_images(*key, &edges, &original)?;
         max_spatial = max_spatial.max(space);
         max_parameter = max_parameter.max(parameter);
     }
@@ -43,6 +40,7 @@ struct TrimImage {
     bound: f64,
     space: [f64; 2],
     angles: [f64; 2],
+    radial_lower: f64,
 }
 
 impl CapCheck<'_> {
@@ -51,7 +49,6 @@ impl CapCheck<'_> {
         key: WrappedHistoryKey,
         coedges: &[topods::Edge],
         source: &SpaceCurve,
-        original_trim: &EdgePCurve,
     ) -> Checked<[f64; 2]> {
         if let Some(cut) = self.sources.iter().find(|cut| cut.edge(self.depth) == key) {
             self.verify_decoded_ancestry(*cut)?;
@@ -59,7 +56,7 @@ impl CapCheck<'_> {
                 .pieces(self.depth)
                 .map(|name| self.named_image(name, coedges, source));
             let [left, right] = images;
-            return self.verify_split(*cut, [left?, right?], original_trim);
+            return self.verify_split(*cut, [left?, right?]);
         }
         let actual = self.named_image(PeriodicImageKey::WrappedRetained(key), coedges, source)?;
         if actual.space != [0., 1.] {
@@ -123,34 +120,23 @@ impl CapCheck<'_> {
                 format!("{:?} vs {:?}", curve.range, source.range),
             ));
         }
-        let (mut controls, chart) = polynomial(&trim)?;
+        let (controls, chart) = polynomial(&trim)?;
         let separation = effective_limits(self.stock.sweep.options).linear_separation;
         verify_rim_clearance(&controls, self.rims, separation)?;
-        let pad = self.frame.canonical_height(&mut controls);
-        let limit = (self.spatial_limit(edge)? - pad).next_down();
-        let proof = certify_cylindrical_trim_ranges(
-            CylindricalTrimQuery {
-                curve: MetricBezier {
-                    poles: &curve.poles,
-                    weights: Some(&curve.weights),
-                },
-                pcurve: &controls,
-                radius: self.frame.radius,
-                spatial_limit: limit,
-                options: Default::default(),
-            },
-            [curve.range, chart],
-            || false,
-        )
-        .map_err(|cause| {
-            incomplete("certified active decoded curved trim", format!("{cause:?}"))
-        })?;
+        let limit = self.spatial_limit(edge)?;
+        let bound = self.frame.certify(&curve, &controls, chart, limit)?;
         let angles = chart_angles(&trim, [trim.first, trim.last])?;
         self.check_sheet(&controls, angles, chart)?;
+        let radial_lower = curve
+            .poles
+            .iter()
+            .map(|point| point[0])
+            .fold(f64::INFINITY, f64::min);
         Ok(TrimImage {
-            bound: (proof.spatial_residual_bound() + pad).next_up(),
+            bound,
             space: curve.range,
             angles,
+            radial_lower,
         })
     }
 
@@ -182,7 +168,6 @@ impl CapCheck<'_> {
         &self,
         cut: binding::FittedCut,
         [one, two]: [TrimImage; 2],
-        original: &EdgePCurve,
     ) -> Checked<[f64; 2]> {
         let u = one.space[1];
         if one.space[0] != 0. || two.space != [u, 1.] || !(0. < u && u < 1.) {
@@ -191,8 +176,10 @@ impl CapCheck<'_> {
                 format!("{:?} {:?}", one.space, two.space),
             ));
         }
-        let error = self.check_parameter(cut, u, [one.angles[1], two.angles[0]], original)?;
-        Ok([one.bound.max(two.bound), error])
+        let spatial = one.bound.max(two.bound);
+        let angle = angle_from_chord(one.radial_lower.min(two.radial_lower), spatial)?;
+        let error = self.check_parameter(cut, u, [one.angles[1], two.angles[0]], angle)?;
+        Ok([spatial, error])
     }
 
     fn check_parameter(
@@ -200,7 +187,7 @@ impl CapCheck<'_> {
         cut: binding::FittedCut,
         parameter: f64,
         [a, b]: [f64; 2],
-        original: &EdgePCurve,
+        trace_angle: f64,
     ) -> Checked<f64> {
         let [left, right] = match cut.crossing.report.id.transition {
             SheetTransition::Increasing => [self.sheet[1], self.sheet[0]],
@@ -213,8 +200,7 @@ impl CapCheck<'_> {
             actual,
             "both active trims contact the commanded sheet lifts",
         )?;
-        let [original_at_cut, _] = chart_angles(original, [parameter; 2])?;
-        let error = self.parameter_bound(cut, original_at_cut.abs());
+        let error = self.parameter_bound(cut, (actual + trace_angle).next_up());
         let [span0, span1] = binding::span_bounds(cut.span);
         let mapped = span0 + parameter * (span1 - span0);
         let [lo, hi] = cut.crossing.report.normalized_parameter;
@@ -228,9 +214,8 @@ impl CapCheck<'_> {
     }
 
     fn parameter_bound(&self, cut: binding::FittedCut, endpoint: f64) -> f64 {
-        let profile = (self.report.spatial.profile_error.upper / self.support_radius).next_up();
-        let chart = (self.report.spatial.cap_angular_error.upper + profile).next_up();
-        let numerator = ((chart + endpoint).next_up() + 64. * f64::EPSILON * TAU).next_up();
+        let numerator =
+            ((self.angular_error + endpoint).next_up() + 64. * f64::EPSILON * TAU).next_up();
         (numerator / cut.crossing.angular_speed).next_up()
     }
 }
@@ -249,64 +234,6 @@ fn verify_rim_clearance(points: &[[f64; 2]], [lo, hi]: [f64; 2], floor: f64) -> 
         margin,
         "whole literal pcurve hull strictly between the native rim meridians",
     )
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn periodic_two_pole_storage_is_not_a_clamped_polynomial_projection() {
-        use martensite_tkernel::ncollection::Array1;
-        use martensite_tkmath::gp::Point2;
-
-        let mut poles = Array1::with_bounds(1, 2).unwrap();
-        poles.set_value(1, Point2::new(0.1, 1.)).unwrap();
-        poles.set_value(2, Point2::new(0.2, 2.)).unwrap();
-        let mut knots = Array1::with_bounds(1, 2).unwrap();
-        knots.set_value(1, 0.).unwrap();
-        knots.set_value(2, 1.).unwrap();
-        let mut multiplicities = Array1::with_bounds(1, 2).unwrap();
-        multiplicities.set_value(1, 2).unwrap();
-        multiplicities.set_value(2, 2).unwrap();
-        let periodic = Geom2dBSplineCurve::new(&poles, &knots, &multiplicities, 3, true).unwrap();
-        assert_eq!(periodic.nb_poles(), 2);
-        let error = clamped_projection(&periodic, [0., 1.]).unwrap_err();
-        assert!(matches!(
-            error,
-            SurfaceFailureCause::Incomplete {
-                context: "one literal clamped polynomial on the exact active domain",
-                ..
-            }
-        ));
-    }
-
-    #[test]
-    fn decoded_meridian_hull_leaves_the_original_linear_clearance_to_both_rims() {
-        let valid = [[0.1, 1.], [0.2, 5.]];
-        verify_rim_clearance(&valid, [0., 6.], 1e-6).unwrap();
-        let edited = [[0.1, 1.], [0.2, 6. - 5e-7]];
-        let error = verify_rim_clearance(&edited, [0., 6.], 1e-6).unwrap_err();
-        assert!(matches!(
-            error,
-            SurfaceFailureCause::InvalidInput {
-                field: "decoded periodic aperture rim clearance",
-                ..
-            }
-        ));
-    }
-}
-
-impl CapFrame {
-    fn canonical_height(self, points: &mut [[f64; 2]]) -> f64 {
-        let mut pad: f64 = 0.;
-        for point in points {
-            let z = self.z + self.sign * point[1];
-            pad = pad.max(z.next_up() - z).max(z - z.next_down());
-            point[1] = z;
-        }
-        pad
-    }
 }
 
 struct SpaceCurve {
@@ -419,23 +346,56 @@ fn cap_edges(
         .filter(move |(key, _)| key.role == roles::edge_role(depth.index()))
 }
 
-fn source_face(
-    tool: &DetachedWrappedBodies,
-    region: SurfaceRegionId,
-    depth: PeriodicDepth,
-) -> Checked<topods::Face> {
-    let key = WrappedHistoryKey {
-        source: WrappedEntitySource::Region(region),
-        role: roles::face_role(depth.index()),
-    };
-    topods::face(binding::tool_image(&tool.entities, key)?)
-        .map_err(|e| native("detached curved tool cap", e))
-}
-
 fn as_edge(shape: &topods::Shape) -> Checked<topods::Edge> {
     topods::edge(shape).map_err(|e| native("curved cap edge", e))
 }
 
 fn curve_on(edge: &topods::Edge, face: &topods::Face) -> Checked<EdgePCurve> {
     BRepTool::curve_on_face(edge, face).map_err(|e| native("curved cap trim", e))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn periodic_two_pole_storage_is_not_a_clamped_polynomial_projection() {
+        use martensite_tkernel::ncollection::Array1;
+        use martensite_tkmath::gp::Point2;
+
+        let mut poles = Array1::with_bounds(1, 2).unwrap();
+        poles.set_value(1, Point2::new(0.1, 1.)).unwrap();
+        poles.set_value(2, Point2::new(0.2, 2.)).unwrap();
+        let mut knots = Array1::with_bounds(1, 2).unwrap();
+        knots.set_value(1, 0.).unwrap();
+        knots.set_value(2, 1.).unwrap();
+        let mut multiplicities = Array1::with_bounds(1, 2).unwrap();
+        multiplicities.set_value(1, 2).unwrap();
+        multiplicities.set_value(2, 2).unwrap();
+        let periodic = Geom2dBSplineCurve::new(&poles, &knots, &multiplicities, 3, true).unwrap();
+        assert_eq!(periodic.nb_poles(), 2);
+        let error = clamped_projection(&periodic, [0., 1.]).unwrap_err();
+        assert!(matches!(
+            error,
+            SurfaceFailureCause::Incomplete {
+                context: "one literal clamped polynomial on the exact active domain",
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn decoded_meridian_hull_leaves_the_original_linear_clearance_to_both_rims() {
+        let valid = [[0.1, 1.], [0.2, 5.]];
+        verify_rim_clearance(&valid, [0., 6.], 1e-6).unwrap();
+        let edited = [[0.1, 1.], [0.2, 6. - 5e-7]];
+        let error = verify_rim_clearance(&edited, [0., 6.], 1e-6).unwrap_err();
+        assert!(matches!(
+            error,
+            SurfaceFailureCause::InvalidInput {
+                field: "decoded periodic aperture rim clearance",
+                ..
+            }
+        ));
+    }
 }

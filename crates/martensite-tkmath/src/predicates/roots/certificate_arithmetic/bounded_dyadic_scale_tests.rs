@@ -28,9 +28,9 @@ fn original_product(arithmetic: &Arithmetic<'_>, a: &Interval, b: &Interval) -> 
 fn compiled_binomials_match_each_integer_coefficient_without_work() {
     let mut never_poll = || panic!("reading the constructor and Pascal table owes no poll");
     let arithmetic = Arithmetic::new(Default::default(), &mut never_poll);
-    for n in 0..=50 {
+    for n in 0..=MAX_BERNSTEIN_PRODUCT_DEGREE {
         let mut choose = 1_u64;
-        for k in 0..=50 {
+        for k in 0..=MAX_BERNSTEIN_PRODUCT_DEGREE {
             assert_eq!(arithmetic.binomial(n, k), choose, "C({n},{k})");
             choose = if k < n {
                 choose * (n - k) as u64 / (k + 1) as u64
