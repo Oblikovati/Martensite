@@ -1,11 +1,8 @@
 //! Prove the directed authored family before fitting the attached tool.
 use super::*;
 use martensite_tkbo::{
-    body_check::{CertifiedDirectedPlanarFamily, DirectedCapPolicy, DirectedPlanarFace},
-    profile_extrusion::{
-        LoopUse, PlanarProofVersion, PlanarProofWorkLimit, ProfileCurve, ProfileCurveId,
-        ProfileLoop, SketchProfile,
-    },
+    body_check::{CertifiedDirectedPlanarFamily, DirectedCapPolicy},
+    profile_extrusion::{PlanarProofVersion, PlanarProofWorkLimit},
 };
 use martensite_tkmath::predicates::roots::RootIsolationOptions;
 
@@ -110,59 +107,12 @@ fn policy(
 
 fn capture(
     originals: &[DevelopedRegionRequest],
-) -> ConeChecked<(SketchProfile, Vec<DirectedPlanarFace>)> {
-    let mut profile = planar::combined_profile(originals)
-        .map_err(|cause| failure(None, None, ConeCause::Planar(Box::new(cause))))?;
-    literal_lines(&mut profile)?;
-    let faces = originals.iter().map(face).collect::<ConeChecked<_>>()?;
-    Ok((profile, faces))
-}
-
-fn literal_lines(profile: &mut SketchProfile) -> ConeChecked<()> {
-    let by_id: BTreeMap<_, _> = profile
-        .vertices
-        .iter()
-        .map(|vertex| (vertex.id, vertex.point))
-        .collect();
-    for curve in &mut profile.curves {
-        if let ProfileCurve::Line { id, start, end } = *curve {
-            let a = by_id
-                .get(&start)
-                .ok_or_else(|| mismatch("authored line start"))?;
-            let b = by_id
-                .get(&end)
-                .ok_or_else(|| mismatch("authored line end"))?;
-            *curve = ProfileCurve::Spline {
-                id,
-                start,
-                end,
-                degree: 1,
-                poles: vec![*a, *b],
-                knots: vec![0., 0., 1., 1.],
-                weights: None,
-            };
-        }
-    }
-    Ok(())
-}
-
-fn face(original: &DevelopedRegionRequest) -> ConeChecked<DirectedPlanarFace> {
-    let mut loops = original.loops.iter().map(|wire| ProfileLoop {
-        uses: wire
-            .iter()
-            .map(|piece| LoopUse {
-                curve: ProfileCurveId(piece.span.curve.0),
-                reversed: false,
-            })
-            .collect(),
-    });
-    let outer = loops
-        .next()
-        .ok_or_else(|| mismatch("authored outer cycle"))?;
-    Ok(DirectedPlanarFace {
-        outer,
-        holes: loops.collect(),
-    })
+) -> ConeChecked<(
+    martensite_tkbo::profile_extrusion::SketchProfile,
+    Vec<martensite_tkbo::body_check::DirectedPlanarFace>,
+)> {
+    planar::directed::capture(originals)
+        .map_err(|cause| failure(None, None, ConeCause::Planar(Box::new(cause))))
 }
 
 fn mismatch(field: &'static str) -> ConeFailure {

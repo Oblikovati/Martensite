@@ -1,5 +1,7 @@
 //! Qualify every selected region against one global authored planar arrangement.
 mod admission;
+mod directed;
+pub(super) use directed::prepare_attachment;
 mod error;
 pub(super) mod material;
 pub(super) use material::{MaterialFailure, MaterialOptions, PeriodicMaterialEvidence};
@@ -132,10 +134,7 @@ fn prepare_with_proof(
         return Err(SelectionFailure::Cancelled);
     }
     let planar = qualify_with_proof(requests, work, preparation.proof, &mut cancelled)?;
-    let prepared = requests
-        .iter()
-        .map(|request| prepare_region(request, preparation.maximum_fit_error, &mut cancelled))
-        .collect::<Result<Vec<_>, _>>()?;
+    let prepared = prepare_requests(requests, preparation.maximum_fit_error, &mut cancelled)?;
     let boundary_clearance = prepare_boundary(requests, &prepared, &mut cancelled)?;
     Ok(PreparedSelection {
         planar,
@@ -143,6 +142,17 @@ fn prepare_with_proof(
         boundary_clearance,
     })
 }
+fn prepare_requests(
+    requests: &[Request],
+    maximum_fit_error: Option<f64>,
+    cancelled: &mut CancelPoll<'_>,
+) -> Result<Vec<Request>, SelectionFailure> {
+    requests
+        .iter()
+        .map(|request| prepare_region(request, maximum_fit_error, cancelled))
+        .collect()
+}
+
 fn prepare_boundary(
     originals: &[Request],
     prepared: &[Request],

@@ -82,6 +82,7 @@ fn planar(cause: &planar::PlanarFailure) -> Option<&(dyn std::error::Error + 'st
         planar::PlanarFailure::Selection { .. }
         | planar::PlanarFailure::SplitSource { .. }
         | planar::PlanarFailure::NonAuthoredVertex(_)
+        | planar::PlanarFailure::MissingVertex(_)
         | planar::PlanarFailure::EmptyMaterial
         | planar::PlanarFailure::Join(_) => None,
     }

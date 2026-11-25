@@ -334,3 +334,33 @@ fn successful_planar_polls(originals: &[Request]) -> usize {
     .unwrap();
     planar_polls
 }
+
+#[test]
+fn attachment_selection_keeps_selected_islands_inside_another_regions_hole() {
+    let requests = [
+        request(),
+        rectangle(100, 1000, [0.625, 0.625], [0.875, 0.875]),
+    ];
+    let selected = prepare_attachment(&requests, WORK, V6.into(), &mut || false).unwrap();
+    assert!(
+        selected
+            .prepared
+            .iter()
+            .map(|r| r.region)
+            .eq(requests.iter().map(|r| r.region))
+    );
+}
+
+#[test]
+fn directed_attachment_selection_certifies_disjoint_material_and_refuses_containment() {
+    let clear = [
+        rectangle(5, 10, [0., 0.], [1., 1.]),
+        rectangle(100, 1000, [4., 0.], [5., 1.]),
+    ];
+    assert!(prepare_attachment(&clear, WORK, V6.into(), &mut || false).is_ok());
+    let overlapping = [
+        rectangle(5, 10, [0., 0.], [2., 2.]),
+        rectangle(100, 1000, [0.5, 0.5], [1.5, 1.5]),
+    ];
+    assert!(prepare_attachment(&overlapping, WORK, V6.into(), &mut || false).is_err());
+}

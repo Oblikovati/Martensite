@@ -4,14 +4,19 @@ pub(super) fn bind<'a>(
     requests: &'a [Request],
     prepared: &RelationInputs<'_>,
 ) -> Checked<Vec<&'a Request>> {
-    super::super::admission::admit(requests)
+    let tolerance = super::super::admission::admit(requests)
         .map_err(|cause| MaterialFailure::Admission(Box::new(cause)))?;
-    membership(requests.len(), prepared)?;
-    for (original, fitted) in requests.iter().zip(prepared.prepared) {
-        member(original, fitted, prepared)?;
-    }
-    if let Some(region) = prepared.planar.integral_mismatch(requests) {
-        return Err(MaterialFailure::Source(region));
+    match prepared.planar {
+        PlanarSource::Graph(planar) => bind_graph(requests, prepared.prepared, planar)?,
+        PlanarSource::Directed(selection) => {
+            selection
+                .rebind(requests, tolerance)
+                .map_err(|cause| MaterialFailure::Admission(Box::new(cause)))?;
+            membership(requests.len(), requests.len(), prepared.prepared.len())?;
+            for (original, fitted) in requests.iter().zip(prepared.prepared) {
+                match_support(original, fitted)?;
+            }
+        }
     }
     planar_clearance::bind_originals(prepared.boundary, requests, prepared.prepared)
         .map_err(|cause| MaterialFailure::Clearance(Box::new(cause)))?;
@@ -19,32 +24,44 @@ pub(super) fn bind<'a>(
     result.sort_by_key(|r| r.region);
     Ok(result)
 }
-fn membership(count: usize, prepared: &RelationInputs<'_>) -> Checked<()> {
-    if count != prepared.planar.members.len() || count != prepared.prepared.len() {
+fn bind_graph(
+    requests: &[Request],
+    fitted: &[Request],
+    planar: &PlanarSelectionEvidence,
+) -> Checked<()> {
+    membership(requests.len(), planar.members.len(), fitted.len())?;
+    for (original, fitted) in requests.iter().zip(fitted) {
+        let id = original.region;
+        let evidence = planar.members.get(&id).ok_or(MaterialFailure::Source(id))?;
+        if !evidence.matches_member(original) {
+            return Err(MaterialFailure::Source(id));
+        }
+        match_support(original, fitted)?;
+    }
+    if let Some(region) = planar.integral_mismatch(requests) {
+        return Err(MaterialFailure::Source(region));
+    }
+    Ok(())
+}
+
+fn membership(requested: usize, planar: usize, prepared: usize) -> Checked<()> {
+    if requested != planar || requested != prepared {
         return Err(MaterialFailure::Members {
-            requested: count,
-            planar: prepared.planar.members.len(),
-            prepared: prepared.prepared.len(),
+            requested,
+            planar,
+            prepared,
         });
     }
     Ok(())
 }
 
-fn member(original: &Request, fitted: &Request, prepared: &RelationInputs<'_>) -> Checked<()> {
-    let id = original.region;
-    let evidence = prepared
-        .planar
-        .members
-        .get(&id)
-        .ok_or(MaterialFailure::Source(id))?;
-    if id != fitted.region
-        || !evidence.matches_member(original)
-        || context(original) != context(fitted)
-    {
-        return Err(MaterialFailure::Source(id));
+fn match_support(original: &Request, fitted: &Request) -> Checked<()> {
+    if original.region != fitted.region || context(original) != context(fitted) {
+        return Err(MaterialFailure::Source(original.region));
     }
     Ok(())
 }
+
 fn context(r: &Request) -> [u64; 5] {
     [
         r.radius.to_bits(),

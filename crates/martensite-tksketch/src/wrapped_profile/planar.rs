@@ -9,6 +9,8 @@ mod order_tests;
 #[path = "planar_tests.rs"]
 mod tests;
 
+#[path = "planar_directed.rs"]
+pub(super) mod directed;
 #[path = "planar_joins.rs"]
 mod joins;
 #[path = "planar_sources.rs"]
@@ -68,6 +70,7 @@ pub(super) enum PlanarFailure {
         index: u32,
     },
     NonAuthoredVertex(CornerSource),
+    MissingVertex(ProfileVertexId),
     EmptyMaterial,
     Join(Box<joins::JoinFailure>),
 }
@@ -88,6 +91,7 @@ impl std::fmt::Display for PlanarFailure {
                 index,
             } => source_message(f, *curve, *level, *index),
             Self::NonAuthoredVertex(source) => vertex_message(f, *source),
+            Self::MissingVertex(id) => write!(f, "vertex={id:?}; expected a captured endpoint"),
             Self::EmptyMaterial => write!(
                 f,
                 "material loops=0; expected an outer boundary with optional holes"

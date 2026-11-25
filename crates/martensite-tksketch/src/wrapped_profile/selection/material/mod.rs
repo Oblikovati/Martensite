@@ -42,7 +42,7 @@ pub(in super::super) fn certify_with_cancel(
         requests,
         RelationInputs {
             prepared: &prepared.prepared,
-            planar: &prepared.planar,
+            planar: PlanarSource::Graph(&prepared.planar),
             boundary: &prepared.boundary_clearance,
         },
         options,
@@ -66,7 +66,7 @@ pub(in super::super) fn certify_projected_with_cancel(
         requests,
         RelationInputs {
             prepared: requests,
-            planar,
+            planar: PlanarSource::Graph(planar),
             boundary,
         },
         options,
@@ -88,9 +88,33 @@ impl From<MaterialFailure> for MaterialWorkFailure {
     }
 }
 
+pub(super) fn certify_directed(
+    requests: &[Request],
+    selected: &directed::DirectedSelection,
+    options: MaterialOptions,
+    cancelled: &mut CancelPoll<'_>,
+) -> Checked<PeriodicMaterialEvidence> {
+    certify_bound(
+        requests,
+        RelationInputs {
+            prepared: &selected.attachment.prepared,
+            planar: PlanarSource::Directed(selected),
+            boundary: &selected.attachment.boundary_clearance,
+        },
+        options,
+        cancelled,
+    )
+    .map_err(|error| error.cause)
+}
+
+enum PlanarSource<'a> {
+    Graph(&'a PlanarSelectionEvidence),
+    Directed(&'a directed::DirectedSelection),
+}
+
 struct RelationInputs<'a> {
     prepared: &'a [Request],
-    planar: &'a PlanarSelectionEvidence,
+    planar: PlanarSource<'a>,
     boundary: &'a planar_clearance::OriginalClearance,
 }
 

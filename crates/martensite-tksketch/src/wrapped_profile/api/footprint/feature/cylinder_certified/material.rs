@@ -103,29 +103,24 @@ pub(super) fn prepare(
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<Tool> {
     let originals = &input.inputs.requests;
-    let selected = certify(
-        attempt,
-        TOOL,
-        "source-bound selected material",
-        selection::certify_with_proof(
-            originals,
-            Default::default(),
-            request.options.planar_work,
-            selection::Preparation {
-                proof: planar,
-                maximum_fit_error: Some(input.resolution.sew),
-            },
-            &mut *cancelled,
-        ),
-    )?;
-    let prepared = &selected.prepared.prepared;
+    let selected = selection::prepare_attachment(
+        originals,
+        request.options.planar_work,
+        selection::Preparation {
+            proof: planar,
+            maximum_fit_error: Some(input.resolution.sew),
+        },
+        cancelled,
+    )
+    .map_err(|cause| selection_refusal(attempt, cause))?;
+    let prepared = &selected.prepared;
     let work = build_members(attempt, originals, prepared, cancelled)?;
     let keys: Vec<_> = work.bindings.iter().map(|(key, _)| *key).collect();
     let lineages = certify(
         attempt,
         TOOL,
         "source tool authored history",
-        source_history::certify(originals, &selected, &keys),
+        source_history::certify_developed(originals, prepared, &keys),
     )?;
     let history = certify(
         attempt,
@@ -143,7 +138,7 @@ pub(super) fn prepare(
         .iter()
         .map(|(&region, proof)| (region, proof.as_slice()))
         .collect();
-    let clearance = selected.prepared.boundary_clearance;
+    let clearance = selected.boundary_clearance;
     certify(
         attempt,
         TOOL,
@@ -158,6 +153,22 @@ pub(super) fn prepare(
         input.support.origin,
         clearance,
     )
+}
+
+fn selection_refusal(
+    attempt: Attempt,
+    cause: selection::SelectionFailure,
+) -> CylinderFeatureFailure {
+    use selection::SelectionFailure as Source;
+    let cause = match cause {
+        Source::Cancelled => CylinderFeatureCause::Cancelled,
+        Source::Directed(cause) => CylinderFeatureCause::DirectedPlanarMaterial(cause),
+        other => CylinderFeatureCause::Native {
+            query: "source-bound selected material",
+            cause: Box::new(Failure::new(&format!("{other:?}"))),
+        },
+    };
+    attempt.fail(TOOL, cause)
 }
 
 struct Working {

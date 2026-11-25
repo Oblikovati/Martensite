@@ -57,6 +57,8 @@ pub enum CylinderFeatureCause {
         /// The source shape or proof invariant requiring evidence.
         expected: &'static str,
     },
+    /// The directed original contours could not prove the selected planar material.
+    DirectedPlanarMaterial(Box<martensite_tkbo::body_check::DirectedCapFailure>),
     /// The original or decoded stock failed its frustum certificate.
     ConicalStock(Box<ConicalStockFailure>),
     /// The decoded stock trim proof must be nonempty and cover every retained side.
