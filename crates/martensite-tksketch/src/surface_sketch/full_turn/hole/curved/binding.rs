@@ -19,7 +19,7 @@ impl FittedCut {
         let mut candidates = tool
             .entities
             .keys()
-            .filter_map(|key| candidate_span(*key, id.curve));
+            .filter_map(|key| candidate_span(*key, crossing.report));
         let enclosed = |span: &WrappedSourceSpan| {
             let [a, b] = span_bounds(*span);
             let [lo, hi] = crossing.report.normalized_parameter;
@@ -54,11 +54,25 @@ impl FittedCut {
 
     pub(super) fn edge(self, depth: PeriodicDepth) -> WrappedHistoryKey {
         WrappedHistoryKey {
-            source: WrappedEntitySource::Curve {
-                curve: self.crossing.report.id.curve,
-                span: self.span,
-            },
+            source: self.curve_source(),
             role: roles::edge_role(depth.index()),
+        }
+    }
+
+    fn curve_source(self) -> WrappedEntitySource {
+        let curve = self.crossing.report.id.curve;
+        let span = self.span;
+        match self.crossing.report.conic_map {
+            None => WrappedEntitySource::Curve { curve, span },
+            Some(map) => WrappedEntitySource::MappedCurve { curve, span, map },
+        }
+    }
+
+    fn split_point(self, point: WrappedSourcePoint) -> WrappedEntitySource {
+        let curve = self.crossing.report.id.curve;
+        match self.crossing.report.conic_map {
+            None => WrappedEntitySource::SplitVertex { curve, point },
+            Some(map) => WrappedEntitySource::MappedSplitVertex { curve, point, map },
         }
     }
 
@@ -70,10 +84,7 @@ impl FittedCut {
             } else if n == 1u64 << level {
                 WrappedEntitySource::Vertex(self.crossing.ends[1])
             } else {
-                WrappedEntitySource::SplitVertex {
-                    curve: self.crossing.report.id.curve,
-                    point: dyadic(n, level),
-                }
+                self.split_point(dyadic(n, level))
             };
             WrappedHistoryKey {
                 source,
@@ -83,7 +94,8 @@ impl FittedCut {
     }
 
     fn ends(self) -> [PeriodicSourceEnd; 2] {
-        [self.span.index, self.span.index + 1].map(|n| endpoint(n, self.span.level))
+        [self.span.index, self.span.index + 1]
+            .map(|n| endpoint(n, self.span.level, self.crossing.report.conic_map))
     }
 
     pub(super) fn pieces(self, depth: PeriodicDepth) -> [PeriodicImageKey; 2] {
@@ -103,24 +115,30 @@ pub(super) fn span_bounds(span: WrappedSourceSpan) -> [f64; 2] {
     [span.index as f64 * scale, (span.index + 1) as f64 * scale]
 }
 
-fn candidate_span(key: WrappedHistoryKey, id: SurfaceCurveId) -> Option<WrappedSourceSpan> {
-    match key {
-        WrappedHistoryKey {
-            source: WrappedEntitySource::Curve { curve, span },
-            role: HistoryRole::FirstDepthEdge,
-        } if curve == id => Some(span),
-        _ => None,
+fn candidate_span(key: WrappedHistoryKey, root: PeriodicCrossing) -> Option<WrappedSourceSpan> {
+    if key.role != HistoryRole::FirstDepthEdge {
+        return None;
     }
+    let (curve, span, map) = match key.source {
+        WrappedEntitySource::Curve { curve, span } => (curve, span, None),
+        WrappedEntitySource::MappedCurve { curve, span, map } => (curve, span, Some(map)),
+        _ => return None,
+    };
+    (curve == root.id.curve && map == root.conic_map).then_some(span)
 }
 
-fn endpoint(n: u64, level: u8) -> PeriodicSourceEnd {
+fn endpoint(n: u64, level: u8, map: Option<WrappedConicParameterMap>) -> PeriodicSourceEnd {
     if n == 0 {
         return PeriodicSourceEnd::Start;
     }
     if n == 1u64 << level {
         return PeriodicSourceEnd::End;
     }
-    PeriodicSourceEnd::Dyadic(dyadic(n, level))
+    let point = dyadic(n, level);
+    match map {
+        Some(map) => PeriodicSourceEnd::ConicDyadic { point, map },
+        None => PeriodicSourceEnd::Dyadic(point),
+    }
 }
 
 fn dyadic(n: u64, level: u8) -> WrappedSourcePoint {

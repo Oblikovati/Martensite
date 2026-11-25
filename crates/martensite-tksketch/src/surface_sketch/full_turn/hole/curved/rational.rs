@@ -5,7 +5,7 @@ use super::*;
 type Completed = CurvedBandResult<RationalWrappedResult>;
 
 /// Cut a rational quadratic aperture through a full cylindrical band and its periodic seam.
-/// Accepts one closed boundary of explicit lines and open, clamped positive-rational quadratics.
+/// Accepts one closed boundary of explicit lines, exact analytic conic quarters, and open, clamped positive-rational quadratics.
 /// The reference level controls exact dyadic subdivision of the original curve parameter.
 /// Example: `let cut = normal_extrude_cylinder_band_with_rational_hole(&band, &profile, options, 3)?;`.
 pub fn normal_extrude_cylinder_band_with_rational_hole(
@@ -19,7 +19,7 @@ pub fn normal_extrude_cylinder_band_with_rational_hole(
         request,
         options,
         Scope::OneCrossed,
-        SourceModel::Rational,
+        SourceModel::Rational(options.resolution),
     )
     .map_err(|cause| admission_failure(band, cause))?;
     let tool = normal_extrude_rational_cylinder(request, reference_level, || false)
@@ -28,7 +28,7 @@ pub fn normal_extrude_cylinder_band_with_rational_hole(
 }
 
 /// Cut a rational quadratic aperture through a full conical band and its periodic seam.
-/// Accepts one closed boundary of explicit lines and open, clamped positive-rational quadratics
+/// Accepts one closed boundary of explicit lines, exact analytic conic quarters, and open, clamped positive-rational quadratics
 /// crossing the zero ray of a positive-X developed chart.
 /// Example: `let cut = normal_extrude_cone_band_with_rational_hole(&band, &profile, options, 3)?;`.
 pub fn normal_extrude_cone_band_with_rational_hole(
@@ -42,7 +42,7 @@ pub fn normal_extrude_cone_band_with_rational_hole(
         request,
         options,
         Scope::OneCrossed,
-        SourceModel::Rational,
+        SourceModel::Rational(options.resolution),
     )
     .map_err(|cause| admission_failure(band, cause))?;
     let tool = normal_extrude_rational_cone(request, reference_level, || false)

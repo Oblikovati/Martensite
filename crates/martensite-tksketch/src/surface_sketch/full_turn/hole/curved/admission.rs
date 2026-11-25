@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Prove the first curved cut from the exact authored polynomial chart controls.
 use super::*;
-use martensite_tkbo::profile_extrusion::{ProfilePlane, SketchProfile};
+use martensite_tkbo::profile_extrusion::{ProfilePlane, Resolution, SketchProfile};
 
 mod cone;
 mod curve;
@@ -28,10 +28,10 @@ pub(super) enum Scope {
     Batch,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy)]
 pub(super) enum SourceModel {
     Polynomial,
-    Rational,
+    Rational(Resolution),
 }
 
 #[derive(Clone, Copy)]
