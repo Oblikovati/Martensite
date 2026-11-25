@@ -51,7 +51,7 @@ fn sample_path() -> (Snapshot, [DirectedLineUse; 3]) {
     (source, [forward(10), back, forward(11)])
 }
 
-fn archive(shape: &Shape) -> Vec<u8> {
+pub(crate) fn archive(shape: &Shape) -> Vec<u8> {
     let mut stream = IoStream::from_bytes(Vec::new());
     let options = bintools::WriteOptions {
         with_triangles: false,

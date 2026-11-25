@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Freeze the actual planar attachment domain of one selected native face.
 mod capture;
+mod curve;
+
+use curve::PlanarSupport;
+pub use curve::{DetachedPlanarCurve, FaceAttachmentCurve, FaceAttachmentCurveError};
 
 use crate::{
     brep::face_input_capture::{
@@ -14,6 +18,7 @@ use martensite_tkmath::gp::UnitPlacementError;
 use martensite_tkmath::predicates::roots::metric_bounds::planar_attachment::CertifiedPlanarAttachment;
 pub use martensite_tkmath::predicates::roots::metric_bounds::planar_attachment::{
     PlanarAttachmentChart, PlanarAttachmentError, PlanarAttachmentLocation, PlanarAttachmentQuery,
+    PlanarCurveCertificate, PlanarCurvePath, PlanarCurveProofFailure,
 };
 use std::{error::Error, fmt, num::NonZeroU64};
 
@@ -127,6 +132,7 @@ impl Error for FaceAttachmentError {
 pub struct FaceAttachment {
     source: AttachmentSource,
     proof: CertifiedPlanarAttachment,
+    support: PlanarSupport,
 }
 
 impl FaceAttachment {
@@ -211,10 +217,14 @@ pub fn capture_planar_attachment(
         &mut cancelled,
     )
     .map_err(capture_failure)?;
-    let proof = capture::prove(&snapshot, &mut cancelled)?;
+    let (proof, support) = capture::prove(&snapshot, &mut cancelled)?;
     member(body, face, limits.owners, &mut cancelled)?;
     poll(&mut cancelled)?;
-    Ok(FaceAttachment { source, proof })
+    Ok(FaceAttachment {
+        source,
+        proof,
+        support,
+    })
 }
 
 fn member(

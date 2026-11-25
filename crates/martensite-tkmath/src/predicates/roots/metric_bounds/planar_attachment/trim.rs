@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Validate complete directed trim cycles before accepting any winding query.
+mod segment;
+
 use super::{
     ExactRatio as R, PLANAR_ATTACHMENT_MAX_LOOP_EDGES, PlanarAttachmentEdge,
     PlanarAttachmentError as Error, PlanarAttachmentLocation as Location,
@@ -159,9 +161,13 @@ fn segments(points: &[Uv]) -> impl Iterator<Item = (&Uv, &Uv)> {
 }
 
 fn turn(a: &Uv, b: &Uv, c: &Uv) -> Ordering {
+    determinant(a, b, c).sign()
+}
+
+fn determinant(a: &Uv, b: &Uv, c: &Uv) -> R {
     let [x, y] = std::array::from_fn(|i| b[i].subtract(&a[i]));
     let [u, v] = std::array::from_fn(|i| c[i].subtract(&a[i]));
-    x.multiply(&v).subtract(&y.multiply(&u)).sign()
+    x.multiply(&v).subtract(&y.multiply(&u))
 }
 
 #[derive(PartialEq, Eq)]

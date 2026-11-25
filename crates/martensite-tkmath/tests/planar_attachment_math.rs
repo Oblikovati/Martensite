@@ -215,3 +215,40 @@ fn native_unit_placement_admits_original_rows_and_rejects_conflicting_shortcuts(
         Err(UnitPlacementError::Shortcut(TransformForm::Identity))
     );
 }
+
+#[test]
+fn affine_curve_uses_both_actual_paths_and_bounds_the_whole_distance() {
+    use martensite_tkmath::predicates::roots::metric_bounds::planar_attachment::{
+        PlanarCurvePath, PlanarCurveProofFailure,
+    };
+    let [outer, hole] = [square(4., false, 0.), square(1., true, 0.)];
+    let chart =
+        CertifiedPlanarAttachment::capture(Axis3::default(), PLACEMENT, [&outer, &hole], || false)
+            .unwrap();
+    let retained_world = [[58., 2., 9.125], [70., 2., 8.5]];
+    let proposed_uv = [[-2., 2.], [2., 2.]];
+    let evidence = chart
+        .certify_straight_curve(retained_world, proposed_uv, 0.5, || false)
+        .unwrap();
+    assert_eq!(evidence.distance_bound, 0.5);
+    assert_eq!(
+        evidence.uv_lift.map(|point| point.distance_bound),
+        [0.125, 0.5]
+    );
+    assert_eq!(evidence.world_projection, evidence.uv_lift);
+    assert!(matches!(
+        chart.certify_straight_curve(retained_world, proposed_uv, 0.5_f64.next_down(), || false),
+        Err(PlanarCurveProofFailure::Attachment(
+            PlanarAttachmentError::OffSupport { .. }
+        ))
+    ));
+    // Retained 3D runs clear of the hole while the independently supplied UV path crosses;
+    // match the actual metric caps first so the interval proof must reject the UV path.
+    assert_eq!(
+        chart.certify_straight_curve(retained_world, [[-2., 0.], [2., 0.]], 3., || false),
+        Err(PlanarCurveProofFailure::Trim {
+            path: PlanarCurvePath::UvLift,
+            location: PlanarAttachmentLocation::HoleInterior,
+        })
+    );
+}

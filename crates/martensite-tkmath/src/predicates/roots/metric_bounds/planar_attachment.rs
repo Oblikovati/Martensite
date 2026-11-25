@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! A located affine chart with a strictly convex outer trim and one convex hole.
 mod chart;
+mod curve;
+pub use curve::{PlanarCurveCertificate, PlanarCurvePath, PlanarCurveProofFailure};
 mod trim;
 
 use self::{chart::Chart, trim::Loop};

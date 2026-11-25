@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Source-bound planar attachment ownership layered over the actual hard sketch program.
+mod curve;
 mod drag;
 mod equation;
 mod failure;
@@ -13,6 +14,7 @@ use martensite_tkbrep::brep::planar_attachment::{
 };
 use std::{num::NonZeroU64, sync::Arc};
 
+pub use curve::{PlanarFaceCurve, PlanarFaceCurveFailure, PlanarFaceCurveRecipe};
 pub use drag::PlanarFaceDragUpdate;
 pub(in crate::constraints) use equation::PlanarEquation;
 pub use failure::PlanarFaceConstraintFailure;

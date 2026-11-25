@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Decode only the coherent source values, with no second reads of live geometry.
-use super::{FaceAttachmentError as Error, numeric_failure, poll};
+use super::{FaceAttachmentError as Error, PlanarSupport, numeric_failure, poll};
 use crate::{
     brep::{
         face_input_capture::{CapturedFaceCell as Cell, CapturedOccurrence, FaceInputSnapshot},
@@ -29,7 +29,7 @@ struct DirectedEdge {
 pub(super) fn prove(
     snapshot: &FaceInputSnapshot,
     cancelled: &mut impl FnMut() -> bool,
-) -> Checked<CertifiedPlanarAttachment> {
+) -> Checked<(CertifiedPlanarAttachment, PlanarSupport)> {
     let root = snapshot.root();
     reversed(root)?;
     let values = Captured::index(snapshot);
@@ -45,13 +45,13 @@ pub(super) fn prove(
             .checked_unit_placement_rows()
             .map_err(Error::Placement)?;
     }
-    let placement = root
-        .location
-        .effective_transform()
+    let position = root.location.effective_transform();
+    let placement = position
         .checked_unit_placement_rows()
         .map_err(Error::Placement)?;
-    CertifiedPlanarAttachment::capture(frame, placement, [&a, &b], cancelled)
-        .map_err(numeric_failure)
+    let proof = CertifiedPlanarAttachment::capture(frame, placement, [&a, &b], cancelled)
+        .map_err(numeric_failure)?;
+    Ok((proof, PlanarSupport { frame, position }))
 }
 
 impl<'a> Captured<'a> {

@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
+mod curve;
+
 use crate::{
     constraints::{length, policy, rid},
     fixture::{lid, line, pid, point, seed},
@@ -72,10 +74,14 @@ fn native(hole: f64) -> (Solid, Face) {
 
 fn proof(revision: u64, hole: f64, salt: u64) -> PlanarFaceBinding {
     let (solid, face) = native(hole);
+    captured(&solid, &face, revision, salt)
+}
+
+fn captured(solid: &Solid, face: &Face, revision: u64, salt: u64) -> PlanarFaceBinding {
     PlanarFaceBinding::new(
         capture_planar_attachment(
-            &solid,
-            &face,
+            solid,
+            face,
             AttachmentSource {
                 document: [42; 16],
                 body: key(10),
