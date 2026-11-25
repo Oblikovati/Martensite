@@ -7,6 +7,7 @@ mod control_spline;
 mod edit;
 mod failure;
 mod fit_spline;
+pub mod line_edit;
 mod mirror;
 mod source;
 pub mod split_plane;

@@ -25,7 +25,24 @@ impl Snapshot {
         edits: &[Edit],
         mut cancelled: impl FnMut() -> bool,
     ) -> Result<Self, EditFailure> {
-        poll(&mut cancelled, BatchPhase::BeforeStaging)?;
+        self.apply_batch(edits, true, &mut cancelled)
+    }
+
+    pub(super) fn apply_targeted_line_batch(
+        &self,
+        edits: &[Edit],
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<Self, EditFailure> {
+        self.apply_batch(edits, false, cancelled)
+    }
+
+    fn apply_batch(
+        &self,
+        edits: &[Edit],
+        prune_orphans: bool,
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<Self, EditFailure> {
+        poll(cancelled, BatchPhase::BeforeStaging)?;
         let mut draft = Self {
             minimum: self.minimum,
             entities: self.entities.clone(),
@@ -38,17 +55,17 @@ impl Snapshot {
         };
         let mut retired = RetiredIds::new();
         for &edit in edits {
-            poll(&mut cancelled, BatchPhase::Staging)?;
-            draft.stage(edit, &mut retired, &mut cancelled)?;
+            poll(cancelled, BatchPhase::Staging)?;
+            draft.stage(edit, &mut retired, cancelled)?;
         }
-        if !retired.is_empty() {
-            draft.prune_defining_points(&mut retired, &mut cancelled)?;
+        if prune_orphans && !retired.is_empty() {
+            draft.prune_defining_points(&mut retired, cancelled)?;
         }
         // This draft has the same minimum as its source, so matching inputs retain their proof.
-        draft.geometry = draft.check_lines(&self.geometry, &mut cancelled)?;
+        draft.geometry = draft.check_lines(&self.geometry, cancelled)?;
         // Line-only edits keep the single geometry scan used by the drag path.
         if !self.arcs.is_empty() || edits.iter().any(|edit| matches!(edit, Edit::InsertArc(_))) {
-            draft.arcs = draft.check_arcs(&self.arcs, &mut cancelled)?;
+            draft.arcs = draft.check_arcs(&self.arcs, cancelled)?;
         }
         if !self.control_splines.is_empty()
             || edits
@@ -56,16 +73,16 @@ impl Snapshot {
                 .any(|edit| matches!(edit, Edit::InsertControlSpline(_)))
         {
             draft.control_splines =
-                draft.check_control_splines(&self.control_splines, &mut cancelled)?;
+                draft.check_control_splines(&self.control_splines, cancelled)?;
         }
         if !self.fit_splines.is_empty()
             || edits
                 .iter()
                 .any(|edit| matches!(edit, Edit::InsertFitSpline(_)))
         {
-            draft.fit_splines = draft.check_fit_splines(&self.fit_splines, &mut cancelled)?;
+            draft.fit_splines = draft.check_fit_splines(&self.fit_splines, cancelled)?;
         }
-        poll(&mut cancelled, BatchPhase::Completion)?;
+        poll(cancelled, BatchPhase::Completion)?;
         Ok(draft)
     }
 
@@ -178,7 +195,7 @@ impl Snapshot {
         Ok(())
     }
 
-    fn incident_curves(
+    pub(super) fn incident_curves(
         &self,
         point: PointId,
         cancelled: &mut impl FnMut() -> bool,

@@ -83,39 +83,77 @@ fn classify(
     s: [BigInt; 3],
     delta: [BigInt; 3],
 ) -> SegmentContact3d {
-    let normal = cross(&r, &s);
+    match exact_support_parameters(&r, &s, &delta) {
+        SupportParameters::Transverse {
+            numerators: [t, u],
+            denominator,
+        } => {
+            if unit_interval(&t, &denominator) && unit_interval(&u, &denominator) {
+                return SegmentContact3d::Point;
+            }
+            SegmentContact3d::Disjoint
+        }
+        SupportParameters::Collinear(Some(axis)) => interval_contact(first, second, axis),
+        SupportParameters::Collinear(None) => SegmentContact3d::Point,
+        SupportParameters::Parallel | SupportParameters::Skew => SegmentContact3d::Disjoint,
+    }
+}
+
+pub(super) enum SupportParameters {
+    Parallel,
+    Skew,
+    Collinear(Option<usize>),
+    Transverse {
+        numerators: [BigInt; 2],
+        denominator: BigInt,
+    },
+}
+
+pub(super) fn exact_support_parameters(
+    first: &[BigInt; 3],
+    second: &[BigInt; 3],
+    delta: &[BigInt; 3],
+) -> SupportParameters {
+    let normal = cross(first, second);
     if let Some(axis) = nonzero_axis(&normal) {
-        return transverse_contact(&r, &s, &delta, &normal, axis);
+        return transverse_contact(first, second, delta, normal, axis);
     }
-    let direction = if nonzero_axis(&r).is_some() { &r } else { &s };
-    let Some(axis) = nonzero_axis(direction) else {
-        return SegmentContact3d::Point;
+    let direction = if nonzero_axis(first).is_some() {
+        first
+    } else {
+        second
     };
-    if nonzero_axis(&cross(&delta, direction)).is_some() {
-        return SegmentContact3d::Disjoint;
+    if nonzero_axis(&cross(delta, direction)).is_some() {
+        return SupportParameters::Parallel;
     }
-    interval_contact(first, second, axis)
+    SupportParameters::Collinear(nonzero_axis(direction))
 }
 
 fn transverse_contact(
-    r: &[BigInt; 3],
-    s: &[BigInt; 3],
+    first: &[BigInt; 3],
+    second: &[BigInt; 3],
     delta: &[BigInt; 3],
-    normal: &[BigInt; 3],
+    normal: [BigInt; 3],
     axis: usize,
-) -> SegmentContact3d {
+) -> SupportParameters {
     let plane: BigInt = (0..3).map(|i| &delta[i] * &normal[i]).sum();
     if plane.sign() != Sign::NoSign {
-        return SegmentContact3d::Disjoint;
+        return SupportParameters::Skew;
     }
     // The nonzero normal component selects an exact two-dimensional solve.
-    let denominator = &normal[axis];
-    let t = cross_component(delta, s, axis);
-    let u = cross_component(delta, r, axis);
-    if unit_interval(&t, denominator) && unit_interval(&u, denominator) {
-        return SegmentContact3d::Point;
+    let [x, y, z] = normal;
+    let denominator = match axis {
+        0 => x,
+        1 => y,
+        _ => z,
+    };
+    SupportParameters::Transverse {
+        numerators: [
+            cross_component(delta, second, axis),
+            cross_component(delta, first, axis),
+        ],
+        denominator,
     }
-    SegmentContact3d::Disjoint
 }
 
 fn unit_interval(numerator: &BigInt, denominator: &BigInt) -> bool {
@@ -129,7 +167,7 @@ fn nonzero_axis(vector: &[BigInt; 3]) -> Option<usize> {
         .position(|component| component.sign() != Sign::NoSign)
 }
 
-fn difference(first: &[BigInt; 3], second: &[BigInt; 3]) -> [BigInt; 3] {
+pub(super) fn difference(first: &[BigInt; 3], second: &[BigInt; 3]) -> [BigInt; 3] {
     std::array::from_fn(|i| &first[i] - &second[i])
 }
 

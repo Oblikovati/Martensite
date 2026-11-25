@@ -338,3 +338,9 @@ pub use segment_plane::{
     SegmentPlaneCut, SegmentPlaneFailure, SegmentPlaneIntersection, SegmentWorkPlane,
     intersect_segment_plane,
 };
+
+mod directed_line;
+pub use directed_line::{
+    DirectedLineContact, DirectedLineHit, DirectedLineIncidenceFailure, DirectedLineParameter,
+    DirectedLinePlacement, LineEvidenceQuantity, LineParameterLocation, directed_line_contact,
+};

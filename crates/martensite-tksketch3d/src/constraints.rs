@@ -6,6 +6,7 @@ mod binding;
 mod error;
 mod incidence;
 mod initialization;
+mod line_edit;
 mod metric;
 mod motion;
 mod program;
