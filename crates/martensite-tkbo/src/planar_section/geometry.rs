@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Read literal carrier coefficients and effective placements without evaluating pcurves.
 use super::{Checked, PlanarSectionCause as Cause};
-use crate::sketch_region_geometry_capture::{CapturedGeometryCause, captured_placement};
 use martensite_tkbrep::{
     brep::{BRepCurveRepresentation, BRepTEdge, BRepTVertex, BRepTool},
     topods::{Edge, Face, Vertex},
@@ -189,17 +188,9 @@ fn contains(outer: [f64; 2], inner: [f64; 2]) -> bool {
 }
 
 fn placement(transform: Transform3) -> Checked<SectionPlacement> {
-    if transform.scale_factor() != 1. {
-        return Err(Cause::PlacementScale(transform.scale_factor()));
-    }
-    let embedding = captured_placement(transform).map_err(|cause| match cause {
-        CapturedGeometryCause::Native(cause) => Cause::from(cause),
-        _ => Cause::PrivateCopy,
-    })?;
-    Ok(std::array::from_fn(|i| {
-        let [a, b, c] = embedding.linear[i];
-        [a, b, c, embedding.origin[i]]
-    }))
+    transform
+        .checked_unit_placement_rows()
+        .map_err(Cause::Placement)
 }
 
 fn representation<T: Transient + ?Sized>(owner: &Handle<T>, expected: &'static str) -> Cause {

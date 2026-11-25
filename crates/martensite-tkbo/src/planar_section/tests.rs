@@ -11,7 +11,7 @@ use martensite_tkg3d::{
     top_abs::{Orientation, ShapeEnum},
 };
 use martensite_tkmath::{
-    gp::{Axis3, Direction3, Plane3, Point3, Transform3, Vector3},
+    gp::{Axis3, Direction3, Plane3, Point3, Quaternion, Transform3, TransformForm, Vector3},
     toploc::Location,
 };
 use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeBox;
@@ -264,6 +264,51 @@ fn located_and_reversed_faces_preserve_direction_and_local_chart() {
         parent.reverse();
     }
     assert_eq!(segment(&reversed).evidence.parent_uv, direct_uv);
+}
+
+fn rotate_face(transform: Transform3) -> Face {
+    let located = setup().moved(&Location::new(transform), false).unwrap();
+    topods::face(&located).unwrap()
+}
+
+fn quarter_y() -> Transform3 {
+    // This quaternion's squared norm is 2, giving an exact signed matrix.
+    Transform3::from_quaternion(Quaternion::new(0., 1., 0., 1.))
+}
+
+#[test]
+fn lying_unit_translation_form_cannot_classify_a_transverse_section_as_empty() {
+    let baseline = cut(&setup(), x_zero()).unwrap();
+    assert_eq!(segment(&baseline).evidence.endpoints, EXPECTED);
+    let mut malformed = quarter_y();
+    assert_eq!(malformed.value(1, 3).unwrap(), 1.);
+    malformed.set_form(TransformForm::Translation);
+    let face = rotate_face(malformed);
+    let effective = BRepTool::surface(&face).unwrap();
+    let actual = effective.downcast_ref::<GeomPlane>().unwrap().pln();
+    assert_eq!(actual.axis().direction(), Direction3::Z);
+    assert_eq!(actual.location().z(), 5.);
+    let failure = cut(&face, x_zero()).unwrap_err();
+    assert_eq!(failure.parents.face, stamp(FACE_ID));
+    assert!(matches!(
+        failure.cause,
+        PlanarSectionCause::Placement(martensite_tkmath::gp::UnitPlacementError::Shortcut(
+            TransformForm::Translation
+        ))
+    ));
+}
+
+#[test]
+fn ordinary_quarter_rotation_retains_the_source_chart() {
+    let face = rotate_face(quarter_y());
+    let tool = work_plane([0., 0., 0.], Direction3::Z);
+    let result = cut(&face, tool).unwrap();
+    let observed = &segment(&result).evidence;
+    assert_eq!(observed.endpoints, [[5., 2., 0.], [5., -2., 0.]]);
+    assert_eq!(
+        observed.parent_uv[0],
+        [[[3., 3.], [4., 4.]], [[3., 3.], [0., 0.]]]
+    );
 }
 
 #[test]

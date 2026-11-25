@@ -6,6 +6,7 @@ use crate::bop_algo::ProgressCompletion;
 use martensite_tkbrep::brep::face_input_capture::FaceCaptureIncomplete;
 use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
+use martensite_tkmath::gp::UnitPlacementError;
 use std::{error::Error, fmt};
 
 /// Typed incomplete, unsupported, or degenerate Section observation.
@@ -48,8 +49,8 @@ pub enum PlanarSectionCause {
         /// Admitted carrier.
         expected: &'static str,
     },
-    /// The actual effective transform did not use unit scale.
-    PlacementScale(f64),
+    /// The stored native placement could not supply a consistent unit affine map.
+    Placement(UnitPlacementError),
     /// An observed raw source modelling tolerance was negative.
     SourceTolerance {
         /// Invocation-local observed owner.
@@ -150,9 +151,7 @@ impl fmt::Display for PlanarSectionCause {
             Self::Representation { actual, expected } => {
                 write!(f, "stored carrier {actual:?} requires {expected}")
             }
-            Self::PlacementScale(actual) => {
-                write!(f, "location scale {actual} requires unit scale")
-            }
+            Self::Placement(cause) => cause.fmt(f),
             Self::SourceTolerance { owner, actual } => {
                 write!(
                     f,
@@ -199,6 +198,7 @@ impl Error for PlanarSectionCause {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::Native(cause) => Some(cause.as_ref()),
+            Self::Placement(cause) => Some(cause),
             Self::BoundarySource { cause, .. } => Some(cause.as_ref()),
             Self::Certificate(cause) => Some(cause),
             Self::Capture(cause) => match cause.as_ref() {
