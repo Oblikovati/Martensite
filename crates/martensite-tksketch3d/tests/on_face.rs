@@ -154,7 +154,17 @@ fn same_gesture_admits_hole_boundary_refuses_hole_and_continues() {
     let boundary = initial
         .drag_preferred(pid(1), point([-1., 0., 0.]), 1e-8, || source, || false)
         .unwrap();
-    assert_eq!(boundary.trim, PlanarAttachmentLocation::HoleBoundary);
+    assert_eq!(
+        boundary.world_projection.location,
+        PlanarAttachmentLocation::HoleBoundary
+    );
+    assert_eq!(boundary.uv_lift, boundary.world_projection);
+    assert_eq!(boundary.world_projection.distance_bound, 0.);
+    assert_eq!(boundary.world_projection.uv, [[-1.; 2], [0.; 2]]);
+    assert_eq!(
+        boundary.world_projection.projected,
+        [[-1.; 2], [0.; 2], [0.; 2]]
+    );
     assert_eq!(location(&boundary.sketch), [-1., 0., 0.]);
     assert_eq!(boundary.sketch.relation().uv, [-1., 0.]);
     let accepted = boundary.sketch;
@@ -189,7 +199,10 @@ fn same_gesture_admits_hole_boundary_refuses_hole_and_continues() {
     let recovered = accepted
         .drag_preferred(pid(1), point([2., 0., 0.]), 1e-8, || source, || false)
         .unwrap();
-    assert_eq!(recovered.trim, PlanarAttachmentLocation::Material);
+    assert_eq!(
+        recovered.world_projection.location,
+        PlanarAttachmentLocation::Material
+    );
     for (actual, expected) in location(&recovered.sketch).into_iter().zip([2., 0., 0.]) {
         assert!((actual - expected).abs() <= 1e-9);
     }
@@ -197,7 +210,10 @@ fn same_gesture_admits_hole_boundary_refuses_hole_and_continues() {
         .sketch
         .drag_preferred(pid(1), point([4., 0., 0.]), 1e-8, || source, || false)
         .unwrap();
-    assert_eq!(outer.trim, PlanarAttachmentLocation::OuterBoundary);
+    assert_eq!(
+        outer.world_projection.location,
+        PlanarAttachmentLocation::OuterBoundary
+    );
     assert_eq!(location(&outer.sketch), [4., 0., 0.]);
     assert_eq!(recovered.rank, rank);
     assert_eq!(
@@ -241,7 +257,22 @@ fn another_cursor_point_moves_attachment_through_the_real_hard_program() {
     let actual = location(&moved.sketch);
     assert_eq!((moved.rank.rank, moved.rank.degrees_of_freedom), (9, 2));
     assert_eq!(moved.rank, moved.sketch.inspect_rank().unwrap());
-    assert_eq!(moved.trim, PlanarAttachmentLocation::Material);
+    assert_eq!(
+        moved.world_projection.location,
+        PlanarAttachmentLocation::Material
+    );
+    assert_eq!(moved.uv_lift.location, PlanarAttachmentLocation::Material);
+    assert_eq!(
+        moved.world_projection.projected,
+        [[actual[0]; 2], [actual[1]; 2], [0.; 2]]
+    );
+    assert_eq!(moved.world_projection.distance_bound, actual[2].abs());
+    let uv = moved.sketch.relation().uv;
+    assert_eq!(moved.uv_lift.uv, [[uv[0]; 2], [uv[1]; 2]]);
+    assert_eq!(moved.uv_lift.projected, [[uv[0]; 2], [uv[1]; 2], [0.; 2]]);
+    let lift_error = moved.uv_lift.distance_bound;
+    assert!(lift_error >= moved.world_projection.distance_bound);
+    assert!(lift_error <= policy().length_tolerance.value());
     assert!((actual[0] - 2.5).abs() <= 1e-8);
     assert!((actual[1] - 0.5).abs() <= 1e-8);
     assert!(actual[2].abs() <= 1e-8);

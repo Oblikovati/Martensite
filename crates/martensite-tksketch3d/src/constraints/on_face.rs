@@ -9,7 +9,7 @@ use super::{
 };
 use crate::{PointId, Snapshot};
 use martensite_tkbrep::brep::planar_attachment::{
-    AttachmentSource, FaceAttachment, PlanarAttachmentLocation, PlanarAttachmentQuery,
+    AttachmentSource, FaceAttachment, PlanarAttachmentQuery,
 };
 use std::{num::NonZeroU64, sync::Arc};
 
@@ -87,17 +87,18 @@ impl PlanarFaceBinding {
         uv: [f64; 2],
         limit: f64,
         cancelled: &mut impl FnMut() -> bool,
-    ) -> Result<PlanarAttachmentLocation, Failure> {
+    ) -> Result<(PlanarAttachmentQuery, PlanarAttachmentQuery), Failure> {
         let projected =
             admitted(
                 self.proof
                     .classify(self.revision.face, point, limit, &mut *cancelled)?,
             )?;
-        admitted(
-            self.proof
-                .classify_uv(self.revision.face, uv, point, limit, cancelled)?,
-        )?;
-        Ok(projected.location)
+        let lift =
+            admitted(
+                self.proof
+                    .classify_uv(self.revision.face, uv, point, limit, cancelled)?,
+            )?;
+        Ok((projected, lift))
     }
 }
 
@@ -297,7 +298,9 @@ fn build_program(
 }
 
 fn admitted(query: PlanarAttachmentQuery) -> Result<PlanarAttachmentQuery, Failure> {
-    use PlanarAttachmentLocation::{HoleInterior, OutsideOuter};
+    use martensite_tkbrep::brep::planar_attachment::PlanarAttachmentLocation::{
+        HoleInterior, OutsideOuter,
+    };
     match query.location {
         OutsideOuter | HoleInterior => Err(Failure::Trim(query.location)),
         _ => Ok(query),

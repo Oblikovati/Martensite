@@ -10,7 +10,7 @@ use crate::{
     },
 };
 use martensite_tkbrep::brep::planar_attachment::{
-    FaceAttachmentError, PlanarAttachmentError, PlanarAttachmentLocation,
+    FaceAttachmentError, PlanarAttachmentError, PlanarAttachmentLocation, PlanarAttachmentQuery,
 };
 use martensite_tkmath::gp::Point3;
 use std::sync::Arc;
@@ -27,8 +27,10 @@ pub struct PlanarFaceDragUpdate {
     pub residual_work_bound: usize,
     /// Projected cursor evidence from the retained coordinates.
     pub preference: PreferenceReport,
-    /// Exact trim class of the accepted world point's support projection.
-    pub trim: PlanarAttachmentLocation,
+    /// Certified trim, coordinate bounds, and Euclidean error of the accepted point's projection.
+    pub world_projection: PlanarAttachmentQuery,
+    /// Certified trim, coordinate bounds, and Euclidean error of the accepted solver UV's lift.
+    pub uv_lift: PlanarAttachmentQuery,
 }
 
 impl PlanarAttachedSketch {
@@ -80,7 +82,7 @@ impl PlanarAttachedSketch {
         let point = geometry.point(self.record.point).ok_or(
             crate::constraints::ConstraintFailure::MissingPoint(self.record.point),
         )?;
-        let trim = self.binding.qualify(
+        let (world_projection, uv_lift) = self.binding.qualify(
             *point.position.coordinates(),
             uv,
             sketch.policy.length_tolerance.value(),
@@ -118,7 +120,8 @@ impl PlanarAttachedSketch {
             hard_error: output.hard_error.max(observed_error),
             residual_work_bound: residual::work_bound(output.work.work),
             preference,
-            trim,
+            world_projection,
+            uv_lift,
         })
     }
 
