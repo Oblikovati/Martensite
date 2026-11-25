@@ -272,6 +272,6 @@ fn paired_cubic_expected(points: &[f64], curvature_scale: Option<f64>) -> Vec<f6
 }
 
 fn scalar_curvature(velocity: Vector, acceleration: Vector) -> Vector {
-    let speed = length(velocity);
-    cross(cross(velocity, acceleration), velocity).map(|x| x / speed.powi(4))
+    let speed_squared = dot(velocity, velocity);
+    cross(cross(velocity, acceleration), velocity).map(|x| x / (speed_squared * speed_squared))
 }
