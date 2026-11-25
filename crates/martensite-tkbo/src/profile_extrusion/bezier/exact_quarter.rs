@@ -94,7 +94,7 @@ pub fn exact_conic_arc_source(
     }))
 }
 
-fn admitted_geometry(
+pub(super) fn admitted_geometry(
     profile: &SketchProfile,
     curve: ProfileCurveId,
     resolution: Resolution,

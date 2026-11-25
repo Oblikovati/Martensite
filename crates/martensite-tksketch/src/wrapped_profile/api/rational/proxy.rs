@@ -20,7 +20,7 @@ pub(super) struct Proxy {
 struct CurveOrigin {
     curve: SurfaceCurveId,
     map: Option<input::ParameterMap>,
-    mapped_spline_partition: bool,
+    mapped_partition: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -28,6 +28,7 @@ enum NativeJoint {
     Interior(WrappedSourcePoint),
     ConicQuarter(i8),
     SplineKnot(WrappedNativeKnot),
+    AdmittedArc(WrappedAdmittedArcMap),
 }
 
 pub(super) fn build(
@@ -164,7 +165,8 @@ fn compose<'a>(
         let origin = CurveOrigin {
             curve: SurfaceCurveId(original.occurrence.curve.0),
             map: span.map,
-            mapped_spline_partition: original.is_mapped_spline() && original.spans.len() > 1,
+            mapped_partition: (original.is_mapped_spline() && original.spans.len() > 1)
+                || original.has_sewn_conic_partition(),
         };
         let end = if index + 1 == count {
             last
@@ -248,7 +250,7 @@ impl Proxy {
         let origin = CurveOrigin {
             curve: SurfaceCurveId(curve.occurrence.curve.0),
             map: None,
-            mapped_spline_partition: false,
+            mapped_partition: false,
         };
         let seam = self.vertex(
             ids,
@@ -273,6 +275,9 @@ impl Proxy {
             }
             Some(input::ParameterMap::Spline(map)) if end == (1_u64 << span.domain.level) => {
                 NativeJoint::SplineKnot(map.knots[1])
+            }
+            Some(input::ParameterMap::Admitted(map)) if end == (1_u64 << span.domain.level) => {
+                NativeJoint::AdmittedArc(map)
             }
             _ => NativeJoint::Interior(history::point(end, span.domain.level)),
         };

@@ -419,4 +419,5 @@ mod holes;
 mod mixed_curves;
 mod native_knots;
 mod one_sided;
+mod sewn_conic;
 mod strict_cone;

@@ -43,16 +43,16 @@ not converted. Errors retain offending source IDs or values and the expected
 shape.
 
 The rational entry points handle the additional profile representations below.
-Longer analytic sweeps still require a certified map from the fitted spans
-to the original angular interval.
 
 ## Positive rational reference
 
-The rational normal entries accept lines, polynomial or positive-weight splines
-with certified monotone spans, and exact circular or axis-aligned elliptic
-quarters, plus closed circles and axis-aligned ellipses with exact coefficients.
-Shorter analytic sweeps can use exact affine-carrier endpoints even when their
-stereographic weights require rounding.
+The rational normal entries accept lines, polynomial or positive-weight
+clamped splines, circular and elliptic arcs, circles, and ellipses. For conics
+with rounded endpoints or rotated axes, the planar proof works on the sewn
+spans captured by TKBO. A bounded trigonometric calculation relates those
+spans to the admitted analytic carrier. Each endpoint must still fit the
+original sewing limit. The position, derivative, and signed area bounds
+include the transfer, and the sewn span joins use exact separation tests.
 The outer and hole loops may mix those curves. The entries require increasing
 signed depths and one angular chart. The cone also requires the profile to
 lie in the positive developed halfplane, clear of the apex. The rational cylinder
@@ -78,7 +78,9 @@ reference error tubes. The normal map bounds the error in world coordinates.
 History records the original curve and its dyadic parameter intervals. For an analytic quarter it
 also records how the stereographic parameter maps to the native angle. Closed
 conics record a native-angle key at each quarter, including the seam at zero.
-For a shorter sweep, the key records the original angular endpoints. A
+Keys for a sewn sweep store the admitted angle and signed sweep, the exact
+fraction covered by each native piece, and its rational parameter map. The
+anchors between pieces carry the same authored curve identity. A
 nonuniform spline records the two original knots alongside each local dyadic
 interval. A vertex at a native knot has one key shared by its two neighbors.
 The position, derivative and Green-area bounds include coefficient rounding.
@@ -98,6 +100,25 @@ passes the directed proof with 16 reference cubics. Subdividing the residual
 bound, without changing those cubics, leaves space for the retained geometry
 within the same tolerance. Its 32-cubic execution under the same one-million
 arithmetic limit returns a typed `WorkLimit` for an actual side pair.
+
+### Degree-16 spline controls
+
+A cylindrical extrusion published an open degree-16 spline with positive
+weights and the native range `[-2, 6]`. Its interior knot `2` retains one
+authored key. The control uses an exact degree-elevated parabola and an
+independent area integral. It completed in 1.90 seconds in a Linux x86_64
+debug run, excluding compilation.
+
+The varying-weight fixture in
+`degree_sixteen_varying_weights_fit_the_original_native_knot` also certifies
+native knot insertion within the original arithmetic allowance. Its complete
+cylindrical extrusion used radius `10`, signed depths `[-0.1, 0.1]`, a
+`1e-4` spatial limit, and reference level `2`. The authored planar
+`CarrierV2` run was stopped after 333 seconds. An exact
+`GeometricCompositeV6` source comparison was stopped after 126 seconds. Both
+runs were still in the planar pair census. The geometric filter reached the
+same integer polynomial elimination as the carrier proof. These timings are
+incomplete debug observations for the same input.
 
 ## Verification
 

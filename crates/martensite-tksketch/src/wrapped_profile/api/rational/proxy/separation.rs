@@ -1,6 +1,7 @@
 //! Keep a paired authored-to-reference homotopy clear except at proven incidences.
 use super::*;
 use martensite_tkmath::predicates::{OrientationSign, orient2d};
+mod own_conic;
 
 type Paired<'a, 'source> = (&'a input::Curve<'source>, &'a fit::Cover);
 
@@ -10,6 +11,7 @@ pub(super) fn prove<'a, 'source>(
 ) -> Checked<Vec<Paired<'a, 'source>>> {
     let pairs = pair_sources(source, reference)?;
     for (index, &pair) in pairs.iter().enumerate() {
+        own_conic::prove(pair)?;
         line_boundaries(source, pair)?;
         for &other in &pairs[..index] {
             curves(other, pair)?;
@@ -184,12 +186,12 @@ fn halfplane(
     let (curve, cover) = pair;
     let check = Halfplane {
         cut,
-        allowed,
         sign,
         curve: cover.curve,
     };
     check.spans(
         curve.endpoint_ids(),
+        allowed,
         curve
             .spans
             .iter()
@@ -197,6 +199,7 @@ fn halfplane(
     )?;
     check.spans(
         curve.endpoint_ids(),
+        allowed,
         cover
             .spans
             .iter()
@@ -204,27 +207,26 @@ fn halfplane(
     )
 }
 
-struct Halfplane<'a> {
+struct Halfplane {
     cut: [[f64; 2]; 2],
-    allowed: &'a [ProfileVertexId],
     sign: OrientationSign,
     curve: ProfileCurveId,
 }
 
 type ControlInputs<'a> = (&'a [[f64; 2]], Option<&'a [[[f64; 2]; 2]]>);
 
-impl Halfplane<'_> {
+impl Halfplane {
     fn spans<'a>(
         &self,
-        [start, end]: [Option<ProfileVertexId>; 2],
+        endpoints: [Option<ProfileVertexId>; 2],
+        allowed: &[ProfileVertexId],
         poles: impl ExactSizeIterator<Item = ControlInputs<'a>>,
     ) -> Checked<()> {
         let count = poles.len();
+        let [start, end] =
+            endpoints.map(|endpoint| endpoint.is_some_and(|id| allowed.contains(&id)));
         for (index, (controls, exact)) in poles.enumerate() {
-            let shared = [
-                (index == 0).then_some(start).flatten(),
-                (index + 1 == count).then_some(end).flatten(),
-            ];
+            let shared = [index == 0 && start, index + 1 == count && end];
             self.controls(controls, exact, shared)?;
         }
         Ok(())
@@ -234,13 +236,13 @@ impl Halfplane<'_> {
         &self,
         controls: &[[f64; 2]],
         exact: Option<&[[[f64; 2]; 2]]>,
-        shared: [Option<ProfileVertexId>; 2],
+        shared: [bool; 2],
     ) -> Checked<()> {
         for (index, &point) in controls.iter().enumerate() {
             let endpoint = match index {
                 0 => shared[0],
                 i if i + 1 == controls.len() => shared[1],
-                _ => None,
+                _ => false,
             };
             let permitted = exact.map_or_else(
                 || self.permits(point, endpoint),
@@ -263,10 +265,10 @@ impl Halfplane<'_> {
         Ok(())
     }
 
-    fn permits(&self, point: [f64; 2], endpoint: Option<ProfileVertexId>) -> bool {
+    fn permits(&self, point: [f64; 2], endpoint: bool) -> bool {
         match orient2d(self.cut[0], self.cut[1], point) {
             Ok(sign) if sign == self.sign => true,
-            Ok(OrientationSign::Zero) => endpoint.is_some_and(|id| self.allowed.contains(&id)),
+            Ok(OrientationSign::Zero) => endpoint,
             _ => false,
         }
     }

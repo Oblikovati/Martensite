@@ -10,10 +10,15 @@ use crate::predicates::roots::certificate_arithmetic::{
     bounded_dyadic::{Arithmetic, ArithmeticPolicy, Interval},
     bounded_failure::BoundedArithmeticFailure,
 };
+mod admitted_conic;
 mod bound_refinement;
 mod conic_lowering;
 mod native_spline;
 mod rational_difference;
+pub use admitted_conic::{
+    AdmittedConicFrame, AdmittedConicPhase, AdmittedConicSpan, CertifiedAdmittedConicSpan,
+    ConicSpanParameter, certify_admitted_conic_span,
+};
 pub use conic_lowering::{
     CertifiedRationalConicSegment, RationalConicSegment, RationalConicSegmentFailure,
     lower_rational_conic_segment,
@@ -95,6 +100,19 @@ pub enum RationalReferenceFailure {
         /// Requested operation count.
         operations: u32,
     },
+    /// An admitted conic phase is outside the supported finite trigonometric domain.
+    ConicPhase {
+        /// First authored angle.
+        first: f64,
+        /// Signed authored sweep.
+        sweep: f64,
+        /// Piece index in the original angle partition.
+        index: u8,
+        /// Number of pieces in the original angle partition.
+        count: u8,
+    },
+    /// An admitted conic frame has no finite positive orientation.
+    ConicFrame(AdmittedConicFrame),
     /// Uniform subdivision level above eight.
     Level(u8),
     /// Original bounded arithmetic cause.

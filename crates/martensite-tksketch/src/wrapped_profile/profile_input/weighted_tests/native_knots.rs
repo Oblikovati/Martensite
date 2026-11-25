@@ -110,3 +110,53 @@ fn check_native_lineage(result: &RationalWrappedResult) {
         spline_arc_profile().curves[0]
     );
 }
+
+#[test]
+fn rational_reference_native_knots_admit_positive_weights_at_degree_sixteen() {
+    let mut request = cylinder();
+    request.profile = smooth_high_degree_profile();
+    request.selections[0].outer.uses.pop();
+    let result = normal_extrude_rational_cylinder(&request, 2, || false)
+        .unwrap_or_else(|error| panic!("{error}"));
+    let r = QUARTER_RADIUS;
+    let expected = r * r / 2. + r * (15. / 512.) / 6.;
+    let area = result.authored_area();
+    assert!(area.lower <= expected && expected <= area.upper, "{area:?}");
+    assert!(result.validation().is_valid());
+    assert!(result.history().iter().any(|record| matches!(record.result.source,
+        WrappedEntitySource::NativeSplineKnot { curve: SurfaceCurveId(1), knot } if knot.value() == 2.)));
+    assert_eq!(
+        result.export_native().unwrap().entities.len(),
+        result.history().len()
+    );
+}
+
+fn smooth_high_degree_profile() -> SketchProfile {
+    let r = QUARTER_RADIUS;
+    let mut profile = quarter(r);
+    let unit_knots: Vec<_> = [0.; 17].into_iter().chain([0.5]).chain([1.; 17]).collect();
+    let poles = unit_knots
+        .windows(16)
+        .skip(1)
+        .take(18)
+        .map(|window| {
+            // Greville's affine and quadratic reproduction gives the exact curve
+            // x(t)=4+r(1-t), y(t)=rt + (15/512)t(1-t) at this stored degree.
+            let sum: f64 = window.iter().sum();
+            let squared: f64 = window.iter().map(|knot| knot * knot).sum();
+            let t = sum / 16.;
+            let pairs = (sum * sum - squared) / 2.;
+            [4. + r * (1. - t), r * t + (120. * t - pairs) / 4096.]
+        })
+        .collect();
+    profile.curves[0] = ProfileCurve::Spline {
+        id: ProfileCurveId(1),
+        start: ProfileVertexId(1),
+        end: ProfileVertexId(2),
+        degree: 16,
+        poles,
+        weights: Some(vec![2.; 18]),
+        knots: unit_knots.into_iter().map(|knot| -2. + 8. * knot).collect(),
+    };
+    profile
+}

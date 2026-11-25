@@ -78,3 +78,81 @@ fn preserves_polynomial_splines_and_finite_typed_refusals() {
         Err(NativeSplineFailure::Knots { .. })
     ));
 }
+
+#[test]
+fn oversized_pole_and_flat_knot_counts_refuse_before_coefficient_reads() {
+    let poles = [[f64::NAN; 2]; 66];
+    let knots = [f64::NAN; 68];
+    let source = NativeSplineSource {
+        degree: 1,
+        poles: &poles,
+        weights: None,
+        knots: &knots,
+    };
+    assert!(matches!(
+        source.check_extent(),
+        Err(NativeSplineFailure::SpanCount {
+            spans: 65,
+            limit: 64
+        })
+    ));
+    assert!(matches!(
+        lower_native_bspline(source, Default::default(), || false),
+        Err(NativeSplineFailure::SpanCount {
+            spans: 65,
+            limit: 64
+        })
+    ));
+    assert!(matches!(
+        lower_native_bspline(source, Default::default(), || true),
+        Err(NativeSplineFailure::Reference(
+            RationalReferenceFailure::Arithmetic(BoundedArithmeticFailure::Cancelled)
+        ))
+    ));
+}
+
+#[test]
+fn degree_sixteen_varying_weights_fit_the_original_native_knot() {
+    let poles: Vec<_> = (0..=17)
+        .map(|i| {
+            let t = f64::from(i) / 17.;
+            [4. + (1. - t) / 16., (t + 0.5 * t * (1. - t)) / 16.]
+        })
+        .collect();
+    let weights: Vec<_> = (0..=17).map(|i| 1. + f64::from(i % 4) / 16.).collect();
+    let knots: Vec<_> = [-2.; 17].into_iter().chain([1.]).chain([7.; 17]).collect();
+    let source = NativeSplineSource {
+        degree: 16,
+        poles: &poles,
+        weights: Some(&weights),
+        knots: &knots,
+    };
+    let options = CylindricalProfileOptions::default();
+    let spans = lower_native_bspline(source, options, || false).unwrap();
+    assert_eq!(spans.len(), 2);
+    assert_eq!(
+        [spans[0].interval, spans[1].interval],
+        [[-2., 1.], [1., 7.]]
+    );
+    let left = &spans[0];
+    assert_eq!(left.poles[16], spans[1].poles[0]);
+    // Independent de Boor evaluation at u=1 using the exact supplied coefficients.
+    for ([lo, hi], expected) in left.control_enclosures[16]
+        .into_iter()
+        .zip([4.040_418_789_895_534, 0.028_862_529_414_295_773])
+    {
+        assert!(lo <= expected && expected <= hi);
+    }
+    assert!(
+        spans
+            .iter()
+            .all(|span| span.transport.position > 0. && span.transport.position < 1e-11)
+    );
+    assert!(
+        spans
+            .iter()
+            .map(|span| span.transport.operations)
+            .sum::<u32>()
+            < options.max_operations
+    );
+}

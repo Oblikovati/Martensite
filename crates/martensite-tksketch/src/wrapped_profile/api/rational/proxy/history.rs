@@ -41,7 +41,7 @@ impl Proxy {
             && self
                 .spans
                 .get(&curve)
-                .is_some_and(|(origin, base)| base.level > 0 || origin.mapped_spline_partition)
+                .is_some_and(|(origin, base)| base.level > 0 || origin.mapped_partition)
             && record.relation == WrappedHistoryRelation::Derived
         {
             record.relation = WrappedHistoryRelation::Split;
@@ -101,6 +101,9 @@ impl Proxy {
             Some(input::ParameterMap::Analytic(map)) => {
                 WrappedEntitySource::AnalyticArcCurve { curve, span, map }
             }
+            Some(input::ParameterMap::Admitted(map)) => {
+                WrappedEntitySource::AdmittedArcCurve { curve, span, map }
+            }
             Some(input::ParameterMap::Spline(map)) => {
                 WrappedEntitySource::NativeSplineCurve { curve, span, map }
             }
@@ -125,6 +128,10 @@ impl CurveOrigin {
     fn authored_anchor(self, anchor: NativeJoint) -> WrappedEntitySource {
         match anchor {
             NativeJoint::Interior(point) => self.authored_point(point),
+            NativeJoint::AdmittedArc(after) => WrappedEntitySource::AdmittedArcAnchor {
+                curve: self.curve,
+                after,
+            },
             NativeJoint::SplineKnot(knot) => WrappedEntitySource::NativeSplineKnot {
                 curve: self.curve,
                 knot,
@@ -144,6 +151,9 @@ impl CurveOrigin {
             }
             Some(input::ParameterMap::Analytic(map)) => {
                 WrappedEntitySource::AnalyticArcSplitVertex { curve, point, map }
+            }
+            Some(input::ParameterMap::Admitted(map)) => {
+                WrappedEntitySource::AdmittedArcSplitVertex { curve, point, map }
             }
             Some(input::ParameterMap::Spline(map)) => {
                 WrappedEntitySource::NativeSplineSplitVertex { curve, point, map }

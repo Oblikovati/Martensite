@@ -54,6 +54,29 @@ pub struct WrappedAnalyticArcMap {
     pub increasing: bool,
 }
 
+pub use martensite_tkmath::predicates::roots::metric_bounds::ConicSpanParameter as WrappedConicParameterization;
+
+/// Original admitted native angle and exact rational span parameter.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct WrappedAdmittedArcMap {
+    pub(crate) angles: [u64; 2],
+    /// Zero-based piece of the admitted sweep.
+    pub index: u8,
+    /// Number of pieces, all of equal native angular length.
+    pub count: u8,
+    /// Conversion from the local parameter to its native angle.
+    pub parameter: WrappedConicParameterization,
+}
+
+impl WrappedAdmittedArcMap {
+    /// Recover the admitted first angle and signed sweep in radians.
+    /// The piece starts at the exact expression `first + sweep * index / count`.
+    /// Example: `let [first, sweep] = map.sweep();`.
+    pub fn sweep(self) -> [f64; 2] {
+        self.angles.map(f64::from_bits)
+    }
+}
+
 /// Exact binary64 parameter authored as a native B-spline knot.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WrappedNativeKnot(pub(crate) u64);
@@ -122,6 +145,31 @@ pub enum WrappedEntitySource {
         point: WrappedSourcePoint,
         /// Exact conversion to the native angle.
         map: WrappedAnalyticArcMap,
+    },
+    /// A portion of an admitted analytic sweep whose planar representative is sewn.
+    AdmittedArcCurve {
+        /// Original authored curve identity.
+        curve: SurfaceCurveId,
+        /// Exact dyadic interval in the local conic parameter.
+        span: WrappedSourceSpan,
+        /// Original native-angle map.
+        map: WrappedAdmittedArcMap,
+    },
+    /// A subdivision point on a parametrized admitted analytic sweep.
+    AdmittedArcSplitVertex {
+        /// Original authored curve identity.
+        curve: SurfaceCurveId,
+        /// Exact dyadic point in the local conic parameter.
+        point: WrappedSourcePoint,
+        /// Original native-angle map.
+        map: WrappedAdmittedArcMap,
+    },
+    /// An internal native angle separating two sewn portions of one sweep.
+    AdmittedArcAnchor {
+        /// Original authored curve identity.
+        curve: SurfaceCurveId,
+        /// The original map whose final angle defines this anchor.
+        after: WrappedAdmittedArcMap,
     },
     /// A dyadic interval within one mapped native B-spline knot span.
     NativeSplineCurve {
