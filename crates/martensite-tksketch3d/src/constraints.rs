@@ -108,6 +108,8 @@ pub struct ConstraintRank {
     pub degrees_of_freedom: usize,
     /// Number of authored scalar equations, including repeated fixed coordinates.
     pub equations: usize,
+    /// Coordinates fixed by captured external geometry, independent of authored relations.
+    pub frozen_coordinates: usize,
 }
 
 /// An atomically accepted preview and its numerical evidence.
@@ -116,6 +118,8 @@ pub struct DragUpdate {
     pub sketch: ConstrainedSketch,
     /// Numerical constraint rank on the accepted coordinates.
     pub rank: ConstraintRank,
+    /// Largest dimensionless hard residual reported by the solver on the accepted coordinates.
+    pub solver_hard_error: f64,
     /// Charged scalar work bound for the built-in residuals, including rejected trials.
     pub residual_work_bound: usize,
 }
@@ -207,6 +211,7 @@ impl ConstrainedSketch {
         Ok(DragUpdate {
             sketch,
             rank,
+            solver_hard_error: output.hard_error,
             residual_work_bound: residual::work_bound(output.work.work),
         })
     }

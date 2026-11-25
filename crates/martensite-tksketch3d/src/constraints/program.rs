@@ -25,6 +25,7 @@ pub(super) struct Program {
     fixed: Vec<(usize, f64)>,
     blocks: Vec<EquationBlock>,
     authored_rows: usize,
+    frozen_coordinates: usize,
     prepared: Prepared,
 }
 
@@ -55,6 +56,15 @@ impl Program {
             authored_rows: 0,
             scale: 1. / policy.length_scale.value(),
         };
+        for (&id, &start) in &point_columns {
+            if geometry.frozen_source(id).is_some() {
+                let point = geometry.point(id).ok_or(Failure::MissingPoint(id))?;
+                builder
+                    .fixed
+                    .extend((start..start + 3).zip(*point.position.coordinates()));
+            }
+        }
+        let frozen_coordinates = builder.fixed.len();
         for (&id, &relation) in relations {
             builder.bind(id, relation)?;
         }
@@ -88,6 +98,7 @@ impl Program {
             fixed,
             blocks,
             authored_rows,
+            frozen_coordinates,
             prepared,
         })
     }
@@ -141,6 +152,15 @@ impl Program {
         if target.iter().any(|value| !value.is_finite()) {
             return Err(Failure::InvalidTarget(point, target));
         }
+        if let Some(source) = geometry.frozen_source(point) {
+            let original = geometry
+                .point(point)
+                .ok_or(Failure::MissingPoint(point))?
+                .position;
+            if target.map(f64::to_bits) != original.coordinates().map(f64::to_bits) {
+                return Err(Failure::FrozenDrag(point, source));
+            }
+        }
         let targets = [
             (base, target[0]),
             (base + 1, target[1]),
@@ -164,6 +184,7 @@ impl Program {
             rank,
             degrees_of_freedom: dof,
             equations: self.authored_rows,
+            frozen_coordinates: self.frozen_coordinates,
         }
     }
 

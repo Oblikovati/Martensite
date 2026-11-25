@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use crate::fixture::{lid, line, pid, point, seed};
 use martensite_tksketch3d::{
-    EditFailure, EntityId, MinimumLength, PointRole, Snapshot,
+    Edit, EditFailure, EntityId, FrozenPointSource, MinimumLength, PointRole, SketchPoint,
+    Snapshot,
     constraints::{
-        ConstrainedSketch, ConstraintFailure, ConstraintPolicy, ParallelDirection, Relation,
-        RelationEdit, RelationId, RelationSpec, SolveOptions, SolverLimits,
+        ConstrainedSketch, ConstraintFailure, ConstraintPolicy, DragUpdate, ParallelDirection,
+        Relation, RelationEdit, RelationId, RelationSpec, SolveOptions, SolverLimits,
     },
 };
 use std::{num::NonZeroU64, time::Instant};
@@ -75,6 +76,9 @@ fn relation_batch() -> [RelationEdit; 5] {
 
 #[test]
 fn directed_spatial_constraints_establish_and_drag_with_exact_anchors_and_owned_identity() {
+    fn assert_send_sync<T: Send + Sync>() {}
+    assert_send_sync::<ConstrainedSketch>();
+    assert_send_sync::<DragUpdate>();
     let original = geometry();
     let base = ConstrainedSketch::new(original.clone(), policy()).unwrap();
     let sketch = base.apply(&relation_batch(), || false).unwrap();
@@ -100,6 +104,7 @@ fn directed_spatial_constraints_establish_and_drag_with_exact_anchors_and_owned_
     let target = point([target[0] + 0.3, target[1] - 0.4, target[2] + 0.2]);
     let update = sketch.drag(pid(3), target, || false).unwrap();
     assert_eq!(rank, update.rank);
+    assert!(update.solver_hard_error <= policy().solve.relative_tolerance);
     assert_eq!(update.rank, update.sketch.inspect_rank().unwrap());
     assert!(update.residual_work_bound > 0 && update.residual_work_bound <= policy().residual_work);
     assert_eq!(
@@ -107,6 +112,7 @@ fn directed_spatial_constraints_establish_and_drag_with_exact_anchors_and_owned_
         update.sketch.relations().collect::<Vec<_>>()
     );
     let moved = update.sketch.geometry();
+    assert_eq!(moved.point(pid(6)), sketch.geometry().point(pid(6)));
     assert!(moved.point(pid(3)).unwrap().position.distance(&target) < 2e-7);
     assert!(
         moved
@@ -161,6 +167,22 @@ fn wrong_branch_refuses_with_the_authored_relation_and_cannot_mutate_geometry() 
     );
     assert_eq!(base.geometry(), &original);
     assert_eq!(base.relations().count(), 0);
+
+    let reversed = original
+        .apply(&[Edit::RemoveLine(lid(11)), line(12, 4, 3)], || false)
+        .unwrap();
+    let positive = ConstrainedSketch::new(reversed.clone(), policy())
+        .unwrap()
+        .apply(
+            &[RelationEdit::Insert(
+                rid(7),
+                RelationSpec::Parallel([lid(10), lid(12)], ParallelDirection::Same),
+            )],
+            || false,
+        )
+        .unwrap();
+    assert_eq!(positive.geometry(), &reversed);
+    assert_eq!(positive.inspect_rank().unwrap().rank, 2);
 }
 
 #[test]
@@ -305,6 +327,81 @@ fn preview_target_and_work_refusals_are_typed() {
         base.drag(pid(1), point([f64::INFINITY, 0., 0.]), || false),
         Err(ConstraintFailure::InvalidTarget(_, _))
     ));
+}
+
+#[test]
+fn frozen_points_are_exact_solver_coordinates_with_owned_source_provenance() {
+    let origin = point([-0., 0., 0.]);
+    let source = FrozenPointSource {
+        document: [42; 16],
+        sketch: NonZeroU64::new(11).unwrap(),
+        incarnation: 1,
+        revision: 5,
+        point: pid(7),
+    };
+    let snapshot = Snapshot::empty(length(0.01))
+        .apply(
+            &[
+                Edit::InsertFrozenPoint {
+                    point: SketchPoint {
+                        id: pid(1),
+                        role: PointRole::SketchMarker,
+                        position: origin,
+                    },
+                    source,
+                },
+                seed(2, [3., 4., 0.], PointRole::Defining),
+                line(3, 1, 2),
+            ],
+            || false,
+        )
+        .unwrap();
+    let sketch = ConstrainedSketch::new(snapshot, policy())
+        .unwrap()
+        .apply(
+            &[RelationEdit::Insert(
+                rid(1),
+                RelationSpec::Length(lid(3), length(5.)),
+            )],
+            || false,
+        )
+        .unwrap();
+    let report = sketch.inspect_rank().unwrap();
+    assert_eq!(
+        (
+            report.rank,
+            report.degrees_of_freedom,
+            report.equations,
+            report.frozen_coordinates
+        ),
+        (4, 2, 1, 3)
+    );
+    assert!(
+        matches!(sketch.drag(pid(1), point([0., 0., 0.]), || false), Err(ConstraintFailure::FrozenDrag(id, stamp)) if id == pid(1) && stamp == source)
+    );
+    let target = point([4., 3., 0.]);
+    let moved = sketch.drag(pid(2), target, || false).unwrap();
+    assert_eq!(moved.rank, report);
+    let geometry = moved.sketch.geometry();
+    assert_eq!(geometry.frozen_source(pid(1)), Some(source));
+    assert_eq!(
+        geometry
+            .point(pid(1))
+            .unwrap()
+            .position
+            .coordinates()
+            .map(f64::to_bits),
+        origin.coordinates().map(f64::to_bits)
+    );
+    assert!(geometry.point(pid(2)).unwrap().position.distance(&target) < 2e-7);
+    assert!(matches!(
+        sketch.drag(pid(2), point([6., 8., 0.]), || false),
+        Err(ConstraintFailure::Preview(_, _))
+    ));
+    assert_eq!(
+        sketch.geometry().point(pid(2)).unwrap().position,
+        point([3., 4., 0.])
+    );
 }
 
 #[test]

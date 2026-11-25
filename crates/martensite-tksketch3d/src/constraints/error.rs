@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::{Relation, RelationId};
-use crate::{EditFailure, EntityId, PointId};
+use crate::{EditFailure, EntityId, FrozenPointSource, PointId};
 use martensite_tksolve::{
     nonlinear::{SolveError, SolveTermination},
     preview::PreviewError,
@@ -46,6 +46,8 @@ pub enum ConstraintFailure {
     ConflictingFix(RelationId, PointId),
     /// A point drag references an identity outside the prepared sketch.
     MissingPoint(PointId),
+    /// The drag would change a captured coordinate that requires explicit detachment.
+    FrozenDrag(PointId, FrozenPointSource),
     /// A point drag specified a nonfinite coordinate.
     InvalidTarget(PointId, [f64; 3]),
     /// A driving length lies below the sketch's minimum constructible length.
