@@ -2,6 +2,7 @@
 use super::*;
 use martensite_tkbrep::{brep_tools::outer_wire, topods, toptools::IndexedMapOfShape};
 use martensite_tkmath::predicates::roots::metric_bounds::CertifiedCylindricalTrim;
+use std::sync::Arc;
 
 mod cycle;
 use cycle::trace_wire;
@@ -11,7 +12,7 @@ pub(super) use trace::Trace;
 type Path = Vec<(WrappedHistoryKey, u8)>;
 type NearLoops = BTreeMap<Path, bool>;
 type FarLoops = BTreeMap<SurfaceRegionId, BTreeSet<Path>>;
-type Receipts = BTreeMap<WrappedHistoryKey, CertifiedCylindricalTrim>;
+type Receipts = BTreeMap<WrappedHistoryKey, Arc<CertifiedCylindricalTrim>>;
 
 pub(in super::super) struct Trims {
     stock: NearLoops,
@@ -142,7 +143,7 @@ impl Trims {
                 attempt.history(CylinderFeatureSource::Tool(key), "matching source side")
             })?;
         let received = usize::from(capture.input.support.normal == NormalSense::Inward) ^ depth;
-        let proof = &span.storage.trims.cap_residuals[received];
+        let proof = Arc::new(span.storage.trims.cap_residuals[received].clone());
         let trace = Trace::read(attempt, capture.input, face, shape, proof, depth)?;
         if depth == 0 {
             for &[u, _] in &trace.uv {
@@ -153,7 +154,7 @@ impl Trims {
         require(
             attempt,
             VALIDATION,
-            self.proofs[depth].insert(key, proof.clone()).is_none(),
+            self.proofs[depth].insert(key, trace.proof).is_none(),
             "one complete retained proof for each source cap edge",
         )
     }
@@ -317,7 +318,14 @@ impl FinalTrims {
                     "matching pre-assembly native trace proof",
                 )
             })?;
-            let trace = Trace::read(ctx.attempt, ctx.input, face, &shape, proof, depth)?;
+            let trace = Trace::read(
+                ctx.attempt,
+                ctx.input,
+                face,
+                &shape,
+                Arc::clone(proof),
+                depth,
+            )?;
             require(
                 ctx.attempt,
                 VALIDATION,

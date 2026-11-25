@@ -6,9 +6,10 @@ use super::{
 };
 use martensite_tkbo::body_check::{
     BodyGeometryValidation, CheckMode, StageReport, StageVerdict, ValidationStage,
-    begin_body_validation,
+    begin_body_validation_with_curve_bounds,
 };
-use std::collections::BTreeSet;
+use martensite_tktopalgo::brep_check::CylindricalCurveBounds;
+use std::{collections::BTreeSet, sync::Arc};
 
 mod contact;
 mod sides;
@@ -41,14 +42,25 @@ pub(super) fn validate(
     complete: &mut impl FnMut(Phase),
 ) -> Checked<(ValidationReport, [f64; 2])> {
     attempt.poll(cancelled, VALIDATION)?;
-    let ready = begin_body_validation(&candidate.native.body, &input.resolution)
-        .map_err(|cause| attempt.fail(VALIDATION, CylinderFeatureCause::Resolution(cause)))?;
+    // The checker independently rebinds metric evidence to each live use. Keep any
+    // prepared failure pending until the native raw, topology and geometry stages finish.
+    let prepared = match PreparedTrims::capture(attempt, input, tool, candidate, cancelled) {
+        Err(error) if matches!(*error.cause, CylinderFeatureCause::Cancelled) => return Err(error),
+        bounded => bounded,
+    };
+    let bounds = prepared
+        .as_ref()
+        .map(PreparedTrims::native_bounds)
+        .unwrap_or_default();
+    let ready =
+        begin_body_validation_with_curve_bounds(&candidate.native.body, &input.resolution, &bounds)
+            .map_err(|cause| attempt.fail(VALIDATION, CylinderFeatureCause::Resolution(cause)))?;
     let ordered = match ready {
         BodyGeometryValidation::Ready(ordered) => ordered,
         BodyGeometryValidation::Stopped(report) => return Err(rejected(attempt, report)),
     };
     complete(Phase::OrderedGeometry);
-    let checked = Cover::verify(attempt, input, tool, candidate, cancelled)?;
+    let checked = Cover::verify(attempt, input, tool, candidate, &prepared?, cancelled)?;
     complete(Phase::ExactContact);
     attempt.poll(cancelled, VALIDATION)?;
     let mut report = ordered.report();
@@ -69,6 +81,40 @@ fn rejected(attempt: Attempt, report: ValidationReport) -> CylinderFeatureFailur
     )
 }
 
+struct PreparedTrims {
+    index: body::Index,
+    traces: sides::CapTraces,
+}
+
+impl PreparedTrims {
+    fn capture(
+        attempt: Attempt,
+        input: &Admitted,
+        tool: &Tool,
+        candidate: &Candidate,
+        cancelled: &mut CancelPoll<'_>,
+    ) -> Checked<Self> {
+        verify_face_owners(attempt, tool, candidate)?;
+        let index = body::Index::new(attempt, &candidate.native.body, VALIDATION)?;
+        let traces = candidate
+            .original
+            .rebind(attempt, input, candidate, &index, cancelled)?;
+        Ok(Self { index, traces })
+    }
+
+    fn native_bounds(&self) -> CylindricalCurveBounds {
+        let mut bounds = CylindricalCurveBounds::default();
+        for trace in self.traces.iter().flat_map(|cap| cap.values()) {
+            bounds.insert(
+                trace.edge.clone(),
+                trace.face.clone(),
+                Arc::clone(&trace.proof),
+            );
+        }
+        bounds
+    }
+}
+
 /// Complete pair closure on the single candidate. Native tolerances and occurrences have
 /// already been admitted by the ordered report and remain attached to this candidate.
 struct Cover {
@@ -81,15 +127,20 @@ impl Cover {
         input: &Admitted,
         tool: &Tool,
         candidate: &Candidate,
+        prepared: &PreparedTrims,
         cancelled: &mut CancelPoll<'_>,
     ) -> Checked<Self> {
-        verify_face_owners(attempt, tool, candidate)?;
-        let index = body::Index::new(attempt, &candidate.native.body, VALIDATION)?;
-        let traces = candidate
-            .original
-            .rebind(attempt, input, candidate, &index, cancelled)?;
-        let contact = sides::validate(attempt, input, tool, candidate, &index, &traces, cancelled)?;
-        stock::close(attempt, input, tool, candidate, &traces, contact)?;
+        let traces = &prepared.traces;
+        let contact = sides::validate(
+            attempt,
+            input,
+            tool,
+            candidate,
+            &prepared.index,
+            traces,
+            cancelled,
+        )?;
+        stock::close(attempt, input, tool, candidate, traces, contact)?;
         let residuals = std::array::from_fn(|depth| {
             traces[depth]
                 .values()

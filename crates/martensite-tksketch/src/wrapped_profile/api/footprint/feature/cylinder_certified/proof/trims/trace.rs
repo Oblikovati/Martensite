@@ -10,7 +10,9 @@ pub(in super::super) struct Trace {
     pub poles: Vec<[f64; 3]>,
     pub weights: Vec<f64>,
     pub uv: Vec<[f64; 2]>,
-    pub proof: CertifiedCylindricalTrim,
+    pub proof: Arc<CertifiedCylindricalTrim>,
+    pub edge: topods::Edge,
+    pub face: Face,
 }
 impl Trace {
     pub(super) fn read(
@@ -18,7 +20,7 @@ impl Trace {
         input: &Admitted,
         face: &Face,
         shape: &Shape,
-        proof: &CertifiedCylindricalTrim,
+        proof: Arc<CertifiedCylindricalTrim>,
         depth: usize,
     ) -> Checked<Self> {
         let datum = CylinderDatum::read(attempt, face)?;
@@ -53,7 +55,9 @@ impl Trace {
             poles,
             weights,
             uv,
-            proof: proof.clone(),
+            proof,
+            edge: edge.clone(),
+            face: face.clone(),
         };
         let raw = attempt
             .native(
