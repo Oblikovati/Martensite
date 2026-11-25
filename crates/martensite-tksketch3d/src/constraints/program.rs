@@ -96,6 +96,8 @@ impl Program {
             &self.blocks,
             &self.fixed,
             options.rank_tolerance,
+            geometry,
+            &self.point_columns,
             cancelled,
         )?;
         let blocks = self

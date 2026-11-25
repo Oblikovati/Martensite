@@ -30,10 +30,20 @@ pub(super) fn line(
     if let Some(previous) = previous.filter(|previous| matches_inputs(previous, source, points)) {
         return Ok(*previous);
     }
+    line_from_points(source, points, snapshot.minimum)
+}
+
+pub(super) fn line_from_points(
+    source: SketchLine,
+    points: [Point3; 2],
+    minimum: MinimumLength,
+) -> Result<LineGeometry, EditFailure> {
+    if points[0] == points[1] {
+        return Err(EditFailure::CoincidentEndpoints(source));
+    }
     let delta = displacement(source.id, points)?;
     let length_estimate = length_estimate(source.id, delta)?;
-    let minimum_comparison =
-        minimum_comparison(source.id, points, length_estimate, snapshot.minimum)?;
+    let minimum_comparison = minimum_comparison(source.id, points, length_estimate, minimum)?;
     let carrier = Line3::new(points[0], direction(source.id, delta)?);
     Ok(LineGeometry {
         line: source,
@@ -60,14 +70,10 @@ fn endpoints(snapshot: &Snapshot, source: SketchLine) -> Result<[Point3; 2], Edi
             point: a,
         });
     }
-    let points = [
+    Ok([
         endpoint(snapshot, source.id, a)?,
         endpoint(snapshot, source.id, b)?,
-    ];
-    if points[0] == points[1] {
-        return Err(EditFailure::CoincidentEndpoints(source));
-    }
-    Ok(points)
+    ])
 }
 
 fn endpoint(snapshot: &Snapshot, line: LineId, point: PointId) -> Result<Point3, EditFailure> {
