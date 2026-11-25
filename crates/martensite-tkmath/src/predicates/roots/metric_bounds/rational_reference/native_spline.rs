@@ -188,6 +188,31 @@ fn admit_spline(source: NativeSplineSource<'_>) -> NativeResult<()> {
     Ok(())
 }
 
+pub(in crate::predicates::roots::metric_bounds) type SpatialSplinePiece =
+    ([f64; 2], Vec<[Interval; 3]>);
+
+pub(in crate::predicates::roots::metric_bounds) fn spatial_polynomial_pieces(
+    degree: usize,
+    knots: &[f64],
+    poles: &[[f64; 3]],
+    arithmetic: &mut Arithmetic<'_>,
+) -> NativeResult<Vec<SpatialSplinePiece>> {
+    check_knots(degree, poles.len(), knots)?;
+    let mut coefficients = Vec::with_capacity(poles.len());
+    for &[x, y, z] in poles {
+        coefficients.push([
+            arithmetic.scalar(x)?,
+            arithmetic.scalar(y)?,
+            arithmetic.scalar(z)?,
+        ]);
+    }
+    let spans = decompose(degree, knots, &coefficients, arithmetic)?;
+    Ok(spans
+        .into_iter()
+        .map(|span| (span.interval, span.poles))
+        .collect())
+}
+
 fn input_poles(
     source: NativeSplineSource<'_>,
     arithmetic: &mut Arithmetic<'_>,

@@ -353,3 +353,9 @@ pub use directed_line::{
     DirectedLineContact, DirectedLineHit, DirectedLineIncidenceFailure, DirectedLineParameter,
     DirectedLinePlacement, LineEvidenceQuantity, LineParameterLocation, directed_line_contact,
 };
+
+mod helix_trace;
+pub use helix_trace::{
+    HelixSplineSource, HelixTraceBounds, HelixTraceFailure, HelixTraceLaw, HelixTraceLead,
+    HelixTraceLimits, certify_polynomial_helix_trace,
+};

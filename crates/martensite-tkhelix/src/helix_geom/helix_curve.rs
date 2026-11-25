@@ -1,6 +1,7 @@
 //! `HelixGeom_HelixCurve`: the analytic helix as an `Adaptor3d_Curve`, with its point
 //! and first two derivatives in closed form.
 use super::errors::{array_failure, construction_error, domain_error, not_implemented};
+use super::local::LocalHelix;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::standard::{Failure, Handle, SharedState};
@@ -154,33 +155,19 @@ impl HelixGeomHelixCurve {
         Handle::new(self.clone()).into_upcast()
     }
 
-    // The point, first and second derivatives shared by the EvalD* members, in the
-    // native operation order.
-    fn point_at(s: &HelixCurveState, t: f64, cos_t: f64, sin_t: f64) -> Point3 {
-        let a1: f64 = s.r_start + s.c1 * s.tg_beta * t;
-        let x: f64 = a1 * cos_t;
-        let y: f64 = oriented(s, a1 * sin_t);
-        Point3::new(x, y, s.c1 * t)
+    fn local(state: &HelixCurveState) -> LocalHelix {
+        LocalHelix {
+            opening_radius: state.r_start,
+            radial_rate: state.c1 * state.tg_beta,
+            axial_rate: state.c1,
+            positive: state.is_clock_wise,
+        }
     }
 
-    // First derivative; returns it with (a1, a2) = (c1 tan(beta), R(t)).
-    fn first_derivative(
-        s: &HelixCurveState,
-        t: f64,
-        cos_t: f64,
-        sin_t: f64,
-    ) -> (Vector3, f64, f64) {
-        let a1: f64 = s.c1 * s.tg_beta;
-        let a2: f64 = s.r_start + a1 * t;
-        let x: f64 = a1 * cos_t - a2 * sin_t;
-        let y: f64 = oriented(s, a1 * sin_t + a2 * cos_t);
-        (Vector3::new(x, y, s.c1), a1, a2)
+    fn point_at(state: &HelixCurveState, t: f64, cos_t: f64, sin_t: f64) -> Point3 {
+        let [x, y, z] = Self::local(state).point(t, cos_t, sin_t);
+        Point3::new(x, y, z)
     }
-}
-
-// The counter-clockwise helix mirrors Y.
-fn oriented(s: &HelixCurveState, y: f64) -> f64 {
-    if s.is_clock_wise { y } else { -y }
 }
 
 // The checks of Load, in the native order; `buf` is the native message.
@@ -253,17 +240,22 @@ impl Adaptor3dCurve for HelixGeomHelixCurve {
         let s: HelixCurveState = *self.state.read();
         let (cos_t, sin_t): (f64, f64) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
         let point: Point3 = Self::point_at(&s, u, cos_t, sin_t);
-        let (d1, _, _) = Self::first_derivative(&s, u, cos_t, sin_t);
+        let [x, y, z] = Self::local(&s).first(u, cos_t, sin_t);
+        let d1 = Vector3::new(x, y, z);
         Ok(GeomCurveD1 { point, d1 })
     }
     fn eval_d2(&self, u: f64) -> Result<GeomCurveD2, Failure> {
         let s: HelixCurveState = *self.state.read();
         let (cos_t, sin_t): (f64, f64) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
         let point: Point3 = Self::point_at(&s, u, cos_t, sin_t);
-        let (d1, a1, a2) = Self::first_derivative(&s, u, cos_t, sin_t);
-        let a1: f64 = 2. * a1;
-        let x: f64 = -a2 * cos_t - a1 * sin_t;
-        let y: f64 = oriented(&s, -a2 * sin_t - a1 * cos_t);
+        let local = Self::local(&s);
+        let [x, y, z] = local.first(u, cos_t, sin_t);
+        let d1 = Vector3::new(x, y, z);
+        let radius = local.radius(u);
+        let twice = 2. * local.radial_rate;
+        let x = -radius * cos_t - twice * sin_t;
+        // #614. Preserve the audited legacy Y acceleration for existing replay.
+        let y = local.sense(-radius * sin_t - twice * cos_t);
         let d2 = Vector3::new(x, y, 0.);
         Ok(GeomCurveD2 { point, d1, d2 })
     }

@@ -13,7 +13,7 @@ use crate::predicates::roots::certificate_arithmetic::{
 mod admitted_conic;
 mod bound_refinement;
 mod conic_lowering;
-mod native_spline;
+pub(super) mod native_spline;
 mod rational_difference;
 pub use admitted_conic::{
     AdmittedConicFrame, AdmittedConicPhase, AdmittedConicSpan, CertifiedAdmittedConicSpan,
