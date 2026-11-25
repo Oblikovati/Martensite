@@ -28,6 +28,11 @@ relation values. Restore checks the saved anchors and all physical relations
 before publishing the supplied coordinates. A captured point may carry its
 source incarnation and revision or its historical session generation.
 
+Use `ConstrainedSketch::drag_preferred` when a pointer can move off a rail or
+circle. The returned sketch satisfies the same geometry checks as `drag`.
+The preference report tells whether the point reached the cursor or settled
+at a first-order stationary pose within the caller's scaled tangent tolerance.
+
 Spatial line relations include signed axis parallelism, plane parallelism,
 perpendicularity, equal length and driving angle. A plane-parallel relation
 leaves offset free. Perpendicular lines may be skew. Angle authoring requires

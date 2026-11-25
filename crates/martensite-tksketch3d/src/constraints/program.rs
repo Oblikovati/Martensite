@@ -10,7 +10,7 @@ use crate::{Edit, EntityId, LineId, PointId, Snapshot};
 use martensite_tkmath::gp::Point3;
 use martensite_tksolve::{
     nonlinear::{SolveError, SolveOptions, SolveTermination, solve_constraints_with_constants},
-    preview::{Block, Domain, Incomplete, Prepared, PreviewError, Update},
+    preview::{Block, Domain, Incomplete, PreferenceReport, Prepared, PreviewError, Update},
     residual::{EvaluationError, ResidualBlock},
 };
 use std::{collections::BTreeMap, sync::Arc};
@@ -142,6 +142,52 @@ impl Program {
         target: Point3,
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<Update, Failure> {
+        let targets = self.cursor_targets(geometry, point, target)?;
+        self.prepared
+            .update(&self.values(geometry)?, &targets, cancelled)
+            .map_err(|error| preview_failure(&self.blocks, error))
+    }
+
+    pub(super) fn drag_preferred(
+        &self,
+        geometry: &Snapshot,
+        point: PointId,
+        target: Point3,
+        tangent_tolerance: f64,
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<(Update, PreferenceReport), Failure> {
+        let targets = self.cursor_targets(geometry, point, target)?;
+        self.prepared
+            .update_preferred(
+                &self.values(geometry)?,
+                &targets,
+                tangent_tolerance,
+                cancelled,
+            )
+            .map_err(|error| preview_failure(&self.blocks, error))
+    }
+
+    pub(super) fn recheck_preferred(
+        &self,
+        geometry: &Snapshot,
+        cursor: (PointId, Point3),
+        output: Update,
+        tangent_tolerance: f64,
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<(Update, PreferenceReport), Failure> {
+        let (point, target) = cursor;
+        let targets = self.cursor_targets(geometry, point, target)?;
+        self.prepared
+            .verify_preferred(output, &targets, tangent_tolerance, cancelled)
+            .map_err(|error| preview_failure(&self.blocks, error))
+    }
+
+    fn cursor_targets(
+        &self,
+        geometry: &Snapshot,
+        point: PointId,
+        target: Point3,
+    ) -> Result<[(usize, f64); 3], Failure> {
         let base = *self
             .point_columns
             .get(&point)
@@ -159,14 +205,11 @@ impl Program {
                 return Err(Failure::FrozenDrag(point, source));
             }
         }
-        let targets = [
+        Ok([
             (base, target[0]),
             (base + 1, target[1]),
             (base + 2, target[2]),
-        ];
-        self.prepared
-            .update(&self.values(geometry)?, &targets, cancelled)
-            .map_err(|error| preview_failure(&self.blocks, error))
+        ])
     }
 
     pub(super) fn inspect(&self, geometry: &Snapshot) -> Result<ConstraintRank, Failure> {

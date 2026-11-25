@@ -9,6 +9,7 @@ mod initialization;
 mod line_edit;
 mod metric;
 mod motion;
+mod preferred;
 mod program;
 mod residual;
 mod restore;
@@ -25,6 +26,7 @@ pub use angle::{InvalidLineAngle, LineAngle};
 pub use error::{ConstraintFailure, PolicyQuantity};
 pub use martensite_tksolve::{nonlinear::SolveOptions, preview::Limits as SolverLimits};
 pub use motion::{RigidMotion, RigidMotionFailure};
+pub use preferred::{PreferenceReport, PreferenceSettlement, PreferredDragUpdate};
 use program::Program;
 
 /// Caller-reserved ID from a namespace separate from points and lines.
@@ -277,21 +279,33 @@ impl ConstrainedSketch {
             self.policy,
             &mut cancelled,
         )?;
-        let rank = self.program.rank_report(output.rank, output.dof);
         let next =
             self.program
                 .reframe(&geometry, self.policy, Some(output.work), &mut cancelled)?;
+        let mut output = output;
+        output.work = next.work;
+        output.hard_error = output.hard_error.max(next.hard_error);
+        Ok(self.drag_update(geometry, next.program, output))
+    }
+
+    fn drag_update(
+        &self,
+        geometry: Snapshot,
+        program: Arc<Program>,
+        output: martensite_tksolve::preview::Update,
+    ) -> DragUpdate {
+        let rank = program.rank_report(output.rank, output.dof);
         let sketch = Self {
             geometry: Arc::new(geometry),
-            program: next.program,
+            program,
             ..self.clone()
         };
-        Ok(DragUpdate {
+        DragUpdate {
             sketch,
             rank,
-            solver_hard_error: output.hard_error.max(next.hard_error),
-            residual_work_bound: residual::work_bound(next.work.work),
-        })
+            solver_hard_error: output.hard_error,
+            residual_work_bound: residual::work_bound(output.work.work),
+        }
     }
 
     /// Run the explicit noninteractive rank check on the accepted geometry.
