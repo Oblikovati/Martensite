@@ -332,3 +332,20 @@ Rust `1.98.1` tests, package verification, dependency checks and strict Clippy p
 of the extracted default API reproduced the 1,960 model outcomes after correcting the two baseline assertions
 in #4191. Nine diagnostic rank groups and the bounded preview controls are separate evidence. Sketch3D still needs
 a typed evaluator with bounded curve and trim work, revision-bound publication and native desktop timings.
+
+## E15. Native point and line adoption
+
+The `martensite-tksketch3d` value layer landed locally at `55184872`. It holds authored points and lines in
+immutable snapshots and validates one atomic batch. The line admission threshold uses the exact squared distance
+of the authored binary64 endpoints. Length estimates and the nominal support direction are separate. Unchanged
+lines reuse admitted geometry only when their directed IDs and endpoint coordinate bits match. The app owns
+identity retirement across revisions and undo. The kernel checks current IDs and reuse within a batch.
+
+The 21 toolkit tests, 12 exact-comparison controls and six triple-product regressions passed under Rust `1.98.1`.
+The full TKMath suite and both-package strict Clippy passed. The same toolkit tests passed under pinned TSan in
+a clean Linux container. Four AB/BA processes produced identical ordered native receipts. The SHA-256 was
+`59037d02840a2f540ff11d755904de3c445071769c32fe88608fba5e0407a315`.
+
+Two optimized benchmark runs per version measured 512 whole-snapshot adopts after warm-up, with one changed point
+and all other lines unchanged. At 1,024 lines, p95 fell from `416–423 µs` to `98 µs`. At 256 lines it fell from
+`106–109 µs` to `23–24 µs`. The timer excluded app edits, rendering and retiring the previous snapshot.
