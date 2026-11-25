@@ -20,8 +20,8 @@ Fixture-scoping notes:
 - Derive Phase 1 point and straight-segment fixtures from `fix:10, 20, 29, 39, 77, 87` and `dimension:20, 40`. The app can run the full setups in Phase 2 once the arcs created in the shared `Background`/`Given` text are available.
 - `dimension:9` searches for both Dimension and Driven Dimension, so it closes in Phase 2 once Driven Dimension lands.
 - `point:70` stays `K` in Phase 1 because the kernel model owns typed point roles (`Defining`, `SketchMarker`, `CenterMarker`, matching app ADR-0017), while marker glyphs and downstream Hole consumption belong to the app.
-- `show-constraints:131` closes in Phase 2 for implemented constraint types; blocked Phase B filter entries (`Smooth (G2)`, `Symmetric`, `Reference`) remain unpopulated until their captures land.
-- Phase `B` scenarios (including `silhouette-curve:83`) stay out of Phase 6 closure until their captures are accepted and assigned to a phase by a reviewed plan update.
+- `show-constraints:131` closes in Phase 2 for implemented constraint types, including Smooth (G2). `Symmetric` and `Reference` are observed filter entries, with no observed relation creation.
+- Phase `B` preserves historical evidence gaps in this corpus snapshot. [Owned native fixtures](OWNED-FIXTURES.md) define geometry where the reference result is missing, including the silhouette exclusion in `silhouette-curve:83`. Run applicable app assertions in the Rust suite and retain the original reference evidence status here.
 
 ## Counts by phase
 
@@ -34,7 +34,7 @@ Fixture-scoping notes:
 | 3b Silhouette | 2 | 0 | 0 | 4 | 6 |
 | 4 Edits | 10 | 4 | 0 | 9 | 23 |
 | 5 Generators | 0 | 0 | 2 | 15 | 17 |
-| B Blocked on capture | 1 | 3 | 0 | 18 | 22 |
+| B Incomplete reference evidence | 1 | 3 | 0 | 18 | 22 |
 | **Total** | **71** | **20** | **2** | **149** | **242** |
 
 The evidence column maps the corpus Gherkin tags in priority order: `@needs_capture` -> `needs capture`, `@needs_fixture` -> `needs fixture`, `@observed_live` -> `observed`, otherwise `untagged`. Secondary tags (`@expected_contract`, `@historical_capture`, `@fixture_variation`, `@fixture_specific`) stay in the `.feature` files.

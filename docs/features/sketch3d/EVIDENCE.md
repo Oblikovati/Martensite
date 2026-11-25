@@ -191,3 +191,66 @@ The live application tooling corpus now has 243 scenario definitions. The assess
 another sketch` was split into `Identify a point from another 3D sketch` and `Identify a planar sketch point from a
 3D sketch`. The 27 shifted references and both revised names belong to the app's scenario inventory. Preserve the
 historical map and use the revised names when tracing new fixtures. [Oblikovati #4038](https://github.com/Oblikovati/Oblikovati/issues/4038)
+
+## E10. Sweep and Loft builder baseline
+
+On Martensite `fb7dd57f`, Linux x86_64 and Rust `1.99.0`, four loft and two pipe-shell regression tests passed. A
+separate five-test probe used line-based wires like those Sketch3D will supply. A three-segment path through
+`(0,0,0)`, `(4,0,0)`, `(4,4,0)` and `(4,4,4)` produced a valid round-corner shell with the end sections centered
+at the path endpoints. A ruled loft of side-2 squares at `z=0` and `z=3` had volume 12. Rebuilding with the second
+square at `z=5` had volume 20. The measured volumes agreed with `4 × height` within the integration error allowance.
+
+The resulting shape archives in those fixtures stayed identical after a source vertex edit. A separate closed-spine
+control exposed an input mutation. Given a wire that starts and ends at the same vertex with its `Closed` flag unset,
+the pipe-shell constructor set that flag on the caller's wire. Giving the builder a topology and geometry copy
+kept the original flag unchanged. Materialize new wires from the immutable sketch recipe, or copy externally owned
+inputs at the adapter boundary. Compose the copy history with the builder history. The controls exercise kernel
+builders directly. App references, transaction adoption and desktop timing need their own tests.
+
+```sh
+cargo test --locked -p martensite-tkoffset --test toolkit brep_offset_api_thru_sections::
+cargo test --locked -p martensite-tkoffset --test toolkit legacy_brep_offset_api_make_pipe_shell::
+```
+
+## E11. X3 source revisions and publication
+
+The X3 experiment used actual `Point3` and `Line3` values. It resolved two app recipe points with terminal positions
+`(0,20,30)` and `(100,25,50)` mm, then applied independent synthetic source edits. The independent fixture check read
+both point keys and their model-space frames from the native scenario part. The app resolves frames, units and document
+identities. The kernel consumes copied values with source keys and revision stamps.
+
+All 15 optimized tests passed at `fb7dd57f` on Linux. Two worker completion orders accepted only the latest request.
+Equal local IDs from another document, recreated sources, superseded destination recipes and stale source revisions
+were refused. Failure and cancellation preserved the last accepted line. Four fresh AB/BA processes produced the same
+receipt, SHA-256 `8d839ff5cdf66c2ce1e86acd20faee57a79f060943f2b545e864a81b5f8f762d`. An independent review reran both checks.
+
+In production the document owner issues source authority and incarnation values and versions changes in any input
+that affects the resolved point, including frame and units. One owner checks the source stamps, destination generation
+and captured tolerance policy before adopting the prepared result. Historic results retain their original stamps.
+
+## E12. X2 section and projection
+
+The X2 experiment used the radius-4 periodic face trimmed to `0 ≤ z ≤ 6`, with a hole around +Y over `2 < z < 4`.
+A transverse section returned +Y intervals `[0,2]` and `[4,6]` and the intact −Y generator. Forward projection
+returned source intervals `[1,3]` and `[5,7]`. Shared degree-1 knots allowed the actual 3D curve and two pcurves
+to be checked over every active span. The outward-rounded bound on the fixture's carrier, source and travel
+residuals was `1.147e-13`. The native edge tolerance was `5e-6`. Source parameters ran backward along the result
+edge. Tangency, empty intersection, multiple roots, invalid input and a ray direction parallel to its source
+line each had a separate control.
+
+The boundary circle and tangent seam lacked public face ancestry. Native interference data recovered the unique
+parents using the original edge's face incidence and the common block's other face. The boundary control verified
+both operand orders. [#613](https://github.com/Oblikovati/Martensite/issues/613)
+
+Native non-destructive mode preserved input archives during construction. Some output curves still shared pcurve
+carriers with the source after construction. Copying the operands with their geometry fixed that input alias.
+Copying the standalone output dropped its detached pcurves. One binary shape table with the result and both
+parents retained those associations through byte-identical encode/decode. Mutating one decoded export left its
+sibling, the sealed archive and the original sources intact. Two processes reproduced all seven BRep exports
+and the evidence text, SHA-256 `84a06950b0e6a79c3312c208cdde980e7c70f3f7396265eeb284b31ea2b78ead` for the latter.
+
+The independent review accepted this bounded fixture. The production adapter still needs to certify admitted
+carrier and trim intervals, recover all required parents, and refuse unsupported chart, rank and branch cases.
+Keep numeric bounds in TKMath, captured support and trim evaluation in TKGeomAlgo, and topology incidence and
+traversal in TKTopAlgo. Section common-block ancestry belongs to TKBO. Compose the TKPrim projection sweep and
+TKBO section above them so the lower toolkits stay acyclic.

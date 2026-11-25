@@ -99,7 +99,7 @@ incidences before AD and rank analysis.
 | Equal length | `\|d1\| − \|d2\|` (1, length) | 1 | zero-length line | none |
 | Equal radius | `radius1 − radius2` (1, length) | 1 | near-straight arc; both fixed-endpoint semicircles | stored minor or major arc of each operand |
 | Tangent at a shared endpoint | `[e1(t1)·u(t2), e2(t1)·u(t2)]` (2, unitless) | 2 | zero end derivative; pole `u(t1) = ±r` | stored sign of `t1·t2` under one endpoint convention; full check `\|u(t1) × u(t2)\|` |
-| G2 at a shared endpoint (blocked on capture) | Tangent (2, unitless) and `[e1(t1)·(κ1 − κ2), e2(t1)·(κ1 − κ2)] · L_ref` (2, unitless) | 4 | zero end derivative; pole `u(t1) = ±r`; inadmissible pairs `line/line` (identically zero curvature rows) and `arc/line` (`1/R ≠ 0` infeasible) | requires at least one spline (or curvature-compatible pair); zero curvature on spline/line is regular |
+| G2 at a shared endpoint | Tangent (2, unitless) and `[e1(t1)·(κ1 − κ2), e2(t1)·(κ1 − κ2)] · L_ref` (2, unitless) | 4 | zero end derivative; pole `u(t1) = ±r`; inadmissible pairs `line/line` (identically zero curvature rows) and `arc/line` (`1/R ≠ 0` infeasible) | admit spline/spline and spline/line with a movable second curve for application. Zero curvature on spline/line is regular. See [the owned fixture](OWNED-FIXTURES.md#g2-continuity). |
 | On Face | attached-point rows `P − F(u, v) = 0` (3, length; 2 new variables) | 3 | singular surface point (`\|F_u × F_v\|` below limit, e.g. sphere pole) | trim classification after solve; requires variable-domain scaling for `(u, v)` |
 | Driven measurement | none (0) | 0 | as driving form | not applicable |
 
@@ -118,7 +118,7 @@ Before `On Face` ships in Phase 3:
 4. Refuse the edit with a named error when the point is outside or classification is inconclusive; keep the last
    accepted snapshot.
 
-An active-set or trim-boundary-sliding rule requires an accepted capture (Capture backlog #8).
+The [owned attachment fixture](OWNED-FIXTURES.md#imports-attachment-drag-and-cross-sketch-references) defines boundary admission and refusal in the hole. Use that fixture when deciding whether to add an active set.
 
 At a sphere pole the 3 rows `P − F(u, v) = 0` have Jacobian rank 3 (suggesting 2 DOF), even though `F_u = 0` restricts
 first-order surface motion to 1 direction. Rank alone is not a freedom certificate in a refused set.
