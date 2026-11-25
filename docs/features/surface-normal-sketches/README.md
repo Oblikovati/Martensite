@@ -51,6 +51,8 @@ its raw error-status units and the same-origin numerical control (#546).
 | [#418](https://github.com/Oblikovati/Martensite/issues/418) | General curves and holes | #415, #416, #417 |
 | [#419](https://github.com/Oblikovati/Martensite/issues/419) | Complete wraps and periodic regions | #418 |
 | [#420](https://github.com/Oblikovati/Martensite/issues/420) | Bosses, pockets, support revisions and replay | #416, then applicable support tasks |
+| [#425](https://github.com/Oblikovati/Martensite/issues/425) | Wrapped multiline emboss, engrave, and edit replay | #418, #420 |
+| [#600](https://github.com/Oblikovati/Martensite/issues/600) | Indirect native cylinder frames from Circle → Extrude | #420 |
 
 A task is complete only after its implementation and evidence are integrated.
 No package version or release is authorized by the feature approval.
@@ -138,8 +140,8 @@ let cone_body = cone_result.export_brep()?;
 
 Normal depth changes both radius and axial position. The operation refuses
 axis contact, unresolved apex/angle limits and any result that fails required
-validation. This primitive entry retains its exact sector contract; the
-candidate solved-profile entry below handles admitted polynomial curves. See the
+validation. The primitive entry retains its sector contract. The solved-profile
+entry below handles admitted polynomial curves. See the
 [conical sector contract](CONE.md) for the coordinate map and supported domain.
 
 ## Full-turn bands
@@ -249,9 +251,8 @@ successful Linux affected-package verification and Sonar checks. The new
 [cone TSan receipt](references/phase-a-549-hosted-tsan-receipt-2026-11-18.json)
 records actual execution of the public overlapping-operation/shared-reader
 control: 1 passed, 0 failed, 0 ignored in 167.83 seconds. These conditions were
-satisfied before merge `8f2b4231`. The local startup exit 139 remains a historical
-failed attempt, not that hosted run. B/C and full-feature qualification remain
-outstanding; no version, tag or release was authorized.
+satisfied before merge `8f2b4231`. The local startup exit 139 predates that hosted
+run. B/C and full-feature qualification were still pending at this checkpoint.
 
 The [final accepted-workload campaign](references/cone-final-workload-benchmark-2026-11-18-summary.json)
 uses source `64110e40` plus the preserved feature changes. In the same executable,
