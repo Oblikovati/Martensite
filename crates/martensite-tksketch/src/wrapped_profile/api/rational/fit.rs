@@ -5,21 +5,47 @@ use martensite_tkmath::predicates::roots::metric_bounds::{
     fit_rational_bezier_reference,
 };
 
+pub(super) struct Cover {
+    pub curve: ProfileCurveId,
+    pub spans: Vec<RationalReferenceSpan>,
+}
+
+pub(super) fn all_spans(covers: &[Cover]) -> impl Iterator<Item = &RationalReferenceSpan> + Clone {
+    covers.iter().flat_map(|cover| cover.spans.iter())
+}
+
 pub(super) fn cover(
     level: u8,
     source: &input::Source<'_>,
     limit: f64,
     cancelled: &mut CancelPoll<'_>,
-) -> Checked<Vec<RationalReferenceSpan>> {
+) -> Checked<Vec<Cover>> {
     let mut options = CylindricalProfileOptions::default();
-    let mut result = Vec::new();
-    for native in &source.spans {
-        let mut local = fit_native(native, level, limit, options, cancelled)?;
+    source
+        .curves
+        .iter()
+        .map(|curve| fit_curve(curve, level, limit, &mut options, cancelled))
+        .collect()
+}
+
+fn fit_curve(
+    curve: &input::Curve<'_>,
+    level: u8,
+    limit: f64,
+    options: &mut CylindricalProfileOptions,
+    cancelled: &mut CancelPoll<'_>,
+) -> Checked<Cover> {
+    let mut spans = Vec::new();
+    for native in &curve.spans {
+        let mut local = fit_native(native, level, limit, *options, cancelled)?;
         let work = local.last().map_or(0, |span| span.bounds.operations);
         options.max_operations -= work;
-        result.append(&mut local);
+        spans.append(&mut local);
     }
-    Ok(result)
+    Ok(Cover {
+        curve: curve.occurrence.curve,
+        spans,
+    })
 }
 
 fn fit_native(
@@ -29,8 +55,12 @@ fn fit_native(
     options: CylindricalProfileOptions,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<Vec<RationalReferenceSpan>> {
+    let mut metric = native.metric();
+    if metric.weights.is_none() {
+        metric.weights = Some(&[1.; 17][..metric.poles.len()]);
+    }
     let query = RationalReferenceRequest {
-        source: native.metric(),
+        source: metric,
         level,
         limits: [limit, limit],
         direction: native.direction(),

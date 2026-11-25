@@ -1,7 +1,7 @@
 # Directed solved-profile input
 
-The private rational pipeline has an input adapter for existing `SketchProfile`
-and `ProfileLoop` values (#418). A selection supplies its own surface-region ID,
+The wrapped-profile operations read the existing `SketchProfile` and
+`ProfileLoop` types (#418). A selection supplies its own surface-region ID,
 one directed outer loop and optional directed hole loops. The adapter resolves
 curve and vertex IDs once and copies the selected control coordinates into owned
 operation input. Material admission, joins, clearance and all geometry proofs
@@ -23,7 +23,8 @@ curve, an out-of-domain index or a level of 64 or above refuses.
 
 ## Current admission
 
-This adapter reads lines and single Bézier spans of degree one through three.
+The polynomial entry points read lines and single Bézier spans of degree one
+through three.
 A spline must have exactly `degree+1` poles, positive weights if supplied, and
 `degree+1` zero knots followed by `degree+1` unit knots. A weighted span needs
 an exact identity with a binary64 polynomial in the same parameter. Both the
@@ -41,18 +42,16 @@ repeated selected curve uses also refuse. An unused curve's representation is
 not converted. Errors retain offending source IDs or values and the expected
 shape.
 
-General conics, rational and multi-span splines, higher degrees and the remaining
-surface-operation scope are still open. The adapter is now used by the uncommitted [P4 API checkpoint](PUBLIC-API.md).
-Publication qualification, sanitizer, glyph-scale, conical-profile and
-oblique-frame work remain open. Existing public primitive operations, package versions and release tags
-are unchanged.
+The rational entry points handle the additional profile representations below.
+Generic analytic conic lowering and knot insertion require certified geometry
+transport with the original parameter identity.
 
 ## Positive rational reference
 
-The rational normal entries accept one positive-weight spline with monotone
-Bernstein spans or one exact circular or axis-aligned elliptic quarter. The
-curve may bound the outside or a hole. The other selected uses are straight
-edges. The entries require increasing signed depths and one angular chart. The cone additionally requires the profile in
+The rational normal entries accept lines, polynomial or positive-weight splines
+with monotone Bernstein spans, and exact circular or axis-aligned elliptic
+quarters. The directed outer and hole loops may mix those curve types. The
+entries require increasing signed depths and one angular chart. The cone additionally requires the profile in
 the positive developed halfplane, clear of the apex. The rational cylinder
 uses `GeometricCompositeV6` for its reference planar proof. The tested cone
 request selects the same version for its UV cap proof. The reference level splits
@@ -65,8 +64,9 @@ boundary for area. For multipart splines, the planar proof uses the exact
 Bernstein partition and the retained proof uses the remaining pair-work budget. It bounds the position and derivative error between the
 rational curve and each cubic reference span. Both curves stay strictly
 inside the straight boundary halfplanes except at shared authored endpoints.
-The proof also separates the full reference error tube from the other boundary
-loops. The normal map then bounds the error in world coordinates. History records the
+At a shared authored vertex, the proof separates curved uses with an exact
+halfplane test. It separates nonincident curves using outward bounds on their
+reference error tubes. The normal map then bounds the error in world coordinates. History records the
 original curve and its dyadic parameter intervals. For an analytic quarter it
 also records how the stereographic parameter maps to the native angle. The result includes the
 authored area and sweep-volume enclosures, the retained boundary flux, the
