@@ -12,6 +12,10 @@ pub(super) struct PlanningFailure {
     cause: CylindricalProfileError,
 }
 impl PlanningFailure {
+    pub(super) fn curve(&self) -> SurfaceCurveId {
+        self.curve
+    }
+
     pub(super) fn source_cause(&self) -> &CylindricalProfileError {
         &self.cause
     }

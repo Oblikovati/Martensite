@@ -32,13 +32,17 @@ impl<'a> Boundary<'a> {
         if sense == CylindricalRadialSense::Inward {
             rails.swap(0, 1);
         }
-        let [wire]: [Shape; 1] = certify(
-            attempt,
-            VALIDATION,
-            "one exact ruled-wall trim wire",
-            assembly::children(attempt, face)?.try_into(),
-        )?;
-        let edges = assembly::children(attempt, &wire)?;
+        let wires = assembly::children(attempt, face)?;
+        let [wire] = wires.as_slice() else {
+            return Err(refusal::cardinality(
+                attempt,
+                VALIDATION,
+                "one exact ruled-wall trim wire",
+                [wires.len(), 1],
+                [history_entity(source)],
+            ));
+        };
+        let edges = assembly::children(attempt, wire)?;
         require(
             attempt,
             VALIDATION,
@@ -92,12 +96,15 @@ impl<'a> Boundary<'a> {
     pub(super) fn pairs(self, attempt: Attempt) -> Checked<BTreeSet<[WrappedHistoryKey; 2]>> {
         let mut result = BTreeSet::new();
         for (_, faces) in self.connectors {
-            let [a, b]: [WrappedHistoryKey; 2] = certify(
-                attempt,
-                VALIDATION,
-                "two wall occurrences per decoded connector",
-                faces.try_into(),
-            )?;
+            let &[a, b] = faces.as_slice() else {
+                return Err(refusal::cardinality(
+                    attempt,
+                    VALIDATION,
+                    "two wall occurrences per decoded connector",
+                    [faces.len(), 2],
+                    faces.into_iter().map(history_entity),
+                ));
+            };
             require(
                 attempt,
                 VALIDATION,

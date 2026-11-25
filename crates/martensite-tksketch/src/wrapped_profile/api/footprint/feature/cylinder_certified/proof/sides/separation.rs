@@ -78,6 +78,7 @@ pub(super) fn validate(
         attempt,
         VALIDATION,
         "directed authored periodic separation",
+        tool.regions.iter().copied().map(HistorySource::Region),
         tool.clearance
             .periodic
             .separation_lower_bound()

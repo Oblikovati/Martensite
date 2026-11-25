@@ -68,7 +68,7 @@ pub(in crate::surface_sketch::wrapped_profile) fn member_context(cause: &Refusal
     context.entities.push(HistorySource::Region(cause.region));
     context
 }
-fn selection_context(cause: &selection::SelectionFailure) -> Context {
+pub(super) fn selection_context(cause: &selection::SelectionFailure) -> Context {
     use selection::SelectionFailure as S;
     match cause {
         S::Empty | S::Limit { .. } => Context::new(Class::InvalidInput, vec![]).admission(),
@@ -247,7 +247,7 @@ fn contour_context(class: Class, region: SurfaceRegionId, contour: SurfaceCurveI
         vec![HistorySource::Region(region), HistorySource::Curve(contour)],
     )
 }
-fn clearance_context(cause: &planar_clearance::ClearanceFailure) -> Context {
+pub(super) fn clearance_context(cause: &planar_clearance::ClearanceFailure) -> Context {
     use planar_clearance::ClearanceFailure as C;
     let entities = match cause {
         C::SelectionBinding { actual, expected } => region_entities(actual, expected),
@@ -317,24 +317,28 @@ fn corner_source(corner: CornerSource) -> HistorySource {
     }
 }
 fn cone_context(region: SurfaceRegionId, cause: &planar_cones::ConeFailure) -> Context {
-    use planar_cones::ConeFailure as C;
     let mut context = Context::owner(Class::Incomplete, region);
+    context.entities.extend(cone_entities(cause));
+    context
+}
+
+pub(super) fn cone_entities(cause: &planar_cones::ConeFailure) -> Vec<HistorySource> {
+    use planar_cones::ConeFailure as C;
+    let mut entities = Vec::new();
     match cause {
         C::Membership { span, .. } | C::Interval { span, .. } => {
-            context.entities.push(HistorySource::Curve(span.curve))
+            entities.push(HistorySource::Curve(span.curve))
         }
         C::Binding { spans, .. } | C::Certificate { spans, .. } => {
-            context.entities.extend(span_entities(spans.iter()))
+            entities.extend(span_entities(spans.iter()))
         }
         C::CapJoin { spans, owners, .. } => {
-            context.entities.extend(span_entities(spans.iter()));
-            context
-                .entities
-                .extend(owners.iter().copied().map(corner_source));
+            entities.extend(span_entities(spans.iter()));
+            entities.extend(owners.iter().copied().map(corner_source));
         }
-        C::Authored(_) => {}
+        C::Authored(cause) => entities.push(binding_source(cause.key)),
     }
-    context
+    entities
 }
 
 pub(in crate::surface_sketch::wrapped_profile) fn budget(

@@ -36,7 +36,7 @@ pub(super) fn validate(
         cancelled,
         |&(&key, stored), poll| {
             let part = Part::read(attempt, &images, caps, key)?;
-            let tube = part.bind(attempt, input.support, sense, stored, common, poll)?;
+            let tube = part.bind(attempt, input.support, sense, (key, stored), common, poll)?;
             Ok((key, part, tube))
         },
     )?;
@@ -196,7 +196,7 @@ impl<'a> Part<'a> {
         attempt: Attempt,
         support: CylinderSupport,
         sense: CylindricalRadialSense,
-        span: &'a material::Span,
+        (key, span): (WrappedHistoryKey, &'a material::Span),
         cover: separation::Cover,
         cancelled: &mut CancelPoll<'_>,
     ) -> Checked<contact::Tube<'a>> {
@@ -207,7 +207,7 @@ impl<'a> Part<'a> {
             support.radius,
             rails,
             sense,
-            span,
+            (history_entity(key), span),
             cover.allowance,
             cancelled,
         )?;
@@ -312,7 +312,7 @@ fn prove_slices(
     radius: f64,
     rails: [MetricBezier<'_, 3>; 2],
     sense: CylindricalRadialSense,
-    span: &material::Span,
+    (source, span): (HistorySource, &material::Span),
     allowance: [f64; 2],
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<[CertifiedCylindricalRadialSweep; 2]> {
@@ -335,6 +335,7 @@ fn prove_slices(
         attempt,
         VALIDATION,
         "actual fixed-radius side and joined trim projections",
+        [source],
         cancelled,
         |poll| certify_cylindrical_slice_with_joins(slice, [incoming, outgoing], poll),
     )?;
@@ -342,6 +343,7 @@ fn prove_slices(
         attempt,
         VALIDATION,
         "complete common radial interval including terminal collars",
+        [source],
         cancelled,
         |poll| {
             slope.require_common_radial_interval(slice, &span.storage.certificate, allowance, poll)

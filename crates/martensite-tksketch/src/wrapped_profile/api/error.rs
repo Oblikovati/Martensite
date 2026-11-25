@@ -172,7 +172,14 @@ impl std::error::Error for profile_input::ProfileInputFailure {
     }
 }
 impl std::error::Error for family::FamilyFailure {}
-impl std::error::Error for history_projection::HistoryMapFailure {}
+impl std::error::Error for history_projection::HistoryMapFailure {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Parameter { cause, .. } => Some(cause),
+            _ => None,
+        }
+    }
+}
 
 pub(in crate::surface_sketch::wrapped_profile) fn failure(
     stage: WrappedStage,
@@ -361,7 +368,7 @@ fn decline_vertex(
     }
 }
 
-fn public_source(source: WrappedEntitySource) -> HistorySource {
+pub(super) fn public_source(source: WrappedEntitySource) -> HistorySource {
     match source {
         WrappedEntitySource::Region(region) => HistorySource::Region(region),
         WrappedEntitySource::Curve { curve, .. }

@@ -86,6 +86,14 @@ pub enum SurfaceFailureCause {
     },
 }
 
+impl fmt::Display for SurfaceFailureCause {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{self:?}")
+    }
+}
+
+impl std::error::Error for SurfaceFailureCause {}
+
 /// Typed unsuccessful operation; no result body accompanies it.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SurfaceSketchFailure {

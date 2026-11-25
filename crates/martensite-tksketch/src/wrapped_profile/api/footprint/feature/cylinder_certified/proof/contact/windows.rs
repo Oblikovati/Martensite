@@ -98,7 +98,14 @@ impl Boundary {
                     ));
                 };
                 let direction = [angle * support_radius / self.radius, z];
-                self.certify_join(attempt, [a, b], cap, direction, pad, poll)
+                self.certify_join(
+                    attempt,
+                    [(pair[0], a), (pair[1], b)],
+                    cap,
+                    direction,
+                    pad,
+                    poll,
+                )
             },
         )?;
         Ok(())
@@ -129,13 +136,13 @@ impl Boundary {
     fn certify_join(
         &self,
         attempt: Attempt,
-        tubes: [&Tube<'_>; 2],
+        joined: [(WrappedHistoryKey, &Tube<'_>); 2],
         cap: usize,
         direction: [f64; 2],
         pad: f64,
         cancelled: &mut CancelPoll<'_>,
     ) -> Checked<()> {
-        let queries = tubes.map(|tube| tube.caps[cap].query);
+        let queries = joined.map(|(_, tube)| tube.caps[cap].query);
         let (anchor, uv) = shared_corner(queries).ok_or_else(|| {
             missing(
                 attempt,
@@ -152,8 +159,9 @@ impl Boundary {
                 "complete positively directed adjacent trim windows",
             )
         })?;
-        let gap = anchor_gap(attempt, queries[0], anchor, uv, cancelled)?;
-        let far = tubes.map(|tube| tube.caps[1 - cap].query.curve);
+        let sources = joined.map(|(key, _)| history_entity(key));
+        let gap = anchor_gap(attempt, queries[0], anchor, uv, sources, cancelled)?;
+        let far = joined.map(|(_, tube)| tube.caps[1 - cap].query.curve);
         self.verify_arms(attempt, queries, far, windows, anchor, gap)
     }
 
@@ -203,6 +211,7 @@ fn anchor_gap(
     query: CylindricalTrimQuery<'_>,
     anchor: [f64; 3],
     uv: [f64; 2],
+    sources: [HistorySource; 2],
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<f64> {
     let query = CylindricalTrimQuery {
@@ -216,6 +225,7 @@ fn anchor_gap(
     let proof = certify_math(
         attempt,
         "actual corner seam point and UV lift",
+        sources,
         cancelled,
         |poll| certify_cylindrical_trim(query, poll),
     )?;

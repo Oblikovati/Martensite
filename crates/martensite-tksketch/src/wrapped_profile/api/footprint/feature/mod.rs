@@ -22,7 +22,7 @@ pub use direct::{CertifiedConeAttachmentReport, CertifiedConeFeatureResult, Coni
 mod failure;
 mod history;
 mod source_members;
-use failure::{Attempt, FeatureChecked};
+use failure::{Attempt, FeatureChecked, history_entity};
 pub use failure::{CylinderFeatureCause, CylinderFeatureFailure, CylinderFeatureStage};
 pub use history::{
     CylinderBodyRef, CylinderFeatureHistory, CylinderFeatureParent, CylinderFeatureRelation,

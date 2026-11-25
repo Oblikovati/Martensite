@@ -66,6 +66,16 @@ impl std::fmt::Display for ConicalStockFailure {
     }
 }
 
+impl std::error::Error for ConicalStockFailure {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        if let Self::Native(cause) = self {
+            Some(cause)
+        } else {
+            None
+        }
+    }
+}
+
 const _: fn() = || {
     fn shared<T: Send + Sync>() {}
     shared::<ConicalStockFailure>();

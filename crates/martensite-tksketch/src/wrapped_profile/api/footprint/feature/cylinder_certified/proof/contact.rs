@@ -53,10 +53,22 @@ pub(super) fn certify(
     let mut boundaries = first
         .caps
         .map(|cap| Boundary::new(cap.query.radius, contact_upper));
-    let sources: Vec<_> = tubes.values().collect();
-    let bounds = work::ordered(attempt, VALIDATION, &sources, cancelled, |&tube, poll| {
-        verify_tube(attempt, tube, support.normal, contact_upper, poll)
-    })?;
+    let sources: Vec<_> = tubes.iter().collect();
+    let bounds = work::ordered(
+        attempt,
+        VALIDATION,
+        &sources,
+        cancelled,
+        |&(&key, tube), poll| {
+            verify_tube(
+                attempt,
+                (history_entity(key), tube),
+                support.normal,
+                contact_upper,
+                poll,
+            )
+        },
+    )?;
     for (tube, ends) in tubes.values().zip(bounds) {
         for ((boundary, (trace, floor)), bound) in boundaries
             .iter_mut()
@@ -92,7 +104,7 @@ fn check_join_census(
 
 fn verify_tube(
     attempt: Attempt,
-    tube: &Tube<'_>,
+    (source, tube): (HistorySource, &Tube<'_>),
     normal: NormalSense,
     contact: f64,
     cancelled: &mut CancelPoll<'_>,
@@ -118,14 +130,30 @@ fn verify_tube(
         }
     };
     Ok([
-        verify_end(attempt, tube, 0, sense(0), motion, contact, cancelled)?,
-        verify_end(attempt, tube, 1, sense(1), motion, contact, cancelled)?,
+        verify_end(
+            attempt,
+            (source, tube),
+            0,
+            sense(0),
+            motion,
+            contact,
+            cancelled,
+        )?,
+        verify_end(
+            attempt,
+            (source, tube),
+            1,
+            sense(1),
+            motion,
+            contact,
+            cancelled,
+        )?,
     ])
 }
 
 fn verify_end(
     attempt: Attempt,
-    tube: &Tube<'_>,
+    (source, tube): (HistorySource, &Tube<'_>),
     cap: usize,
     sense: CylindricalRadialSense,
     motion: f64,
@@ -144,7 +172,7 @@ fn verify_end(
     )?;
     let prefix = radial_prefix(
         attempt,
-        trace,
+        (source, trace),
         far,
         &tube.sweeps[cap],
         sense,
@@ -163,7 +191,7 @@ fn verify_end(
 
 fn radial_prefix(
     attempt: Attempt,
-    trace: Trace<'_>,
+    (source, trace): (HistorySource, Trace<'_>),
     far: MetricBezier<'_, 3>,
     radial: &CertifiedCylindricalRadialSweep,
     sense: CylindricalRadialSense,
@@ -182,18 +210,20 @@ fn radial_prefix(
     certify_math(
         attempt,
         "stored cylinder radial contact prefix",
+        [source],
         cancelled,
         |poll| certify_cylindrical_contact_prefix(prefix, radial, trace.proof, poll),
     )
 }
 
-fn certify_math<T, E: std::fmt::Debug>(
+fn certify_math<T, E: refusal::ProofFailure>(
     attempt: Attempt,
     query: &'static str,
+    entities: impl IntoIterator<Item = HistorySource>,
     cancelled: &mut CancelPoll<'_>,
     run: impl FnOnce(&mut CancelPoll<'_>) -> Result<T, E>,
 ) -> Checked<T> {
-    certify_cancellable(attempt, VALIDATION, query, cancelled, run)
+    certify_cancellable(attempt, VALIDATION, query, entities, cancelled, run)
 }
 
 #[derive(Clone, Copy)]
@@ -271,14 +301,35 @@ mod tests {
             polls += 1;
             polls == 1
         };
-        let error = certify_math(attempt, "corner test", &mut cancel, |poll| {
+        use martensite_tkmath::predicates::roots::metric_bounds::{
+            BoundedArithmeticFailure, CylindricalSliceRefusal,
+        };
+        let error = certify_math(attempt, "corner test", [], &mut cancel, |poll| {
             assert!(poll());
             assert!(poll());
-            Err::<(), _>("underlying arithmetic left the certificate incomplete")
+            Err::<(), _>(CylindricalSliceRefusal::Arithmetic(
+                BoundedArithmeticFailure::WorkLimit {
+                    completed: 1,
+                    limit: 1,
+                },
+            ))
         })
         .unwrap_err();
         assert_eq!(polls, 1);
         assert_eq!(error.stage, VALIDATION);
-        assert!(matches!(*error.cause, CylinderFeatureCause::Cancelled));
+        assert_eq!(
+            error.class(),
+            crate::surface_sketch::WrappedFailureClass::Cancelled
+        );
+        assert!(matches!(
+            std::error::Error::source(&error)
+                .and_then(|source| source.downcast_ref::<CylindricalSliceRefusal>()),
+            Some(CylindricalSliceRefusal::Arithmetic(
+                BoundedArithmeticFailure::WorkLimit {
+                    completed: 1,
+                    limit: 1
+                }
+            ))
+        ));
     }
 }

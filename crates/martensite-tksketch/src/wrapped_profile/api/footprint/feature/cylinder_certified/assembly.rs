@@ -167,12 +167,16 @@ impl Shell {
         sheet: [f64; 2],
     ) -> Checked<Self> {
         let all = faces(attempt, stock)?;
-        let [wire]: [Shape; 1] = certify(
-            attempt,
-            ASSEMBLY,
-            "one stock frame wire",
-            children(attempt, band)?.try_into(),
-        )?;
+        let wires = children(attempt, band)?;
+        let [wire] = wires.as_slice() else {
+            return Err(refusal::cardinality(
+                attempt,
+                ASSEMBLY,
+                "one stock frame wire",
+                [wires.len(), 1],
+                [],
+            ));
+        };
         let frame = CylinderDatum::read(attempt, band)?;
         let directed = chart_orientation(band.orientation(), frame.height_sign < 0.);
         require(
@@ -194,7 +198,7 @@ impl Shell {
         attempt.native(
             ASSEMBLY,
             "retain stock frame incidence",
-            Builder.add(&mut band, &wire),
+            Builder.add(&mut band, wire),
         )?;
         Ok(Self {
             shell,

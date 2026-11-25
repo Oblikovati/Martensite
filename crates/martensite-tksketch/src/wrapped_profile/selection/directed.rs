@@ -93,13 +93,7 @@ fn prove(
         policy,
         cancelled,
     )
-    .map_err(|failure| {
-        if failure.cancelled {
-            SelectionFailure::Cancelled
-        } else {
-            SelectionFailure::Directed(Box::new(failure))
-        }
-    })
+    .map_err(|failure| SelectionFailure::Directed(Box::new(failure)))
 }
 
 impl DirectedSelection {

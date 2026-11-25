@@ -1,11 +1,12 @@
 //! Explicit source-bound publication of one selected cylindrical material operation.
 use super::*;
-use crate::surface_sketch::WrappedHistoryRecord;
+use crate::surface_sketch::{HistorySource, WrappedHistoryRecord};
 use martensite_tkbo::profile_extrusion::PlanarProofVersion;
 
 mod assembly;
 mod material;
 mod proof;
+mod refusal;
 #[cfg(test)]
 mod tests;
 mod work;
@@ -32,35 +33,32 @@ fn missing(
     attempt.fail(stage, CylinderFeatureCause::DirectAttachment { expected })
 }
 
-fn certify<T, E: std::fmt::Debug>(
+fn certify<T, E: refusal::ProofFailure>(
     attempt: Attempt,
     stage: CylinderFeatureStage,
     query: &'static str,
+    entities: impl IntoIterator<Item = HistorySource>,
     result: Result<T, E>,
 ) -> Checked<T> {
-    result.map_err(|cause| {
-        attempt.fail(
-            stage,
-            CylinderFeatureCause::NumericalProof {
-                query,
-                detail: format!("{cause:?}"),
-            },
-        )
-    })
+    result.map_err(|cause| refusal::project(attempt, stage, query, entities, cause, false))
 }
 
-fn certify_cancellable<T, E: std::fmt::Debug>(
+fn certify_cancellable<T, E: refusal::ProofFailure>(
     attempt: Attempt,
     stage: CylinderFeatureStage,
     query: &'static str,
+    entities: impl IntoIterator<Item = HistorySource>,
     cancelled: &mut CancelPoll<'_>,
     operation: impl FnOnce(&mut CancelPoll<'_>) -> Result<T, E>,
 ) -> Checked<T> {
     let (result, observed) = observe_cancellation(cancelled, operation);
-    if observed {
-        return Err(attempt.fail(stage, CylinderFeatureCause::Cancelled));
+    match result {
+        Err(cause) => Err(refusal::project(
+            attempt, stage, query, entities, cause, observed,
+        )),
+        Ok(_) if observed => Err(attempt.fail(stage, CylinderFeatureCause::Cancelled)),
+        Ok(value) => Ok(value),
     }
-    certify(attempt, stage, query, result)
 }
 
 fn observe_cancellation<T>(

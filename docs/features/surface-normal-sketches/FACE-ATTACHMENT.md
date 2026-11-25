@@ -148,6 +148,13 @@ Cancellation is polled during tool construction and at the boundaries
 of native Boolean construction, history and validation. A native failure
 keeps its original cause when cancellation is requested after it failed.
 
+The certified cylinder operation retains the original numerical errors from
+tool construction and stored contact checks. `CylinderFeatureFailure::class()`
+distinguishes invalid proof requests, incomplete proofs, and cancellation.
+`entities()` identifies the affected authored members when the failed check
+knows them. `std::error::Error::source()` exposes the original provider error,
+including its requested arithmetic policy and any work reported before refusal.
+
 The [public operation checks](references/cylindrical-trim-band-2026-11-20/boolean-feature.json)
 passed 44 selected tests and strict Clippy in TKSketch and the TKV3D test
 target. The existing multiline edit tests now use this entry point. The

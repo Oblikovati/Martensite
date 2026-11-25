@@ -141,10 +141,11 @@ pub(super) fn prepare(
             poll,
         )
     });
-    if observed {
-        return Err(attempt.fail(TOOL, CylinderFeatureCause::Cancelled));
-    }
-    let selected = selected.map_err(|cause| selection_refusal(attempt, cause))?;
+    let selected = match selected {
+        Err(cause) => return Err(selection_refusal(attempt, cause, observed)),
+        Ok(_) if observed => return Err(attempt.fail(TOOL, CylinderFeatureCause::Cancelled)),
+        Ok(selected) => selected,
+    };
     complete(Phase::AuthoredPlan);
     let prepared = &selected.prepared;
     let work = build_members(attempt, originals, prepared, cancelled)?;
@@ -154,12 +155,14 @@ pub(super) fn prepare(
         attempt,
         TOOL,
         "source tool authored history",
+        [],
         source_history::certify_developed(originals, prepared, &keys),
     )?;
     let history = certify(
         attempt,
         TOOL,
         "normal-sense authored history",
+        [],
         history_projection::prepare_physical(
             &keys,
             &lineages,
@@ -177,6 +180,7 @@ pub(super) fn prepare(
         attempt,
         TOOL,
         "source-bound family clearance",
+        [],
         planar_clearance::bind_many(&clearance, originals, prepared, &references),
     )?;
     let tool = finish(
@@ -194,17 +198,23 @@ pub(super) fn prepare(
 fn selection_refusal(
     attempt: Attempt,
     cause: selection::SelectionFailure,
+    observed: bool,
 ) -> CylinderFeatureFailure {
     use selection::SelectionFailure as Source;
-    let cause = match cause {
-        Source::Cancelled => CylinderFeatureCause::Cancelled,
-        Source::Directed(cause) => CylinderFeatureCause::DirectedPlanarMaterial(cause),
-        other => CylinderFeatureCause::NumericalProof {
-            query: "source-bound selected material",
-            detail: format!("{other:?}"),
-        },
-    };
-    attempt.fail(TOOL, cause)
+    match cause {
+        Source::Cancelled => attempt.fail(TOOL, CylinderFeatureCause::Cancelled),
+        Source::Directed(cause) if !observed || cause.cancelled => {
+            attempt.fail(TOOL, CylinderFeatureCause::DirectedPlanarMaterial(cause))
+        }
+        other => refusal::project(
+            attempt,
+            TOOL,
+            "source-bound selected material",
+            [],
+            other,
+            observed,
+        ),
+    }
 }
 
 struct Working {
@@ -268,14 +278,20 @@ impl QualifiedMember {
             "matching canonical region order",
         )?;
         let member = attempt.native(TOOL, "source cylinder member", native::construct(request))?;
-        let receipts =
-            certify_cancellable(attempt, TOOL, "source member storage", cancelled, |poll| {
-                storage::certify_with_cancel(original, request, &member.bindings, poll)
-            })?;
+        let subject = [HistorySource::Region(request.region)];
+        let receipts = certify_cancellable(
+            attempt,
+            TOOL,
+            "source member storage",
+            subject,
+            cancelled,
+            |poll| storage::certify_with_cancel(original, request, &member.bindings, poll),
+        )?;
         let cones = certify_cancellable(
             attempt,
             TOOL,
             "source span and join projections",
+            subject,
             cancelled,
             |poll| planar_cones::certify_with_cancel(original, request, &receipts, poll),
         )?;
@@ -283,6 +299,7 @@ impl QualifiedMember {
             attempt,
             TOOL,
             "bind authored and cap projections",
+            subject,
             planar_cones::bind(original, request, &receipts, &cones),
         )?;
         Ok(Self {
@@ -314,12 +331,18 @@ impl Working {
 
     fn add_cones(&mut self, attempt: Attempt, cones: planar_cones::ConeEvidence) -> Checked<()> {
         for join in &cones.joins {
-            let pair: [CurveSpan; 2] = certify(
-                attempt,
-                TOOL,
-                "two directed spans per source join",
-                join.spans.as_slice().try_into(),
-            )?;
+            let &[a, b] = join.spans.as_slice() else {
+                return Err(refusal::cardinality(
+                    attempt,
+                    TOOL,
+                    "two directed spans per source join",
+                    [join.spans.len(), 2],
+                    join.spans
+                        .iter()
+                        .map(|span| HistorySource::Curve(span.curve)),
+                ));
+            };
+            let pair = [a, b];
             require(
                 attempt,
                 TOOL,
@@ -440,6 +463,7 @@ fn place(
         attempt,
         TOOL,
         "publish only operation-local source identities",
+        [],
         export_bindings::append(keys, names, bindings, &mut entities),
     )?;
     Ok(DetachedWrappedBodies { bodies, entities })

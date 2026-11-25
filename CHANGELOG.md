@@ -12,7 +12,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added rectangular and curved apertures across native seams in full-turn cylinder and cone bands, with exact authored split intervals and stable replay (#419).
 
-- Added certified cylindrical bosses and pockets for selected full cylinders, including multiline glyph contours and source-bound seam and topology history (#420, #425).
+- Added certified cylindrical bosses and pockets for selected full cylinders, including multiline glyph contours and source-bound seam and topology history, and typed proof refusals with authored identities (#420, #425).
 
 - Added source-bound radial motion and stock-contact bounds for stored cylindrical ruled sides (#420).
 
