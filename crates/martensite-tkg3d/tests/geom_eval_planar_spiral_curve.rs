@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Independent cardinal and derivative fixtures for #611.
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::dump::DumpStream;
+use martensite_tkernel::standard::dump::{DumpStream, dump_vector};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkg3d::geom::{GeomCurve, GeomGeometry};
@@ -199,6 +199,72 @@ fn nonfinite_inputs_and_native_finite_parameter_limits_are_typed() {
     let invalid_frame =
         GeomEvalPlanarSpiralCurve::new(invalid_axis, 4., 2., 1., rotation).unwrap_err();
     assert_eq!(invalid_frame.exception_type(), "Standard_ConstructionError");
+}
+
+#[test]
+fn malformed_frames_loaded_through_axis2_json_are_refused() {
+    for y in [Direction3::X, -Direction3::Y] {
+        let frame = frame_from_json(y);
+        assert_eq!(frame.direction(), Direction3::Z);
+        assert_eq!(frame.x_direction(), Direction3::X);
+        assert_eq!(frame.y_direction(), y);
+        assert_frame_refused(frame);
+    }
+}
+
+fn frame_from_json(y: Direction3) -> Axis2 {
+    let mut stored = DumpStream::default();
+    for (name, coefficients) in [
+        ("Location", [2., 3., 4.]),
+        ("Direction", [0., 0., 1.]),
+        ("XDirection", [1., 0., 0.]),
+        ("YDirection", *y.coordinates()),
+    ] {
+        dump_vector(&mut stored, name, &coefficients).unwrap();
+    }
+    let mut frame = Axis2::default();
+    assert!(frame.init_from_json(stored.text(), &mut 1).unwrap());
+    frame
+}
+
+#[test]
+fn zero_normal_left_by_failed_axis_edit_is_refused() {
+    let mut frame = Axis2::default();
+    let invalid = Direction3::new(f64::MAX, 0., 0.).unwrap();
+    assert!(frame.set_direction(invalid).is_err());
+    assert_eq!(*frame.direction().coordinates(), [0.; 3]);
+    assert_frame_refused(frame);
+}
+
+fn assert_frame_refused(frame: Axis2) {
+    let refusal =
+        GeomEvalPlanarSpiralCurve::new(frame, 4., 2., 1., SpiralRotation::Counterclockwise)
+            .unwrap_err();
+    assert_eq!(refusal.exception_type(), "Standard_ConstructionError");
+    assert!(refusal.message().contains("frame"));
+}
+
+#[test]
+fn bit_preserving_admission_of_computed_oblique_frame() {
+    let frame = Axis2::with_x_direction(
+        Point3::new(-0.0, f64::from_bits(1), 5.),
+        Direction3::new(2., 3., 4.).unwrap(),
+        Direction3::new(4., -2., 1.).unwrap(),
+    )
+    .unwrap();
+    let curve = GeomEvalPlanarSpiralCurve::new(frame, 4., 2., 1., SpiralRotation::Counterclockwise)
+        .unwrap();
+    assert_eq!(frame_bits(curve.position()), frame_bits(frame));
+}
+
+fn frame_bits(frame: Axis2) -> [[u64; 3]; 4] {
+    [
+        *frame.location().coordinates(),
+        *frame.direction().coordinates(),
+        *frame.x_direction().coordinates(),
+        *frame.y_direction().coordinates(),
+    ]
+    .map(|coefficients| coefficients.map(f64::to_bits))
 }
 
 #[test]

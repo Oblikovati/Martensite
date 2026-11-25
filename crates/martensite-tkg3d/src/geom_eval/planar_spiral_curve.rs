@@ -8,7 +8,7 @@ use crate::geom::{GeomCurve, GeomCurveD1, GeomCurveD2, GeomCurveD3, GeomGeometry
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::exceptions::{construction_error, overflow, range_error};
+use martensite_tkernel::standard::exceptions::{overflow, range_error};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{Axis2, Point3, Transform3, Vector3};
 use radial::SpiralRadial;
@@ -55,8 +55,9 @@ impl_transient!(
 
 impl GeomEvalPlanarSpiralCurve {
     /// Create a spiral on `[0, TAU * turns]`. A positive radial pitch increases
-    /// radius for either rotation direction. World coordinates and requested
-    /// derivative components are checked when evaluated.
+    /// radius for either rotation direction. The placement must be a valid
+    /// right-handed frame. World coordinates and requested derivative components
+    /// are checked when evaluated.
     ///
     /// ```
     /// use martensite_tkg3d::geom_eval::{GeomEvalPlanarSpiralCurve, SpiralRotation};
@@ -75,7 +76,7 @@ impl GeomEvalPlanarSpiralCurve {
         rotation: SpiralRotation,
     ) -> Result<Self, Failure> {
         let radial = SpiralRadial::new(initial_radius, radial_pitch, turns)?;
-        check_frame(AxisFrame::new(position))?;
+        let position = checked_placement(position)?;
         Ok(Self {
             position,
             radial,
@@ -126,21 +127,14 @@ impl GeomEvalPlanarSpiralCurve {
     }
 }
 
-fn check_frame(frame: AxisFrame) -> Result<(), Failure> {
-    for (name, vector) in [
-        ("origin", frame.origin),
-        ("X", frame.x_dir),
-        ("Y", frame.y_dir),
-        ("Z", frame.z_dir),
-    ] {
-        if !vector.coordinates().iter().all(|value| value.is_finite()) {
-            return Err(construction_error(&format!(
-                "planar spiral frame {name} {:?} must be finite",
-                vector.coordinates()
-            )));
-        }
-    }
-    Ok(())
+fn checked_placement(position: Axis2) -> Result<Axis2, Failure> {
+    // Legacy Axis2 loading and editing can leave independently stored directions.
+    Axis2::from_stored_coefficients(
+        position.location(),
+        *position.direction().coordinates(),
+        *position.x_direction().coordinates(),
+        *position.y_direction().coordinates(),
+    )
 }
 
 fn direction(frame: AxisFrame, cos: f64, sin: f64) -> [f64; 3] {
