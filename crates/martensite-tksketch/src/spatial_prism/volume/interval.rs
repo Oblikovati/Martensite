@@ -3,11 +3,11 @@ use martensite_tkmath::gp::Transform3;
 use std::ops::{Add, Mul, Neg, Sub};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(super) struct Span {
+pub(crate) struct Span {
     pub lo: f64,
     pub hi: f64,
 }
-pub(super) type Point = [Span; 3];
+pub(crate) type Point = [Span; 3];
 
 impl Span {
     pub const ZERO: Self = Self::at(0.);
@@ -178,7 +178,7 @@ pub(super) fn placed(local: Point, transform: Transform3, reference: [f64; 3]) -
     })
 }
 
-pub(super) fn l1_difference(a: Point, b: Point) -> f64 {
+pub(crate) fn l1_difference(a: Point, b: Point) -> f64 {
     if a.into_iter().chain(b).any(|span| !span.finite()) {
         return f64::INFINITY;
     }

@@ -42,3 +42,7 @@ path = "tests/spatial_prism.rs"
 [[test]]
 name = "spatial_loft"
 path = "tests/spatial_loft.rs"
+
+[[test]]
+name = "spatial_sweep"
+path = "tests/spatial_sweep.rs"

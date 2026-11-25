@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Bind and integrate the actual planar faces of the retained native sweep.
-mod affine_curve;
+pub(crate) mod affine_curve;
 mod bilinear;
 mod face;
-mod interval;
+pub(crate) mod interval;
 
 use super::{SpatialPrismFailure as Failure, SpatialPrismStage as Stage, failure::native, poll};
 use interval::{Point, Span, l1_difference, placed};

@@ -17,7 +17,7 @@ enum Curve<const N: usize> {
     },
 }
 
-pub(super) fn planar(trim: &EdgePCurve, reverse: bool, degree_one: bool) -> Option<[[Span; 2]; 2]> {
+pub(crate) fn planar(trim: &EdgePCurve, reverse: bool, degree_one: bool) -> Option<[[Span; 2]; 2]> {
     let curve = &trim.pcurve;
     let carrier = if let Some(line) = curve.downcast_ref::<Geom2dLine>() {
         Curve::Line {
@@ -27,7 +27,11 @@ pub(super) fn planar(trim: &EdgePCurve, reverse: bool, degree_one: bool) -> Opti
     } else if !degree_one {
         return None;
     } else if let Some(bezier) = curve.downcast_ref::<Geom2dBezierCurve>() {
-        if bezier.degree() != 1 || bezier.weight(1).ok()? != 1. || bezier.weight(2).ok()? != 1. {
+        if bezier.has_eval_representation()
+            || bezier.degree() != 1
+            || bezier.weight(1).ok()? != 1.
+            || bezier.weight(2).ok()? != 1.
+        {
             return None;
         }
         let poles =
@@ -64,7 +68,7 @@ pub(super) fn planar(trim: &EdgePCurve, reverse: bool, degree_one: bool) -> Opti
     carrier.endpoints(trim.first, trim.last, reverse)
 }
 
-pub(super) fn spatial(
+pub(crate) fn spatial(
     trim: &EdgeCurve3D,
     reverse: bool,
     degree_one: bool,
@@ -80,7 +84,11 @@ pub(super) fn spatial(
     } else if !degree_one {
         return None;
     } else if let Some(bezier) = curve.downcast_ref::<GeomBezierCurve>() {
-        if bezier.degree() != 1 || bezier.weight(1).ok()? != 1. || bezier.weight(2).ok()? != 1. {
+        if bezier.has_eval_representation()
+            || bezier.degree() != 1
+            || bezier.weight(1).ok()? != 1.
+            || bezier.weight(2).ok()? != 1.
+        {
             return None;
         }
         let poles = [bezier.pole(1).ok()?, bezier.pole(2).ok()?].map(|point| *point.coordinates());
