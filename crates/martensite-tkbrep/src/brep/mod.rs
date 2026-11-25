@@ -16,6 +16,7 @@ pub mod cylindrical_split;
 mod dump;
 pub mod errors;
 pub mod face_input_capture;
+pub mod line_edge_capture;
 mod gcurve;
 pub mod planar_attachment;
 mod point_on_curve;

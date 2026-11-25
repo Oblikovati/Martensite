@@ -18,7 +18,7 @@ pub mod planar_attachment;
 pub use cylindrical_generators::{
     CylindricalGeneratorChart, CylindricalGeneratorError, CylindricalPullKind,
 };
-pub use placed_plane::{PlacedPlane, exact_placed_line_ends};
+pub use placed_plane::{PlacedPlane, exact_placed_line_ends, exact_placed_point};
 mod parameter;
 mod prism_jacobian;
 pub use prism_jacobian::affine_prism_jacobian;

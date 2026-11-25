@@ -78,15 +78,32 @@ pub fn exact_placed_line_ends(
     Ok(a.zip(b).map(|(a, b)| [a, b]))
 }
 
+/// Apply the original placement and require exact binary64 world coordinates.
+/// Example: `let placed = exact_placed_point(point, placement)?;`.
+pub fn exact_placed_point(
+    point: Point3,
+    rows: [[f64; 4]; 3],
+) -> Result<Option<[f64; 3]>, NonFiniteCoordinate> {
+    let placement = ExactPlacement::capture(rows)?;
+    Ok(exact_binary64_point(
+        placement.point(exact_point(point, 0)?),
+    ))
+}
+
 fn exact_line_point(
     origin: &ExactVector,
     direction: &ExactVector,
     parameter: ExactRatio,
 ) -> Option<[f64; 3]> {
+    exact_binary64_point(std::array::from_fn(|axis| {
+        origin[axis].add(&direction[axis].multiply(&parameter))
+    }))
+}
+
+fn exact_binary64_point(position: ExactVector) -> Option<[f64; 3]> {
     let mut point = [0.; 3];
-    for (axis, value) in point.iter_mut().enumerate() {
-        let coordinate = origin[axis].add(&direction[axis].multiply(&parameter));
-        let [lo, hi] = outward_binary64(&coordinate)?;
+    for (coordinate, value) in position.iter().zip(&mut point) {
+        let [lo, hi] = outward_binary64(coordinate)?;
         if lo != hi {
             return None;
         }
@@ -166,9 +183,21 @@ pub(super) fn cross(b: &ExactVector, c: &ExactVector) -> ExactVector {
 
 #[cfg(test)]
 mod tests {
-    use super::{PlacedPlane, exact_placed_line_ends};
+    use super::{PlacedPlane, exact_placed_line_ends, exact_placed_point};
     use crate::gp::{Axis1, Direction3, Line3, Plane3, Point3, Transform3};
     use std::cmp::Ordering;
+
+    #[test]
+    fn exact_placed_point_refuses_a_binary64_rounding_cell() {
+        let point = Point3::new(1., 2., 3.);
+        let mut placement = [[1., 0., 0., 2.], [0., 1., 0., 0.], [0., 0., 1., 0.]];
+        assert_eq!(
+            exact_placed_point(point, placement).unwrap(),
+            Some([3., 2., 3.])
+        );
+        placement[0][3] = 2_f64.powi(53);
+        assert_eq!(exact_placed_point(point, placement).unwrap(), None);
+    }
 
     #[test]
     fn stored_placement_sign_survives_rebuilt_frame_rounding() {
