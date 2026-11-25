@@ -24,7 +24,7 @@ fn measure(stock: &CylinderFaceAttachment, mut sketch: WrappedNormalRequest, wor
     ] {
         sketch.support = stock.extrusion_support(REVISION, 0., normal).unwrap();
         let mut samples = [std::time::Duration::ZERO; SAMPLES];
-        let mut baseline = None;
+        let mut baseline: Option<CertifiedCylinderFeatureResult> = None;
         for sample in &mut samples {
             let start = Instant::now();
             let result = stock
@@ -33,11 +33,15 @@ fn measure(stock: &CylinderFaceAttachment, mut sketch: WrappedNormalRequest, wor
             *sample = start.elapsed();
             assert_ordered(result.validation());
             if let Some(expected) = &baseline {
-                assert_eq!(result.encoded_brep(), expected);
+                assert!(
+                    result.encoded_brep() == expected.encoded_brep(),
+                    "repeated cylinder archive changed"
+                );
             } else {
-                baseline = Some(result.encoded_brep().to_vec());
+                baseline = Some(result);
             }
         }
+        check_permuted(stock, sketch.clone(), kind, baseline.as_ref().unwrap());
         samples.sort_unstable();
         let index = (SAMPLES * 95).div_ceil(100) - 1;
         eprintln!(
@@ -47,4 +51,26 @@ fn measure(stock: &CylinderFaceAttachment, mut sketch: WrappedNormalRequest, wor
             samples[SAMPLES - 1].as_secs_f64() * 1000.
         );
     }
+}
+
+fn check_permuted(
+    stock: &CylinderFaceAttachment,
+    mut recipe: WrappedNormalRequest,
+    kind: CylinderFeatureKind,
+    initial: &CertifiedCylinderFeatureResult,
+) {
+    recipe.profile.curves.reverse();
+    recipe.profile.vertices.reverse();
+    recipe.selections.reverse();
+    let replay = stock
+        .apply_certified_wrapped_profile(REVISION, kind, &recipe, planar())
+        .unwrap();
+    assert!(
+        replay.encoded_brep() == initial.encoded_brep(),
+        "permuted authored cylinder archive changed"
+    );
+    assert_eq!(replay.history(), initial.history());
+    assert_eq!(replay.authored_history(), initial.authored_history());
+    assert_eq!(replay.validation(), initial.validation());
+    assert_eq!(replay.attachment_report(), initial.attachment_report());
 }

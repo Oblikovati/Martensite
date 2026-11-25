@@ -3,6 +3,7 @@ use super::*;
 use crate::surface_sketch::wrapped_profile::api::footprint::tests::request;
 use martensite_tkbo::body_check::{CheckMode, StageVerdict, ValidationStage, validate_body};
 
+mod replay;
 mod text;
 
 fn planar() -> PlanarProofVersion {
