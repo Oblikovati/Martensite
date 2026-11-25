@@ -317,7 +317,14 @@ mod tests {
     #[test]
     fn decoded_radius_within_weld_can_still_exceed_the_trace_limit() {
         let (band, request) = fixture();
-        let plan = AperturePlan::admit(&band, &request, options(), Scope::OneCrossed).unwrap();
+        let plan = AperturePlan::admit(
+            &band,
+            &request,
+            options(),
+            Scope::OneCrossed,
+            SourceModel::Polynomial,
+        )
+        .unwrap();
         let stock = export_stock(&plan.stock, band.rims).unwrap();
         let cutter = fitted_cutter(&plan, &request).unwrap();
         let report = report(&plan, cutter.reports()).unwrap();

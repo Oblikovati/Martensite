@@ -250,7 +250,7 @@ impl CapCheck<'_> {
     fn parameter_bound(&self, cut: binding::FittedCut, endpoint: f64) -> f64 {
         let numerator =
             ((self.angular_error + endpoint).next_up() + 64. * f64::EPSILON * TAU).next_up();
-        (numerator / cut.crossing.angular_speed).next_up()
+        (numerator / cut.angular_speed).next_up()
     }
 }
 
