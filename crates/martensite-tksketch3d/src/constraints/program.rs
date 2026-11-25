@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::{
     ConstraintFailure as Failure, ConstraintPolicy, ConstraintRank, PolicyQuantity, Relation,
-    RelationId, RelationSpec, metric, poll,
+    RelationId, RelationSpec,
+    adopt::apply_checked,
+    poll,
     residual::{self, Equation},
 };
-use crate::{Edit, EditFailure, EntityId, LineGeometry, LineId, PointId, Snapshot};
+use crate::{Edit, EntityId, LineGeometry, LineId, PointId, Snapshot};
 use martensite_tkmath::gp::Point3;
 use martensite_tksolve::{
     nonlinear::{SolveError, SolveOptions, SolveTermination, solve_constraints_with_constants},
@@ -231,20 +233,7 @@ impl Program {
                 });
             }
         }
-        let next = geometry
-            .apply(&edits, &mut *cancelled)
-            .map_err(|error| match error {
-                EditFailure::Cancelled(_) => Failure::Cancelled,
-                error => Failure::Geometry(error),
-            })?;
-        for (&id, &relation) in relations {
-            poll(cancelled)?;
-            if !metric::feasible(&next, relation, policy) {
-                return Err(Failure::Infeasible(id, relation));
-            }
-        }
-        poll(cancelled)?;
-        Ok(next)
+        apply_checked(geometry, relations, &edits, policy, cancelled)
     }
 }
 

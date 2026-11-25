@@ -6,5 +6,6 @@ mod constraints;
 mod construction;
 mod fixture;
 mod frozen_point;
+mod motion;
 mod values;
 mod wire;

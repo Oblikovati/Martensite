@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Immutable spatial point and line constraints with separate apply and drag paths.
+mod adopt;
 mod error;
 mod metric;
+mod motion;
 mod program;
 mod residual;
 
@@ -15,6 +17,7 @@ use std::{
 
 pub use error::{ConstraintFailure, PolicyQuantity};
 pub use martensite_tksolve::{nonlinear::SolveOptions, preview::Limits as SolverLimits};
+pub use motion::{RigidMotion, RigidMotionFailure};
 use program::Program;
 
 /// Caller-reserved ID from a namespace separate from points and lines.
