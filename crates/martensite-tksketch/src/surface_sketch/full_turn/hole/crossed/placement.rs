@@ -24,14 +24,39 @@ impl CutPlacement {
     }
 }
 
-pub(super) struct CutLattice {
+pub(in crate::surface_sketch::full_turn::hole) struct CutLattice {
     developed: DevelopedPeriod,
     phase: f64,
     angular_margin: f64,
 }
 
+struct ProvedSpan {
+    cut: Option<ScalarCut>,
+    width: [f64; 2],
+    clearance: f64,
+}
+
+#[derive(Clone, Copy)]
+pub(in crate::surface_sketch::full_turn::hole) struct ScalarCut {
+    pub turn: i64,
+    pub coordinate: [f64; 2],
+}
+
+impl ScalarCut {
+    pub(in crate::surface_sketch::full_turn::hole) fn signed(self, x: f64) -> [f64; 2] {
+        let [a, b] = self.coordinate;
+        if [a, b] == [0.; 2] {
+            return [x; 2];
+        }
+        [(x - b).next_down(), (x - a).next_up()]
+    }
+}
+
 impl CutLattice {
-    pub(super) fn new(support: FullTurnSupport, options: NormalExtrusionOptions) -> Checked<Self> {
+    pub(in crate::surface_sketch::full_turn::hole) fn new(
+        support: FullTurnSupport,
+        options: NormalExtrusionOptions,
+    ) -> Checked<Self> {
         let (scale, phase) = match support {
             FullTurnSupport::Cylinder { support, .. } => (
                 DevelopedScale::CylinderRadius(support.radius),
@@ -58,15 +83,37 @@ impl CutLattice {
     }
 
     pub(super) fn classify(&self, contour: tool::Contour) -> Checked<CutPlacement> {
-        let [first, last] = contour.lift;
-        cylinder_admission::finite("aperture angular endpoints", &contour.lift)?;
-        let margin = self.margin(contour.lift);
+        let proof = self.prove_span(contour.lift)?;
+        let crossings = proof
+            .cut
+            .map(|cut| self.crossing(contour, cut.turn, proof.width))
+            .transpose()?;
+        Ok(CutPlacement {
+            crossings,
+            angular_clearance: proof.clearance,
+        })
+    }
+
+    pub(in crate::surface_sketch::full_turn::hole) fn cut_in_hull(
+        &self,
+        lift: [f64; 2],
+    ) -> Checked<Option<ScalarCut>> {
+        Ok(self.prove_span(lift)?.cut)
+    }
+
+    fn prove_span(&self, lift: [f64; 2]) -> Checked<ProvedSpan> {
+        let [first, last] = lift;
+        cylinder_admission::finite("aperture angular endpoints", &lift)?;
+        let margin = self.margin(lift);
         let width = self.width(first, last, margin)?;
         let (a, clear_a) = self.sheet(first, margin)?;
         let (b, clear_b) = self.sheet(last, margin)?;
-        let crossings = match b - a {
+        let cut = match b - a {
             0 => None,
-            1 => Some(self.crossing(contour, b, width)?),
+            1 => Some(ScalarCut {
+                turn: b,
+                coordinate: self.cut(b),
+            }),
             _ => {
                 return Err(incomplete(
                     "at most one transverse cut per aperture",
@@ -74,10 +121,11 @@ impl CutLattice {
                 ));
             }
         };
-        let angular_clearance = (clear_a.min(clear_b) / self.developed.scale[1]).next_down();
-        Ok(CutPlacement {
-            crossings,
-            angular_clearance,
+        let clearance = (clear_a.min(clear_b) / self.developed.scale[1]).next_down();
+        Ok(ProvedSpan {
+            cut,
+            width,
+            clearance,
         })
     }
 

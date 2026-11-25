@@ -96,6 +96,51 @@ fn quadratic_aperture_certifies_the_actual_decoded_seam_cut() {
 }
 
 #[test]
+fn quadratic_aperture_preserves_positive_and_negative_lifted_roots() {
+    for (turn, parameters) in [
+        (1, [0.428_571_428_571_429_27, 0.571_428_571_428_570_7]),
+        (-1, [0.428_571_428_571_427_9, 0.571_428_571_428_572_2]),
+    ] {
+        let (band, mut request) = fixture();
+        let lift = f64::from(turn) * 10. * PI;
+        for vertex in &mut request.profile.vertices {
+            vertex.point[0] += lift;
+        }
+        if let ProfileCurve::Spline { poles, .. } = &mut request.profile.curves[0] {
+            for pole in poles {
+                pole[0] += lift;
+            }
+        }
+        let result =
+            normal_extrude_cylinder_band_with_curved_hole(&band, &request, options()).unwrap();
+        assert_lifted_aperture(&result, i64::from(turn), parameters);
+    }
+}
+
+fn assert_lifted_aperture(result: &CurvedBandResult, turn: i64, parameters: [f64; 2]) {
+    let cut = result.publication();
+    let roots = cut.crossings();
+    assert_eq!(roots.len(), 2);
+    // The oracle solves the original binary64 controls against mathematical 10π.
+    for (index, root) in roots.iter().enumerate() {
+        assert_eq!(root.id.turn, turn);
+        let [lo, hi] = root.normalized_parameter;
+        assert!(
+            lo <= parameters[index] && parameters[index] <= hi,
+            "{root:?}"
+        );
+    }
+    assert_eq!(roots[0].id.transition, SheetTransition::Increasing);
+    assert_eq!(roots[1].id.transition, SheetTransition::Decreasing);
+    let geometry = cut.geometry();
+    assert_eq!(geometry.validation().census[0].genus, Some(2));
+    let discrepancy = result.tool().measures.retained_ideal_discrepancy.upper;
+    let volume = geometry.volume();
+    assert!((volume.value - (198. * PI - 6.7375)).abs() <= volume.error_bound + discrepancy);
+    assert!(result.trace_bound() <= 1e-7);
+}
+
+#[test]
 fn curved_aperture_refuses_periodic_overlap_and_ambiguous_corner_contact() {
     let (band, mut request) = fixture();
     request.profile.vertices[1].point[0] = 32.;
