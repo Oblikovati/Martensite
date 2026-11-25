@@ -28,10 +28,101 @@ fn recut_preserves_the_indirect_circle_extrude_stock() {
     );
     assert_eq!(archive(attempt, &original.body).0, source_bytes);
     assert!((volume(&result.solid) - 400. * PI).abs() < 1e-7);
-    let (_, decoded) = archive(attempt, &result.solid);
+    let empty_tool = DetachedWrappedBodies {
+        bodies: Shape::default(),
+        entities: BTreeMap::new(),
+    };
+    let replacement = [result.band.to_shape()];
+    let captured = history::capture_recut_direct(
+        attempt,
+        &original.face,
+        &original.body,
+        &empty_tool,
+        history::RecutResult {
+            solid: result.solid.clone(),
+            replacement: &replacement,
+            recut: &result,
+        },
+        &mut || false,
+    )
+    .unwrap();
+    assert_eq!(captured.history.removed.len(), 3);
+    assert!(captured.history.removed.iter().all(|source| matches!(
+        source,
+        CylinderFeatureSource::SupportMember(CylinderBodyRef {
+            kind: ShapeEnum::Edge | ShapeEnum::Vertex,
+            ..
+        })
+    )));
+    let binding = result
+        .bind_final(attempt, &captured.index, &result.band)
+        .unwrap();
+    let (_, mut decoded) = body::detach(attempt, &captured, &mut || false).unwrap();
+    binding.rebind(attempt, &decoded).unwrap();
     check_images(attempt, &original.body, &result, &decoded);
     let validation = validate_body(&decoded.body, &attachment.record().resolution).unwrap();
     assert!(validation.is_valid(), "{validation:?}");
+    let seam = result
+        .images
+        .iter()
+        .find(|link| {
+            link.source.kind == ShapeEnum::Edge
+                && link.relation == CylinderFeatureRelation::Generated
+        })
+        .unwrap();
+    let seam_ref = captured
+        .index
+        .reference(&seam.image, attempt)
+        .unwrap()
+        .unwrap();
+    decoded.entities.insert(seam_ref, result.band.to_shape());
+    let failure = binding.rebind(attempt, &decoded).unwrap_err();
+    assert!(matches!(
+        *failure.cause,
+        CylinderFeatureCause::ArchiveMismatch
+    ));
+}
+
+#[test]
+fn recut_history_requires_the_same_native_source_snapshot() {
+    let attachment = indirect_extruded_circle();
+    let source = attachment.export_native(REVISION).unwrap();
+    let independent = attachment.export_native(REVISION).unwrap();
+    let attempt = attempt(&attachment);
+    let result = prepare(
+        attempt,
+        &source.body,
+        &source.face,
+        [-0.025, 0.025],
+        attachment.record().resolution.sew,
+    )
+    .unwrap();
+    let empty_tool = DetachedWrappedBodies {
+        bodies: Shape::default(),
+        entities: BTreeMap::new(),
+    };
+    let replacement = [result.band.to_shape()];
+    let failure = history::capture_recut_direct(
+        attempt,
+        &independent.face,
+        &independent.body,
+        &empty_tool,
+        history::RecutResult {
+            solid: result.solid.clone(),
+            replacement: &replacement,
+            recut: &result,
+        },
+        &mut || false,
+    )
+    .err()
+    .unwrap();
+    assert!(matches!(
+        *failure.cause,
+        CylinderFeatureCause::History {
+            source: CylinderFeatureSource::SupportFace(_),
+            ..
+        }
+    ));
 }
 
 #[test]
@@ -166,10 +257,13 @@ fn check_image(link: &StockImage, old: &Shape, new: &Shape, sheet: [f64; 2]) {
 }
 
 fn check_paired_trim(attempt: Attempt, band: &Face, sheet: [f64; 2]) {
-    let [wire]: [Shape; 1] = children(attempt, band).unwrap().try_into().unwrap();
+    let [wire]: [Shape; 1] = children(RecutCheck(attempt), band)
+        .unwrap()
+        .try_into()
+        .unwrap();
     let mut seam_uses = Vec::new();
     let mut rims = 0;
-    for edge in children(attempt, &wire).unwrap() {
+    for edge in children(RecutCheck(attempt), &wire).unwrap() {
         let edge = topods::edge(&edge).unwrap();
         let uv = BRepTool::curve_on_face(&edge, band).unwrap();
         assert!(uv.is_stored);

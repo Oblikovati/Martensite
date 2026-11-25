@@ -14,7 +14,7 @@ pub(super) struct Cut {
 
 impl Cut {
     pub(super) fn opposite(
-        attempt: Attempt,
+        attempt: RecutCheck,
         hull: [f64; 2],
         radius: f64,
         stock_error: f64,
@@ -29,10 +29,7 @@ impl Cut {
             || hull[0] > hull[1]
             || sum_with_residual(range[0], TAU) != (range[1], 0.)
         {
-            return Err(refuse(
-                attempt,
-                "ordered finite angular hull in a full-turn sheet",
-            ));
+            return Err(attempt.refusal("ordered finite angular hull in a full-turn sheet"));
         }
         let low_phase_error = angle_error(attempt, range[0])?;
         let high_phase_error = angle_error(attempt, range[1])?;
@@ -48,10 +45,9 @@ impl Cut {
             || !clear_distance.is_finite()
             || clear_distance <= (clearance + residual).next_up()
         {
-            return Err(refuse(
-                attempt,
-                "strict clearance from both images of the replacement seam",
-            ));
+            return Err(
+                attempt.refusal("strict clearance from both images of the replacement seam")
+            );
         }
         Ok(Self {
             range,
@@ -61,20 +57,17 @@ impl Cut {
     }
 }
 
-fn angle_error(attempt: Attempt, angle: f64) -> FeatureChecked<f64> {
+fn angle_error(attempt: RecutCheck, angle: f64) -> FeatureChecked<f64> {
     let canonical = FrameTransportInput {
         axis: [0., 0., 1.],
         radial: [1., 0., 0.],
         stored: [[-1., 0., 0.], [0., -1., 0.], [0., 0., 1.]],
     };
     let proof = certify_frame_transport_at_angle(canonical, angle)
-        .map_err(|_| refuse(attempt, "certified trigonometry at the opposite generator"))?;
+        .map_err(|_| attempt.refusal("certified trigonometry at the opposite generator"))?;
     let rotation = proof.rotation();
     if rotation.cosine_bounds[1] >= -0.5 {
-        return Err(refuse(
-            attempt,
-            "stored cut angle adjacent to the opposite generator",
-        ));
+        return Err(attempt.refusal("stored cut angle adjacent to the opposite generator"));
     }
     // In this angular sector the distance to the nearest odd multiple of pi is
     // at most twice the absolute sine. The trig proof used the exact stored angle.

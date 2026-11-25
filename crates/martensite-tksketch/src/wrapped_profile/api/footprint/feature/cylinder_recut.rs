@@ -16,6 +16,7 @@ use martensite_tkmath::gp::{
 };
 use std::f64::consts::TAU;
 
+mod frozen;
 mod lift;
 mod source;
 #[cfg(test)]
@@ -27,12 +28,21 @@ const X: [f64; 3] = [1., 0., 0.];
 const Y: [f64; 3] = [0., 1., 0.];
 
 pub(super) struct RecutStock {
+    source: Shape,
+    selected: Face,
+    receipt: Vec<u8>,
     pub(super) solid: Shape,
     pub(super) band: Face,
     pub(super) sheet: [f64; 2],
     pub(super) clear_distance: f64,
     pub(super) spatial_upper: f64,
     pub(super) images: Vec<StockImage>,
+}
+
+impl RecutStock {
+    pub(super) fn matches_source(&self, stock: &Shape, selected: &Face) -> bool {
+        self.source.is_equal(stock) && self.selected.is_equal(selected)
+    }
 }
 
 pub(super) struct StockImage {
@@ -48,31 +58,39 @@ pub(super) fn prepare(
     native_u_hull: [f64; 2],
     sew: f64,
 ) -> FeatureChecked<RecutStock> {
+    let attempt = RecutCheck(attempt);
     if !sew.is_finite() || sew <= 0. {
-        return Err(refuse(attempt, "finite positive sewing resolution"));
+        return Err(attempt.refusal("finite positive sewing resolution"));
     }
     let source = source::Stock::capture(attempt, stock, side)?;
     let (generator_x, stock_error) = sum_with_residual(source.origin[0], -source.radius);
     let cut = lift::Cut::opposite(attempt, native_u_hull, source.radius, stock_error, sew)?;
     if cut.residual >= source.tolerance.min(sew) {
-        return Err(refuse(
-            attempt,
-            "replacement seam below the original stock and sewing limits",
-        ));
+        return Err(attempt.refusal("replacement seam below the original stock and sewing limits"));
     }
     let installed = install(attempt, &source, &cut, generator_x)?;
     finish(attempt, stock, &source, installed, cut)
 }
 
-fn refuse(attempt: Attempt, expected: &'static str) -> CylinderFeatureFailure {
-    attempt.fail(STAGE, CylinderFeatureCause::DirectAttachment { expected })
+#[derive(Clone, Copy)]
+struct RecutCheck(Attempt);
+
+impl RecutCheck {
+    fn native<T>(self, query: &'static str, result: Result<T, Failure>) -> FeatureChecked<T> {
+        self.0.native(STAGE, query, result)
+    }
+
+    fn refusal(self, expected: &'static str) -> CylinderFeatureFailure {
+        self.0
+            .fail(STAGE, CylinderFeatureCause::DirectAttachment { expected })
+    }
 }
 
-fn children(attempt: Attempt, parent: &Shape) -> FeatureChecked<Vec<Shape>> {
+fn children(attempt: RecutCheck, parent: &Shape) -> FeatureChecked<Vec<Shape>> {
     let mut iter = ShapeIterator::new(parent, true, true);
     let mut output = Vec::new();
     while iter.more() {
-        let child = attempt.native(STAGE, "native direct child", iter.value())?;
+        let child = attempt.native("native direct child", iter.value())?;
         output.push(child.to_shape());
         iter.next();
     }
@@ -103,7 +121,7 @@ struct Installed {
 }
 
 fn install(
-    attempt: Attempt,
+    attempt: RecutCheck,
     stock: &source::Stock<'_>,
     cut: &lift::Cut,
     x: f64,
@@ -127,17 +145,13 @@ fn install(
     })
 }
 
-fn empty_face(attempt: Attempt, source: &Face) -> FeatureChecked<Face> {
-    let shape = attempt.native(
-        STAGE,
-        "preserve the original stock carrier",
-        source.empty_copied(),
-    )?;
-    attempt.native(STAGE, "stock carrier face", topods::face(&shape))
+fn empty_face(attempt: RecutCheck, source: &Face) -> FeatureChecked<Face> {
+    let shape = attempt.native("preserve the original stock carrier", source.empty_copied())?;
+    attempt.native("stock carrier face", topods::face(&shape))
 }
 
 fn install_rim(
-    attempt: Attempt,
+    attempt: RecutCheck,
     source: &source::Rim,
     cap: &Face,
     band: &Face,
@@ -149,12 +163,10 @@ fn install_rim(
     let mut anchor = Vertex::default();
     let mut rim = Edge::default();
     attempt.native(
-        STAGE,
         "shifted rim anchor",
         builder.make_vertex_at(&mut anchor, Point3::new(x, y, z), source.vertex_tol),
     )?;
     attempt.native(
-        STAGE,
         "retain literal circle",
         builder.make_edge_with_located_curve(
             &mut rim,
@@ -165,12 +177,10 @@ fn install_rim(
     )?;
     let lateral = line2(Point2::new(0., source.v), StandardDirection2::X);
     attempt.native(
-        STAGE,
         "native lateral circle trim",
         builder.update_edge_pcurve_on_face(&rim, &lateral, band, source.edge_tol),
     )?;
     attempt.native(
-        STAGE,
         "retain literal disk circle trim",
         builder.update_edge_pcurve_on_face(&rim, &source.cap_pcurve, cap, source.edge_tol),
     )?;
@@ -179,7 +189,7 @@ fn install_rim(
 }
 
 fn install_seam(
-    attempt: Attempt,
+    attempt: RecutCheck,
     stock: &source::Stock<'_>,
     band: &Face,
     anchors: &[Vertex; 2],
@@ -195,14 +205,12 @@ fn install_seam(
     );
     let curve = Handle::new(line).into_upcast();
     attempt.native(
-        STAGE,
         "antipodal generator",
         builder.make_edge_with_curve(&mut seam, &curve, stock.seam_tol),
     )?;
     let trims = [lo, hi].map(|angle| line2(Point2::new(angle, 0.), StandardDirection2::NegY));
     let [a, b] = stock.seam_order.map(|i| &trims[i]);
     attempt.native(
-        STAGE,
         "store both directed seam trims",
         builder.update_edge_pcurves_on_face(&seam, (a, b), band, stock.seam_tol),
     )?;
@@ -216,7 +224,7 @@ fn install_seam(
 }
 
 fn finish_edge(
-    attempt: Attempt,
+    attempt: RecutCheck,
     edge: &Edge,
     [first, last]: [&Vertex; 2],
     [lo, hi]: [f64; 2],
@@ -224,30 +232,20 @@ fn finish_edge(
     let mut edge_use = edge.to_edge();
     let builder = BRepBuilder::default();
     attempt.native(
-        STAGE,
         "edge starting vertex",
         Builder.add(&mut edge_use, &first.oriented(Orientation::Forward)),
     )?;
     attempt.native(
-        STAGE,
         "edge ending vertex",
         Builder.add(&mut edge_use, &last.oriented(Orientation::Reversed)),
     )?;
-    attempt.native(
-        STAGE,
-        "common 3D and UV range",
-        builder.range(edge, lo, hi, false),
-    )?;
-    attempt.native(
-        STAGE,
-        "common edge parameter",
-        builder.same_parameter(edge, true),
-    )?;
-    attempt.native(STAGE, "common edge range", builder.same_range(edge, true))
+    attempt.native("common 3D and UV range", builder.range(edge, lo, hi, false))?;
+    attempt.native("common edge parameter", builder.same_parameter(edge, true))?;
+    attempt.native("common edge range", builder.same_range(edge, true))
 }
 
 fn finish(
-    attempt: Attempt,
+    attempt: RecutCheck,
     stock: &Shape,
     source: &source::Stock<'_>,
     mut built: Installed,
@@ -264,7 +262,16 @@ fn finish(
     }
     let solid = close_stock(attempt, &source.shell, &built)?;
     let images = bind_images(attempt, stock, source, &built)?;
+    let receipt = frozen::stock_receipt(
+        attempt.0,
+        &built.band,
+        &built.seam,
+        non_band_images(&built.band, &images),
+    )?;
     Ok(RecutStock {
+        source: stock.clone(),
+        selected: source.side.clone(),
+        receipt,
         solid,
         band: built.band,
         sheet: cut.range,
@@ -275,61 +282,56 @@ fn finish(
 }
 
 fn attach_wire(
-    attempt: Attempt,
+    attempt: RecutCheck,
     source: &Shape,
     face: &mut Face,
     swaps: &[(&Edge, &Edge); 3],
 ) -> FeatureChecked<()> {
-    let mut wire = attempt.native(STAGE, "copy stock wire occurrence", source.empty_copied())?;
+    let mut wire = attempt.native("copy stock wire occurrence", source.empty_copied())?;
     for edge in children(attempt, source)? {
         let (_, image) = swaps
             .iter()
             .find(|(old, _)| edge.is_same(*old))
-            .ok_or_else(|| refuse(attempt, "known original rim or periodic seam occurrence"))?;
+            .ok_or_else(|| attempt.refusal("known original rim or periodic seam occurrence"))?;
         let occurrence = image.oriented(edge.orientation());
         attempt.native(
-            STAGE,
             "preserve directed replaced stock coedge",
             Builder.add(&mut wire, &occurrence),
         )?;
     }
-    attempt.native(STAGE, "closed stock trim", wire.set_closed(true))?;
-    attempt.native(STAGE, "install stock trim", Builder.add(face, &wire))
+    attempt.native("closed stock trim", wire.set_closed(true))?;
+    attempt.native("install stock trim", Builder.add(face, &wire))
 }
 
-fn close_stock(attempt: Attempt, source: &Shape, installed: &Installed) -> FeatureChecked<Shape> {
-    let mut shell = attempt.native(
-        STAGE,
-        "preserve source shell orientation",
-        source.empty_copied(),
-    )?;
+fn close_stock(
+    attempt: RecutCheck,
+    source: &Shape,
+    installed: &Installed,
+) -> FeatureChecked<Shape> {
+    let mut shell = attempt.native("preserve source shell orientation", source.empty_copied())?;
     for face in std::iter::once(&installed.band).chain(&installed.ends) {
-        attempt.native(
-            STAGE,
-            "stock face occurrence",
-            Builder.add(&mut shell, face),
-        )?;
+        attempt.native("stock face occurrence", Builder.add(&mut shell, face))?;
     }
-    attempt.native(STAGE, "closed stock shell", shell.set_closed(true))?;
+    attempt.native("closed stock shell", shell.set_closed(true))?;
     let mut solid = topods::Solid::default();
     Builder.make_solid(&mut solid);
-    attempt.native(STAGE, "stock solid shell", Builder.add(&mut solid, &shell))?;
+    attempt.native("stock solid shell", Builder.add(&mut solid, &shell))?;
     Ok(solid.to_shape())
 }
 
 fn bind_images(
-    attempt: Attempt,
+    attempt: RecutCheck,
     stock: &Shape,
     source: &source::Stock<'_>,
     built: &Installed,
 ) -> FeatureChecked<Vec<StockImage>> {
     use CylinderFeatureRelation::{Generated, Modified};
-    let index = body::Index::new(attempt, stock, STAGE)?;
+    let index = body::Index::new(attempt.0, stock, STAGE)?;
     let mut images = Vec::new();
     let mut bind = |old: &Shape, image: &Shape, relation| {
         let source = index
-            .reference(old, attempt)?
-            .ok_or_else(|| refuse(attempt, "original stock occurrence-to-image binding"))?;
+            .reference(old, attempt.0)?
+            .ok_or_else(|| attempt.refusal("original stock occurrence-to-image binding"))?;
         images.push(StockImage {
             source,
             image: image.to_shape(),
@@ -345,4 +347,14 @@ fn bind_images(
         bind(&end.anchor, &built.anchors[i], Generated)?;
     }
     Ok(images)
+}
+
+fn non_band_images<'a>(
+    band: &'a Face,
+    images: &'a [StockImage],
+) -> impl Iterator<Item = &'a Shape> {
+    images
+        .iter()
+        .filter(|link| !link.image.is_same(band))
+        .map(|link| &link.image)
 }
