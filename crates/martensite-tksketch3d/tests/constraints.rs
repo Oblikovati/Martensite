@@ -17,7 +17,7 @@ fn length(value: f64) -> MinimumLength {
     MinimumLength::new(value).unwrap()
 }
 
-fn policy() -> ConstraintPolicy {
+pub(super) fn policy() -> ConstraintPolicy {
     ConstraintPolicy {
         length_scale: length(10.),
         length_tolerance: length(2e-7),

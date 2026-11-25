@@ -38,6 +38,8 @@ pub enum ConstraintFailure {
     DuplicateId(RelationId),
     /// No relation exists at the requested key.
     MissingRelation(RelationId),
+    /// The constraint evaluator has no layout for this sketch entity.
+    UnsupportedEntity(EntityId),
     /// A relation references a point or line outside this sketch.
     MissingOperand(RelationId, EntityId),
     /// A relation uses the same identity for both operands.

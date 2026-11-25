@@ -303,3 +303,14 @@ fn finite_endpoints_with_overflowing_displacement_refuse() {
         }),
     );
 }
+
+#[test]
+fn point_and_line_solver_refuses_an_arc_layout_it_cannot_rank() {
+    use martensite_tksketch3d::constraints::{ConstrainedSketch, ConstraintFailure};
+
+    let geometry = create([[0.; 3], [10., 0., 0.], [5., 5., 0.]], through(), 1e-9).unwrap();
+    let result = ConstrainedSketch::new(geometry, crate::constraints::policy());
+    assert!(
+        matches!(result, Err(ConstraintFailure::UnsupportedEntity(EntityId::Arc(id))) if id == aid())
+    );
+}

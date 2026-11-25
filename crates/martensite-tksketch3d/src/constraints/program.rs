@@ -40,7 +40,7 @@ impl Program {
             .owned_ids()
             .filter_map(|key| match key {
                 EntityId::Point(point) => Some(point),
-                EntityId::Line(_) => None,
+                EntityId::Line(_) | EntityId::Arc(_) => None,
             })
             .collect::<Vec<_>>();
         let point_columns = points
@@ -369,6 +369,9 @@ fn admit(
         geometry.entities.len().saturating_add(relations.len()),
         policy.validation_items,
     )?;
+    if let Some(&arc) = geometry.arcs.keys().next() {
+        return Err(Failure::UnsupportedEntity(EntityId::Arc(arc)));
+    }
     let points = geometry
         .owned_ids()
         .filter(|entity| matches!(entity, EntityId::Point(_)))
