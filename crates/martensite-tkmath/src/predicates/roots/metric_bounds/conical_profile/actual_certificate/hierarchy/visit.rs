@@ -19,6 +19,7 @@ pub(super) fn certify(
     let mut pending = vec![[root, root]];
     let mut seen = BTreeSet::new();
     let mut stats = initial_stats(nodes.len());
+    let mut memo = refine::Memo::new(sides);
     while let Some(pair) = pending.pop() {
         arithmetic.certificate_step()?;
         stats.visits += 1;
@@ -29,6 +30,7 @@ pub(super) fn certify(
             &mut seen,
             &mut stats,
             arithmetic,
+            &mut memo,
         )?;
     }
     complete(&domain, root, &seen, &stats)?;
@@ -48,6 +50,7 @@ fn visit(
     seen: &mut BTreeSet<[usize; 2]>,
     stats: &mut HierarchyStats,
     arithmetic: &mut Arithmetic<'_>,
+    memo: &mut refine::Memo<'_>,
 ) -> Outcome<()> {
     let a = &domain.nodes[pair[0]];
     let b = &domain.nodes[pair[1]];
@@ -61,7 +64,7 @@ fn visit(
         return Ok(());
     }
     if let (Kind::Leaf(x), Kind::Leaf(y)) = (a.kind, b.kind) {
-        return leaf_pair(domain, [a, b], [x, y], seen, stats, arithmetic);
+        return leaf_pair(domain, [a, b], [x, y], seen, stats, arithmetic, memo);
     }
     expand(domain.nodes, pair, pending);
     Ok(())
@@ -131,6 +134,7 @@ fn leaf_pair(
     seen: &mut BTreeSet<[usize; 2]>,
     stats: &mut HierarchyStats,
     arithmetic: &mut Arithmetic<'_>,
+    memo: &mut refine::Memo<'_>,
 ) -> Outcome<()> {
     let [x, y] = indices;
     let key = if x < y { [x, y] } else { [y, x] };
@@ -139,7 +143,7 @@ fn leaf_pair(
         stats.adjacent_pairs += 1;
         return Ok(());
     }
-    if domain.refine && refined_pair(domain, indices, stats, arithmetic)? {
+    if domain.refine && refined_pair(domain, indices, stats, arithmetic, memo)? {
         stats.excluded_pairs += 1;
         return Ok(());
     }
@@ -151,9 +155,10 @@ fn refined_pair(
     indices: [usize; 2],
     stats: &mut HierarchyStats,
     arithmetic: &mut Arithmetic<'_>,
+    memo: &mut refine::Memo<'_>,
 ) -> Outcome<bool> {
     let sides = indices.map(|index| &domain.sides[index]);
-    refine::separated(sides, &mut stats.visits, arithmetic)
+    refine::separated(indices, &mut stats.visits, arithmetic, memo)
         .map_err(|cause| pair_failure(sides.map(|side| side.source.id), cause))
 }
 
