@@ -88,6 +88,18 @@ wire with its point and edge bindings. It verifies the stored native tolerance
 and bounds the deviation of each native line trim from its authored segment.
 Sweep and Loft can take independent exports from the same recipe.
 
+`Edit::InsertFitSpline` admits one clamped cubic with four fixed, ordered
+stations. A point edit reuses the band's interpolation operator and checks the
+new stored curve against the station miss and regularity limits. Position and
+derivative evaluation use the stored poles. Station sensitivities describe the
+retained affine interpolation operator before pole rounding.
+
+`Snapshot::trim_line` removes the picked side of a proper crossing.
+`Snapshot::extend_line` finds the nearest admitted forward crossing from a
+selected endpoint. Both preserve the kept endpoint and report the source
+parameter interval of the replacement. A shared or frozen endpoint is protected.
+The constrained forms replay and check the surviving relations before adoption.
+
 An edit batch adopts a complete snapshot. It can traverse the whole draft and
 reuses curve checks when the recipe and placement point bits match. A failed or
 cancelled batch leaves the source available for the next edit.

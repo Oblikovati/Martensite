@@ -281,3 +281,56 @@ kernel operation. The final input-guard revision passed all 145 legacy TKOffset
 tests and strict Clippy. Rust `1.98.1` combined verification also passed the
 seven Loft, ten prism, two direct adapter and one homothety tests. Desktop
 rebuild and presentation require their own timings.
+
+## E31. Point on line and directed colinearity
+
+Point On Line uses two transverse rows and checks the final distance to the
+authored line independently. Colinear uses four, two or zero rows for zero, one
+or two shared endpoint IDs. Its stored direction branch is checked from the
+actual endpoints. An exact squared-sine comparison resolves overlapping
+outward bounds and admits equality at the caller's tolerance. A shared endpoint
+supplies incidence directly, with no repeated equation.
+
+An accepted pose can replace the local residual frame while keeping its
+prepared layout. The replacement checks hard residual, rank and remaining
+work before publication. In 7,200 accepted updates on a loaded host, frame
+crossings measured `0.222–0.335 ms` p95 for Point On Line at 234 coordinates
+and `0.440–0.489 ms` for Colinear at 240. Replay matched across processes. The
+prepared-source and chart code passed concurrent replay under ThreadSanitizer.
+
+## E32. Four fixed fit stations
+
+Fit cubics retain station IDs and fixed parameters. A banded solve constructs
+an affine interpolation operator once. Later edits reuse it, check chord
+distortion and certify both regularity and the actual station miss of the
+stored polynomial. One translated fixture has rounded D0 equal to the
+authored station and an exact 32-unit miss. It accepts a cap of 32 and refuses
+the next smaller binary64 value.
+
+For the owned cubic, independent Lagrange derivatives and TKGeomAlgo
+interpolation agreed with the accepted position and derivative fixtures. In
+matched loaded runs, exact dyadic completion of the sensitivity weights sped
+up the twelve-component jet by `9.36–14.81×` at p95. Each 1,179,696-byte
+output stream matched byte for byte. The original fixture measured
+`0.440–0.452 ms` p95 cold admission and `0.738–0.806 ms` for an accepted
+station edit. Multi-span fitting and active fit-curve constraints require
+their own support and fixtures.
+
+## E33. Trim and Extend for straight lines
+
+Trim uses the authored pick parameter to keep one side of a proper crossing.
+Extend compares exact forward parameters across the supplied boundaries, including
+collinear overlap intervals. It checks whether the crossing advances the
+stored line after rounding. A literal boundary endpoint supplies the contact's
+stored coordinate bits. Other contacts carry a certified placement bound.
+
+The edit keeps the other endpoint and construction role, retires only the
+selected source and its unused defining endpoint, and reports the retained
+source interval separately from any extension. Shared and frozen endpoints
+are protected. Replayed constraints keep their anchors and rank. A combined
+fixture verified a shared fit station survives an accepted trim and protects
+its endpoint when selected for replacement.
+
+Rust `1.98.1` passed 4,735 combined TKMath, TKSketch3D and TKSolve tests and
+strict Clippy, with seven opt-in tests skipped. Trim and Extend also passed
+22 ThreadSanitizer controls with byte-identical replay.

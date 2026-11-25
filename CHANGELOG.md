@@ -34,9 +34,15 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added directed axis and plane parallelism, perpendicularity, equal length and driving angles for spatial lines (#611).
 
+- Added point-on-line and directed colinear constraints with exact incidence checks and bounded continuation across solver frames (#611).
+
 - Added open clamped spatial control cubics with certified regularity and exact binary64-rounded position and derivative evaluation (#611).
 
+- Added spatial fit cubics that retain four authored stations, with checked parameter spacing, interpolation error and analytic station sensitivities (#611).
+
 - Added exact work-plane splits for spatial lines with ordered fragment history and bounded cut placement (#611).
+
+- Added Trim and Extend for spatial lines with exact crossings, bounded placement and source parameter history (#611).
 
 - Added mirror copies of spatial points and directed lines, preserving roles and recording source identities and certified placement bounds (#611).
 
