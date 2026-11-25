@@ -60,9 +60,9 @@ fn transported_arc<'a>(
     })?;
     options.max_operations -= lowered.transport.operations;
     Ok(NativeSpan {
-        controls: NativeControls::Transported(Box::new(lowered)),
+        controls: NativeControls::TransportedConic(Box::new(lowered)),
         domain: unit_interval(),
-        map: Some(ConicMap::Analytic(map)),
+        map: Some(ParameterMap::Analytic(map)),
     })
 }
 
@@ -102,14 +102,6 @@ fn conic_span<'a>(quarter: ExactConicQuarter) -> NativeSpan<'a> {
     NativeSpan {
         controls: NativeControls::Quarter(quarter.poles),
         domain: unit_interval(),
-        map: Some(ConicMap::Quarter(map)),
-    }
-}
-
-fn unit_interval() -> WrappedSourceSpan {
-    WrappedSourceSpan {
-        level: 0,
-        index: 0,
-        reversed: false,
+        map: Some(ParameterMap::Quarter(map)),
     }
 }

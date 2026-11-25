@@ -41,7 +41,7 @@ impl Proxy {
             && self
                 .spans
                 .get(&curve)
-                .is_some_and(|(_, base)| base.level > 0)
+                .is_some_and(|(origin, base)| base.level > 0 || origin.mapped_spline_partition)
             && record.relation == WrappedHistoryRelation::Derived
         {
             record.relation = WrappedHistoryRelation::Split;
@@ -95,11 +95,14 @@ impl Proxy {
         };
         let curve = origin.curve;
         Ok(match origin.map {
-            Some(input::ConicMap::Quarter(map)) => {
+            Some(input::ParameterMap::Quarter(map)) => {
                 WrappedEntitySource::MappedCurve { curve, span, map }
             }
-            Some(input::ConicMap::Analytic(map)) => {
+            Some(input::ParameterMap::Analytic(map)) => {
                 WrappedEntitySource::AnalyticArcCurve { curve, span, map }
+            }
+            Some(input::ParameterMap::Spline(map)) => {
+                WrappedEntitySource::NativeSplineCurve { curve, span, map }
             }
             None => WrappedEntitySource::Curve { curve, span },
         })
@@ -122,6 +125,10 @@ impl CurveOrigin {
     fn authored_anchor(self, anchor: NativeJoint) -> WrappedEntitySource {
         match anchor {
             NativeJoint::Interior(point) => self.authored_point(point),
+            NativeJoint::SplineKnot(knot) => WrappedEntitySource::NativeSplineKnot {
+                curve: self.curve,
+                knot,
+            },
             NativeJoint::ConicQuarter(quarter) => WrappedEntitySource::ConicAnchor {
                 curve: self.curve,
                 quarter,
@@ -132,11 +139,14 @@ impl CurveOrigin {
     fn authored_point(self, point: WrappedSourcePoint) -> WrappedEntitySource {
         let curve = self.curve;
         match self.map {
-            Some(input::ConicMap::Quarter(map)) => {
+            Some(input::ParameterMap::Quarter(map)) => {
                 WrappedEntitySource::MappedSplitVertex { curve, point, map }
             }
-            Some(input::ConicMap::Analytic(map)) => {
+            Some(input::ParameterMap::Analytic(map)) => {
                 WrappedEntitySource::AnalyticArcSplitVertex { curve, point, map }
+            }
+            Some(input::ParameterMap::Spline(map)) => {
+                WrappedEntitySource::NativeSplineSplitVertex { curve, point, map }
             }
             None => WrappedEntitySource::SplitVertex { curve, point },
         }

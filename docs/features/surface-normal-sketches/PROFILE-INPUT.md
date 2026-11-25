@@ -43,13 +43,13 @@ not converted. Errors retain offending source IDs or values and the expected
 shape.
 
 The rational entry points handle the additional profile representations below.
-Longer analytic sweeps and native knot insertion require certified geometry
-transport with the original parameter identity.
+Longer analytic sweeps still require a certified map from the fitted spans
+to the original angular interval.
 
 ## Positive rational reference
 
 The rational normal entries accept lines, polynomial or positive-weight splines
-with monotone Bernstein spans, and exact circular or axis-aligned elliptic
+with certified monotone spans, and exact circular or axis-aligned elliptic
 quarters, plus closed circles and axis-aligned ellipses with exact coefficients.
 Shorter analytic sweeps can use exact affine-carrier endpoints even when their
 stereographic weights require rounding.
@@ -58,13 +58,18 @@ signed depths and one angular chart. The cone also requires the profile to
 lie in the positive developed halfplane, clear of the apex. The rational cylinder
 uses `GeometricCompositeV6` for its reference planar proof. The tested cone
 request selects the same version for its UV cap proof. The reference level splits
-each native span into equal dyadic intervals. An authored multipart spline
-must already have full Bernstein knot multiplicity and exact dyadic native
-intervals. It may close at a shared authored vertex.
+each native span into equal dyadic intervals. Open clamped splines may have
+nonuniform knots with multiplicities up to their degree. Knot insertion encloses
+the homogeneous coefficients before rounding and requires a strictly monotone
+projection across the complete curve and its reference. A closed authored
+spline may use the exact dyadic Bernstein partition.
 
 The operation verifies the original planar region and integrates its signed
 boundary for area. For multipart splines, the planar proof uses the exact
-Bernstein partition. The retained proof uses the remaining pair-work budget
+or bounded Bernstein partition. Each bounded span keeps the original knot
+bits and its outward position, derivative and area transfer errors. Neighboring
+spans share one computed knot and enclose the same original point there.
+The retained proof uses the remaining pair-work budget
 and bounds position and derivative error for each cubic reference span. Both curves stay strictly
 inside the straight boundary halfplanes except at shared authored endpoints.
 At a shared authored vertex, the proof separates curved uses with an exact
@@ -73,8 +78,10 @@ reference error tubes. The normal map bounds the error in world coordinates.
 History records the original curve and its dyadic parameter intervals. For an analytic quarter it
 also records how the stereographic parameter maps to the native angle. Closed
 conics record a native-angle key at each quarter, including the seam at zero.
-For a shorter sweep, the key records the original angular endpoints. The
-position, derivative and Green-area bounds include any coefficient rounding.
+For a shorter sweep, the key records the original angular endpoints. A
+nonuniform spline records the two original knots alongside each local dyadic
+interval. A vertex at a native knot has one key shared by its two neighbors.
+The position, derivative and Green-area bounds include coefficient rounding.
 The result includes the authored area and sweep-volume enclosures, the retained boundary flux, the
 spatial bound, and the ordered native validation report. The volume proof uses
 the original area and the signed depth Jacobian. For asymmetric cone depths,

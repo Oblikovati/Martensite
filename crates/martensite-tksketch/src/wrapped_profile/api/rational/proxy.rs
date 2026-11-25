@@ -19,13 +19,15 @@ pub(super) struct Proxy {
 #[derive(Clone, Copy)]
 struct CurveOrigin {
     curve: SurfaceCurveId,
-    map: Option<input::ConicMap>,
+    map: Option<input::ParameterMap>,
+    mapped_spline_partition: bool,
 }
 
 #[derive(Clone, Copy)]
 enum NativeJoint {
     Interior(WrappedSourcePoint),
     ConicQuarter(i8),
+    SplineKnot(WrappedNativeKnot),
 }
 
 pub(super) fn build(
@@ -72,7 +74,7 @@ pub(super) fn native_partition(
     for curve in source
         .curves
         .iter()
-        .filter(|curve| curve.ends.is_some() && curve.spans.len() > 1)
+        .filter(|curve| curve.needs_planar_partition())
     {
         let spans = curve.spans.iter().map(native_controls);
         expanded(&mut proxy, &mut ids, curve, spans)?;
@@ -108,7 +110,7 @@ struct SpanControls<'a> {
     poles: &'a [[f64; 2]],
     weights: Option<&'a [f64]>,
     domain: WrappedSourceSpan,
-    map: Option<input::ConicMap>,
+    map: Option<input::ParameterMap>,
 }
 
 fn begin(
@@ -162,6 +164,7 @@ fn compose<'a>(
         let origin = CurveOrigin {
             curve: SurfaceCurveId(original.occurrence.curve.0),
             map: span.map,
+            mapped_spline_partition: original.is_mapped_spline() && original.spans.len() > 1,
         };
         let end = if index + 1 == count {
             last
@@ -245,6 +248,7 @@ impl Proxy {
         let origin = CurveOrigin {
             curve: SurfaceCurveId(curve.occurrence.curve.0),
             map: None,
+            mapped_spline_partition: false,
         };
         let seam = self.vertex(
             ids,
@@ -263,9 +267,12 @@ impl Proxy {
     ) -> Checked<ProfileVertexId> {
         let end = span.domain.index + 1;
         let anchor = match span.map {
-            Some(input::ConicMap::Quarter(map)) if end == (1_u64 << span.domain.level) => {
+            Some(input::ParameterMap::Quarter(map)) if end == (1_u64 << span.domain.level) => {
                 let quarter = map.first_quarter + if map.increasing { 1 } else { -1 };
                 NativeJoint::ConicQuarter(quarter)
+            }
+            Some(input::ParameterMap::Spline(map)) if end == (1_u64 << span.domain.level) => {
+                NativeJoint::SplineKnot(map.knots[1])
             }
             _ => NativeJoint::Interior(history::point(end, span.domain.level)),
         };

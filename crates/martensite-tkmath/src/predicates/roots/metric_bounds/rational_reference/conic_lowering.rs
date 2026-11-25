@@ -204,16 +204,8 @@ fn output(
         arithmetic,
     )
     .map_err(RationalConicSegmentFailure::Reference)?;
-    let mut transport = rational_difference::compare(&original, &target, arithmetic)
+    let (transport, area_transfer) = rational_difference::transport(&original, &target, arithmetic)
         .map_err(RationalConicSegmentFailure::Reference)?;
-    let speed = rational_difference::speed_upper(&target, arithmetic)
-        .map_err(RationalConicSegmentFailure::Reference)?;
-    let max_speed = (speed + transport.derivative).next_up();
-    let area_transfer = (max_speed * transport.position).next_up();
-    if !area_transfer.is_finite() {
-        return Err(RationalConicSegmentFailure::Rounding);
-    }
-    transport.operations = arithmetic.operations();
     Ok(CertifiedRationalConicSegment {
         poles,
         weights,

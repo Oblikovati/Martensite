@@ -39,6 +39,13 @@ pub enum RationalWrappedFailure {
         /// Exact incidence, sweep, or transport failure.
         cause: Box<RationalConicSegmentFailure>,
     },
+    /// The original native knot partition could not be transported.
+    NativeSplineTransport {
+        /// Original authored spline identity.
+        curve: ProfileCurveId,
+        /// Full bounded knot or arithmetic cause.
+        cause: Box<martensite_tkmath::predicates::roots::metric_bounds::NativeSplineFailure>,
+    },
     /// The original signed boundary area did not produce a bounded enclosure.
     Measure(Box<RationalIntegralError>),
     /// Reference geometry or its monotone proof remained unresolved.
@@ -52,6 +59,9 @@ impl std::fmt::Display for RationalWrappedFailure {
             Self::Input { actual, expected } => write!(f, "{actual}; expected {expected}"),
             Self::Planar(cause) => cause.fmt(f),
             Self::Analytic(cause) => cause.fmt(f),
+            Self::NativeSplineTransport { curve, cause } => {
+                write!(f, "authored spline {curve:?}: {cause}")
+            }
             Self::ConicTransport { curve, cause } => write!(f, "authored conic {curve:?}: {cause}"),
             Self::Measure(cause) => cause.fmt(f),
             Self::Reference(cause) => cause.fmt(f),
@@ -65,6 +75,7 @@ impl std::error::Error for RationalWrappedFailure {
             Self::Input { .. } => None,
             Self::Planar(cause) => Some(cause.as_ref()),
             Self::Analytic(cause) => Some(cause.as_ref()),
+            Self::NativeSplineTransport { cause, .. } => Some(cause.as_ref()),
             Self::ConicTransport { cause, .. } => Some(cause.as_ref()),
             Self::Measure(cause) => Some(cause.as_ref()),
             Self::Reference(cause) => Some(cause.as_ref()),
@@ -357,7 +368,7 @@ fn original_area(
     let partition = source
         .curves
         .iter()
-        .any(|curve| curve.ends.is_some() && curve.spans.len() > 1)
+        .any(input::Curve::needs_planar_partition)
         .then(|| proxy::native_partition(source, options))
         .transpose()?;
     let (profile, selection) = partition

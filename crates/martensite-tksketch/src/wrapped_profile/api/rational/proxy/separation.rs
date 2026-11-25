@@ -211,7 +211,7 @@ struct Halfplane<'a> {
     curve: ProfileCurveId,
 }
 
-type ControlInputs<'a> = (&'a [[f64; 2]], Option<&'a [[[f64; 2]; 2]; 3]>);
+type ControlInputs<'a> = (&'a [[f64; 2]], Option<&'a [[[f64; 2]; 2]]>);
 
 impl Halfplane<'_> {
     fn spans<'a>(
@@ -233,7 +233,7 @@ impl Halfplane<'_> {
     fn controls(
         &self,
         controls: &[[f64; 2]],
-        exact: Option<&[[[f64; 2]; 2]; 3]>,
+        exact: Option<&[[[f64; 2]; 2]]>,
         shared: [Option<ProfileVertexId>; 2],
     ) -> Checked<()> {
         for (index, &point) in controls.iter().enumerate() {

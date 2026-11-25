@@ -1,6 +1,26 @@
 //! Bound two rational representatives without raising the derivative product degree.
 use super::*;
 
+pub(super) fn transport(
+    source: &Homogeneous,
+    target: &Homogeneous,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<(Bounds, f64)> {
+    let mut proof = compare(source, target, arithmetic)?;
+    let speed = speed_upper(target, arithmetic)?;
+    // The closing homotopy segments cancel at shared exact and literal knots.
+    let area = ((speed + proof.derivative).next_up() * proof.position).next_up();
+    proof.operations = arithmetic.operations();
+    if area.is_finite() {
+        Ok((proof, area))
+    } else {
+        Err(Refusal::Limits {
+            position: proof.position,
+            derivative: speed,
+        })
+    }
+}
+
 pub(super) fn compare(
     source: &Homogeneous,
     target: &Homogeneous,
