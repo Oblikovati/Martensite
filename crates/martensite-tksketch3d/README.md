@@ -10,6 +10,13 @@ batch. Point and line IDs share one namespace, and both snapshot iterators use
 ascending key order. Sketch markers and center markers have their own rows and
 can also serve as endpoints.
 
+Use `Edit::InsertFrozenPoint` to connect to a captured point from another sketch.
+The caller resolves the source and supplies its position in destination model
+units. The snapshot stores the captured source revision and coordinates. The
+point can serve as a line endpoint and keeps its position if the source changes
+or is deleted. Detach it before moving it. Detachment keeps the point ID and
+incident lines.
+
 Supply a positive finite minimum in model units when creating the snapshot.
 Admission compares the squared distance of the supplied coordinates with the
 squared minimum using exact arithmetic. Equality is allowed. Line geometry

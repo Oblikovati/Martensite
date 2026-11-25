@@ -2,4 +2,5 @@
 //! One executable for the spatial sketch toolkit tests.
 mod admission;
 mod fixture;
+mod frozen_point;
 mod values;

@@ -3,9 +3,11 @@
 mod admission;
 mod edit;
 mod failure;
+mod source;
 
 pub use failure::{BatchPhase, EditFailure, InvalidMinimumLength};
 use martensite_tkmath::gp::{Line3, Point3};
+pub use source::FrozenPointSource;
 use std::{collections::BTreeMap, num::NonZeroU64};
 
 /// Caller-reserved identity for one point. Points and lines share a numeric namespace.
@@ -130,6 +132,13 @@ impl MinimumLength {
 pub enum Edit {
     /// Add a point at an unused identity.
     InsertPoint(SketchPoint),
+    /// Add a read-only point at the captured model-space position of an external point.
+    InsertFrozenPoint {
+        /// Destination point, with the source position expressed in destination model units.
+        point: SketchPoint,
+        /// Source occurrence and captured revision.
+        source: FrozenPointSource,
+    },
     /// Change a point's position without changing its identity or role.
     MovePoint {
         /// Existing point identity.
@@ -139,6 +148,8 @@ pub enum Edit {
     },
     /// Add an ordered line. Its endpoint points must exist by the end of the batch.
     InsertLine(SketchLine),
+    /// Make a frozen point editable while keeping its identity, coordinates and incident lines.
+    DetachFrozenPoint(PointId),
     /// Remove a point and its incident lines. Cascaded lines cannot be removed again.
     RemovePoint(PointId),
     /// Remove a line. A batch with any deletion retires all unused defining points.
@@ -178,6 +189,7 @@ pub struct Snapshot {
     minimum: MinimumLength,
     entities: BTreeMap<NonZeroU64, Entity>,
     geometry: BTreeMap<LineId, LineGeometry>,
+    frozen: BTreeMap<PointId, FrozenPointSource>,
 }
 
 impl Snapshot {
@@ -187,6 +199,7 @@ impl Snapshot {
             minimum,
             entities: BTreeMap::new(),
             geometry: BTreeMap::new(),
+            frozen: BTreeMap::new(),
         }
     }
 
@@ -196,6 +209,11 @@ impl Snapshot {
             Some(Entity::Point(point)) => Some(*point),
             _ => None,
         }
+    }
+
+    /// Look up the source stamp for a frozen point. Example: `snapshot.frozen_source(point_id)`.
+    pub fn frozen_source(&self, key: PointId) -> Option<FrozenPointSource> {
+        self.frozen.get(&key).copied()
     }
 
     /// Return validated directed geometry. Example: `snapshot.line(line_id)`.

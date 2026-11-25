@@ -349,3 +349,15 @@ a clean Linux container. Four AB/BA processes produced identical ordered native 
 Two optimized benchmark runs per version measured 512 whole-snapshot adopts after warm-up, with one changed point
 and all other lines unchanged. At 1,024 lines, p95 fell from `416–423 µs` to `98 µs`. At 256 lines it fell from
 `106–109 µs` to `23–24 µs`. The timer excluded app edits, rendering and retiring the previous snapshot.
+
+## E16. Frozen source points
+
+The station-to-station fixture captures `(0,20,30)` mm and connects it to `(100,25,50)` mm in the destination.
+After moving and deleting the source, the destination line retains both endpoint IDs, the captured coordinates,
+and the source document, sketch, incarnation, revision and point IDs. A direct move of the frozen endpoint
+refuses the entire edit batch. Detaching it preserves its coordinate bits and incident lines. Deletion and
+orphan pruning clear the captured provenance. The kernel takes the resolved capture from the app, which owns
+source resolution and checks the source revision before capture.
+
+The four focused cases passed with the existing 21 toolkit tests on Rust `1.98.1`. Strict toolkit Clippy
+and an independent review passed.

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Refusals identify the exact edit or line input that failed admission.
-use crate::{EntityId, LineId, MinimumLength, PointId, SketchLine};
+use crate::{EntityId, FrozenPointSource, LineId, MinimumLength, PointId, SketchLine};
 use martensite_tkmath::predicates::NonFiniteCoordinate;
 use std::{error::Error, fmt};
 
@@ -49,6 +49,15 @@ pub enum EditFailure {
     },
     /// An edited or removed entity has no matching typed identity.
     MissingEditTarget(EntityId),
+    /// A move would change a point captured from an external sketch.
+    FrozenPointMove {
+        /// Destination point identity.
+        point: PointId,
+        /// Captured source.
+        source: FrozenPointSource,
+    },
+    /// An editable point has no source to detach.
+    PointIsNotFrozen(PointId),
     /// A line has an endpoint without an owned point.
     MissingEndpoint {
         /// Line that requires the point.
@@ -137,6 +146,13 @@ impl fmt::Display for EditFailure {
                 "identity {attempted:?} must be unused in the batch, already held by {existing:?}"
             ),
             Self::MissingEditTarget(entity) => write!(f, "edit target {entity:?} must exist"),
+            Self::FrozenPointMove { point, source } => {
+                write!(
+                    f,
+                    "point {point:?} captured from {source:?} must be detached before moving"
+                )
+            }
+            Self::PointIsNotFrozen(point) => write!(f, "point {point:?} has no frozen source"),
             Self::MissingEndpoint { line, point } => {
                 write!(
                     f,
