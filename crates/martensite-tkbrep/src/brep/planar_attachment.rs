@@ -13,7 +13,7 @@ use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::gp::UnitPlacementError;
 use martensite_tkmath::predicates::roots::metric_bounds::planar_attachment::CertifiedPlanarAttachment;
 pub use martensite_tkmath::predicates::roots::metric_bounds::planar_attachment::{
-    PlanarAttachmentError, PlanarAttachmentLocation, PlanarAttachmentQuery,
+    PlanarAttachmentChart, PlanarAttachmentError, PlanarAttachmentLocation, PlanarAttachmentQuery,
 };
 use std::{error::Error, fmt, num::NonZeroU64};
 
@@ -145,15 +145,48 @@ impl FaceAttachment {
         mut cancelled: impl FnMut() -> bool,
     ) -> Result<PlanarAttachmentQuery, FaceAttachmentError> {
         poll(&mut cancelled)?;
+        self.require_source(current)?;
+        self.proof
+            .classify(point, distance_limit, cancelled)
+            .map_err(numeric_failure)
+    }
+
+    /// Check a supplied UV lift against the frozen trim and its proposed world point.
+    /// Example: attachment.classify_uv(current, uv, world, tolerance, || false).
+    pub fn classify_uv(
+        &self,
+        current: AttachmentSource,
+        uv: [f64; 2],
+        world: [f64; 3],
+        distance_limit: f64,
+        mut cancelled: impl FnMut() -> bool,
+    ) -> Result<PlanarAttachmentQuery, FaceAttachmentError> {
+        poll(&mut cancelled)?;
+        self.require_source(current)?;
+        self.proof
+            .classify_uv(uv, world, distance_limit, cancelled)
+            .map_err(numeric_failure)
+    }
+
+    /// Read nominal solver coefficients from this same original affine chart.
+    /// Example: attachment.solver_chart(current, accepted_uv).
+    pub fn solver_chart(
+        &self,
+        current: AttachmentSource,
+        anchor: [f64; 2],
+    ) -> Result<PlanarAttachmentChart, FaceAttachmentError> {
+        self.require_source(current)?;
+        self.proof.solver_chart(anchor).map_err(numeric_failure)
+    }
+
+    fn require_source(&self, current: AttachmentSource) -> Result<(), FaceAttachmentError> {
         if current != self.source {
             return Err(FaceAttachmentError::StaleSource {
                 captured: self.source,
                 current,
             });
         }
-        self.proof
-            .classify(point, distance_limit, cancelled)
-            .map_err(numeric_failure)
+        Ok(())
     }
 }
 

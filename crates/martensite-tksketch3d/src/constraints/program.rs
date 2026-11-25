@@ -28,6 +28,7 @@ pub(super) struct Program {
     authored_rows: usize,
     frozen_coordinates: usize,
     prepared: Prepared,
+    has_parameters: bool,
 }
 
 impl Program {
@@ -36,7 +37,16 @@ impl Program {
         relations: &BTreeMap<RelationId, Relation>,
         policy: ConstraintPolicy,
     ) -> Result<Self, Failure> {
-        admit(geometry, relations, policy)?;
+        Self::compile(geometry, relations, policy, None)
+    }
+
+    pub(super) fn compile(
+        geometry: &Snapshot,
+        relations: &BTreeMap<RelationId, Relation>,
+        policy: ConstraintPolicy,
+        planar: Option<(RelationId, PointId, super::on_face::PlanarEquation)>,
+    ) -> Result<Self, Failure> {
+        admit(geometry, relations, policy, planar.is_some())?;
         let points = geometry
             .owned_ids()
             .filter_map(|key| match key {
@@ -54,11 +64,24 @@ impl Program {
             .collect::<BTreeMap<_, _>>();
         let Binding {
             fixed,
-            blocks,
-            authored_rows,
+            mut blocks,
+            mut authored_rows,
             frozen_coordinates,
         } = super::binding::bind(geometry, relations, &point_columns, policy)?;
-        let domains = vec![Domain::Length(policy.length_scale.value()); 3 * points.len()];
+        let mut domains = vec![Domain::Length(policy.length_scale.value()); 3 * points.len()];
+        if let Some((id, point, equation)) = planar {
+            let start = *point_columns
+                .get(&point)
+                .ok_or(Failure::MissingPoint(point))?;
+            let uv = domains.len();
+            blocks.push(EquationBlock {
+                id,
+                source: Arc::new(residual::Equation::PlanarAttachment(equation)),
+                variables: [start, start + 1, start + 2, uv, uv + 1].into(),
+            });
+            authored_rows += 3;
+            domains.extend(equation.steps.map(Domain::Parameter));
+        }
         let mut limits = policy.preview;
         limits.work = limits
             .work
@@ -90,6 +113,7 @@ impl Program {
             authored_rows,
             frozen_coordinates,
             prepared,
+            has_parameters: planar.is_some(),
         })
     }
 
@@ -182,10 +206,25 @@ impl Program {
         tangent_tolerance: f64,
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<(Update, PreferenceReport), Failure> {
+        self.prefer_with_uv(
+            (geometry, None),
+            (point, target),
+            tangent_tolerance,
+            cancelled,
+        )
+    }
+
+    pub(super) fn prefer_with_uv(
+        &self,
+        (geometry, uv): (&Snapshot, Option<[f64; 2]>),
+        (point, target): (PointId, Point3),
+        tangent_tolerance: f64,
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<(Update, PreferenceReport), Failure> {
         let targets = self.cursor_targets(geometry, point, target)?;
         self.prepared
             .update_preferred(
-                &self.values(geometry)?,
+                &self.values_with_uv(geometry, uv)?,
                 &targets,
                 tangent_tolerance,
                 cancelled,
@@ -238,10 +277,43 @@ impl Program {
         ])
     }
 
+    pub(super) fn verify_attachment_state(
+        &self,
+        geometry: &Snapshot,
+        uv: [f64; 2],
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<(), Failure> {
+        let values = self.values_with_uv(geometry, Some(uv))?;
+        // No cursor targets means a complete warm-state replay without motion.
+        let (verified, _) = self
+            .prepared
+            .update_preferred(&values, &[], 1., cancelled)
+            .map_err(|error| preview_failure(&self.blocks, error))?;
+        if values
+            .iter()
+            .zip(&verified.values)
+            .any(|(before, after)| before.to_bits() != after.to_bits())
+        {
+            return Err(Failure::Preview(
+                None,
+                PreviewError::Incomplete(Incomplete::InfeasibleWarmState),
+            ));
+        }
+        Ok(())
+    }
+
     pub(super) fn inspect(&self, geometry: &Snapshot) -> Result<ConstraintRank, Failure> {
+        self.inspect_with_uv(geometry, None)
+    }
+
+    pub(super) fn inspect_with_uv(
+        &self,
+        geometry: &Snapshot,
+        uv: Option<[f64; 2]>,
+    ) -> Result<ConstraintRank, Failure> {
         let (rank, dof) = self
             .prepared
-            .inspect_rank(&self.values(geometry)?)
+            .inspect_rank(&self.values_with_uv(geometry, uv)?)
             .map_err(|error| preview_failure(&self.blocks, error))?;
         Ok(self.rank_report(rank, dof))
     }
@@ -256,7 +328,16 @@ impl Program {
     }
 
     fn values(&self, geometry: &Snapshot) -> Result<Vec<f64>, Failure> {
-        let mut values = Vec::with_capacity(3 * self.points.len());
+        self.values_with_uv(geometry, None)
+    }
+
+    pub(super) fn values_with_uv(
+        &self,
+        geometry: &Snapshot,
+        uv: Option<[f64; 2]>,
+    ) -> Result<Vec<f64>, Failure> {
+        let expected = self.value_count();
+        let mut values = Vec::with_capacity(expected);
         for &id in self.points.iter() {
             values.extend(
                 geometry
@@ -266,7 +347,45 @@ impl Program {
                     .coordinates(),
             );
         }
+        values.extend(uv.into_iter().flatten());
+        if values.len() != expected {
+            return Err(Failure::ReturnedCoordinates {
+                expected,
+                actual: values.len(),
+            });
+        }
         Ok(values)
+    }
+
+    fn value_count(&self) -> usize {
+        3 * self.points.len() + 2 * usize::from(self.has_parameters)
+    }
+
+    pub(super) fn set_point_and_uv(
+        &self,
+        point: PointId,
+        xyz: [f64; 3],
+        uv: [f64; 2],
+        values: &mut [f64],
+    ) -> Result<(), Failure> {
+        let start = *self
+            .point_columns
+            .get(&point)
+            .ok_or(Failure::MissingPoint(point))?;
+        self.parameter_values(values)?;
+        values[start..start + 3].copy_from_slice(&xyz);
+        values[3 * self.points.len()..].copy_from_slice(&uv);
+        Ok(())
+    }
+
+    pub(super) fn parameter_values(&self, values: &[f64]) -> Result<[f64; 2], Failure> {
+        let Some([u, v]) = values.get(3 * self.points.len()..) else {
+            return Err(Failure::ReturnedCoordinates {
+                expected: self.value_count(),
+                actual: values.len(),
+            });
+        };
+        Ok([*u, *v])
     }
 
     pub(super) fn adopt(
@@ -277,7 +396,7 @@ impl Program {
         policy: ConstraintPolicy,
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<Snapshot, Failure> {
-        let expected = 3 * self.points.len();
+        let expected = self.value_count();
         if values.len() != expected {
             return Err(Failure::ReturnedCoordinates {
                 expected,
@@ -285,7 +404,11 @@ impl Program {
             });
         }
         let mut edits = Vec::new();
-        for (&point, &xyz) in self.points.iter().zip(values.as_chunks::<3>().0) {
+        for (&point, &xyz) in self
+            .points
+            .iter()
+            .zip(values[..3 * self.points.len()].as_chunks::<3>().0)
+        {
             poll(cancelled)?;
             let position = geometry
                 .point(point)
@@ -312,6 +435,7 @@ fn admit(
     geometry: &Snapshot,
     relations: &BTreeMap<RelationId, Relation>,
     policy: ConstraintPolicy,
+    planar: bool,
 ) -> Result<(), Failure> {
     let sine = policy.parallel_sine_tolerance;
     if !(sine > 0. && sine < 1.) {
@@ -322,7 +446,11 @@ fn admit(
     }
     bound(
         PolicyQuantity::ValidationItems,
-        geometry.entities.len().saturating_add(relations.len()),
+        geometry
+            .entities
+            .len()
+            .saturating_add(relations.len())
+            .saturating_add(usize::from(planar)),
         policy.validation_items,
     )?;
     if let Some(&arc) = geometry.arcs.keys().next() {
@@ -337,7 +465,9 @@ fn admit(
         .count();
     bound(
         PolicyQuantity::Coordinates,
-        points.saturating_mul(3),
+        points
+            .saturating_mul(3)
+            .saturating_add(2 * usize::from(planar)),
         policy.preview.coordinates,
     )
 }

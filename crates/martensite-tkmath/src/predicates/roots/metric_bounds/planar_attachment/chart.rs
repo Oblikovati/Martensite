@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Exact local and world charts. Inversion uses the placed Gram matrix.
-use super::{ExactRatio as R, PlanarAttachmentError as Error};
+use super::{ExactRatio as R, PlanarAttachmentChart, PlanarAttachmentError as Error};
 use crate::gp::Axis3;
-use crate::predicates::roots::certificate_arithmetic::rounding::outward_binary64;
+use crate::predicates::roots::certificate_arithmetic::rounding::{
+    nearest_binary64, outward_binary64,
+};
 use crate::predicates::roots::metric_bounds::placed_plane::{
     ExactPlacement, ExactVector, dot, exact_point, exact_vector,
 };
@@ -61,14 +63,45 @@ impl Chart {
     pub(super) fn project(&self, point: [f64; 3]) -> Result<Projection, Error> {
         let point = exact_vector(point, 3)?;
         let uv = self.pullback(&point);
+        Ok(self.projection(uv, point))
+    }
+
+    pub(super) fn proposed(&self, uv: [f64; 2], point: [f64; 3]) -> Result<Projection, Error> {
+        Ok(self.projection(exact_uv(uv)?, exact_vector(point, 3)?))
+    }
+
+    pub(super) fn solver_chart(&self, uv: [f64; 2]) -> Result<PlanarAttachmentChart, Error> {
+        let world = rounded(&self.lift(&exact_uv(uv)?))?;
+        let [du, dv] = &self.axes;
+        Ok(PlanarAttachmentChart {
+            uv,
+            world,
+            tangents: [rounded(du)?, rounded(dv)?],
+        })
+    }
+
+    fn projection(&self, uv: Uv, point: Vector) -> Projection {
         let world = self.lift(&uv);
         let delta = std::array::from_fn(|i| world[i].subtract(&point[i]));
-        Ok(Projection {
+        Projection {
             uv,
             world,
             distance_squared: dot(&delta, &delta),
-        })
+        }
     }
+}
+
+fn exact_uv([u, v]: [f64; 2]) -> Result<Uv, Error> {
+    let [u, v, _] = exact_vector([u, v, 0.], 4)?;
+    Ok([u, v])
+}
+
+fn rounded(value: &Vector) -> Result<[f64; 3], Error> {
+    let mut nominal = [0.; 3];
+    for (result, exact) in nominal.iter_mut().zip(value) {
+        *result = nearest_binary64(exact).ok_or(Error::Unrepresentable)?;
+    }
+    Ok(nominal)
 }
 
 pub(super) fn retained_frame(frame: Axis3) -> Result<Axis3, Error> {

@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
-use super::{AxisDirection, CoordinateAxis, LineAngle, ParallelDirection, metric};
+use super::{
+    AxisDirection, CoordinateAxis, LineAngle, ParallelDirection, metric, on_face::PlanarEquation,
+};
 use martensite_tkmath::gp::Point3;
 use martensite_tksolve::{
     ad::{DualNumber, DualVector},
@@ -29,6 +31,7 @@ pub(super) fn work_bound(units: usize) -> usize {
 
 #[derive(Clone, Copy)]
 pub(super) enum Equation {
+    PlanarAttachment(PlanarEquation),
     Coincident {
         scale: f64,
     },
@@ -102,7 +105,7 @@ impl Equation {
 
     pub(super) fn rows(self) -> usize {
         match self {
-            Self::Coincident { .. } => 3,
+            Self::Coincident { .. } | Self::PlanarAttachment(_) => 3,
             Self::Length { .. }
             | Self::Plane(_)
             | Self::Perpendicular
@@ -141,6 +144,7 @@ impl Equation {
                 ..
             } => 12,
             Self::PointOnLine { .. } | Self::Continuity { .. } => 9,
+            Self::PlanarAttachment(_) => 5,
             _ => 6,
         }
     }
@@ -159,14 +163,15 @@ impl ResidualSource for Equation {
                 v.len()
             )));
         }
-        let first = displacement(v, 0)?;
+        let first = || displacement(v, 0);
         match *self {
-            Self::Coincident { scale } => Ok(first.scaled(scale)?.components().to_vec()),
+            Self::PlanarAttachment(source) => source.evaluate(v),
+            Self::Coincident { scale } => Ok(first()?.scaled(scale)?.components().to_vec()),
             Self::Length { scale, target } => Ok(vec![
-                checked_length(&first)?.shifted(-target)?.scaled(scale)?,
+                checked_length(&first()?)?.shifted(-target)?.scaled(scale)?,
             ]),
             Self::PointOnLine { scale, reference } => {
-                let basis = reference.basis(&unit(&first)?, "point-on-line")?;
+                let basis = reference.basis(&unit(&first()?)?, "point-on-line")?;
                 let offset = vector(v, 6)?.minus(&vector(v, 0)?)?;
                 Ok(length_rows(&basis, &offset, scale)?.into())
             }
@@ -175,33 +180,42 @@ impl ResidualSource for Equation {
                 reference,
                 scale,
                 independent_offset,
-            } => colinear_rows(v, &first, direction, reference, scale, independent_offset),
+            } => colinear_rows(
+                v,
+                &first()?,
+                direction,
+                reference,
+                scale,
+                independent_offset,
+            ),
             Self::Parallel {
                 direction,
                 reference,
             } => {
-                let a = unit(&first)?;
+                let a = unit(&first()?)?;
                 let b = unit(&displacement(v, 6)?)?;
                 directed(&a, &b, direction)?;
                 Ok(components(&reference.basis(&a, "parallel")?, &b)?.into())
             }
-            Self::Axis(axis, direction) => axis_rows(unit(&first)?, axis, direction),
-            Self::Plane(normal) => Ok(vec![unit(&first)?.dot(&unit(&constant_vector(normal)?)?)?]),
-            Self::Perpendicular => Ok(vec![unit(&first)?.dot(&unit(&displacement(v, 6)?)?)?]),
+            Self::Axis(axis, direction) => axis_rows(unit(&first()?)?, axis, direction),
+            Self::Plane(normal) => Ok(vec![
+                unit(&first()?)?.dot(&unit(&constant_vector(normal)?)?)?,
+            ]),
+            Self::Perpendicular => Ok(vec![unit(&first()?)?.dot(&unit(&displacement(v, 6)?)?)?]),
             Self::EqualLength { scale } => Ok(vec![
-                checked_length(&first)?
+                checked_length(&first()?)?
                     .minus(&checked_length(&displacement(v, 6)?)?)?
                     .scaled(scale)?,
             ]),
             Self::Angle {
                 target,
                 minimum_sine,
-            } => angle_row(v, &first, target, minimum_sine),
+            } => angle_row(v, &first()?, target, minimum_sine),
             Self::Continuity {
                 reference,
                 cubic_reference,
                 curvature_scale,
-            } => continuity::evaluate(v, &first, reference, cubic_reference, curvature_scale),
+            } => continuity::evaluate(v, &first()?, reference, cubic_reference, curvature_scale),
         }
     }
 }

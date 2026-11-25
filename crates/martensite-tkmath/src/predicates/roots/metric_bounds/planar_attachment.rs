@@ -55,6 +55,17 @@ pub struct PlanarAttachmentQuery {
     pub distance_bound: f64,
 }
 
+/// Nominal local data for a solver linearization at an accepted chart coordinate.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct PlanarAttachmentChart {
+    /// Accepted chart coordinate used as the local evaluation anchor.
+    pub uv: [f64; 2],
+    /// Nominal world point at the anchor, rounded once from the exact affine map.
+    pub world: [f64; 3],
+    /// Nominal world tangents for one unit of each original chart coordinate.
+    pub tangents: [[f64; 3]; 2],
+}
+
 /// Why exact planar trim preparation or classification could not complete.
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[non_exhaustive]
@@ -187,6 +198,41 @@ impl CertifiedPlanarAttachment {
             return Err(Error::DistanceLimit(limit));
         }
         let projection = self.world.project(point)?;
+        self.qualify(projection, limit, &mut cancelled)
+    }
+
+    /// Check a supplied solver UV lift against the complete trim and the proposed world point.
+    /// Example: proof.classify_uv(uv, world, tolerance, || false).
+    pub fn classify_uv(
+        &self,
+        uv: [f64; 2],
+        world: [f64; 3],
+        limit: f64,
+        mut cancelled: impl FnMut() -> bool,
+    ) -> Result<PlanarAttachmentQuery, PlanarAttachmentError> {
+        poll(&mut cancelled)?;
+        if !limit.is_finite() || limit < 0. {
+            return Err(PlanarAttachmentError::DistanceLimit(limit));
+        }
+        self.qualify(self.world.proposed(uv, world)?, limit, &mut cancelled)
+    }
+
+    /// Read a finite nominal affine linearization at a caller-selected accepted UV anchor.
+    /// Example: proof.solver_chart([0., 0.]).
+    pub fn solver_chart(
+        &self,
+        anchor: [f64; 2],
+    ) -> Result<PlanarAttachmentChart, PlanarAttachmentError> {
+        self.world.solver_chart(anchor)
+    }
+
+    fn qualify(
+        &self,
+        projection: chart::Projection,
+        limit: f64,
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<PlanarAttachmentQuery, PlanarAttachmentError> {
+        use PlanarAttachmentError as Error;
         let cap = ExactRatio::from_finite(limit);
         let distance_bound = if projection.distance_squared.sign() == Ordering::Equal {
             Some(0.)
@@ -199,10 +245,10 @@ impl CertifiedPlanarAttachment {
                 limit,
             });
         }
-        let location = trim::locate(&self.outer, &self.hole, &projection.uv, &mut cancelled)?;
+        let location = trim::locate(&self.outer, &self.hole, &projection.uv, cancelled)?;
         let uv = chart::enclose(&projection.uv)?;
         let projected = chart::enclose(&projection.world)?;
-        poll(&mut cancelled)?;
+        poll(cancelled)?;
         Ok(PlanarAttachmentQuery {
             location,
             uv,

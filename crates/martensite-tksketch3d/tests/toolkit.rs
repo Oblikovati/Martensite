@@ -17,6 +17,7 @@ mod line_relations;
 mod line_seed;
 mod mirror;
 mod motion;
+mod on_face;
 mod preferred_drag;
 mod restore;
 mod split_plane;

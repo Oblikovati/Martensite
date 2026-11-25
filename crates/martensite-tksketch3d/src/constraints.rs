@@ -10,6 +10,7 @@ mod initialization;
 mod line_edit;
 mod metric;
 mod motion;
+mod on_face;
 mod preferred;
 mod program;
 mod residual;
@@ -30,6 +31,10 @@ pub use continuity::{
 pub use error::{ConstraintFailure, PolicyQuantity};
 pub use martensite_tksolve::{nonlinear::SolveOptions, preview::Limits as SolverLimits};
 pub use motion::{RigidMotion, RigidMotionFailure};
+pub use on_face::{
+    PlanarAttachedSketch, PlanarFaceBinding, PlanarFaceConstraintFailure, PlanarFaceDragUpdate,
+    PlanarFaceRelation, PlanarFaceRevision,
+};
 pub use preferred::{PreferenceReport, PreferenceSettlement, PreferredDragUpdate};
 use program::Program;
 

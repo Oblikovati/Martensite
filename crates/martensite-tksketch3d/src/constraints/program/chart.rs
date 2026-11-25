@@ -20,6 +20,17 @@ impl Program {
         spent: Option<Work>,
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<Reframed, Failure> {
+        self.reframe_with_uv(geometry, None, policy, spent, cancelled)
+    }
+
+    pub(in crate::constraints) fn reframe_with_uv(
+        self: &Arc<Self>,
+        geometry: &Snapshot,
+        uv: Option<[f64; 2]>,
+        policy: ConstraintPolicy,
+        spent: Option<Work>,
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<Reframed, Failure> {
         let mut work = spent.unwrap_or_default();
         if let Some(spent) = spent {
             work = charge(policy, spent, self.chart_sources.len())?;
@@ -32,7 +43,13 @@ impl Program {
                 hard_error: 0.,
             });
         }
-        self.replace_frames(geometry, updates, policy, spent.map(|_| work), cancelled)
+        self.replace_frames(
+            (geometry, uv),
+            updates,
+            policy,
+            spent.map(|_| work),
+            cancelled,
+        )
     }
 
     fn collect_frames(
@@ -54,7 +71,7 @@ impl Program {
 
     fn replace_frames(
         &self,
-        geometry: &Snapshot,
+        (geometry, uv): (&Snapshot, Option<[f64; 2]>),
         updates: Vec<(usize, Arc<residual::Equation>)>,
         policy: ConstraintPolicy,
         spent: Option<Work>,
@@ -77,7 +94,12 @@ impl Program {
         }
         let (prepared, work, hard_error) = self
             .prepared
-            .with_rebound_sources(&replacements, &self.values(geometry)?, work, cancelled)
+            .with_rebound_sources(
+                &replacements,
+                &self.values_with_uv(geometry, uv)?,
+                work,
+                cancelled,
+            )
             .map_err(|error| preview_failure(&blocks, error))?;
         Ok(Reframed {
             program: Arc::new(Self {
