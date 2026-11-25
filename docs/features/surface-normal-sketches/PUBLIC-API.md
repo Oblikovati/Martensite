@@ -18,6 +18,7 @@ signatures and behavior.
 | --- | --- | --- |
 | Cylinder | `normal_extrude_profile`, `normal_extrude_profile_with_cancel` | `WrappedNormalRequest`, `WrappedNormalResult` |
 | Cylinder with explicit chart placement | `normal_extrude_profile_on_chart`, `normal_extrude_profile_on_chart_with_cancel` | Existing cylinder request and `WrappedChartNormalResult`; see [frame contract](OBLIQUE-FRAMES.md). |
+| Rational cylinder or cone | `normal_extrude_rational_cylinder`, `normal_extrude_rational_cone` | Existing support requests, an explicit dyadic reference level, and `RationalWrappedResult`; see [rational input](PROFILE-INPUT.md#positive-rational-reference). |
 | Canonical cone | `normal_extrude_cone_profile`, `normal_extrude_cone_profile_with_cancel` | `WrappedConeNormalRequest`, `WrappedConeNormalResult` |
 | Placed cone | `normal_extrude_cone_profile_on_chart`, `normal_extrude_cone_profile_on_chart_with_cancel` | Existing request and execution selector, `WrappedPlacedConeResult`. See [cone placement](CONE-PLACEMENT.md). |
 | Certified conical frustum | `ConeFaceAttachment::apply_certified_wrapped_profile`, `apply_certified_wrapped_profile_with_cancel` | `WrappedConeNormalRequest` with the V9 family-chart selector and a `CertifiedConeFeatureResult`. |

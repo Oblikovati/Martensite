@@ -240,6 +240,7 @@ pub use polynomial_integrals::{
 };
 
 mod rational_integrals;
+mod rational_reference;
 pub use rational_integrals::{
     AnalyticConicalFluxError, AnalyticConicalFluxFailure, AnalyticConicalFluxQuery,
     AnalyticConicalFluxSpan, BoundaryIntegralProgramQuery, CertifiedAnalyticConicalFlux,
@@ -255,6 +256,10 @@ pub use rational_integrals::{
     certify_cylindrical_boundary_flux, certify_face_integral_program,
     certify_rational_boundary_integral, certify_rational_face_area,
     certify_rational_sweep_integral,
+};
+pub use rational_reference::{
+    RationalReferenceBounds, RationalReferenceFailure, RationalReferenceRequest,
+    RationalReferenceSpan, fit_rational_bezier_reference,
 };
 
 mod polynomial_side;

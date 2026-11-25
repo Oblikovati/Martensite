@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added checked cylindrical and conical normal extrusions for a positive rational Bézier with a straight outer boundary, with original parameter history and certified material measurements (#418).
+
 - Added wrapped cylinder and cone profiles for weighted Bernstein spans with a proven same-parameter polynomial identity and source-bound planar evidence (#418).
 
 - Added per-window mailbox presentation for synchronized native views, with FIFO fallback (#420).

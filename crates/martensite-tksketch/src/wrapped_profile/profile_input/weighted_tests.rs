@@ -204,3 +204,146 @@ fn parabola() -> ProfileCurve {
         knots: vec![0., 0., 0., 0., 1., 1., 1., 1.],
     }
 }
+
+fn quarter(radius: f64) -> SketchProfile {
+    let points = [[4. + radius, 0.], [4., radius], [4., 0.]];
+    SketchProfile {
+        plane: ProfilePlane::world_xy(),
+        vertices: (1..=3)
+            .zip(points)
+            .map(|(id, point)| ProfileVertex {
+                id: ProfileVertexId(id),
+                point,
+            })
+            .collect(),
+        curves: vec![
+            ProfileCurve::Spline {
+                id: ProfileCurveId(1),
+                start: ProfileVertexId(1),
+                end: ProfileVertexId(2),
+                degree: 2,
+                poles: vec![points[0], [4. + radius, radius], points[1]],
+                weights: Some(vec![1., 1., 2.]),
+                knots: vec![0., 0., 0., 1., 1., 1.],
+            },
+            ProfileCurve::Line {
+                id: ProfileCurveId(2),
+                start: ProfileVertexId(2),
+                end: ProfileVertexId(3),
+            },
+            ProfileCurve::Line {
+                id: ProfileCurveId(3),
+                start: ProfileVertexId(3),
+                end: ProfileVertexId(1),
+            },
+        ],
+    }
+}
+
+const QUARTER_RADIUS: f64 = 1. / 16.;
+
+#[test]
+fn rational_reference_quarter_extrudes_with_original_curve_parameter_history() {
+    let mut request = cylinder();
+    request.profile = quarter(QUARTER_RADIUS);
+    request.selections[0].outer.uses.pop();
+    let result = normal_extrude_rational_cylinder(&request, 3, || false).unwrap();
+    assert_rational_quarter(&result, QUARTER_RADIUS, request.options.spatial_error);
+    let replay = normal_extrude_rational_cylinder(&request, 3, || false).unwrap();
+    assert_eq!(result.encoded_brep(), replay.encoded_brep());
+    assert_eq!(result.history(), replay.history());
+    assert_eq!(result.authored_selection(), &request.selections[0]);
+    request.profile.curves.clear();
+    assert_eq!(result.authored_profile(), &quarter(QUARTER_RADIUS));
+    assert_rational_publication_thread_safety::<RationalWrappedResult>();
+}
+
+#[test]
+fn rational_reference_refuses_coarse_subdivision_and_cancellation() {
+    let mut request = cylinder();
+    request.profile = quarter(QUARTER_RADIUS);
+    request.selections[0].outer.uses.pop();
+    let cancelled = normal_extrude_rational_cylinder(&request, 3, || true)
+        .err()
+        .unwrap();
+    assert!(matches!(cancelled, RationalWrappedFailure::Wrapped(cause)
+        if cause.class() == WrappedFailureClass::Cancelled));
+    let coarse = normal_extrude_rational_cylinder(&request, 1, || false)
+        .err()
+        .unwrap();
+    assert!(matches!(coarse, RationalWrappedFailure::Reference(cause)
+        if matches!(*cause, martensite_tkmath::predicates::roots::metric_bounds::RationalReferenceFailure::Exceeds { .. })));
+}
+
+fn assert_rational_publication_thread_safety<T: Send + Sync>() {}
+
+#[test]
+fn rational_reference_quarter_extrudes_on_cone_away_from_apex() {
+    let mut request = cone();
+    request.proof.planar_proof =
+        martensite_tkbo::profile_extrusion::PlanarProofVersion::GeometricCompositeV6 {
+            max_components: 64,
+            max_total_subintervals: 100_000,
+        };
+    request.profile = quarter(QUARTER_RADIUS);
+    request.selections[0].outer.uses.pop();
+    let result = normal_extrude_rational_cone(&request, 3, || false).unwrap();
+    assert_rational_quarter(&result, QUARTER_RADIUS, request.options.spatial_error);
+}
+
+#[test]
+#[ignore = "unit-radius qualification control; retained exact proof is expensive in debug"]
+fn rational_reference_unit_radius_quarter_byte_and_history_replay() {
+    let mut request = cylinder();
+    request.profile = quarter(1.);
+    request.selections[0].outer.uses.pop();
+    let result = normal_extrude_rational_cylinder(&request, 4, || false).unwrap();
+    assert_rational_quarter(&result, 1., request.options.spatial_error);
+    let replay = normal_extrude_rational_cylinder(&request, 4, || false).unwrap();
+    assert_eq!(result.encoded_brep(), replay.encoded_brep());
+    assert_eq!(result.history(), replay.history());
+}
+
+fn assert_rational_quarter(result: &RationalWrappedResult, radius: f64, limit: f64) {
+    let expected = std::f64::consts::FRAC_PI_4 * radius * radius;
+    let area = result.authored_area();
+    assert!(area.lower <= expected && expected <= area.upper);
+    let volume = result.authored_volume();
+    let expected = expected * 0.2;
+    assert!(volume.lower <= expected && expected <= volume.upper);
+    assert!(result.spatial_error().upper <= limit);
+    assert!(result.validation().is_valid());
+    assert!(result.authored_area_receipt().integration_subintervals() > 0);
+    assert!(result.authored_planar_work().effective_pair_bisections > 0);
+    assert!(result.boundary_flux().lower > 0.);
+    assert!(result.volume_discrepancy().upper > 0.);
+    assert_original_quarter_history(result);
+}
+
+fn assert_original_quarter_history(result: &RationalWrappedResult) {
+    assert!(result.history().iter().any(|record| matches!(
+        record.result.source,
+        WrappedEntitySource::SplitVertex {
+            curve: SurfaceCurveId(1),
+            point: WrappedSourcePoint {
+                numerator: 1,
+                level: 1
+            }
+        }
+    )));
+    assert!(
+        result
+            .history()
+            .iter()
+            .all(|record| match record.result.source {
+                WrappedEntitySource::Curve { curve, .. }
+                | WrappedEntitySource::SplitVertex { curve, .. } => (1..=3).contains(&curve.0),
+                WrappedEntitySource::Vertex(vertex) => (1..=3).contains(&vertex.0),
+                _ => true,
+            })
+    );
+    assert_eq!(
+        result.export_native().unwrap().entities.len(),
+        result.history().len()
+    );
+}
