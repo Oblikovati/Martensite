@@ -187,18 +187,16 @@ fn cylinder_contour(
     for curve in &curves {
         extend_bounds(&mut bounds, &curve.points);
     }
-    certify_cylinder_hull(bounds, support.radius, axial, options)?;
+    require_rim_clearance(axial, bounds[1], options)?;
+    let lattice = crossed::CutLattice::new(FullTurnSupport::Cylinder { support, axial }, options)?;
     let margin = effective_limits(options).angular_clearance;
-    let roots = curves
-        .iter()
-        .map(|curve| curve.crossing(support.radius, margin))
-        .collect::<Checked<Vec<_>>>()?;
-    aperture(
-        selection,
-        curves,
-        bounds[1],
-        roots.into_iter().flatten().collect(),
-    )
+    let mut roots = Vec::new();
+    if let Some(cut) = lattice.cut_in_hull(bounds[0])? {
+        for curve in &curves {
+            roots.extend(curve.crossing_at(cut, support.radius, margin)?);
+        }
+    }
+    aperture(selection, curves, bounds[1], roots)
 }
 
 fn aperture(
@@ -257,30 +255,6 @@ fn extend_bounds(bounds: &mut [[f64; 2]; 2], points: &[[f64; 2]]) {
             bounds[1] = bounds[1].max(*coordinate);
         }
     }
-}
-
-fn certify_cylinder_hull(
-    [chart, height]: [[f64; 2]; 2],
-    radius: f64,
-    axial: [f64; 2],
-    options: NormalExtrusionOptions,
-) -> Checked<()> {
-    require_rim_clearance(axial, height, options)?;
-    let period = certify_developed_period(DevelopedScale::CylinderRadius(radius))
-        .map_err(|cause| incomplete("curved aperture exact period", format!("{cause:?}")))?;
-    cylinder_admission::require(
-        (chart[1] - chart[0]).next_up() < period.period[0],
-        "periodic aperture overlap",
-        chart[1] - chart[0],
-        "profile hull narrower than a certified period",
-    )?;
-    let largest = chart[0].abs().max(chart[1].abs());
-    cylinder_admission::require(
-        largest < period.period[0] / 2.,
-        "curved aperture angular lift",
-        largest,
-        "strictly inside the two sheets adjoining the zero cut",
-    )
 }
 
 fn ordered_crossings(mut roots: Vec<Crossing>) -> Checked<[Crossing; 2]> {
@@ -370,27 +344,40 @@ impl DirectedCurve {
         )
     }
 
-    fn crossing(&self, radius: f64, angular: f64) -> Checked<Option<Crossing>> {
+    fn crossing(&self, scale: f64, angular: f64) -> Checked<Option<Crossing>> {
+        self.crossing_at(
+            crossed::ScalarCut {
+                turn: 0,
+                coordinate: [0.; 2],
+            },
+            scale,
+            angular,
+        )
+    }
+
+    fn crossing_at(
+        &self,
+        cut: crossed::ScalarCut,
+        scale: f64,
+        angular: f64,
+    ) -> Checked<Option<Crossing>> {
         let values = self.points.iter().map(|p| p[0]).collect::<Vec<_>>();
-        let first = values[0];
-        let last = values[values.len() - 1];
-        let margin = (radius * angular).next_up();
-        if values.iter().all(|&v| v > margin) || values.iter().all(|&v| v < -margin) {
+        let bounds = values
+            .iter()
+            .map(|&value| cut.signed(value))
+            .collect::<Vec<_>>();
+        let margin = (scale * angular).next_up();
+        let Some(direction) = crossing_direction(self.id, &bounds, margin)? else {
             return Ok(None);
-        }
-        if first.abs().min(last.abs()) <= margin || first.signum() == last.signum() {
-            return Err(incomplete(
-                "transverse crossing clear of authored corners",
-                format!("{:?}: {values:?}", self.id),
-            ));
-        }
-        let (transition, speed) = monotone(&values, margin, radius)?;
-        let normalized_parameter = isolate(&values)?;
+        };
+        let speed = monotone(&values, direction, margin, scale)?;
+        let normalized_parameter = isolate_between(&bounds)?;
         let id = PeriodicCrossingId {
             curve: self.id,
-            turn: 0,
-            transition,
+            turn: cut.turn,
+            transition: direction,
         };
+        let height_hull = self.height_hull();
         Ok(Some(Crossing {
             report: PeriodicCrossing {
                 id,
@@ -398,25 +385,58 @@ impl DirectedCurve {
             },
             ends: self.ends,
             angular_speed: speed,
-            height_hull: [
-                self.points
-                    .iter()
-                    .map(|p| p[1])
-                    .fold(f64::INFINITY, f64::min),
-                self.points
-                    .iter()
-                    .map(|p| p[1])
-                    .fold(f64::NEG_INFINITY, f64::max),
-            ],
+            height_hull,
         }))
+    }
+
+    fn height_hull(&self) -> [f64; 2] {
+        self.points
+            .iter()
+            .map(|point| point[1])
+            .fold([f64::INFINITY, f64::NEG_INFINITY], |[lo, hi], v| {
+                [lo.min(v), hi.max(v)]
+            })
     }
 }
 
-fn monotone(values: &[f64], margin: f64, radius: f64) -> Checked<(SheetTransition, f64)> {
-    let sign = values[0].signum();
+fn crossing_direction(
+    curve: SurfaceCurveId,
+    bounds: &[[f64; 2]],
+    margin: f64,
+) -> Checked<Option<SheetTransition>> {
+    let side = |[a, b]: [f64; 2]| {
+        if a > margin {
+            1
+        } else if b < -margin {
+            -1
+        } else {
+            0
+        }
+    };
+    let first = side(bounds[0]);
+    let last = side(bounds[bounds.len() - 1]);
+    if first != 0 && bounds.iter().all(|&bound| side(bound) == first) {
+        return Ok(None);
+    }
+    match [first, last] {
+        [-1, 1] => Ok(Some(SheetTransition::Increasing)),
+        [1, -1] => Ok(Some(SheetTransition::Decreasing)),
+        _ => Err(incomplete(
+            "transverse crossing clear of authored corners",
+            format!("{curve:?}: {bounds:?}"),
+        )),
+    }
+}
+
+fn monotone(values: &[f64], transition: SheetTransition, margin: f64, scale: f64) -> Checked<f64> {
+    let sign = if transition == SheetTransition::Increasing {
+        1.
+    } else {
+        -1.
+    };
     let min = values
         .windows(2)
-        .map(|pair| ((pair[0] - pair[1]) * sign).next_down())
+        .map(|pair| ((pair[1] - pair[0]) * sign).next_down())
         .fold(f64::INFINITY, f64::min);
     cylinder_admission::require(
         min > margin,
@@ -424,13 +444,24 @@ fn monotone(values: &[f64], margin: f64, radius: f64) -> Checked<(SheetTransitio
         min,
         "positive quantitative derivative distance from tangency",
     )?;
-    let transition = if sign < 0. {
-        SheetTransition::Increasing
-    } else {
-        SheetTransition::Decreasing
-    };
-    let speed = ((min * (values.len() - 1) as f64).next_down() / radius).next_down();
-    Ok((transition, speed))
+    Ok(((min * (values.len() - 1) as f64).next_down() / scale).next_down())
+}
+
+fn isolate_between(controls: &[[f64; 2]]) -> Checked<[f64; 2]> {
+    let lower = controls
+        .iter()
+        .map(|interval| interval[0])
+        .collect::<Vec<_>>();
+    let upper = controls
+        .iter()
+        .map(|interval| interval[1])
+        .collect::<Vec<_>>();
+    let first = isolate(&lower)?;
+    if lower == upper {
+        return Ok(first);
+    }
+    let second = isolate(&upper)?;
+    Ok([first[0].min(second[0]), first[1].max(second[1])])
 }
 
 fn isolate(values: &[f64]) -> Checked<[f64; 2]> {

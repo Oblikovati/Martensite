@@ -6,6 +6,7 @@ mod binding;
 pub(super) use binding::oriented_edge;
 mod names;
 mod placement;
+pub(super) use placement::{CutLattice, ScalarCut};
 mod plan;
 mod tool;
 pub use names::*;
