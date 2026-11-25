@@ -2,7 +2,7 @@
 //! Certify the actual projected trims on their decoded active parameter ranges.
 use super::*;
 use martensite_tkbrep::brep::EdgePCurve;
-use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dBezierCurve};
+use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dBezierCurve, Geom2dCurve};
 use martensite_tkg3d::geom::GeomBezierCurve;
 use martensite_tkmath::predicates::roots::metric_bounds::{
     CylindricalTrimQuery, MetricBezier, certify_cylindrical_trim_ranges,
@@ -18,6 +18,7 @@ pub(super) struct CapCheck<'a> {
     pub stock: &'a band_admission::BandSection,
     pub report: &'a WrappedMemberReport,
     pub sheet: [f64; 2],
+    pub rims: [f64; 2],
     pub support_radius: f64,
     pub frame: CapFrame,
 }
@@ -123,6 +124,8 @@ impl CapCheck<'_> {
             ));
         }
         let (mut controls, chart) = polynomial(&trim)?;
+        let separation = effective_limits(self.stock.sweep.options).linear_separation;
+        verify_rim_clearance(&controls, self.rims, separation)?;
         let pad = self.frame.canonical_height(&mut controls);
         let limit = (self.spatial_limit(edge)? - pad).next_down();
         let proof = certify_cylindrical_trim_ranges(
@@ -132,7 +135,7 @@ impl CapCheck<'_> {
                     weights: Some(&curve.weights),
                 },
                 pcurve: &controls,
-                radius: self.radius(),
+                radius: self.frame.radius,
                 spatial_limit: limit,
                 options: Default::default(),
             },
@@ -173,11 +176,6 @@ impl CapCheck<'_> {
         let edge =
             BRepTool::edge_tolerance(edge).map_err(|e| native("curved edge tolerance", e))?;
         Ok(self.stock.sweep.options.resolution.weld.min(face).min(edge))
-    }
-
-    fn radius(&self) -> f64 {
-        let index = usize::from(self.depth.index() != self.stock.sweep.first_depth);
-        self.stock.meridian[index][0]
     }
 
     fn verify_split(
@@ -234,6 +232,68 @@ impl CapCheck<'_> {
         let chart = (self.report.spatial.cap_angular_error.upper + profile).next_up();
         let numerator = ((chart + endpoint).next_up() + 64. * f64::EPSILON * TAU).next_up();
         (numerator / cut.crossing.angular_speed).next_up()
+    }
+}
+
+fn verify_rim_clearance(points: &[[f64; 2]], [lo, hi]: [f64; 2], floor: f64) -> Checked<()> {
+    let margin = points
+        .iter()
+        .map(|point| {
+            let v = point[1];
+            (v - lo).min(hi - v).next_down()
+        })
+        .fold(f64::INFINITY, f64::min);
+    cylinder_admission::require(
+        margin > floor,
+        "decoded periodic aperture rim clearance",
+        margin,
+        "whole literal pcurve hull strictly between the native rim meridians",
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn periodic_two_pole_storage_is_not_a_clamped_polynomial_projection() {
+        use martensite_tkernel::ncollection::Array1;
+        use martensite_tkmath::gp::Point2;
+
+        let mut poles = Array1::with_bounds(1, 2).unwrap();
+        poles.set_value(1, Point2::new(0.1, 1.)).unwrap();
+        poles.set_value(2, Point2::new(0.2, 2.)).unwrap();
+        let mut knots = Array1::with_bounds(1, 2).unwrap();
+        knots.set_value(1, 0.).unwrap();
+        knots.set_value(2, 1.).unwrap();
+        let mut multiplicities = Array1::with_bounds(1, 2).unwrap();
+        multiplicities.set_value(1, 2).unwrap();
+        multiplicities.set_value(2, 2).unwrap();
+        let periodic = Geom2dBSplineCurve::new(&poles, &knots, &multiplicities, 3, true).unwrap();
+        assert_eq!(periodic.nb_poles(), 2);
+        let error = clamped_projection(&periodic, [0., 1.]).unwrap_err();
+        assert!(matches!(
+            error,
+            SurfaceFailureCause::Incomplete {
+                context: "one literal clamped polynomial on the exact active domain",
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn decoded_meridian_hull_leaves_the_original_linear_clearance_to_both_rims() {
+        let valid = [[0.1, 1.], [0.2, 5.]];
+        verify_rim_clearance(&valid, [0., 6.], 1e-6).unwrap();
+        let edited = [[0.1, 1.], [0.2, 6. - 5e-7]];
+        let error = verify_rim_clearance(&edited, [0., 6.], 1e-6).unwrap_err();
+        assert!(matches!(
+            error,
+            SurfaceFailureCause::InvalidInput {
+                field: "decoded periodic aperture rim clearance",
+                ..
+            }
+        ));
     }
 }
 
@@ -322,7 +382,9 @@ fn clamped_projection(
     });
     let poles = curve.nb_poles();
     if curve.is_rational()
+        || curve.is_periodic()
         || curve.has_eval_representation()
+        || poles != curve.degree() + 1
         || knots != range
         || [first?, last?] != [poles; 2]
     {

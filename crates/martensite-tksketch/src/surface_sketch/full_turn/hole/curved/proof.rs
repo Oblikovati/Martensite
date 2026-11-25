@@ -3,6 +3,7 @@
 use super::*;
 use crate::surface_sketch::{history as roles, validation};
 use martensite_tkbrep::{brep::BRepTool, brep_adaptor::BRepAdaptorSurface, topexp::Explorer};
+use martensite_tkg2d::geom2d::Geom2dLine;
 use martensite_tkg3d::{adaptor3d::Adaptor3dSurface, top_abs::ShapeEnum};
 
 mod trim;
@@ -155,7 +156,7 @@ impl Cap<'_> {
                 format!("{} edges, expected {expected}", edges.len()),
             ));
         }
-        self.verify_rims(&face, &surface, &edges)?;
+        let rims = self.verify_rims(&face, &surface, &edges)?;
         self.verify_rails(&face, &surface, &edges)?;
         trim::verify(trim::CapCheck {
             face: &face,
@@ -167,6 +168,7 @@ impl Cap<'_> {
             stock,
             report,
             sheet: [first, last],
+            rims,
             support_radius: support.radius,
             frame,
         })
@@ -177,16 +179,25 @@ impl Cap<'_> {
         face: &topods::Face,
         surface: &BRepAdaptorSurface,
         coedges: &[topods::Edge],
-    ) -> Checked<()> {
-        for rim in self.plan.band.rims {
+    ) -> Checked<[f64; 2]> {
+        let values = self.plan.band.rims.map(|rim| {
             let key = PeriodicImageKey::Retained(HistoryKey {
                 source: HistorySource::Curve(rim),
                 role: roles::edge_role(self.depth.index()),
             });
             let [edge] = occurrences(coedges, binding::resolve(self.bindings, key)?)?;
             verification::verify_rim_trim(&self.plan.stock, face, surface, &edge, true)?;
-        }
-        Ok(())
+            let trim = BRepTool::curve_on_face(&edge, face)
+                .map_err(|e| native("curved stock rim pcurve", e))?;
+            let line = trim
+                .pcurve
+                .downcast_ref::<Geom2dLine>()
+                .ok_or_else(|| incomplete("literal constant-meridian rim", format!("{key:?}")))?;
+            Ok(line.location().y())
+        });
+        let [first, last] = values;
+        let [a, b] = [first?, last?];
+        Ok([a.min(b), a.max(b)])
     }
 
     fn verify_rails(
@@ -226,23 +237,31 @@ impl Cap<'_> {
 struct CapFrame {
     z: f64,
     sign: f64,
+    radius: f64,
 }
 
 fn canonical_carrier(surface: &BRepAdaptorSurface) -> Checked<CapFrame> {
-    let pos = surface
+    let cylinder = surface
         .cylinder()
-        .map_err(|e| native("curved cap carrier", e))?
-        .position();
+        .map_err(|e| native("curved cap carrier", e))?;
+    let radius = cylinder.radius();
+    let pos = cylinder.position();
     let [x, y, z] = *pos.location().coordinates();
     let axis = *pos.direction().coordinates();
     if x == 0.
         && y == 0.
         && z.is_finite()
+        && radius.is_finite()
+        && radius > 0.
         && *pos.x_direction().coordinates() == [1., 0., 0.]
         && *pos.y_direction().coordinates() == [0., 1., 0.]
         && (axis == [0., 0., 1.] || axis == [0., 0., -1.])
     {
-        return Ok(CapFrame { z, sign: axis[2] });
+        return Ok(CapFrame {
+            z,
+            sign: axis[2],
+            radius,
+        });
     }
     Err(incomplete(
         "canonical decoded cap angular frame and signed axial datum",
@@ -285,4 +304,50 @@ fn coedges(face: &topods::Face) -> Checked<Vec<topods::Edge>> {
             .map_err(|e| native("next curved face coedge", e))?;
     }
     Ok(edges)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::surface_sketch::full_turn::tests::{curved_aperture::fixture, options};
+    use martensite_tkg3d::geom::GeomCylindricalSurface;
+
+    #[test]
+    fn decoded_radius_within_weld_can_still_exceed_the_trace_limit() {
+        let (band, request) = fixture();
+        let plan = AperturePlan::admit(&band, &request, options()).unwrap();
+        let stock = export_stock(&plan.stock, band.rims).unwrap();
+        let cutter = fitted_cutter(&plan, &request).unwrap();
+        let report = &cutter.reports()[&plan.region];
+        let tool = cutter.export_native().unwrap();
+        let bound = binding::bind(&plan, &stock, &tool, report).unwrap();
+        let keys = bound
+            .bindings
+            .iter()
+            .map(|(key, _)| *key)
+            .collect::<Vec<_>>();
+        let bytes = encoding::encode(&bound.body, &bound.bindings).unwrap();
+        let (_, bindings) = encoding::decode(&bytes, &keys).unwrap();
+        let depth = PeriodicDepth::First;
+        let face = stock_face(&plan, &bindings, depth).unwrap();
+        let (surface, _) = BRepTool::surface_with_location(&face).unwrap();
+        let cylinder = surface.downcast_ref::<GeomCylindricalSurface>().unwrap();
+        cylinder.set_radius(cylinder.radius() + 2.5e-7).unwrap();
+        let actual = BRepAdaptorSurface::with_face(&face, true).unwrap();
+        verification::verify_cylinder(&plan.stock, &actual, 3).unwrap();
+        let cap = Cap {
+            plan: &plan,
+            depth,
+            bindings: &bindings,
+            tool: &tool,
+            sources: &bound.sources,
+        };
+        let cause = cap.check(report).unwrap_err();
+        assert!(
+            matches!(cause, SurfaceFailureCause::Incomplete {
+            context: "decoded curved aperture cap image", ref actual,
+        } if actual.contains("Uncertified") && actual.contains("4.00000025")),
+            "{cause:?}"
+        );
+    }
 }
