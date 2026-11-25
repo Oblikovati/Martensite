@@ -141,7 +141,9 @@ fn bezier_wall() -> Face {
     let (a, b) = (Point3::new(0., 0., 0.), Point3::new(1., 0., 0.));
     let mut net = [a, Point3::new(0., 1., 0.), b, Point3::new(1., 1., 0.5)];
     let patch = GeomBezierSurface::new(&Array2::from_buffer(&mut net, 2, 2).unwrap()).unwrap();
-    BRepBuilder::default().make_face_on_surface(&mut face, &Handle::new(patch).into_upcast(), TOL).unwrap();
+    BRepBuilder::default()
+        .make_face_on_surface(&mut face, &Handle::new(patch).into_upcast(), TOL)
+        .unwrap();
     face
 }
 
@@ -153,8 +155,12 @@ fn bezier_wall_edge(shift: f64, trace_v: f64) -> (Edge, Face) {
     let curve = GeomBezierCurve::new(&Array1::from_shared(&rail, 1)).unwrap();
     let trim = [Point2::new(0., trace_v), Point2::new(1., trace_v)];
     let trace = Geom2dBezierCurve::new(&Array1::from_shared(&trim, 1)).unwrap();
-    builder.make_edge_with_curve(&mut edge, &Handle::new(curve).into_upcast(), TOL).unwrap();
-    builder.update_edge_pcurve_on_face(&edge, &Handle::new(trace).into_upcast(), &face, TOL).unwrap();
+    builder
+        .make_edge_with_curve(&mut edge, &Handle::new(curve).into_upcast(), TOL)
+        .unwrap();
+    builder
+        .update_edge_pcurve_on_face(&edge, &Handle::new(trace).into_upcast(), &face, TOL)
+        .unwrap();
     builder.range(&edge, 0., 1., false).unwrap();
     builder.make_wire(&mut wire);
     builder.add(&mut wire, &edge).unwrap();
@@ -166,8 +172,16 @@ fn bezier_wall_edge(shift: f64, trace_v: f64) -> (Edge, Face) {
 fn exact_bezier_boundary_preserves_edge_status_and_checks_changed_geometry() {
     for (shift, trace_v, expected) in [
         (0., 0., vec![NoError]),
-        (1e-3, 0., vec![InvalidCurveOnSurface, InvalidSameParameterFlag]),
-        (0., 1., vec![InvalidCurveOnSurface, InvalidSameParameterFlag]),
+        (
+            1e-3,
+            0.,
+            vec![InvalidCurveOnSurface, InvalidSameParameterFlag],
+        ),
+        (
+            0.,
+            1.,
+            vec![InvalidCurveOnSurface, InvalidSameParameterFlag],
+        ),
     ] {
         let (edge, face) = bezier_wall_edge(shift, trace_v);
         for exact in [false, true] {
