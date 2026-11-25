@@ -17,6 +17,7 @@ mod admission;
 pub(crate) use admission::admit_profile;
 mod admit_curves;
 mod admitted;
+mod bernstein_partition;
 mod bezier;
 mod build_regions;
 mod carriers;
@@ -49,6 +50,7 @@ mod work;
 pub use crate::body_check::ValidationReport;
 pub use crate::measured::{Evidence, IntegrationMethod, Measured, MeasuredPoint};
 pub use crate::sketch_region_certification::CensusWorkReceipt as PlanarProofWorkReceipt;
+pub use bernstein_partition::{NativeBernsteinSpan, exact_bernstein_partition};
 pub use build_regions::{
     build_planar_regions, build_planar_regions_with_integration_budget_and_cancel,
     build_planar_regions_with_proof_and_cancel, build_planar_regions_with_work,

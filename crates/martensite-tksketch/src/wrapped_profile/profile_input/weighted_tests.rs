@@ -347,3 +347,68 @@ fn assert_original_quarter_history(result: &RationalWrappedResult) {
         result.history().len()
     );
 }
+
+#[test]
+fn rational_reference_closed_multipart_spline_keeps_native_knots_and_seam() {
+    let mut request = cylinder();
+    request.profile = closed_rational_spline();
+    request.selections[0].outer.uses.truncate(1);
+    let result = normal_extrude_rational_cylinder(&request, 3, || false)
+        .unwrap_or_else(|error| panic!("{error}"));
+    let expected = std::f64::consts::PI * QUARTER_RADIUS * QUARTER_RADIUS;
+    let actual = result.authored_area();
+    assert!(actual.lower <= expected && expected <= actual.upper);
+    assert_eq!(result.authored_profile(), &request.profile);
+    assert!(result.validation().is_valid());
+    assert_closed_spline_history(&result);
+}
+
+fn assert_closed_spline_history(result: &RationalWrappedResult) {
+    for numerator in [1, 3] {
+        assert!(result.history().iter().any(|record| record.result.source
+            == WrappedEntitySource::SplitVertex {
+                curve: SurfaceCurveId(1),
+                point: WrappedSourcePoint {
+                    numerator,
+                    level: 2
+                },
+            }));
+    }
+    assert!(result.history().iter().any(|record| record.result.source
+        == WrappedEntitySource::Vertex(crate::surface_sketch::SurfaceVertexId(1))));
+    assert_eq!(
+        result.export_native().unwrap().entities.len(),
+        result.history().len()
+    );
+}
+
+fn closed_rational_spline() -> SketchProfile {
+    let r = QUARTER_RADIUS;
+    let poles = vec![
+        [4. + r, 0.],
+        [4. + r, r],
+        [4., r],
+        [4. - r, r],
+        [4. - r, 0.],
+        [4. - r, -r],
+        [4., -r],
+        [4. + r, -r],
+        [4. + r, 0.],
+    ];
+    SketchProfile {
+        plane: ProfilePlane::world_xy(),
+        vertices: vec![ProfileVertex {
+            id: ProfileVertexId(1),
+            point: poles[0],
+        }],
+        curves: vec![ProfileCurve::Spline {
+            id: ProfileCurveId(1),
+            start: ProfileVertexId(1),
+            end: ProfileVertexId(1),
+            degree: 2,
+            poles,
+            weights: Some(vec![1., 1., 2., 2., 4., 4., 8., 8., 16.]),
+            knots: vec![0., 0., 0., 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1., 1., 1.],
+        }],
+    }
+}

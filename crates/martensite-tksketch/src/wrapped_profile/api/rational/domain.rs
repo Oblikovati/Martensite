@@ -127,10 +127,7 @@ struct Hull {
 impl Hull {
     fn capture(source: &input::Source<'_>, spans: &[RationalReferenceSpan]) -> Self {
         let points = source
-            .curve
-            .poles
-            .iter()
-            .copied()
+            .poles()
             .chain(source.lines.iter().flat_map(|line| line.points))
             .chain(spans.iter().flat_map(|span| span.poles));
         let mut hull = Self {
