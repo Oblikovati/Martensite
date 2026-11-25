@@ -753,5 +753,31 @@ frame in 678.38 ms p95. The desktop measurements cover one cylindrical
 rectangle on a part with one body. Native cone, connected sketch group
 and text gestures remain outside this fixture.
 
+At app revision `a611cc915` with SDK revision `0150ea1f`, reopening a
+consumed sketch uses the part state before its extrusion. Finishing the
+edit replays from the first feature that reads the changed sketch. A
+projected world origin on a fixed plane can reuse that prefix. The
+viewport retains the support chart while the extrusion depth changes.
+
+The 960×720 Linux/RADV run used Vulkan validation and the default mailbox
+policy on the 59.97 Hz display. Timings end at a completed native frame.
+
+| Operation | Samples | p95 |
+| --- | ---: | ---: |
+| Drag at 60 Hz input | 400 | 5.71 ms |
+| Drag at 120 Hz input | 400 | 4.46 ms |
+| First extrusion preview | 30 | 14.48 ms |
+| Depth preview at 60 Hz input | 120 | 6.28 ms |
+| Depth preview at 120 Hz input | 120 | 5.78 ms |
+| Commit a new boss | 20 | 381.98 ms |
+| Open a consumed sketch with no retained checkpoint | 20 | 412.82 ms |
+| Save an edited sketch and publish its rebuilt boss | 20 | 650.37 ms |
+
+All 800 drag samples met their frame budget. The equivalent full-replay
+edit reached a completed frame in 1,207.41 ms p95. The scoped edit took
+599.16 ms p95 before native presentation. The correctness tests checked
+the revised volume against the analytic result and verified undo, redo,
+and rejection of a profile outside the support trim.
+
 [Oblikovati #4187](https://github.com/Oblikovati/Oblikovati/issues/4187),
 [Martensite #600](https://github.com/Oblikovati/Martensite/issues/600).
