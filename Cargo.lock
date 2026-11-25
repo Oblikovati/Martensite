@@ -1124,6 +1124,7 @@ name = "martensite-tksketch3d"
 version = "0.1.0"
 dependencies = [
  "martensite-tkmath",
+ "martensite-tksolve",
 ]
 
 [[package]]

@@ -17,6 +17,12 @@ point can serve as a line endpoint and keeps its position if the source changes
 or is deleted. Detach it before moving it. Detachment keeps the point ID and
 incident lines.
 
+Relations have a separate caller-reserved ID namespace. `ConstrainedSketch::apply`
+captures Fix anchors and solves authored relations before adoption. `drag` uses
+the prepared program for that accepted sketch and publishes a new snapshot only
+when the geometry and the caller's physical tolerances pass an independent check.
+Use `inspect_rank` outside interactive drag when numerical rank needs inspection.
+
 Supply a positive finite minimum in model units when creating the snapshot.
 Admission compares the squared distance of the supplied coordinates with the
 squared minimum using exact arithmetic. Equality is allowed. Line geometry

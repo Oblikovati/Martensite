@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Owned spatial sketch points and lines with atomic edit validation.
 mod admission;
+pub mod constraints;
 mod edit;
 mod failure;
 mod source;

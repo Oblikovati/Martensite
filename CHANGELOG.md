@@ -22,6 +22,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added a per-operation worker limit for certified cylinder attachments so applications could reserve CPU time for interactive edits (#425).
 
+- Added fixed points and lines, coincident points, directed parallel lines, and driving lengths for spatial sketches with bounded drag and independent geometry checks (#611).
+
 - Added source-bound radial motion and stock-contact bounds for stored cylindrical ruled sides (#420).
 
 - Added checked cylindrical and conical normal extrusions for mixed line, clamped spline, circular and elliptic boundaries, including rotated axes and sewn endpoints, with directed holes, signed normal depths, original parameter history and certified material measurements (#418).
