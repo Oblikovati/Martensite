@@ -53,8 +53,9 @@ The rational normal entries accept one positive-weight spline with monotone
 Bernstein spans or one exact circular or axis-aligned elliptic quarter. Either
 can use straight edges to close its outer region. The entries require symmetric signed
 depths and one angular chart. The cone additionally requires the profile in
-the positive developed halfplane, clear of the apex. The tested cone request
-selects `GeometricCompositeV6` for its UV cap proof. The reference level splits
+the positive developed halfplane, clear of the apex. The rational cylinder
+uses `GeometricCompositeV6` for its reference planar proof. The tested cone
+request selects the same version for its UV cap proof. The reference level splits
 each native span into equal dyadic intervals. An authored multipart spline
 must already have full Bernstein knot multiplicity and exact dyadic native
 intervals. It may close at a shared authored vertex.

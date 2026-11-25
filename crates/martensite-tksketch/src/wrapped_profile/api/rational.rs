@@ -2,8 +2,9 @@
 use super::*;
 use martensite_tkbo::body_check::ValidationReport;
 use martensite_tkbo::profile_extrusion::{
-    OperationDecline, PlanarProofWorkLimit, PlanarProofWorkReceipt, PlanarRegionWorkFailure,
-    ProfileCurveId, SketchProfile, build_planar_regions_with_work_and_cancel,
+    OperationDecline, PlanarProofVersion, PlanarProofWorkLimit, PlanarProofWorkReceipt,
+    PlanarRegionWorkFailure, ProfileCurveId, SketchProfile,
+    build_planar_regions_with_work_and_cancel,
 };
 use martensite_tkmath::predicates::roots::metric_bounds::{
     CertifiedRationalMeasure, RationalIntegralError, RationalReferenceFailure,
@@ -156,8 +157,13 @@ pub fn normal_extrude_rational_cylinder(
         &mut cancelled,
     )?;
     let native = prepared.proxy.cylinder(request);
-    let retained =
-        normal_extrude_profile_with_cancel(&native, &mut cancelled).map_err(wrapped_failure)?;
+    let inputs = super::input::read(&native, &mut cancelled).map_err(wrapped_failure)?;
+    let proof = PlanarProofVersion::GeometricCompositeV6 {
+        max_components: 64,
+        max_total_subintervals: 100_000,
+    };
+    let retained = operation::from_inputs_with_proof(&native, inputs, proof, &mut cancelled)
+        .map_err(wrapped_failure)?;
     prepared.finish(
         retained.into(),
         request.depths[1],
