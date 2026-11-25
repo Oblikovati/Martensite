@@ -50,7 +50,7 @@ impl Transform3 {
         if scale != 1. {
             return Err(UnitPlacementError::Scale(scale));
         }
-        let matrix = self.matrix().coefficients();
+        let matrix = *self.matrix().coefficients();
         let translation = *self.translation_part().coordinates();
         let form = self.form();
         if !shortcut_agrees(form, matrix, translation) {
