@@ -4,7 +4,7 @@ use super::super::{RootIsolation, RootIsolationOptions};
 use super::{
     algebraic,
     operation::PairOperationFailure,
-    source::{HomogeneousPolynomials, OwnedBezierSource},
+    source::{HomogeneousPolynomials, ObservedHomogeneous, OwnedBezierSource},
 };
 #[derive(Debug)]
 pub(super) struct SourceCertificate {
@@ -20,8 +20,29 @@ pub(super) fn certify(
     let homogeneous = source
         .homogeneous(cancelled)
         .map_err(PairOperationFailure::Source)?;
-    let denominator =
-        checked_denominator(&homogeneous, source.interval, options, budget, cancelled)?;
+    certify_homogeneous(homogeneous, source.interval, options, budget, cancelled)
+}
+
+pub(super) fn certify_observed(
+    observed: ObservedHomogeneous<'_>,
+    options: RootIsolationOptions,
+    budget: &super::work_budget::PairWorkBudget,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<SourceCertificate, PairOperationFailure> {
+    let (source, homogeneous) = observed
+        .replay(cancelled)
+        .map_err(PairOperationFailure::Source)?;
+    certify_homogeneous(homogeneous, source.interval, options, budget, cancelled)
+}
+
+fn certify_homogeneous(
+    homogeneous: HomogeneousPolynomials,
+    interval: [f64; 2],
+    options: RootIsolationOptions,
+    budget: &super::work_budget::PairWorkBudget,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<SourceCertificate, PairOperationFailure> {
+    let denominator = checked_denominator(&homogeneous, interval, options, budget, cancelled)?;
     Ok(SourceCertificate {
         homogeneous,
         denominator,

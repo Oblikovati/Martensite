@@ -1,0 +1,18 @@
+{
+  "source_head": "da08ca1a46c622c4a63fceb696ba1a06f807bdc8",
+  "source_manifest_sha256": "820af5e4fbbbfa674e389a3f2d35fa0ce77d529be63a90ee6a49cb5944d77f66",
+  "tests_passed": 5,
+  "multiline_source_curves": 239,
+  "multiline_selected_regions": 18,
+  "independent_authored_volume_oracle": "226802403/134217728",
+  "multiline_test_total_seconds": 47.9,
+  "four_other_tests_total_seconds": 28.03,
+  "prior_zero_test_attempt_refused": true,
+  "performance_accepted": false,
+  "scope": "Full multiline cylinder standalone; single-glyph boss/pocket, seam crossing and edit/replay. Not full multiline attachment or cone text.",
+  "post_execution_edits": [
+    "crates/martensite-tkv3d/tests/wrapped_text_regions/body_controls.rs"
+  ],
+  "post_execution_edits_match_committed_tested_source": true,
+  "post_execution_edit_reason": "New multiline attachment regression module added after observing both terminal passing logs; tested binary is separately SHA-bound."
+}

@@ -1,0 +1,41 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "taskset",
+    "-c",
+    "14",
+    "/tmp/martensite-v6-stage-attribution-r2/probe-binary",
+    "surface_sketch::wrapped_profile::operation::cone::tests::narrow::complete::directed::geometric_v6_outward_requires_complete_actual_si",
+    "--exact",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "binary_sha256": "49969f00dd873cab5aa9dbbeb121af4fa644701883eccddfd78bb2a01aad3425",
+  "source_files_verified": 346,
+  "concurrent_compilers": [
+    {
+      "pid": "1494812",
+      "name": "cargo",
+      "cwd": "/home/vmiguel/git/oblikovati-workspace/oblikovati-rust/.slim/worktrees/constraint-settings-4158"
+    },
+    {
+      "pid": "1494825",
+      "name": "rustc",
+      "cwd": "/home/vmiguel/git/oblikovati-workspace/oblikovati-rust/.slim/worktrees/constraint-settings-4158"
+    },
+    {
+      "pid": "1495541",
+      "name": "cargo",
+      "cwd": "/home/vmiguel/git/oblikovati-workspace/oblikovati-rust/.slim/worktrees/glyph-visibility-4166"
+    },
+    {
+      "pid": "1495553",
+      "name": "rustc",
+      "cwd": "/home/vmiguel/git/oblikovati-workspace/oblikovati-rust/.slim/worktrees/glyph-visibility-4166"
+    }
+  ],
+  "cpu": 14,
+  "prequiet_busy": 0.010000000000000009,
+  "meaning": "single instrumented attribution diagnostic, not performance acceptance"
+}

@@ -1,16 +1,15 @@
 # Wrapped-profile API contract
 
 The current candidate exposes cylinder and cone solved-profile operations from
-`martensite_tksketch::surface_sketch` (#418). The cone implementation is preserved
-as feature working changes above integration
-`64110e402e131afff2e3fadcbf9e2b9d4c9b245c`. Phase A's curved outer contour with a
-hole now completes through the public entry. Full local library, public
-integration, explicit contention and the canonical local cone PR gate passed;
-the case-specific footprint tradeoff was accepted on 2026-11-18. Final Gate A
-review accepted a phase commit and ready PR. Required hosted checks, including
-new cone TSan, remain pending and must pass before merge. This is an
-unreleased candidate contract, not completion of general
-cone wrapping. Existing cylinder-rectangle and conical-sector APIs retain their
+`martensite_tksketch::surface_sketch` (#418). Phase A was integrated by
+[PR #549](https://github.com/Oblikovati/Martensite/pull/549) into `release/next`
+at `8f2b423103d13b22d9724747946b43ee1ca15ded`. Required hosted checks passed on
+PR head `7a2aa0814a3f8c5b049aaec74b5d98bd26b296fe`, including actual new cone
+TSan execution. The receipts were captured before merge and retain that tested
+head. Phase A's curved outer contour with a hole completes through the public
+entry, and the case-specific footprint tradeoff was accepted on 2026-11-18.
+This is an unreleased bounded contract, not completion of general cone wrapping
+or B/C qualification. Existing cylinder-rectangle and conical-sector APIs retain their
 signatures and behavior.
 
 ## Entries and owned input
@@ -19,7 +18,9 @@ signatures and behavior.
 | --- | --- | --- |
 | Cylinder | `normal_extrude_profile`, `normal_extrude_profile_with_cancel` | `WrappedNormalRequest`, `WrappedNormalResult` |
 | Cylinder with explicit chart placement | `normal_extrude_profile_on_chart`, `normal_extrude_profile_on_chart_with_cancel` | Existing cylinder request and `WrappedChartNormalResult`; see [frame contract](OBLIQUE-FRAMES.md). |
-| Cone candidate | `normal_extrude_cone_profile`, `normal_extrude_cone_profile_with_cancel` | `WrappedConeNormalRequest`, `WrappedConeNormalResult` |
+| Canonical cone | `normal_extrude_cone_profile`, `normal_extrude_cone_profile_with_cancel` | `WrappedConeNormalRequest`, `WrappedConeNormalResult` |
+| Placed cone | `normal_extrude_cone_profile_on_chart`, `normal_extrude_cone_profile_on_chart_with_cancel` | Existing request and execution selector, `WrappedPlacedConeResult`. See [cone placement](CONE-PLACEMENT.md). |
+| Certified conical frustum | `ConeFaceAttachment::apply_certified_wrapped_profile`, `apply_certified_wrapped_profile_with_cancel` | `WrappedConeNormalRequest` with the V9 family-chart selector and a `CertifiedConeFeatureResult`. |
 
 A request owns a solved `SketchProfile`, explicit `WrappedRegionSelection`
 values, analytic support, increasing signed normal depths and
@@ -37,16 +38,19 @@ Their [oblique bounds](OBLIQUE-FRAMES.md) cover the decoded located graph and
 direct location evaluation. A normalized analytic convenience-query copy is a
 separate representation requiring correspondence evidence.
 
-The cone input uses developed Cartesian `[x,y]` measured from the apex. Phase A
-requires exactly apex `[0,0,0]`, axis `[0,0,1]` and radial `[1,0,0]`.
-`admit_frame` returns `Unsupported` before source capture for other frames.
-The whole family must fit one admitted strict angular chart/wedge, with positive
-radius throughout its filled material and depth interval. The fitted reference
-must also satisfy the chart and perturbation margin. Chart admission and finite
-proof exhaustion return typed refusals. This scope does not establish wider
-wraps, seam occurrences, text-scale families, oblique cone placement or attachment.
-Those remain Phase B; exact primitive-span lowering and replacement deletion
-remain Phase C.
+The cone input uses developed Cartesian `[x,y]` measured from the apex.
+The canonical entry requires apex `[0,0,0]`, axis `[0,0,1]` and radial
+`[1,0,0]`. It returns `Unsupported` before source capture for other
+frames. The placed entry uses the requested frame and chart angle and
+reserves a canonical error allowance before fitting.
+
+A selected chart must retain positive radius throughout its filled
+material and depth interval. The fitted reference must also satisfy the
+chart and perturbation margins. The [cone region atlas](CONE-REGION-ATLAS.md)
+can use multiple charts for disconnected regions. Connected profiles
+requiring multiple charts, seam occurrences, larger text families, and
+cone-face attachment remain Phase B. Exact primitive-span lowering and
+replacement deletion remain Phase C.
 
 ## Cone request example
 
@@ -94,6 +98,15 @@ different work/cancellation traces. Existing cylinder and toolkit defaults stay
 unchanged. The requested selector is rebound to the actual UV capture receipt
 and reported by `reports()[&region].material.planar_proof`.
 
+`DirectedTransportedAuthoredPlanarAndCapCyclesV9` uses the positive-X family
+chart and the V8 authored GeometricCompositeV6 program. For each decoded
+cap it checks every self and distinct curve domain, verifies the exact join
+parameters, and proves the orientation and nesting of the directed outer
+cycle and holes. It requires `GeometricCompositeV6` as the request's cap
+policy. Its work receipt records the original cap, the remaining operation
+allowance, the effective cap and the work spent. Native cap rebinding and
+ordered self-intersection checks still run on the frozen tool.
+
 The cone proof defaults retain 128 fractional arithmetic bits and one finite
 aggregate allowance of 1,000,000 charged operations. `integration` uses
 `CylindricalFluxOptions::default()` as a shared finite reference-volume and
@@ -103,6 +116,27 @@ subdivision level 6, clearance level 0 and enclosure width `1e-7`.
 tighter requests are not silently enlarged. `proof_options()` returns the
 original values, while leaf receipts retain actual remaining/effective settings
 and consumed work. Zero work can refuse as incomplete; it is not a no-limit mode.
+
+## Certified conical-frustum attachment
+
+The explicit attachment entry admits a full, axis-aligned conical frustum
+with two retained planar disks and one proved periodic seam. It uses the
+V9 family-chart selector, zero first depth, the material sense prescribed
+by the selected face and a `Report` volume policy. The result carries
+the committed B-rep, composed authored history, physical spatial budget,
+certified sewing gap and ordered validation coverage. The individual tool's
+volume comparison belongs to the separate tool result.
+
+Applications can pass their names and the corresponding native shapes to
+`ConeFaceAttachment::bind_feature_sources`. Each name resolves to the source
+reference used in the certified boss or pocket history. Binding requires the
+attachment revision and the exact body and face recorded at capture.
+
+The operation constructs the tool in one owner and validates the decoded
+final solid. Its checks account for every cap, ruled side, stock trim,
+shared seam, oriented edge use and vertex link. The exact contact policy
+covers the declared native tolerances on those domains. An unsupported
+source or an incomplete proof returns a refusal at the failing stage.
 
 ## Reference body and native representation
 
@@ -151,6 +185,8 @@ Both result families own frozen bytes and authored history. For cones:
 | `encoded_brep()`, `export_native()` | Immutable keyed archive and independently decoded native owners. |
 | `reports()[&region]` | `WrappedConeMemberReport`: counted incidence, native validation, boundary/trace/tolerance, actual storage, material and measure evidence. |
 | `budget()` | `WrappedConeBudgetReport`: source and aggregate planar work, aggregate arithmetic/integration work, requested/achieved spatial bounds, reference/bridge bounds and family volume comparisons. |
+| `planar_integral_receipt(region)` | The decoded face and orbit integral program for V5 or V6. |
+| `directed_cap_receipt(region)` | The V9 decoded cap cycle census, pair and winding work, and integration allowance and consumption. |
 | `reference_body_receipt()` | Actual source-bound reference topology, filled-body and storage composition. |
 | `reference_volume_receipt(region)` | `CertifiedConicalReferenceVolume`, with integration enclosure, effective policies and work. |
 | `authored_receipt(region)`, `flux_receipt(region)` | Original-source volume and conditional proxy-flux receipts. |
@@ -245,12 +281,16 @@ reference/body correctness findings. The maintainer accepted the quantified
 Phase A code/process footprint tradeoff on 2026-11-18. Final
 [review 3](references/cone-gate-a-oracle-3-2026-11-18.md) accepted the bounded
 phase commit and ready PR. The [dated decision](PRODUCTION-MEMORY-ACCEPTANCE.md#maintainer-decision-2026-11-18)
-does not change runtime, heap, tolerance or general performance policy. Hosted
-checks, including new cone TSan, remain pending and must pass before merge.
-This acceptance does not complete #414/#418; B/C have not started. The focused
-ordinary cone concurrency control passed; driver and inventory checks passed
-46 and 9 tests. The TSan startup fixture exited 139
-before `main`, and no instrumented cone geometry ran.
+does not change runtime, heap, tolerance or general performance policy. Required
+hosted checks then passed on `7a2aa081`: the
+[final receipt](references/phase-a-549-hosted-final-receipt-2026-11-18.json)
+records 55 successful and 4 skipped checks, and the
+[cone TSan receipt](references/phase-a-549-hosted-tsan-receipt-2026-11-18.json)
+records the actual public concurrency control passing 1/0/0 in 167.83 seconds.
+PR #549 subsequently merged at `8f2b4231`. The earlier ordinary concurrency and
+46 driver/9 inventory controls remain separate evidence. Local startup exit
+139 is preserved as a historical failed attempt; hosted cone instrumentation
+subsequently ran and passed. This does not complete #414/#418 or B/C.
 
 The final campaign compares the two cone policies in the same executable and
 uses a stronger cylinder baseline from accepted source before the shared
@@ -321,6 +361,53 @@ original metrics were retained, and no cone timing was rerun. Both campaigns
 are preserved rather than selecting only the faster observations. Neither
 campaign grants remaining kernel/application acceptance or a release.
 
+## Uncommitted B1 opt-in path, 2026-11-19
+
+HEAD `8f2b423103d13b22d9724747946b43ee1ca15ded` contains merged Phase A. The B1
+implementation is additional uncommitted work, not part of that commit or a
+qualified extension of the full API contract. Its explicit entry points are
+`normal_extrude_cone_profile_with_domain_policy` and
+`normal_extrude_cone_profile_with_domain_policy_and_cancel`.
+`WrappedConeDomainPolicy::LegacySectorV1` remains the existing default;
+`PositiveXCommonChartV2` selects actual UV-trim and normal-material evidence in
+one positive-X common chart. `result.domain_policy()` retains that choice, and
+`chart_domain_receipt()` exposes its executed V2 receipt (legacy returns `None`).
+
+The branch's owned polynomial punctuation control explicitly requests composite
+UV proof V5 while retaining the original finite limits. Given an admitted owned
+`request`, the selection is:
+
+```rust
+let mut b1_request = request.clone();
+b1_request.proof.planar_proof = PlanarProofVersion::FilteredCompositeBernsteinV5 {
+    max_components: 64,
+    max_total_subintervals: u64::from(b1_request.proof.integration.max_total_subintervals),
+};
+let result = normal_extrude_cone_profile_with_domain_policy(
+    &b1_request,
+    WrappedConeDomainPolicy::PositiveXCommonChartV2,
+)?;
+assert_eq!(result.domain_policy(), WrappedConeDomainPolicy::PositiveXCommonChartV2);
+```
+
+The V2 path explicitly selects `ConicalAuthoredFluxMethod::ConditionedSimpsonV2`
+and reuses pi bounds per bounded arithmetic batch. The legacy authored method,
+V4/default selectors and earlier replay paths remain selectable and unchanged.
+No tolerance or work limit is widened by these selections.
+
+Two complete outward/inward `O.` fixture controls passed with unchanged source
+within each run and identical pre-run manifests. API times were `150.110240`
+and `114.468438` seconds; both consumed 984593/1000000 arithmetic operations and
+501 integration subintervals. The fixture has eight O curves plus four dot
+curves, two regions and three loops, at epsilon `1e-4`, fit level 8, authored
+level 6/width `1e-7` and 128 bits. Reported `retained_spans: 167` means derived
+side faces (`faces - 2` per member), not an independent fitted-span census.
+The [compact receipt](references/b1-functional-punctuation-2026-11-19.json)
+binds these results to their commands, profile, manifest and unprobed binary.
+They are runtime diagnostics, not a matched benchmark or performance pass;
+B1 remains incomplete with phase gate 0 of 3. No five-second or full B/C
+capability acceptance follows.
+
 ## Historical checkpoints
 
 P4's canonical-cylinder checkpoint passed 199 library tests in 30.59 seconds
@@ -332,6 +419,7 @@ Clippy. These are historical cylinder records, not current cone qualification.
 The [P4 review](P4-REVIEW-2026-11-14.md) and
 [cap-realization composition](CAP-REALIZATION.md#filled-cap-distance-composition)
 retain the earlier review and accounting history. The current bounded candidate
-review accepted a commit and ready PR; required hosted checks, including new
-cone TSan, must still pass before merge. The local affected-package pass is
-recorded above. No package version or release tag is authorized by these records.
+review accepted a commit and ready PR; required hosted checks, including actual
+new cone TSan execution, passed before the Phase A merge. The local and hosted
+evidence is recorded above. No package version or release tag is authorized by
+these records, and B/C qualification remains outstanding.

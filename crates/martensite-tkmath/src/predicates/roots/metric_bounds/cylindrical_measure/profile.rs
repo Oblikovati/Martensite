@@ -27,11 +27,7 @@ pub(super) fn integral(
 ) -> Checked<Interval> {
     let derivative = curve::derivative(&poles[1], arithmetic)?;
     let product = polynomial::product(&poles[0], &derivative, arithmetic)?;
-    let mut sum = arithmetic.zero();
-    for pole in &product {
-        sum = arithmetic.add(&sum, pole)?;
-    }
-    Ok(arithmetic.fraction(&sum, 1, product.len() as u64)?)
+    Ok(polynomial::integrate_unit(&product, arithmetic)?)
 }
 pub(super) fn discrepancy(
     source: &CylindricalProfileSource<'_>,

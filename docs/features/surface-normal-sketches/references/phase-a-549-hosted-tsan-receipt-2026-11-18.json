@@ -1,0 +1,15 @@
+{
+  "head": "7a2aa0814a3f8c5b049aaec74b5d98bd26b296fe",
+  "run_id": 44378122033,
+  "job_id": 135063041701,
+  "job_conclusion": "success",
+  "job_url": "https://github.com/Oblikovati/Martensite/actions/runs/44378122033/job/135063041701",
+  "exact_test": "surface_sketch::wrapped_profile::operation::cone::tests::completed::concurrency::overlapping_public_cone_operations_and_shared_readers_preserve_owned_evidence",
+  "actually_executed": true,
+  "result": "1 passed; 0 failed; 0 ignored; 451 filtered out",
+  "finished_seconds": 167.83,
+  "completed_utc": "2026-11-18T19:39:32.5000359Z",
+  "log": "/tmp/martensite-549-hosted-tsan.log",
+  "log_sha256": "b4a4edce313f2b68eee8d8aa7acf8435433d8dfce91bd7429e1d2a3942a7602c",
+  "test_result_line": "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 451 filtered out; finished in 167.83s"
+}

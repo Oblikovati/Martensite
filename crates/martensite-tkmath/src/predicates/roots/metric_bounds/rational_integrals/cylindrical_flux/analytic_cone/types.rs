@@ -54,7 +54,7 @@ impl CertifiedAnalyticConicalFlux {
     pub fn requested_options(&self) -> CylindricalFluxOptions {
         self.options
     }
-    /// Unchanged aggregate integration policy; per-span remaining limits are reported separately.
+    /// Unchanged parent integration policy; scalar term algorithm1 and per-span grants are separate.
     /// Example: `assert_eq!(proof.effective_options(), proof.requested_options());`.
     pub fn effective_options(&self) -> CylindricalFluxOptions {
         self.options
@@ -79,7 +79,7 @@ impl CertifiedAnalyticConicalFlux {
     pub fn span_work(&self) -> &[CylindricalFluxWork] {
         &self.work
     }
-    /// Charged carrier-coefficient interval operations; exact polynomial moments use their bounded degree.
+    /// Charged coefficient operations, plus outward accumulation operations for parent version2.
     /// Example: `assert!(proof.arithmetic_operations() <= proof.requested_arithmetic().max_operations);`.
     pub fn arithmetic_operations(&self) -> u32 {
         self.operations
@@ -88,10 +88,15 @@ impl CertifiedAnalyticConicalFlux {
     pub fn span_count(&self) -> usize {
         self.work.len()
     }
-    /// Bind actual carrier/curve/weight/orientation bits independently of valid resource policies.
+    /// Bind actual geometry; parent2 additionally binds its full precision and resource policy.
     /// Example: `assert!(proof.matches_source(query));`.
     pub fn matches_source(&self, query: AnalyticConicalFluxQuery<'_>) -> bool {
-        admission::admit(query).is_ok() && self.bits == binding::source_bits(query)
+        admission::admit(query).is_ok()
+            && self.options.behavior_version == query.options.behavior_version
+            && self.bits == binding::source_bits(query)
+            && (self.options.behavior_version == 1
+                || binding::policy_bits(self.options, self.arithmetic)
+                    == binding::policy_bits(query.options, query.arithmetic))
     }
     pub(super) fn assemble(
         query: AnalyticConicalFluxQuery<'_>,

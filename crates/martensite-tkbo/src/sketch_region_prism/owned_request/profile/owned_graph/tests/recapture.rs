@@ -42,7 +42,7 @@ fn check_mutated_batch(
     assert!(live.certificate(domain).is_none());
     assert!(!census.source_representation_certified());
 }
-fn change_curve(census: &BoundaryCensus) {
+pub(super) fn change_curve(census: &BoundaryCensus) {
     let native = edge(&census.inputs.segments[0].edge).unwrap();
     let (curve, _, _) = BRepTool::curve(&native).unwrap();
     curve

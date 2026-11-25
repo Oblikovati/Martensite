@@ -1,0 +1,1150 @@
+{
+  "kind": "instrumented diagnostic, not performance acceptance",
+  "probes": {
+    "r2": {
+      "api_seconds": 12.342035161,
+      "controlled_stage_seconds": 12.310827842,
+      "outside_control_seconds": 0.031207318999999956,
+      "operation_records_only": [
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/input.rs:capture_with_selection",
+          "seconds": 0.000185243,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare/selection.rs:planar",
+          "seconds": 0.163755725,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/domain.rs:certify",
+          "seconds": 0.003316468,
+          "metric_units": 14792
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare.rs:prepare_regions",
+          "seconds": 0.305992626,
+          "metric_units": 695418
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare/clearance.rs:certify",
+          "seconds": 0.006552136,
+          "metric_units": 14764
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare/directed.rs:finalize",
+          "seconds": 0.016854092,
+          "metric_units": 12140
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare.rs:select_with_execution",
+          "seconds": 0.496610815,
+          "metric_units": 737114
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/Selection/None",
+          "seconds": 0.496621666,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/Construction/Some(SurfaceRegionId(1))",
+          "seconds": 0.238879788,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/Construction/Some(SurfaceRegionId(2))",
+          "seconds": 0.026009697,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/Encoding/None",
+          "seconds": 0.077250519,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/Coverage/None",
+          "seconds": 0.004564848,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/History/None",
+          "seconds": 0.001944408,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/Storage/Some(SurfaceRegionId(1))",
+          "seconds": 0.24079883,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/Storage/Some(SurfaceRegionId(2))",
+          "seconds": 0.0180149,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/Binding/None",
+          "seconds": 0.000278074,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/material.rs:certify_uv",
+          "seconds": 6.029340606,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/material.rs:certify",
+          "seconds": 6.038348878,
+          "metric_units": 13338
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/measures/reference.rs:certify",
+          "seconds": 0.663779257,
+          "metric_units": 475
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/measures/flux.rs:certify",
+          "seconds": 0.685511938,
+          "metric_units": 954
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/measures.rs:authored_for_chart",
+          "seconds": 0.012479416,
+          "metric_units": 29953
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/measures.rs:geometry",
+          "seconds": 7.400209195,
+          "metric_units": 44720
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/MemberChecks/Some(SurfaceRegionId(1))",
+          "seconds": 7.400224693,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/material.rs:certify_uv",
+          "seconds": 0.084231258,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/material.rs:certify",
+          "seconds": 0.085306488,
+          "metric_units": 1494
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/measures/reference.rs:certify",
+          "seconds": 0.018117992,
+          "metric_units": 475
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/measures/flux.rs:certify",
+          "seconds": 0.033694188,
+          "metric_units": 954
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/measures.rs:authored_for_chart",
+          "seconds": 0.00525787,
+          "metric_units": 6739
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/measures.rs:geometry",
+          "seconds": 0.142423756,
+          "metric_units": 9662
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/MemberChecks/Some(SurfaceRegionId(2))",
+          "seconds": 0.142437972,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/actual.rs:certify_family",
+          "seconds": 0.127663149,
+          "metric_units": 35904
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/MemberChecks/None",
+          "seconds": 0.127700547,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "pipeline/qualification.rs:certified_conical_checks",
+          "seconds": 2.973608995,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "pipeline.rs:estimate",
+          "seconds": 0.163624433,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/MemberChecks/Some(SurfaceRegionId(1))",
+          "seconds": 3.137319938,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "pipeline/qualification.rs:certified_conical_checks",
+          "seconds": 0.196994171,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "pipeline.rs:estimate",
+          "seconds": 0.010288081,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/MemberChecks/Some(SurfaceRegionId(2))",
+          "seconds": 0.207357019,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/measures.rs:budget",
+          "seconds": 0.191383677,
+          "metric_units": 2521
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/Budget/None",
+          "seconds": 0.191421947,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/Completion/None",
+          "seconds": 2.996e-06,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/publication.rs:publish",
+          "seconds": 0.028008836,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/mod.rs:execute_with_selection",
+          "seconds": 12.342035161,
+          "metric_units": 0
+        }
+      ],
+      "work_by_disjoint_phase": {
+        "selection": 737114,
+        "decoded_storage": 159434,
+        "member_geometry": 54382,
+        "actual_si": 35904,
+        "family_budget": 2521
+      },
+      "total_metric_units": 989355,
+      "integration_cells": 444,
+      "retained_spans": 148,
+      "test_passed": true,
+      "configuration": {
+        "command": [
+          "/usr/bin/time",
+          "-v",
+          "taskset",
+          "-c",
+          "14",
+          "/tmp/martensite-v6-stage-attribution-r2/probe-binary",
+          "surface_sketch::wrapped_profile::operation::cone::tests::narrow::complete::directed::geometric_v6_outward_requires_complete_actual_si",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "49969f00dd873cab5aa9dbbeb121af4fa644701883eccddfd78bb2a01aad3425",
+        "source_files_verified": 346,
+        "concurrent_compilers": [
+          {
+            "pid": "1494812",
+            "name": "cargo",
+            "cwd": "/home/vmiguel/git/oblikovati-workspace/oblikovati-rust/.slim/worktrees/constraint-settings-4158"
+          },
+          {
+            "pid": "1494825",
+            "name": "rustc",
+            "cwd": "/home/vmiguel/git/oblikovati-workspace/oblikovati-rust/.slim/worktrees/constraint-settings-4158"
+          },
+          {
+            "pid": "1495541",
+            "name": "cargo",
+            "cwd": "/home/vmiguel/git/oblikovati-workspace/oblikovati-rust/.slim/worktrees/glyph-visibility-4166"
+          },
+          {
+            "pid": "1495553",
+            "name": "rustc",
+            "cwd": "/home/vmiguel/git/oblikovati-workspace/oblikovati-rust/.slim/worktrees/glyph-visibility-4166"
+          }
+        ],
+        "cpu": 14,
+        "prequiet_busy": 0.010000000000000009,
+        "meaning": "single instrumented attribution diagnostic, not performance acceptance"
+      },
+      "cargo_profiles": [
+        {
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "num_integer",
+            "src_path": "/home/vmiguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-integer-0.1.47/src/lib.rs",
+            "edition": "2018",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "0",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          },
+          "fresh": true
+        },
+        {
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "num_bigint",
+            "src_path": "/home/vmiguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/lib.rs",
+            "edition": "2021",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "3",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          },
+          "fresh": true
+        },
+        {
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "martensite_tkmath",
+            "src_path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkmath/src/lib.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "3",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          },
+          "fresh": true
+        },
+        {
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "martensite_tkbo",
+            "src_path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkbo/src/lib.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "1",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          },
+          "fresh": true
+        },
+        {
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "martensite_tksketch",
+            "src_path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tksketch/src/lib.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "0",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": true
+          },
+          "fresh": false
+        }
+      ]
+    },
+    "r3": {
+      "api_seconds": 9.501935683,
+      "controlled_stage_seconds": 9.481248869,
+      "outside_control_seconds": 0.020686813999999387,
+      "operation_records_only": [
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/input.rs:capture_with_selection",
+          "seconds": 0.000255362,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "../../../martensite-tkbo/src/sketch_region_prism/owned_request/profile/pipeline.rs:census",
+          "seconds": 0.068525621,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "../../../martensite-tkbo/src/sketch_region_prism/owned_request/profile/pipeline.rs:partition",
+          "seconds": 0.032752326,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "../../../martensite-tkbo/src/sketch_region_prism/owned_request/profile/pipeline.rs:contacts",
+          "seconds": 0.003384193,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare/selection.rs:planar",
+          "seconds": 0.177649409,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/domain.rs:certify",
+          "seconds": 0.003487254,
+          "metric_units": 14792
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare.rs:radius",
+          "seconds": 0.000199149,
+          "metric_units": 585
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare/fit.rs:plan",
+          "seconds": 0.029534179,
+          "metric_units": 80961
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare.rs:radius",
+          "seconds": 0.000182006,
+          "metric_units": 585
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare/fit.rs:plan",
+          "seconds": 0.029716266,
+          "metric_units": 85988
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare.rs:radius",
+          "seconds": 0.000169123,
+          "metric_units": 585
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare/fit.rs:plan",
+          "seconds": 0.035503427,
+          "metric_units": 86008
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare.rs:radius",
+          "seconds": 0.000223964,
+          "metric_units": 585
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare/fit.rs:plan",
+          "seconds": 0.037500993,
+          "metric_units": 86036
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare.rs:radius",
+          "seconds": 0.000177769,
+          "metric_units": 585
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare/fit.rs:plan",
+          "seconds": 0.026930371,
+          "metric_units": 76030
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare.rs:radius",
+          "seconds": 0.000189501,
+          "metric_units": 585
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare/fit.rs:plan",
+          "seconds": 0.030347775,
+          "metric_units": 81045
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare.rs:radius",
+          "seconds": 0.000164715,
+          "metric_units": 585
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare/fit.rs:plan",
+          "seconds": 0.026928537,
+          "metric_units": 80949
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare.rs:radius",
+          "seconds": 0.000189992,
+          "metric_units": 585
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare/fit.rs:plan",
+          "seconds": 0.026176605,
+          "metric_units": 76008
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare.rs:radius",
+          "seconds": 0.000161749,
+          "metric_units": 496
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare/fit.rs:plan",
+          "seconds": 0.00101056,
+          "metric_units": 2386
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare.rs:radius",
+          "seconds": 0.000147483,
+          "metric_units": 496
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare/fit.rs:plan",
+          "seconds": 0.005807518,
+          "metric_units": 13629
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare.rs:radius",
+          "seconds": 0.000164003,
+          "metric_units": 496
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare/fit.rs:plan",
+          "seconds": 0.002786968,
+          "metric_units": 6115
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare.rs:radius",
+          "seconds": 0.000169033,
+          "metric_units": 496
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare/fit.rs:plan",
+          "seconds": 0.006337589,
+          "metric_units": 13599
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare.rs:prepare_regions",
+          "seconds": 0.261303318,
+          "metric_units": 695418
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare/clearance.rs:certify",
+          "seconds": 0.006479452,
+          "metric_units": 14764
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare/directed.rs:finalize",
+          "seconds": 0.013491128,
+          "metric_units": 12140
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/prepare.rs:select_with_execution",
+          "seconds": 0.46246443,
+          "metric_units": 737114
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/Selection/None",
+          "seconds": 0.462479869,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/Construction/Some(SurfaceRegionId(1))",
+          "seconds": 0.201374026,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/Construction/Some(SurfaceRegionId(2))",
+          "seconds": 0.017669301,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/Encoding/None",
+          "seconds": 0.07068052,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/Coverage/None",
+          "seconds": 0.003990675,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/History/None",
+          "seconds": 0.001695057,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/storage.rs:capture",
+          "seconds": 0.185336134,
+          "metric_units": 147608
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/Storage/Some(SurfaceRegionId(1))",
+          "seconds": 0.185364958,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/storage.rs:capture",
+          "seconds": 0.017104385,
+          "metric_units": 11826
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/Storage/Some(SurfaceRegionId(2))",
+          "seconds": 0.017119774,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/Binding/None",
+          "seconds": 0.000254351,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "../../../martensite-tkbo/src/sketch_region_prism/owned_request/profile/pipeline.rs:census",
+          "seconds": 0.355330186,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "../../../martensite-tkbo/src/sketch_region_prism/owned_request/profile/pipeline.rs:partition",
+          "seconds": 0.46626838,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "../../../martensite-tkbo/src/sketch_region_prism/owned_request/profile/pipeline.rs:contacts",
+          "seconds": 1.979101455,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/material.rs:certify_uv",
+          "seconds": 4.514183822,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/material.rs:certify",
+          "seconds": 4.523206961,
+          "metric_units": 13338
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/measures/reference.rs:certify",
+          "seconds": 0.577518022,
+          "metric_units": 475
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/measures/flux.rs:certify",
+          "seconds": 0.541344685,
+          "metric_units": 954
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/measures.rs:authored_for_chart",
+          "seconds": 0.011502698,
+          "metric_units": 29953
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/measures.rs:geometry",
+          "seconds": 5.653640111,
+          "metric_units": 44720
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/MemberChecks/Some(SurfaceRegionId(1))",
+          "seconds": 5.653654479,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "../../../martensite-tkbo/src/sketch_region_prism/owned_request/profile/pipeline.rs:census",
+          "seconds": 0.005782111,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "../../../martensite-tkbo/src/sketch_region_prism/owned_request/profile/pipeline.rs:partition",
+          "seconds": 0.022602411,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "../../../martensite-tkbo/src/sketch_region_prism/owned_request/profile/pipeline.rs:contacts",
+          "seconds": 0.002939801,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/material.rs:certify_uv",
+          "seconds": 0.141859081,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/material.rs:certify",
+          "seconds": 0.142942696,
+          "metric_units": 1494
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/measures/reference.rs:certify",
+          "seconds": 0.017698846,
+          "metric_units": 475
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/measures/flux.rs:certify",
+          "seconds": 0.027266923,
+          "metric_units": 954
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/measures.rs:authored_for_chart",
+          "seconds": 0.003831942,
+          "metric_units": 6739
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/measures.rs:geometry",
+          "seconds": 0.19178543,
+          "metric_units": 9662
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/MemberChecks/Some(SurfaceRegionId(2))",
+          "seconds": 0.191797933,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/actual.rs:certify_family",
+          "seconds": 0.109390801,
+          "metric_units": 35904
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/MemberChecks/None",
+          "seconds": 0.10942259,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "../../../martensite-tkbo/src/body_check/mod.rs:topology",
+          "seconds": 0.724353332,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "../../../martensite-tkbo/src/body_check/mod.rs:geometry",
+          "seconds": 1.386656517,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "../../../martensite-tkbo/src/body_check/certified_conical/ordered.rs:certified_stage",
+          "seconds": 0.064203753,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "../../../martensite-tkbo/src/body_check/mod.rs:tolerance",
+          "seconds": 0.007258332,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "pipeline/qualification.rs:certified_conical_checks",
+          "seconds": 2.190141009,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "pipeline.rs:estimate",
+          "seconds": 0.102806455,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/MemberChecks/Some(SurfaceRegionId(1))",
+          "seconds": 2.292994662,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "../../../martensite-tkbo/src/body_check/mod.rs:topology",
+          "seconds": 0.040912458,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "../../../martensite-tkbo/src/body_check/mod.rs:geometry",
+          "seconds": 0.095466431,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "../../../martensite-tkbo/src/body_check/certified_conical/ordered.rs:certified_stage",
+          "seconds": 0.003351313,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "../../../martensite-tkbo/src/body_check/mod.rs:tolerance",
+          "seconds": 0.000673367,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "pipeline/qualification.rs:certified_conical_checks",
+          "seconds": 0.141142364,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "pipeline.rs:estimate",
+          "seconds": 0.008843417,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/MemberChecks/Some(SurfaceRegionId(2))",
+          "seconds": 0.15002279,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/material/reference.rs:certify",
+          "seconds": 0.039376534,
+          "metric_units": 2521
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/measures.rs:budget",
+          "seconds": 0.122710643,
+          "metric_units": 2521
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/Budget/None",
+          "seconds": 0.12272576,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "control/Completion/None",
+          "seconds": 2.124e-06,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/publication.rs:publish",
+          "seconds": 0.017962213,
+          "metric_units": 0
+        },
+        {
+          "probe": "v6-stage",
+          "stage": "operation/cone/mod.rs:execute_with_selection",
+          "seconds": 9.501935683,
+          "metric_units": 0
+        }
+      ],
+      "work_by_disjoint_phase": {
+        "selection": 737114,
+        "decoded_storage": 159434,
+        "member_geometry": 54382,
+        "actual_si": 35904,
+        "family_budget": 2521
+      },
+      "total_metric_units": 989355,
+      "integration_cells": 444,
+      "retained_spans": 148,
+      "test_passed": true,
+      "configuration": {
+        "command": [
+          "/usr/bin/time",
+          "-v",
+          "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tksketch-1bce81d5a48f0d86",
+          "surface_sketch::wrapped_profile::operation::cone::tests::narrow::complete::directed::geometric_v6_outward_requires_complete_actual_si",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "99ba5a4cf4f66016fcf114da167b2e7ae922e0214222e5ca756a5d2bec69a02e",
+        "concurrent_compilers": [
+          {
+            "pid": "1499168",
+            "name": "cargo",
+            "cwd": "/home/vmiguel/git/oblikovati-workspace/oblikovati-rust/.slim/worktrees/relax-mode-4164"
+          }
+        ],
+        "affinity": "inherited, unpinned",
+        "meaning": "single deeper instrumented attribution diagnostic, not performance acceptance"
+      },
+      "cargo_profiles": [
+        {
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "num_integer",
+            "src_path": "/home/vmiguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-integer-0.1.47/src/lib.rs",
+            "edition": "2018",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "0",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          },
+          "fresh": true
+        },
+        {
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "num_bigint",
+            "src_path": "/home/vmiguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/lib.rs",
+            "edition": "2021",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "3",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          },
+          "fresh": true
+        },
+        {
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "martensite_tkmath",
+            "src_path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkmath/src/lib.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "3",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          },
+          "fresh": true
+        },
+        {
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "martensite_tkbo",
+            "src_path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkbo/src/lib.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "1",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          },
+          "fresh": false
+        },
+        {
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "martensite_tksketch",
+            "src_path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tksketch/src/lib.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "0",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": true
+          },
+          "fresh": false
+        }
+      ]
+    }
+  },
+  "final_source_verification": {
+    "files": 346,
+    "changed": []
+  },
+  "cleanup": {
+    "instrumented_artifacts_removed": [
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkbo-2d5eb07b17b037d4.rlib",
+        "sha256": "37e84a34e7f2524c3d5721f71dd14168c9c7eb94785561ded63d4905b58e5032"
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkbo-2d5eb07b17b037d4.rmeta",
+        "sha256": "898742605b287f7deca1086a0d9edd5a925682a03e04c0ad8d5be10b2c891935"
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tksketch-1bce81d5a48f0d86",
+        "sha256": "99ba5a4cf4f66016fcf114da167b2e7ae922e0214222e5ca756a5d2bec69a02e"
+      }
+    ],
+    "temporary_original_source_copies_removed": true,
+    "source_restored": true,
+    "throwaway_probe_script_removed": true
+  }
+}

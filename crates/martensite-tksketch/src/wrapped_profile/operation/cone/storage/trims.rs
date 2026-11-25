@@ -1,12 +1,19 @@
 //! Actual stored UV occurrences are counted, coefficient-bound and jointly certified.
 use super::*;
 use capture::SourceCapture;
+mod chart;
 pub(super) struct Trims {
     pub proofs: [CertifiedConicalTrim; 2],
+    pub developed_boundary: Option<ConicalDevelopedBoundaryEvidence>,
     pub pcurves: [Vec<[f64; 2]>; 2],
     pub count: usize,
     pub side_count: usize,
     pub maximum_tolerance: f64,
+}
+
+struct CapProofs {
+    traces: [CertifiedConicalTrim; 2],
+    developed_boundary: Option<ConicalDevelopedBoundaryEvidence>,
 }
 struct CapturedCaps {
     pcurves: [Vec<[f64; 2]>; 2],
@@ -16,6 +23,7 @@ pub(super) fn certify(
     source: &SourceCapture<'_>,
     piece: &AuthoredPiece,
     curves: &[retained::OwnedCurve; 2],
+    boundary: &ConicalBoundaryEvidence,
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<Trims> {
@@ -24,13 +32,18 @@ pub(super) fn certify(
         source,
         piece,
         expected: &fit.uv,
+        chart: source
+            .prepared
+            .boundary_metric(piece.span, fit.local_chart)?
+            .chart,
     };
     let (side_count, side_tolerance) = side(source, piece)?;
     let caps = cap.captured()?;
-    let proofs = cap.certify(curves, &caps.pcurves, work, cancelled)?;
-    let count = proofs.len();
+    let proofs = cap.certify(curves, &caps.pcurves, boundary, work, cancelled)?;
+    let count = proofs.traces.len();
     Ok(Trims {
-        proofs,
+        proofs: proofs.traces,
+        developed_boundary: proofs.developed_boundary,
         pcurves: caps.pcurves,
         count,
         side_count,
@@ -56,6 +69,7 @@ struct CapCapture<'a, 'b> {
     source: &'a SourceCapture<'b>,
     piece: &'a AuthoredPiece,
     expected: &'a [[f64; 2]],
+    chart: Option<&'b ConicalChartDomainEvidence>,
 }
 impl CapCapture<'_, '_> {
     fn captured(&self) -> ConeChecked<CapturedCaps> {
@@ -71,20 +85,51 @@ impl CapCapture<'_, '_> {
         &self,
         curves: &[retained::OwnedCurve; 2],
         pcurves: &[Vec<[f64; 2]>; 2],
+        boundary: &ConicalBoundaryEvidence,
         work: &mut Work,
         cancelled: &mut CancelPoll<'_>,
-    ) -> ConeChecked<[CertifiedConicalTrim; 2]> {
-        let query = ConicalTrimPairQuery {
+    ) -> ConeChecked<CapProofs> {
+        let query = self.query(curves, pcurves, work.profile());
+        let (pair, developed_boundary) =
+            self.selected_pair(query, curves, boundary, work, cancelled)?;
+        self.bind(&pair, query)?;
+        Ok(CapProofs {
+            traces: pair.into_traces(),
+            developed_boundary,
+        })
+    }
+    fn selected_pair(
+        &self,
+        query: ConicalTrimPairQuery<'_>,
+        curves: &[retained::OwnedCurve; 2],
+        boundary: &ConicalBoundaryEvidence,
+        work: &mut Work,
+        cancelled: &mut CancelPoll<'_>,
+    ) -> ConeChecked<(
+        CertifiedConicalTrimPair,
+        Option<ConicalDevelopedBoundaryEvidence>,
+    )> {
+        if let Some(domain) = self.chart {
+            let (pair, evidence) =
+                chart::certify(self, query, curves, boundary, domain, work, cancelled)?;
+            return Ok((pair, Some(evidence)));
+        }
+        let result = certify_conical_trim_pair(query, cancelled);
+        self.charged(result, work).map(|pair| (pair, None))
+    }
+    fn query<'a>(
+        &self,
+        curves: &'a [retained::OwnedCurve; 2],
+        pcurves: &'a [Vec<[f64; 2]>; 2],
+        options: CylindricalProfileOptions,
+    ) -> ConicalTrimPairQuery<'a> {
+        ConicalTrimPairQuery {
             curves: curves.each_ref().map(retained::OwnedCurve::borrowed),
             pcurves: pcurves.each_ref().map(Vec::as_slice),
             carriers: self.source.carriers,
             spatial_limits: [self.source.prepared.source.tolerance / 2.; 2],
-            options: work.profile(),
-        };
-        let result = certify_conical_trim_pair(query, cancelled);
-        let pair = self.charged(result, work)?;
-        self.bind(&pair, query)?;
-        Ok(pair.into_traces())
+            options,
+        }
     }
     fn charged(
         &self,

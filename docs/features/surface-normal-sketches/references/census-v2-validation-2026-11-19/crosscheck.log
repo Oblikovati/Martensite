@@ -1,0 +1,7 @@
+O: brute-force closed-box overlaps 137 (== sweep), all adjacent: True; non-adjacent hull-disjoint 9179/9179
+dot: brute-force closed-box overlaps 11 (== sweep), all adjacent: True; non-adjacent hull-disjoint 44/44
+O137 domains D = 9453 ; D(D-1)/2 = 44674878 (brief: 44674878 lookup entries)
+census   : O137/dot11 time ratio    20.4  -> empirical exponent in N: 1.20
+partition: O137/dot11 time ratio    18.3  -> empirical exponent in N: 1.15
+contacts : O137/dot11 time ratio   538.6  -> empirical exponent in N: 2.49
+listed 10.243  unattributed 3.146  prep share 60.4%

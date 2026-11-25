@@ -1,0 +1,674 @@
+[
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "program_admission",
+    "input_units": 12,
+    "seconds": 8.1541e-05
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "owned_native_edges",
+    "input_units": 12,
+    "seconds": 0.000679779
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "owned_census",
+    "input_units": 12,
+    "seconds": 0.062987141
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "owned_partition",
+    "input_units": 12,
+    "seconds": 0.029252852
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "owned_contacts",
+    "input_units": 12,
+    "seconds": 0.003200856
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_binding",
+    "input_units": 12,
+    "seconds": 3.356e-06
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_expected_contacts",
+    "input_units": 12,
+    "seconds": 7.504e-06
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_join_validation",
+    "input_units": 12,
+    "seconds": 0.000822002
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_faces",
+    "input_units": 12,
+    "seconds": 0.000839985
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_nesting",
+    "input_units": 12,
+    "seconds": 0.000688575
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_selected_area",
+    "input_units": 12,
+    "seconds": 0.000365788
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_selected_area",
+    "input_units": 12,
+    "seconds": 0.000243611
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_selected_area",
+    "input_units": 12,
+    "seconds": 0.000174372
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_face_certification",
+    "input_units": 12,
+    "seconds": 0.000801885
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "program_certification",
+    "input_units": 12,
+    "seconds": 0.100023524
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_topology",
+    "input_units": 12,
+    "seconds": 0.000374092
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_face",
+    "input_units": 12,
+    "seconds": 0.001016753
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "publication_ordered_validation",
+    "input_units": 0,
+    "seconds": 0.035806045
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "publication_achieved_tolerance",
+    "input_units": 0,
+    "seconds": 6.0281e-05
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "publication_tolerance_cap",
+    "input_units": 0,
+    "seconds": 1.7e-07
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_native_publication",
+    "input_units": 12,
+    "seconds": 0.035900329
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_measured_area",
+    "input_units": 12,
+    "seconds": 1.625e-05
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_assembly",
+    "input_units": 12,
+    "seconds": 1.0489e-05
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_face",
+    "input_units": 12,
+    "seconds": 0.000919693
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "publication_ordered_validation",
+    "input_units": 0,
+    "seconds": 0.012602063
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "publication_achieved_tolerance",
+    "input_units": 0,
+    "seconds": 3.219e-05
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "publication_tolerance_cap",
+    "input_units": 0,
+    "seconds": 8e-08
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_native_publication",
+    "input_units": 12,
+    "seconds": 0.012650663
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_measured_area",
+    "input_units": 12,
+    "seconds": 9.658e-06
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_assembly",
+    "input_units": 12,
+    "seconds": 4.368e-06
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_face",
+    "input_units": 12,
+    "seconds": 0.000600311
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "publication_ordered_validation",
+    "input_units": 0,
+    "seconds": 0.00616827
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "publication_achieved_tolerance",
+    "input_units": 0,
+    "seconds": 3.0797e-05
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "publication_tolerance_cap",
+    "input_units": 0,
+    "seconds": 8e-08
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_native_publication",
+    "input_units": 12,
+    "seconds": 0.006225917
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_measured_area",
+    "input_units": 12,
+    "seconds": 4.689e-06
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_assembly",
+    "input_units": 12,
+    "seconds": 4.248e-06
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_set_publication",
+    "input_units": 12,
+    "seconds": 3.527e-06
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "program_construction",
+    "input_units": 12,
+    "seconds": 0.057810627
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "program_issue",
+    "input_units": 12,
+    "seconds": 2.71e-07
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "uv_domain_request",
+    "input_units": 137,
+    "seconds": 0.000410621
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "program_admission",
+    "input_units": 137,
+    "seconds": 0.00239289
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "owned_native_edges",
+    "input_units": 137,
+    "seconds": 0.002767183
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "owned_census",
+    "input_units": 137,
+    "seconds": 0.314818428
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "owned_partition",
+    "input_units": 137,
+    "seconds": 0.405358474
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "owned_contacts",
+    "input_units": 137,
+    "seconds": 1.8835305089999999
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_binding",
+    "input_units": 137,
+    "seconds": 4.5925e-05
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_expected_contacts",
+    "input_units": 137,
+    "seconds": 0.000262837
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_join_validation",
+    "input_units": 137,
+    "seconds": 0.483454329
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_trace_new",
+    "input_units": 137,
+    "seconds": 3.0116e-05
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_integral_signs",
+    "input_units": 137,
+    "seconds": 0.016845249
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_faces",
+    "input_units": 137,
+    "seconds": 0.017687869
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_nesting",
+    "input_units": 137,
+    "seconds": 0.022910359
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_selected_area",
+    "input_units": 137,
+    "seconds": 0.012862215
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_selected_area",
+    "input_units": 137,
+    "seconds": 0.0067512
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_face_certification",
+    "input_units": 137,
+    "seconds": 0.019660431
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_trace_finish",
+    "input_units": 137,
+    "seconds": 2.11e-07
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "program_certification",
+    "input_units": 137,
+    "seconds": 3.156080944
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_topology",
+    "input_units": 137,
+    "seconds": 0.003214962
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_face",
+    "input_units": 137,
+    "seconds": 0.01285932
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "publication_ordered_validation",
+    "input_units": 0,
+    "seconds": 0.764023414
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "publication_achieved_tolerance",
+    "input_units": 0,
+    "seconds": 0.000653349
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "publication_tolerance_cap",
+    "input_units": 0,
+    "seconds": 1.81e-07
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_native_publication",
+    "input_units": 137,
+    "seconds": 0.764715376
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_measured_area",
+    "input_units": 137,
+    "seconds": 0.000128127
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_assembly",
+    "input_units": 137,
+    "seconds": 9.5056e-05
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_face",
+    "input_units": 137,
+    "seconds": 0.011066269
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "publication_ordered_validation",
+    "input_units": 0,
+    "seconds": 0.183037435
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "publication_achieved_tolerance",
+    "input_units": 0,
+    "seconds": 0.0003023
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "publication_tolerance_cap",
+    "input_units": 0,
+    "seconds": 8e-08
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_native_publication",
+    "input_units": 137,
+    "seconds": 0.183364541
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_measured_area",
+    "input_units": 137,
+    "seconds": 7.8735e-05
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_assembly",
+    "input_units": 137,
+    "seconds": 5.0964e-05
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_set_publication",
+    "input_units": 137,
+    "seconds": 4.4302e-05
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "program_construction",
+    "input_units": 137,
+    "seconds": 0.97571346
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "program_issue",
+    "input_units": 137,
+    "seconds": 5.8298e-05
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "uv_capture",
+    "input_units": 137,
+    "seconds": 4.134472703
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "uv_select",
+    "input_units": 137,
+    "seconds": 0.000182107
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "uv_retain_selected_material",
+    "input_units": 137,
+    "seconds": 0.000103101
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "uv_finish",
+    "input_units": 137,
+    "seconds": 0.000446036
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "uv_domain_request",
+    "input_units": 11,
+    "seconds": 0.000154216
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "program_admission",
+    "input_units": 11,
+    "seconds": 7.4448e-05
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "owned_native_edges",
+    "input_units": 11,
+    "seconds": 0.000503031
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "owned_census",
+    "input_units": 11,
+    "seconds": 0.004902467
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "owned_partition",
+    "input_units": 11,
+    "seconds": 0.023819903
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "owned_contacts",
+    "input_units": 11,
+    "seconds": 0.00406195
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_binding",
+    "input_units": 11,
+    "seconds": 4.378e-06
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_expected_contacts",
+    "input_units": 11,
+    "seconds": 8.325e-06
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_join_validation",
+    "input_units": 11,
+    "seconds": 0.00086983
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_trace_new",
+    "input_units": 11,
+    "seconds": 1.633e-06
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_integral_signs",
+    "input_units": 11,
+    "seconds": 0.001669
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_faces",
+    "input_units": 11,
+    "seconds": 0.001759518
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_nesting",
+    "input_units": 11,
+    "seconds": 8.736e-06
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_selected_area",
+    "input_units": 11,
+    "seconds": 0.001639325
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_face_certification",
+    "input_units": 11,
+    "seconds": 0.001658712
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "graph_trace_finish",
+    "input_units": 11,
+    "seconds": 1.1e-07
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "program_certification",
+    "input_units": 11,
+    "seconds": 0.038025865
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_topology",
+    "input_units": 11,
+    "seconds": 0.000451185
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_face",
+    "input_units": 11,
+    "seconds": 0.002319304
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "publication_ordered_validation",
+    "input_units": 0,
+    "seconds": 0.034949229
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "publication_achieved_tolerance",
+    "input_units": 0,
+    "seconds": 7.5149e-05
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "publication_tolerance_cap",
+    "input_units": 0,
+    "seconds": 1.3e-07
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_native_publication",
+    "input_units": 11,
+    "seconds": 0.035053191
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_measured_area",
+    "input_units": 11,
+    "seconds": 2.9865e-05
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_assembly",
+    "input_units": 11,
+    "seconds": 2.163e-05
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "region_set_publication",
+    "input_units": 11,
+    "seconds": 4.108e-06
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "program_construction",
+    "input_units": 11,
+    "seconds": 0.037925339
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "program_issue",
+    "input_units": 11,
+    "seconds": 1.8694e-05
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "uv_capture",
+    "input_units": 11,
+    "seconds": 0.076132941
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "uv_select",
+    "input_units": 11,
+    "seconds": 9.3904e-05
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "uv_retain_selected_material",
+    "input_units": 11,
+    "seconds": 3.4134e-05
+  },
+  {
+    "probe": "DEBUG-B1-UV-20261120",
+    "stage": "uv_finish",
+    "input_units": 11,
+    "seconds": 0.000170646
+  }
+]

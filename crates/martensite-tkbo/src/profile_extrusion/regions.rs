@@ -99,7 +99,7 @@ pub struct RegionCertificate {
 }
 
 /// All bounded faces of a solved profile and the complete curve to edge mapping.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct PlanarRegionSet {
     pub(crate) regions: Vec<PlanarRegion>,
     pub(crate) curve_edges: Vec<CurveEdge>,
@@ -107,6 +107,7 @@ pub struct PlanarRegionSet {
     pub(crate) certificate: RegionCertificate,
     pub(crate) proof_work: super::PlanarProofWorkReceipt,
     pub(crate) proof_version: super::PlanarProofVersion,
+    pub(crate) integral: Option<super::PlanarIntegralEvidence>,
 }
 
 impl PlanarRegionSet {
@@ -142,3 +143,33 @@ impl PlanarRegionSet {
 
 /// Result of `build_planar_regions`.
 pub type PlanarRegionResult = Result<PlanarRegionSet, OperationDecline>;
+
+impl PlanarRegionSet {
+    /// Original selectable proof version before caller lending; `set.requested_proof_version()`.
+    pub fn requested_proof_version(&self) -> super::PlanarProofVersion {
+        self.integral
+            .as_ref()
+            .map_or(self.proof_version, |proof| proof.requested_proof_version())
+    }
+    /// Executed source-bound program evidence, present only for explicit V5.
+    /// Example: `set.integral_program_evidence().map(|proof| proof.granted_subintervals())`.
+    pub fn integral_program_evidence(&self) -> Option<&super::PlanarIntegralEvidence> {
+        self.integral.as_ref()
+    }
+}
+impl std::fmt::Debug for PlanarRegionSet {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut output = f.debug_struct("PlanarRegionSet");
+        output
+            .field("regions", &self.regions)
+            .field("curve_edges", &self.curve_edges)
+            .field("resolution", &self.resolution)
+            .field("certificate", &self.certificate)
+            .field("proof_work", &self.proof_work)
+            .field("proof_version", &self.proof_version);
+        if let Some(integral) = &self.integral {
+            output.field("integral", integral);
+        }
+        output.finish()
+    }
+}

@@ -17,6 +17,30 @@ pub struct CylindricalClearanceError {
     pub cause: CylindricalClearanceFailure,
 }
 
+/// Failed clearance certification with the exact arithmetic already consumed.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CylindricalClearanceWorkError {
+    /// Actual charged arithmetic for the refused leaf.
+    pub operations: u32,
+    /// Original clearance error including requested settings.
+    pub cause: CylindricalClearanceError,
+}
+
+impl std::fmt::Display for CylindricalClearanceWorkError {
+    fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            out,
+            "{} after {} arithmetic operations",
+            self.cause, self.operations
+        )
+    }
+}
+impl std::error::Error for CylindricalClearanceWorkError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.cause)
+    }
+}
+
 /// Invalid input, an exact witness below the margin, or exhausted certification.
 #[derive(Clone, Debug, PartialEq)]
 pub enum CylindricalClearanceFailure {

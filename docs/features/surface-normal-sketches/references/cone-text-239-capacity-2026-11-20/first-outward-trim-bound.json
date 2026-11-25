@@ -1,0 +1,20 @@
+{
+  "region": 9001,
+  "curve": 9027,
+  "span_level": 0,
+  "span_index": 0,
+  "physical_depth_index": 0,
+  "requested_spatial_limit": 5e-06,
+  "original_bound": 5.486573941946662e-06,
+  "angular_arc_upper_approximate": 3.879588355369879e-06,
+  "components": {
+    "radial_error_upper": 8.515332593690192e-16,
+    "axial_error_upper": 7.045623397434884e-15,
+    "native_radius_upper": 12.802409419467036,
+    "angle_error_upper": 3.030357980483479e-07,
+    "storage_l1_error_upper": 7.733639645442777e-13
+  },
+  "probe_only": true,
+  "source_restored": true,
+  "published_body": false
+}

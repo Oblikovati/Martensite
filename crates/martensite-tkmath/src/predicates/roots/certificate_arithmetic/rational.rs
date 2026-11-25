@@ -23,30 +23,56 @@ impl ExactRatio {
             numerator = -numerator;
             denominator = -denominator;
         }
-        let divisor = positive_gcd(numerator.clone(), denominator.clone());
+        if numerator.sign() == Sign::NoSign {
+            return Self {
+                numerator,
+                denominator: 1.into(),
+            };
+        }
+        if denominator.bits() != 1 {
+            let divisor = positive_gcd(numerator.clone(), denominator.clone());
+            if divisor.bits() != 1 {
+                numerator /= &divisor;
+                denominator /= divisor;
+            }
+        }
         Self {
-            numerator: numerator / &divisor,
-            denominator: denominator / divisor,
+            numerator,
+            denominator,
         }
     }
     pub(in crate::predicates::roots) fn from_dyadic(bound: &DyadicBound) -> Self {
         let (numerator, denominator) = bound.ratio();
-        Self::new(numerator, denominator)
+        // Canonical dyadics give either a unit denominator or an odd numerator
+        // over a positive power of two. Both forms are already reduced.
+        Self {
+            numerator,
+            denominator,
+        }
     }
     pub(in crate::predicates::roots) fn from_finite(value: f64) -> Self {
         let bound = DyadicBound::from_f64(value).expect("finite input already validated");
         Self::from_dyadic(&bound)
     }
     pub(in crate::predicates::roots) fn add(&self, other: &Self) -> Self {
+        if self.denominator == other.denominator {
+            return Self::new(&self.numerator + &other.numerator, self.denominator.clone());
+        }
         let numerator = &self.numerator * &other.denominator + &other.numerator * &self.denominator;
         Self::new(numerator, &self.denominator * &other.denominator)
     }
     pub(in crate::predicates::roots) fn negated(&self) -> Self {
-        Self::new(-self.numerator.clone(), self.denominator.clone())
+        Self {
+            numerator: -&self.numerator,
+            denominator: self.denominator.clone(),
+        }
     }
     pub(in crate::predicates::roots) fn subtract(&self, other: &Self) -> Self {
-        let opposite = other.negated();
-        self.add(&opposite)
+        if self.denominator == other.denominator {
+            return Self::new(&self.numerator - &other.numerator, self.denominator.clone());
+        }
+        let numerator = &self.numerator * &other.denominator - &other.numerator * &self.denominator;
+        Self::new(numerator, &self.denominator * &other.denominator)
     }
     pub(in crate::predicates::roots) fn multiply(&self, other: &Self) -> Self {
         let numerator = &self.numerator * &other.numerator;
@@ -70,6 +96,9 @@ impl ExactRatio {
 }
 impl Ord for ExactRatio {
     fn cmp(&self, other: &Self) -> Ordering {
+        if self.denominator == other.denominator {
+            return self.numerator.cmp(&other.numerator);
+        }
         let left = &self.numerator * &other.denominator;
         let right = &other.numerator * &self.denominator;
         left.cmp(&right)
@@ -105,6 +134,60 @@ mod tests {
         assert_eq!(half.divide(&third), ExactRatio::new(3.into(), 2.into()));
         assert_eq!(third.negated().sign(), Ordering::Less);
     }
+    #[test]
+    fn canonical_dyadics_match_general_ratio_reduction() {
+        let low = DyadicBound::new((-8).into(), -66609);
+        let high = DyadicBound::new(12.into(), 1022);
+        let middle = low.midpoint(&high);
+        for bound in [
+            DyadicBound::from_f64(-0.).unwrap(),
+            low.scale_pow2(32),
+            high.difference(&middle),
+            middle.difference(&high),
+        ] {
+            let (numerator, denominator) = bound.ratio();
+            assert_eq!(
+                ExactRatio::from_dyadic(&bound),
+                ExactRatio::new(numerator, denominator)
+            );
+        }
+    }
+    #[test]
+    fn reduced_arithmetic_matches_cross_products_and_general_gcd() {
+        let samples: [(i64, i64); 7] =
+            [(0, -9), (3, -5), (6, 10), (2, 5), (9, -3), (5, 7), (13, 17)];
+        for (a, b) in samples {
+            let left = ExactRatio::new(a.into(), b.into());
+            assert_eq!(left, literal_reduction(a.into(), b.into()));
+            assert_eq!(left.negated(), literal_reduction((-a).into(), b.into()));
+            for (c, d) in samples {
+                let right = ExactRatio::new(c.into(), d.into());
+                assert_eq!(
+                    left.add(&right),
+                    literal_reduction((a * d + b * c).into(), (b * d).into())
+                );
+                assert_eq!(
+                    left.subtract(&right),
+                    literal_reduction((a * d - b * c).into(), (b * d).into())
+                );
+                let sign = (b * d).signum();
+                assert_eq!(left.cmp(&right), (sign * a * d).cmp(&(sign * b * c)));
+            }
+        }
+    }
+
+    fn literal_reduction(mut numerator: BigInt, mut denominator: BigInt) -> ExactRatio {
+        if denominator.sign() == Sign::Minus {
+            numerator = -numerator;
+            denominator = -denominator;
+        }
+        let divisor = positive_gcd(numerator.clone(), denominator.clone());
+        ExactRatio {
+            numerator: numerator / &divisor,
+            denominator: denominator / divisor,
+        }
+    }
+
     #[test]
     fn exact_binary64_conversion_preserves_subnormal_and_extreme_values() {
         for value in [0., -0., f64::from_bits(1), -f64::MAX, 0.1] {

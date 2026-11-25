@@ -65,7 +65,10 @@ fn add_totals(
 fn add(a: f64, b: f64, quantity: publication_budget::Quantity) -> Checked<f64> {
     error::budget(publication_budget::add_upper(a, b, quantity))
 }
-fn product(range: WrappedCertifiedRange, determinant: [f64; 2]) -> Checked<WrappedCertifiedRange> {
+pub(super) fn product(
+    range: WrappedCertifiedRange,
+    determinant: [f64; 2],
+) -> Checked<WrappedCertifiedRange> {
     let mut lower = f64::INFINITY;
     let mut upper = f64::NEG_INFINITY;
     for value in [range.lower, range.upper] {
@@ -90,7 +93,10 @@ fn finite(actual: [f64; 2]) -> Checked<[f64; 2]> {
     }
     Ok(actual)
 }
-fn difference(actual: WrappedCertifiedRange, ideal: WrappedCertifiedRange) -> Checked<f64> {
+pub(super) fn difference(
+    actual: WrappedCertifiedRange,
+    ideal: WrappedCertifiedRange,
+) -> Checked<f64> {
     let low = actual.lower - ideal.upper;
     let high = actual.upper - ideal.lower;
     let bound = low.abs().max(high.abs());

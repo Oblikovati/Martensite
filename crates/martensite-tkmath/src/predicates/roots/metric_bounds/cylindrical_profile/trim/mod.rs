@@ -2,7 +2,7 @@
 //! Direct physical residual; no angular normalization or sampled surface evaluation.
 use super::*;
 use crate::predicates::roots::certificate_arithmetic::bernstein_curve::capture_planar;
-mod conical;
+pub(in crate::predicates::roots::metric_bounds) mod conical;
 mod types;
 pub use conical::*;
 pub use types::{CertifiedCylindricalTrim, CylindricalTrimError, CylindricalTrimQuery};

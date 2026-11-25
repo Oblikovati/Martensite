@@ -53,10 +53,13 @@ impl CapturedBezierPair {
     ) -> Result<Self, PairSourceFailure> {
         let source = OwnedBezierSource::capture(controls, weights, interval)
             .map_err(|cause| super::source::capture_context(0, cause))?;
-        Ok(Self {
+        Ok(Self::captured_self(source))
+    }
+    pub(super) fn captured_self(source: OwnedBezierSource) -> Self {
+        Self {
             sources: [source.clone(), source],
             domain: CapturedPairDomain::SelfOffDiagonal,
-        })
+        }
     }
     pub(super) fn sources(&self) -> &[OwnedBezierSource; 2] {
         let captured = &self.sources;

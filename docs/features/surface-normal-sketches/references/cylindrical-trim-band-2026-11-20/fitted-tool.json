@@ -1,0 +1,137 @@
+{
+  "source_head": "ed71b1eda20b2cac0d35c950eada39acabfff499",
+  "source_sha256": {
+    "Cargo.lock": "ae5a5ca217961e6592020d9ed11db2b27fa0306afa98828177b87c5ea6a0bb8e",
+    "Cargo.toml": "6b8e22b47df0f47dfa9b88359deddacb18bbd9699b6fa136551083db7d3ddd2e",
+    "crates/martensite-tksketch/src/surface_sketch/mod.rs": "d76af7494688383dceeb32a0094c8af1e73d98848ef48de91d9268fefb2c1e1b",
+    "crates/martensite-tksketch/src/wrapped_profile/api/footprint.rs": "397d9ae2b12147c6597f9e67035a03a5a2dcdcc16c389e7916c8421c031af5f1",
+    "crates/martensite-tksketch/src/wrapped_profile/api/footprint/bounds.rs": "a9c77a294397866045fceee07eafc8860aead0baf33f5fed5da212445ca59c10",
+    "crates/martensite-tksketch/src/wrapped_profile/api/footprint/extrusion.rs": "97176e624417babbb4b5bf01b0d6a95725978acddf17ad55f50e569ee2378c6c",
+    "crates/martensite-tksketch/src/wrapped_profile/api/footprint/fitted.rs": "aecd98f838c9076ad6620c790680eb64facd6aaed5865a65673b641dcb110004",
+    "crates/martensite-tksketch/src/wrapped_profile/api/footprint/tests.rs": "34fea495bf20d21837e55d2ae61733db0617557e7a010e69aabede28270b5308",
+    "crates/martensite-tksketch/src/wrapped_profile/api/input.rs": "f97611ffaf93c1e28f3abdc6683b4df868190b231ff7751ef498a1bddd274972",
+    "crates/martensite-tksketch/src/wrapped_profile/api/placement/chart.rs": "5275913ca3657180c710d5a06fd69016cf6c91dff78b795fe14d3926ce70a7db",
+    "crates/martensite-tksketch/src/wrapped_profile/api/placement/mod.rs": "0e006c61fb25f1098cc65f13212dbc8bd2c72b84e714d972c36744327f695ce5",
+    "crates/martensite-tksketch/src/wrapped_profile/cap_coordinates.rs": "9172b9f7967757fdc78626eea446f64e220eb44c4b3409e51e2df4a29d88481c",
+    "crates/martensite-tksketch/src/wrapped_profile/operation/cone/storage/work.rs": "c2f2c38a1395a2309873e5b481419a2659abe979708c1dba4fcd23b87211673e"
+  },
+  "build_settings": {
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/tmp/martensite-cone-b1-cached-target",
+    "CARGO_PROFILE_DEV_STRIP": "debuginfo",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_TEST_STRIP": "debuginfo"
+  },
+  "results": {
+    "footprint": {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tksketch",
+        "--lib",
+        "wrapped_profile::api::footprint::"
+      ],
+      "exit": 0,
+      "duration_seconds": 10.289,
+      "changed_sources": [],
+      "summary": [
+        "Finished `test` profile [unoptimized] target(s) in 6.02s",
+        "test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 531 filtered out; finished in 4.23s"
+      ]
+    },
+    "attachment": {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tksketch",
+        "--lib",
+        "surface_sketch::attachment::"
+      ],
+      "exit": 0,
+      "duration_seconds": 0.146,
+      "changed_sources": [],
+      "summary": [
+        "Finished `test` profile [unoptimized] target(s) in 0.03s",
+        "test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 514 filtered out; finished in 0.07s"
+      ]
+    },
+    "chart": {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tksketch",
+        "--lib",
+        "wrapped_profile::api::placement::chart"
+      ],
+      "exit": 0,
+      "duration_seconds": 39.1,
+      "changed_sources": [],
+      "summary": [
+        "Finished `test` profile [unoptimized] target(s) in 0.03s",
+        "test result: ok. 11 passed; 0 failed; 1 ignored; 0 measured; 529 filtered out; finished in 39.02s"
+      ]
+    },
+    "cone-ledger": {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tksketch",
+        "--lib",
+        "aggregate_grants_lend_bounded_leaves_and_keep_one_final_remainder"
+      ],
+      "exit": 0,
+      "duration_seconds": 0.133,
+      "changed_sources": [],
+      "summary": [
+        "Finished `test` profile [unoptimized] target(s) in 0.09s",
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 540 filtered out; finished in 0.00s"
+      ]
+    },
+    "clippy": {
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "martensite-tksketch",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0,
+      "duration_seconds": 3.006,
+      "changed_sources": [],
+      "summary": [
+        "Finished `dev` profile [unoptimized] target(s) in 2.93s"
+      ]
+    }
+  },
+  "scope": "authored and stored cap-pcurve containment in the requested cylindrical trim-band chart",
+  "test_cases": {
+    "passed": 49,
+    "ignored_worker_executed_by_replay_test": 1
+  },
+  "log_sha256": {
+    "footprint": "326a6e6f23983ea4118bfcb7eb5eda8b2e1d73d75123beaea9e213f912b6e3d7",
+    "attachment": "100c4754a684d4b7e4969e2c8329c3f7234c8740c6c9a93cd7059b813f8cf58d",
+    "chart": "e684db79ffa7187223bbdf4712f2c2460d32504c58e1bdeaacb18fd8493b6713",
+    "cone-ledger": "245b8827527ce99300b0d50346b50a0c1e3d9ca26240678e461363809995f5bb",
+    "clippy": "555fbe018ceff949e42990c356fa78c716eb31d54f85825f09478fb07dcaffc7"
+  },
+  "excluded": [
+    "general trim loops",
+    "Boolean publication and composed history",
+    "matched performance"
+  ]
+}

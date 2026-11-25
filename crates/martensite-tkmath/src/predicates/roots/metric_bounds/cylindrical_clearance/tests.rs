@@ -21,6 +21,36 @@ fn query<'a>(
         options: Default::default(),
     }
 }
+#[test]
+fn failed_work_is_retained_without_changing_the_legacy_error() {
+    let sources = [source(&[[0., 0.], [1., 0.]]), source(&[[0., 1.], [1., 1.]])];
+    let mut input = query(&sources, 0.5);
+    input.options.max_operations = 5;
+    let failure = certify_cylindrical_clearance_with_work(input, || false).unwrap_err();
+    assert_eq!(failure.operations, 5);
+    assert_eq!(
+        failure.cause,
+        certify_cylindrical_clearance(input, || false).unwrap_err()
+    );
+}
+
+#[test]
+fn cancellation_after_arithmetic_records_actual_consumption() {
+    let sources = [source(&[[0., 0.], [1., 0.]]), source(&[[0., 1.], [1., 1.]])];
+    let mut polls = 0;
+    let failure = certify_cylindrical_clearance_with_work(query(&sources, 0.5), || {
+        polls += 1;
+        polls > 10
+    })
+    .unwrap_err();
+    assert!(failure.operations > 0);
+    assert!(matches!(
+        failure.cause.cause,
+        CylindricalClearanceFailure::Arithmetic(cause)
+            if *cause == super::super::BoundedArithmeticFailure::Cancelled
+    ));
+}
+
 fn certify(
     sources: &[CylindricalClearanceSource<'_>],
     clearance: f64,

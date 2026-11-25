@@ -2,51 +2,185 @@
 use super::*;
 pub(super) fn certify(
     originals: &[DevelopedRegionRequest],
-    selection: &Selection,
+    prepared: &[Prepared],
+    domain: &domain::DomainEvidence,
+    clearance_bound: &CertifiedCylindricalClearance,
     stored: &BTreeMap<SurfaceRegionId, Stored>,
 ) -> ConeChecked<()> {
-    sector(originals, selection)?;
+    sector(originals, prepared, domain)?;
+    let originals = operation::source::by_region(originals);
     let mut clearance = Vec::new();
-    for prepared in &selection.prepared {
-        let original = original(originals, prepared.source.region)?;
+    for prepared in prepared {
+        let original = originals
+            .get(&prepared.source.region)
+            .copied()
+            .ok_or_else(|| missing(prepared.source.region))?;
         let member = stored
             .get(&original.region)
             .ok_or_else(|| missing(original.region))?;
         bind_member(original, prepared, member, &mut clearance)?;
     }
-    if !selection.clearance.matches_sources(&clearance) {
+    if !clearance_bound.matches_sources(&clearance) {
         return Err(family_mismatch("clearance original source binding"));
     }
     Ok(())
 }
-fn sector(originals: &[DevelopedRegionRequest], selection: &Selection) -> ConeChecked<()> {
-    let spans: Vec<_> = originals
-        .iter()
-        .flat_map(|r| r.loops.iter().flatten())
-        .map(|piece| piece.poles.as_slice())
-        .collect();
-    let angle = selection
-        .prepared
+fn sector(
+    originals: &[DevelopedRegionRequest],
+    prepared: &[Prepared],
+    domain: &domain::DomainEvidence,
+) -> ConeChecked<()> {
+    if let domain::DomainEvidence::Connected { reference_slant } = domain {
+        return connected(originals, prepared, *reference_slant);
+    }
+    if let domain::DomainEvidence::Atlas(charts) = domain {
+        return atlas(originals, prepared, charts);
+    }
+    let spans = domain::original_spans(originals);
+    let first = prepared
         .first()
-        .map_or(0., |prepared| prepared.semi_angle);
-    let query = ConicalSectorQuery {
-        spans: &spans,
-        semi_angle: angle,
-        options: selection.sector_options,
-    };
-    if !selection.sector.matches(&query) {
-        return Err(family_mismatch("sector original source binding"));
+        .ok_or_else(|| family_mismatch("domain member owner"))?;
+    let matches = domain_matches(domain, first, &spans);
+    let owners_match = prepared
+        .iter()
+        .all(|member| authority_matches(domain, first, member, &spans));
+    if !matches || !owners_match {
+        return Err(family_mismatch("domain original source binding"));
     }
     Ok(())
 }
-fn original(
+
+fn connected(
     originals: &[DevelopedRegionRequest],
-    region: SurfaceRegionId,
-) -> ConeChecked<&DevelopedRegionRequest> {
-    originals
+    prepared: &[Prepared],
+    slant: f64,
+) -> ConeChecked<()> {
+    let datum = originals
         .iter()
-        .find(|original| original.region == region)
-        .ok_or_else(|| missing(region))
+        .min_by_key(|source| source.region)
+        .map(prepare::reference)
+        .transpose()?;
+    if datum.map(f64::to_bits) != Some(slant.to_bits()) || originals.len() != prepared.len() {
+        return Err(family_mismatch(
+            "complete connected atlas and source slant datum",
+        ));
+    }
+    for (original, prepared) in originals.iter().zip(prepared) {
+        if original.region != prepared.source.region
+            || prepared.local_charts.is_empty()
+            || prepared.chart_domain.is_some()
+            || prepared.reference_slant.to_bits() != slant.to_bits()
+        {
+            return Err(mismatch(
+                original.region,
+                None,
+                "connected atlas member authority",
+                vec![0],
+                vec![1],
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn atlas(
+    originals: &[DevelopedRegionRequest],
+    prepared: &[Prepared],
+    charts: &BTreeMap<SurfaceRegionId, std::sync::Arc<ConicalChartDomainEvidence>>,
+) -> ConeChecked<()> {
+    if originals.len() != prepared.len() || charts.len() != prepared.len() {
+        return Err(family_mismatch("complete atlas region inventory"));
+    }
+    for (original, member) in originals.iter().zip(prepared) {
+        let region = original.region;
+        let spans = domain::original_spans(std::slice::from_ref(original));
+        if member.source.region != region || !atlas_matches(charts.get(&region), member, &spans) {
+            return Err(mismatch(
+                region,
+                None,
+                "atlas member source binding",
+                vec![0],
+                vec![1],
+            ));
+        }
+    }
+    Ok(())
+}
+fn atlas_matches(
+    selected: Option<&std::sync::Arc<ConicalChartDomainEvidence>>,
+    member: &Prepared,
+    spans: &[&[[f64; 2]]],
+) -> bool {
+    let (Some(selected), Some(actual)) = (selected, &member.chart_domain) else {
+        return false;
+    };
+    selected.version() == ConicalChartDomainVersion::AtlasMemberV5
+        && selected.version() == actual.version()
+        && selected.options() == actual.options()
+        && chart_matches(selected, member, spans)
+        && (std::sync::Arc::ptr_eq(selected, actual) || chart_matches(actual, member, spans))
+}
+fn domain_matches(
+    domain: &domain::DomainEvidence,
+    prepared: &Prepared,
+    spans: &[&[[f64; 2]]],
+) -> bool {
+    match domain {
+        domain::DomainEvidence::Legacy { sector, options } => sector.matches(&ConicalSectorQuery {
+            spans,
+            semi_angle: prepared.semi_angle,
+            options: *options,
+        }),
+        domain::DomainEvidence::Chart(proof, _) => chart_matches(proof, prepared, spans),
+        domain::DomainEvidence::Atlas(_) | domain::DomainEvidence::Connected { .. } => false,
+    }
+}
+fn chart_matches(
+    proof: &ConicalChartDomainEvidence,
+    prepared: &Prepared,
+    spans: &[&[[f64; 2]]],
+) -> bool {
+    proof.matches_with_version(
+        &ConicalChartDomainQuery {
+            spans,
+            semi_angle: prepared.semi_angle,
+            chart_origin: prepared.chart_origin,
+            fit_center: prepared.chart_center,
+            developed_turn: 0,
+            physical_turn: 0,
+            options: proof.options(),
+        },
+        proof.version(),
+    )
+}
+
+fn authority_matches(
+    selected: &domain::DomainEvidence,
+    first: &Prepared,
+    prepared: &Prepared,
+    spans: &[&[[f64; 2]]],
+) -> bool {
+    match (selected, &prepared.chart_domain) {
+        (domain::DomainEvidence::Legacy { .. }, None) => true,
+        (domain::DomainEvidence::Chart(selected, _), Some(actual)) => {
+            selected.version() == actual.version()
+                && selected.span_limit() == actual.span_limit()
+                && selected.options() == actual.options()
+                && chart_scalars(first) == chart_scalars(prepared)
+                && (std::sync::Arc::ptr_eq(selected, actual)
+                    || chart_matches(actual, prepared, spans))
+        }
+        _ => false,
+    }
+}
+
+fn chart_scalars(prepared: &Prepared) -> [u64; 3] {
+    [
+        prepared.semi_angle,
+        prepared.chart_origin,
+        prepared.chart_center,
+    ]
+    .map(f64::to_bits)
 }
 fn missing(region: SurfaceRegionId) -> ConeFailure {
     failure(region, None, ConeCause::Missing(region))
@@ -69,19 +203,26 @@ fn bind_member<'a>(
     stored: &Stored,
     clearance: &mut Vec<CylindricalClearanceSource<'a>>,
 ) -> ConeChecked<()> {
-    let pieces: Vec<_> = prepared.source.loops.iter().flatten().collect();
-    if pieces.len() != stored.spans.len() {
+    let count: usize = prepared.source.loops.iter().map(Vec::len).sum();
+    if count != stored.spans.len() {
         return Err(mismatch(
             original.region,
             None,
             "stored span count",
             vec![stored.spans.len() as u64],
-            vec![pieces.len() as u64],
+            vec![count as u64],
         ));
     }
-    for (piece, proof) in pieces.into_iter().zip(&stored.spans) {
-        bind_span(original, prepared, piece, proof)?;
-        clearance.push(clearance_source(original, piece.span)?);
+    let common_chart = prepared.local_charts.is_empty();
+    for (piece, proof) in prepared.source.loops.iter().flatten().zip(&stored.spans) {
+        if common_chart {
+            bind_span(original, prepared, piece, proof)?;
+        }
+        clearance.push(clearance_source(original, prepared, piece.span)?);
+    }
+    if !common_chart {
+        // Cap join binding already rechecks each local chart and retained edge.
+        bind_cap_joins(original, prepared, stored)?;
     }
     Ok(())
 }
@@ -91,8 +232,9 @@ fn bind_span(
     piece: &AuthoredPiece,
     proof: &SpanProof,
 ) -> ConeChecked<()> {
-    let query = boundary::query(original, prepared, piece, &proof.curves)?;
-    if proof.span != piece.span || !proof.boundary.matches(&query) {
+    let input = boundary::BoundaryInput::new(original, prepared, piece, "frozen fit membership")?;
+    let query = input.query(&proof.curves);
+    if proof.span != piece.span || !input.metric()?.matches(&proof.boundary, &query) {
         return Err(mismatch(
             original.region,
             Some(piece.span),
@@ -103,11 +245,12 @@ fn bind_span(
     }
     Ok(())
 }
-fn clearance_source(
-    original: &DevelopedRegionRequest,
+fn clearance_source<'a>(
+    original: &'a DevelopedRegionRequest,
+    prepared: &Prepared,
     span: CurveSpan,
-) -> ConeChecked<CylindricalClearanceSource<'_>> {
-    let source = source_piece(original, span)?;
+) -> ConeChecked<CylindricalClearanceSource<'a>> {
+    let source = source_piece(original, prepared, span)?;
     let interval = source_interval(original.region, span)?;
     Ok(CylindricalClearanceSource {
         authored: &source.poles,
@@ -115,12 +258,13 @@ fn clearance_source(
     })
 }
 
-fn source_piece(original: &DevelopedRegionRequest, span: CurveSpan) -> ConeChecked<&AuthoredPiece> {
-    original
-        .loops
-        .iter()
-        .flatten()
-        .find(|source| source.span.curve == span.curve)
+fn source_piece<'a>(
+    original: &'a DevelopedRegionRequest,
+    prepared: &Prepared,
+    span: CurveSpan,
+) -> ConeChecked<&'a AuthoredPiece> {
+    prepared
+        .authored_piece(original, span.curve)
         .ok_or_else(|| {
             mismatch(
                 original.region,

@@ -46,7 +46,9 @@ fn execute(
     })
 }
 
-fn admit(query: ConicalTrimQuery<'_>) -> Checked<()> {
+pub(in crate::predicates::roots::metric_bounds) fn admit(
+    query: ConicalTrimQuery<'_>,
+) -> Checked<()> {
     admission::policy(query.options)?;
     admission::count("retained cone UV poles", query.pcurve.len(), 4)?;
     admission::count("retained cone space poles", query.curve.poles.len(), 10)?;
@@ -75,7 +77,7 @@ fn residual(query: ConicalTrimQuery<'_>, arithmetic: &mut Arithmetic<'_>) -> Che
     capture::residual(query, None, arithmetic).map(|(bounds, _)| bounds)
 }
 
-fn positive_radius(
+pub(in crate::predicates::roots::metric_bounds) fn positive_radius(
     radius: &[Interval],
     reference: f64,
     arithmetic: &mut Arithmetic<'_>,
@@ -108,3 +110,25 @@ fn affine(
 
 #[cfg(test)]
 mod tests;
+
+// Only checked metric-bound producers may construct the existing receipt.
+pub(in crate::predicates::roots::metric_bounds) fn accepted_trace(
+    query: ConicalTrimQuery<'_>,
+    bounds: [f64; 3],
+    operations: u32,
+) -> Checked<CertifiedConicalTrim> {
+    accept_position(bounds[2], query.spatial_limit)?;
+    Ok(CertifiedConicalTrim {
+        bounds,
+        bits: types::source_bits(query),
+        limit: query.spatial_limit,
+        options: query.options,
+        operations,
+    })
+}
+pub(in crate::predicates::roots::metric_bounds) fn accepted_pair(
+    traces: [CertifiedConicalTrim; 2],
+    operations: u32,
+) -> CertifiedConicalTrimPair {
+    CertifiedConicalTrimPair { traces, operations }
+}

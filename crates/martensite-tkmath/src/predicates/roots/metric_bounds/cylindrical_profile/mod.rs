@@ -15,7 +15,7 @@ mod source;
 #[cfg(test)]
 mod tests;
 pub(in crate::predicates::roots::metric_bounds) mod trigonometric;
-mod trim;
+pub(in crate::predicates::roots::metric_bounds) mod trim;
 mod types;
 use crate::predicates::roots::certificate_arithmetic::{
     bernstein_bounds as polynomial,

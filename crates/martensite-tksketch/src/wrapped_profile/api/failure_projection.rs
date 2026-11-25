@@ -110,7 +110,7 @@ pub(in crate::surface_sketch::wrapped_profile) fn planar_context(
             context.entities.push(HistorySource::Curve(*curve))
         }
         planar::PlanarFailure::WorkCapture(cause) => {
-            error::decline_entities(&cause.decline().cause, &mut context.entities)
+            planar_work_entities(cause, &mut context.entities);
         }
         #[cfg(test)]
         planar::PlanarFailure::Capture(cause) => {
@@ -127,7 +127,11 @@ pub(in crate::surface_sketch::wrapped_profile) fn planar_class(
         return Class::Cancelled;
     }
     match cause {
-        planar::PlanarFailure::WorkCapture(cause) => decline_class(cause.decline().class()),
+        planar::PlanarFailure::WorkCapture(cause) => decline_class(
+            cause
+                .integral_policy_failure()
+                .map_or_else(|| cause.decline().class(), |policy| policy.class()),
+        ),
         #[cfg(test)]
         planar::PlanarFailure::Capture(cause) => decline_class(cause.class()),
         planar::PlanarFailure::EmptyMaterial
@@ -202,7 +206,9 @@ fn limit_context(region: Option<SurfaceRegionId>, span: Option<CurveSpan>) -> Co
     entities.extend(span.map(|span| HistorySource::Curve(span.curve)));
     Context::new(Class::Incomplete, entities)
 }
-fn material_context(cause: &selection::MaterialFailure) -> Context {
+pub(in crate::surface_sketch::wrapped_profile) fn material_context(
+    cause: &selection::MaterialFailure,
+) -> Context {
     use selection::MaterialFailure as M;
     match cause {
         M::Admission(cause) => selection_context(cause),
@@ -333,4 +339,17 @@ pub(in crate::surface_sketch::wrapped_profile) fn budget(
 ) -> (WrappedStage, Class, Vec<HistorySource>) {
     let context = budget_context(cause);
     (context.stage, context.class, context.entities)
+}
+
+fn planar_work_entities(
+    cause: &martensite_tkbo::profile_extrusion::PlanarRegionWorkFailure,
+    entities: &mut Vec<HistorySource>,
+) {
+    error::decline_entities(&cause.decline().cause, entities);
+    if let Some(curve) = cause
+        .integral_program_failure()
+        .and_then(|proof| proof.offending_curve())
+    {
+        entities.push(HistorySource::Curve(SurfaceCurveId(curve.0)));
+    }
 }

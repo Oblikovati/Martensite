@@ -1,0 +1,69 @@
+[
+  {
+    "name": "python-exact",
+    "command": [
+      "python3",
+      "-I",
+      "census_v2.py",
+      "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/docs/features/surface-normal-sketches/references/specialist-census-fixtures-2026-11-19.json"
+    ],
+    "exit": 0,
+    "log_sha256": "29bb001eda0e652f8b31a8d2520cf30aca3c596c43e122962b461ce3c417dbc9"
+  },
+  {
+    "name": "crosscheck",
+    "command": [
+      "python3",
+      "-I",
+      "crosscheck.py",
+      "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/docs/features/surface-normal-sketches/references/specialist-census-fixtures-2026-11-19.json"
+    ],
+    "exit": 0,
+    "log_sha256": "b4a50171d741f6cff314c71db464c38b4b30cd52e74ffdccc749cc13e54fced7"
+  },
+  {
+    "name": "as-provided-dev",
+    "command": [
+      "/tmp/martensite-census-v2-review-l614c7ls/evidence/as-provided",
+      "curves.txt"
+    ],
+    "exit": 0,
+    "log_sha256": "d3cb4766712228dc4eba27b4a652018d9f4c8d5e3e7bf66c604ec66806efdca3"
+  },
+  {
+    "name": "release-checked",
+    "command": [
+      "/tmp/martensite-census-v2-review-l614c7ls/target/release/census_bench",
+      "curves.txt"
+    ],
+    "exit": 0,
+    "log_sha256": "8e119b7be98330dbeac1f19ebe8c6eadb2a260c1eb0348f419ef0c624935c4eb"
+  },
+  {
+    "name": "underflow-red",
+    "command": [
+      "/tmp/martensite-census-v2-review-l614c7ls/evidence/underflow-red",
+      "--nocapture"
+    ],
+    "exit": 101,
+    "log_sha256": "c4b82804ceb24acc253e1f97f14943064a396ccb5f64ec0265c485d1bb5dbb63"
+  },
+  {
+    "name": "kernel-predicate-green",
+    "command": [
+      "/tmp/martensite-census-v2-review-l614c7ls/kernel-predicate-test",
+      "--nocapture"
+    ],
+    "exit": 0,
+    "log_sha256": "c060633b6bec507336df0088da04ed8c7f802792fb97197d71df00c5c5926f18"
+  },
+  {
+    "name": "kernel-predicate-dev",
+    "command": [
+      "/tmp/martensite-census-v2-review-l614c7ls/kernel-predicate-bench",
+      "curves.txt"
+    ],
+    "exit": 0,
+    "log_sha256": "1cb5ecf1d7be9f044fa118648f0e8b9adb731b2c026806b9b5229952e6bb06db"
+  }
+]

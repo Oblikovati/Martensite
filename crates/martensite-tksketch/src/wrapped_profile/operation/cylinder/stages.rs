@@ -7,6 +7,7 @@ pub(in crate::surface_sketch::wrapped_profile) struct CylinderStages {
     pub volume: CylindricalMeasureLimit,
 }
 impl SupportStages for CylinderStages {
+    type NativeEvidence = ();
     type Original = Request;
     type Prepared = Request;
     type Context = ();
@@ -78,6 +79,8 @@ impl SupportStages for CylinderStages {
         originals: &[Request],
         selection: &Self::Selection,
         stored: &BTreeMap<SurfaceRegionId, Self::Stored>,
+        _: &mut (),
+        _: &mut CancelPoll<'_>,
     ) -> FamilyChecked<()> {
         family::bind(originals, selection, stored)
     }

@@ -11,7 +11,7 @@ pub(crate) struct GraphPolicySnapshot {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct GraphPolicyMismatch {
     pub requested_graph_version: u32,
-    pub admitted_graph_versions: [u32; 3],
+    pub admitted_graph_versions: Vec<u32>,
     pub expected: Option<GraphPolicySnapshot>,
     pub actual: Option<GraphPolicySnapshot>,
 }
@@ -30,7 +30,13 @@ pub(crate) fn bind_graph_policy(
     }
     Err(Box::new(GraphPolicyMismatch {
         requested_graph_version: version,
-        admitted_graph_versions: [2, 3, 4],
+        admitted_graph_versions: if version <= 4 {
+            vec![2, 3, 4]
+        } else if version <= 5 {
+            vec![2, 3, 4, 5]
+        } else {
+            vec![2, 3, 4, 5, 6]
+        },
         expected,
         actual,
     }))
@@ -40,7 +46,8 @@ impl GraphPolicySnapshot {
         let (exclusion_version, sign_version) = match version {
             2 => (None, 1),
             3 => (Some(1), 1),
-            4 => (Some(1), 2),
+            4 | 5 => (Some(1), 2),
+            6 => (Some(2), 2),
             _ => return None,
         };
         let mut signs = BezierPairSignOptions::derived();

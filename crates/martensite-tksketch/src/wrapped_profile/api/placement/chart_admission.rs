@@ -9,37 +9,43 @@ pub(super) fn prepare(request: &WrappedNormalRequest, sources: &[Request]) -> Ch
     let support = request.support;
     let transform = rotated_transform(support)
         .map_err(|cause| fail(PlacementFailure::InputFrame { support, cause }))?;
-    let frame = rotation_proof(support, transform)?;
+    let frame = rotation_proof(
+        support.axis,
+        support.radial,
+        support.chart_origin,
+        transform,
+    )?;
     let budget = frame
         .spatial_budget(admission::spatial_input(request, sources, transform)?)
         .map_err(|cause| fail(PlacementFailure::Frame(cause)))?;
     Ok(Plan { transform, budget })
 }
-fn rotation_proof(
-    support: crate::surface_sketch::CylinderSupport,
+pub(super) fn rotation_proof(
+    axis: [f64; 3],
+    radial: [f64; 3],
+    angle: f64,
     transform: Transform3,
 ) -> Checked<martensite_tkmath::predicates::roots::metric_bounds::CertifiedRotatedFrameTransport> {
     certify_frame_transport_at_angle(
         FrameTransportInput {
-            axis: support.axis,
-            radial: support.radial,
+            axis,
+            radial,
             stored: *transform.matrix().coefficients(),
         },
-        support.chart_origin,
+        angle,
     )
     .map_err(|cause| fail(PlacementFailure::Rotation(cause)))
 }
 fn rotated_transform(
     support: crate::surface_sketch::CylinderSupport,
 ) -> Result<Transform3, Failure> {
-    let base = admission::transform(support)?;
-    if support.chart_origin == 0. || !support.chart_origin.is_finite() {
+    rotate(admission::transform(support)?, support.chart_origin)
+}
+pub(super) fn rotate(base: Transform3, angle: f64) -> Result<Transform3, Failure> {
+    if angle == 0. || !angle.is_finite() {
         return Ok(base);
     }
-    let (sine, cosine) = (
-        martensite_cmath::sin(support.chart_origin),
-        martensite_cmath::cos(support.chart_origin),
-    );
+    let (sine, cosine) = (martensite_cmath::sin(angle), martensite_cmath::cos(angle));
     stored_rotation(base, sine, cosine)
 }
 fn stored_rotation(base: Transform3, sine: f64, cosine: f64) -> Result<Transform3, Failure> {

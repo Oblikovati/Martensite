@@ -1,0 +1,106 @@
+{
+  "source_head": "7555aec1",
+  "source_sha256": {
+    "crates/martensite-tksketch/src/surface_sketch/attachment/support.rs": "7877934830551888bb627e982e6c03f8a566be0875c118e7d5758f9833e50a41",
+    "crates/martensite-tksketch/src/surface_sketch/mod.rs": "a8a639ee9a2680df5fd174634a32ffbd5ba44aec72f06fdbbfc84d7879dbf907",
+    "crates/martensite-tksketch/src/wrapped_profile/api/footprint.rs": "7e18fe6b50a86217910652173a8517d1d4497517db0209aeaa963fe49b45bc2c",
+    "crates/martensite-tksketch/src/wrapped_profile/api/footprint/band.rs": "205c52bd6bedf81764a4f93bea1da1b0873e6fc98d9dca7cb4ef83ee16dbe6f2",
+    "crates/martensite-tksketch/src/wrapped_profile/api/footprint/bounds.rs": "4013643db26811f0266fb66489977d4b2be2a78798e3370e4d62bcc71e9145ea",
+    "crates/martensite-tksketch/src/wrapped_profile/api/footprint/tests.rs": "445c03f73440e45afb87475f795bbaaff5f3e5f82700ade596fab1caf8b6e7e3",
+    "crates/martensite-tksketch/src/wrapped_profile/api/mod.rs": "6cbfefa025dea7b48867899c0fe74cfe00293e89b8e74fe3f412590649ec12f9",
+    "crates/martensite-tkv3d/tests/wrapped_text_regions/body_controls/multiline/replay/content.rs": "099fa9c7842f2e3f0bda36af210fada89719506b19c065feb3b6a5978e122395"
+  },
+  "tests": {
+    "footprint": {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tksketch",
+        "--lib",
+        "wrapped_profile::api::footprint::",
+        "--",
+        "--nocapture"
+      ],
+      "exit": 0,
+      "passed": true,
+      "wall_s": 6.795995124964975,
+      "changed_sources": [],
+      "summary": [
+        "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 531 filtered out; finished in 0.17s"
+      ]
+    },
+    "attachment": {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tksketch",
+        "--lib",
+        "surface_sketch::attachment::"
+      ],
+      "exit": 0,
+      "passed": true,
+      "wall_s": 0.15365285496227443,
+      "changed_sources": [],
+      "summary": [
+        "test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 509 filtered out; finished in 0.07s"
+      ]
+    },
+    "multiline": {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkv3d",
+        "--test",
+        "toolkit",
+        "wrapped_text_regions::wrapped::body_controls::multiline::replay::content::native_trim_band_admits_full_multiline_outline_and_seam_edit",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit": 0,
+      "passed": true,
+      "wall_s": 11.369031681038905,
+      "changed_sources": [],
+      "summary": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 698 filtered out; finished in 0.06s"
+      ]
+    },
+    "clippy": {
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "martensite-tksketch",
+        "--lib",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0,
+      "passed": true,
+      "wall_s": 1.5042841989779845,
+      "changed_sources": [],
+      "summary": [
+        "    Finished `dev` profile [unoptimized] target(s) in 1.44s"
+      ]
+    }
+  },
+  "case_curves": [
+    239,
+    229
+  ],
+  "case_regions": [
+    18,
+    16
+  ],
+  "scope": "selected authored control hulls on verified rectangular native cylinder bands",
+  "general_trim_coverage": false,
+  "fitted_footprint_coverage": false
+}

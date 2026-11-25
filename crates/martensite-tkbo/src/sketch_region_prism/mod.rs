@@ -53,6 +53,7 @@ mod owned_request;
 pub(crate) use owned_request::profile::{
     ProfileGraphInput, ProfileProofCause, ProfileProofRefusal, ProofEdge, certify_profile_graph,
     certify_profile_graph_version_with_cancel, certify_profile_graph_with_cancel,
+    certify_profile_program_with_cancel,
 };
 pub(crate) use region_certificate::loop_region::graph::{GraphFaceProof, GraphRegionCertificate};
 pub(crate) use region_certificate::loop_region::{
@@ -67,3 +68,7 @@ pub(in crate::sketch_region_prism) mod annular_construction;
 pub(crate) mod diagnostic_envelope;
 
 pub(crate) use owned_request::profile::OwnedGraphAccess;
+pub(crate) use region_certificate::loop_region::graph::ProgramGraphFailure;
+pub(crate) use region_certificate::loop_region::program_trace::{
+    GraphIntegralEvidence, IntegralRole, IntegralStep,
+};

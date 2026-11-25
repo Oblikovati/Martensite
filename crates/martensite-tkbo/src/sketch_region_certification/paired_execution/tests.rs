@@ -2,7 +2,9 @@
 //! The old literal lookup drives the same numerical calls as the indexed implementation.
 use super::*;
 use crate::sketch_region_certification::paired_tests::{curved_pair, paired};
+mod carrier_pool;
 mod cold_unique;
+mod conditioned;
 mod replay;
 use replay::{compare_censuses, result_snapshot};
 
@@ -42,6 +44,7 @@ fn run_lookup(
 ) -> (Result<BoundaryCensus, CensusCause>, usize) {
     let mut polls = 0;
     let census = fresh();
+    let source_pool = PairSourcePool::capture(&census);
     let mut cancelled = || {
         polls += 1;
         polls == stop
@@ -51,6 +54,7 @@ fn run_lookup(
         &mut cancelled,
         super::super::SourceAccess::Live,
         lookup,
+        &source_pool,
     );
     (result, polls)
 }
@@ -175,9 +179,10 @@ fn seeded_duplicate_keys_reuse_the_first_failure_without_a_solver_retry() {
 }
 fn append_duplicate_failure(census: &mut BoundaryCensus, pair: [usize; 2]) {
     let mode = PairedQueryMode::SelfOffDiagonal;
-    let first = cold_execution(census, pair, mode, &mut || false);
+    let source_pool = PairSourcePool::default();
+    let first = cold_execution(census, pair, mode, &mut || false, &source_pool);
     census.paired.as_mut().unwrap().requested.version = 1;
-    let second = cold_execution(census, pair, mode, &mut || false);
+    let second = cold_execution(census, pair, mode, &mut || false, &source_pool);
     census
         .paired
         .as_mut()

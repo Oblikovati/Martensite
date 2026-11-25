@@ -4,8 +4,18 @@ use martensite_tkbo::{body_check::CheckMode, measured::Measured};
 use martensite_tkg3d::top_abs::State;
 mod arithmetic;
 mod mapping;
+pub(super) use mapping::classify;
 #[cfg(test)]
 mod tests;
+
+/// Caller-owned chart for repeated reads of one cylindrical support revision and seam.
+pub struct CylinderAuthoringChart {
+    attempt: Attempt,
+    face: Face,
+    radius: f64,
+    seam_angle: f64,
+    tolerance: f64,
+}
 
 /// Authoring policy for parameters outside the selected face's trims.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -40,6 +50,16 @@ pub struct DevelopedCylinderHit {
     pub trim_check: CheckMode,
 }
 impl CylinderFaceAttachment {
+    /// Open an independent authoring chart at the chosen unwrapped native seam.
+    /// Example: `let chart = attachment.authoring_chart(revision, seam_angle)?;`.
+    pub fn authoring_chart(
+        &self,
+        revision: SupportRevision,
+        seam_angle: f64,
+    ) -> Checked<CylinderAuthoringChart> {
+        mapping::open_chart(self, revision, seam_angle)
+    }
+
     /// Map a native hit's UV into the developed chart of this revision's selected face.
     /// Example: `attachment.develop_parameters(revision, request)?`.
     /// Callers supply parameters from this face; this method does not project world points.
@@ -49,5 +69,18 @@ impl CylinderFaceAttachment {
         request: CylinderParameterRequest,
     ) -> Checked<DevelopedCylinderHit> {
         mapping::apply(self, revision, request)
+    }
+}
+
+impl CylinderAuthoringChart {
+    /// Map a native hit without decoding its support again.
+    /// Example: `chart.develop_parameters(revision, uv, OutOfSupportPolicy::Refuse)?`.
+    pub fn develop_parameters(
+        &self,
+        revision: SupportRevision,
+        uv: [f64; 2],
+        outside: OutOfSupportPolicy,
+    ) -> Checked<DevelopedCylinderHit> {
+        mapping::apply_chart(self, revision, uv, outside)
     }
 }

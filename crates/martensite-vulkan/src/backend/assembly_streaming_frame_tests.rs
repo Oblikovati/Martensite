@@ -59,7 +59,12 @@ fn cold_native_parts_stream_then_match_complete_color_and_depth() {
     frame.assembly_upload_budget = Some(stream_bytes(&far));
     let render = |renderer: &mut VulkanRenderer, frame: &RenderFrame, presenter: &mut _| {
         let ticket = renderer
-            .render_window(frame, presenter, false, RenderGuiSurfacePolicy::default())
+            .render_window(
+                frame,
+                presenter,
+                crate::driver_options::WindowFrameQueue::Unrestricted,
+                RenderGuiSurfacePolicy::default(),
+            )
             .unwrap();
         let capture = renderer.read_frame(&ticket).unwrap();
         (ticket.assembly_streaming, capture)
@@ -123,7 +128,12 @@ fn moved_focus_and_failed_redraw_use_current_geometry_on_retry() {
     frame.assembly_upload_budget = Some(stream_bytes(&frame.draws[0]));
     let policy = RenderGuiSurfacePolicy::default();
     let first = renderer
-        .render_window(&frame, &mut presenter, false, policy)
+        .render_window(
+            &frame,
+            &mut presenter,
+            crate::driver_options::WindowFrameQueue::Unrestricted,
+            policy,
+        )
         .unwrap();
     assert_eq!(first.assembly_streaming.unwrap().drawn, 1);
     renderer.finish_frames().unwrap();
@@ -135,14 +145,19 @@ fn moved_focus_and_failed_redraw_use_current_geometry_on_retry() {
     let rejected = renderer.render_window_with_probe(
         &frame,
         &mut presenter,
-        false,
+        crate::driver_options::WindowFrameQueue::Unrestricted,
         policy,
         &mut RejectBeforeSubmit,
     );
     assert!(rejected.is_err());
     assert!(presenter.assembly_sources.is_empty());
     let retry = renderer
-        .render_window(&frame, &mut presenter, false, policy)
+        .render_window(
+            &frame,
+            &mut presenter,
+            crate::driver_options::WindowFrameQueue::Unrestricted,
+            policy,
+        )
         .unwrap();
     let progress = retry.assembly_streaming.unwrap();
     assert_eq!((progress.drawn, progress.visible), (2, 3));

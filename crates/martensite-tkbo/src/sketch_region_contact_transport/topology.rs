@@ -321,10 +321,13 @@ fn measure_parameters(
     let maps = native_maps(retained, axes)?;
     let row = &retained.inspection.contacts[contact];
     let domain = &retained.census.domains[row.occurrence_domains[0]];
-    let proof =
-        crate::sketch_region_certification::certificate_in(&retained.census, domain, proofs)?;
+    let proof = crate::sketch_region_certification::unified_certificate_in(
+        &retained.census,
+        domain,
+        proofs,
+    )?;
     let index = (0..proof.contact_count())
-        .find(|&i| proof.contact(i).unwrap().candidate_index == row.identity.candidate_root)?;
+        .find(|&i| proof.contact(i).unwrap().key() == row.identity.proof_key)?;
     Some(proof.measure_native_parameters(
         index,
         maps,

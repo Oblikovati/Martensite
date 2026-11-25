@@ -1,0 +1,74 @@
+
+running 1 test
+test surface_sketch::wrapped_profile::operation::cone::tests::narrow::complete::directed::geometric_v6_outward_requires_complete_actual_si ... {"probe":"v6-stage","stage":"operation/cone/input.rs:capture_with_selection","seconds":0.000185243,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/prepare/selection.rs:planar","seconds":0.163755725,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/domain.rs:certify","seconds":0.003316468,"metric_units":14792}
+{"probe":"v6-stage","stage":"operation/cone/prepare.rs:prepare_regions","seconds":0.305992626,"metric_units":695418}
+{"probe":"v6-stage","stage":"operation/cone/prepare/clearance.rs:certify","seconds":0.006552136,"metric_units":14764}
+{"probe":"v6-stage","stage":"operation/cone/prepare/directed.rs:finalize","seconds":0.016854092,"metric_units":12140}
+{"probe":"v6-stage","stage":"operation/cone/prepare.rs:select_with_execution","seconds":0.496610815,"metric_units":737114}
+{"probe":"v6-stage","stage":"control/Selection/None","seconds":0.496621666,"metric_units":0}
+{"probe":"v6-stage","stage":"control/Construction/Some(SurfaceRegionId(1))","seconds":0.238879788,"metric_units":0}
+{"probe":"v6-stage","stage":"control/Construction/Some(SurfaceRegionId(2))","seconds":0.026009697,"metric_units":0}
+{"probe":"v6-stage","stage":"control/Encoding/None","seconds":0.077250519,"metric_units":0}
+{"probe":"v6-stage","stage":"control/Coverage/None","seconds":0.004564848,"metric_units":0}
+{"probe":"v6-stage","stage":"control/History/None","seconds":0.001944408,"metric_units":0}
+{"probe":"v6-stage","stage":"control/Storage/Some(SurfaceRegionId(1))","seconds":0.240798830,"metric_units":0}
+{"probe":"v6-stage","stage":"control/Storage/Some(SurfaceRegionId(2))","seconds":0.018014900,"metric_units":0}
+{"probe":"v6-stage","stage":"control/Binding/None","seconds":0.000278074,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/material.rs:certify_uv","seconds":6.029340606,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/material.rs:certify","seconds":6.038348878,"metric_units":13338}
+{"probe":"v6-stage","stage":"operation/cone/measures/reference.rs:certify","seconds":0.663779257,"metric_units":475}
+{"probe":"v6-stage","stage":"operation/cone/measures/flux.rs:certify","seconds":0.685511938,"metric_units":954}
+{"probe":"v6-stage","stage":"operation/cone/measures.rs:authored_for_chart","seconds":0.012479416,"metric_units":29953}
+{"probe":"v6-stage","stage":"operation/cone/measures.rs:geometry","seconds":7.400209195,"metric_units":44720}
+{"probe":"v6-stage","stage":"control/MemberChecks/Some(SurfaceRegionId(1))","seconds":7.400224693,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/material.rs:certify_uv","seconds":0.084231258,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/material.rs:certify","seconds":0.085306488,"metric_units":1494}
+{"probe":"v6-stage","stage":"operation/cone/measures/reference.rs:certify","seconds":0.018117992,"metric_units":475}
+{"probe":"v6-stage","stage":"operation/cone/measures/flux.rs:certify","seconds":0.033694188,"metric_units":954}
+{"probe":"v6-stage","stage":"operation/cone/measures.rs:authored_for_chart","seconds":0.005257870,"metric_units":6739}
+{"probe":"v6-stage","stage":"operation/cone/measures.rs:geometry","seconds":0.142423756,"metric_units":9662}
+{"probe":"v6-stage","stage":"control/MemberChecks/Some(SurfaceRegionId(2))","seconds":0.142437972,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/actual.rs:certify_family","seconds":0.127663149,"metric_units":35904}
+{"probe":"v6-stage","stage":"control/MemberChecks/None","seconds":0.127700547,"metric_units":0}
+{"probe":"v6-stage","stage":"pipeline/qualification.rs:certified_conical_checks","seconds":2.973608995,"metric_units":0}
+{"probe":"v6-stage","stage":"pipeline.rs:estimate","seconds":0.163624433,"metric_units":0}
+{"probe":"v6-stage","stage":"control/MemberChecks/Some(SurfaceRegionId(1))","seconds":3.137319938,"metric_units":0}
+{"probe":"v6-stage","stage":"pipeline/qualification.rs:certified_conical_checks","seconds":0.196994171,"metric_units":0}
+{"probe":"v6-stage","stage":"pipeline.rs:estimate","seconds":0.010288081,"metric_units":0}
+{"probe":"v6-stage","stage":"control/MemberChecks/Some(SurfaceRegionId(2))","seconds":0.207357019,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/measures.rs:budget","seconds":0.191383677,"metric_units":2521}
+{"probe":"v6-stage","stage":"control/Budget/None","seconds":0.191421947,"metric_units":0}
+{"probe":"v6-stage","stage":"control/Completion/None","seconds":0.000002996,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/publication.rs:publish","seconds":0.028008836,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/mod.rs:execute_with_selection","seconds":12.342035161,"metric_units":0}
+{"event":"directed_narrow_cone_api","sense":"Outward","seconds":12.342049}
+{"event":"narrow_cone_completed_work","arithmetic_operations":989355,"integration_subintervals":444,"retained_spans":148}
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 513 filtered out; finished in 19.66s
+
+	Command being timed: "taskset -c 14 /tmp/martensite-v6-stage-attribution-r2/probe-binary surface_sketch::wrapped_profile::operation::cone::tests::narrow::complete::directed::geometric_v6_outward_requires_complete_actual_si --exact --nocapture --test-threads=1"
+	User time (seconds): 19.65
+	System time (seconds): 0.01
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:19.66
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 67000
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 1
+	Minor (reclaiming a frame) page faults: 9326
+	Voluntary context switches: 4
+	Involuntary context switches: 399
+	Swaps: 0
+	File system inputs: 64
+	File system outputs: 48
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

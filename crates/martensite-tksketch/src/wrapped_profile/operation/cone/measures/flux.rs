@@ -1,7 +1,7 @@
 //! The actual frozen cap and side occurrences supply the conditional centered patch flux.
 use super::*;
-pub(super) fn certify(
-    request: &WrappedConeNormalRequest,
+pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn certify(
+    request: &ConeRun<'_>,
     region: SurfaceRegionId,
     stored: &storage::Stored,
     work: &mut storage::Work,
@@ -18,14 +18,38 @@ pub(super) fn certify(
         options: work.integration(request.proof.integration),
         arithmetic: work.profile(),
     };
-    let flux = certify_analytic_conical_boundary_flux(query, cancelled)
-        .map_err(|cause| failed(region, &stored.spans, cause))?;
-    work.charge(region, None, flux.arithmetic_operations())?;
-    work.charge_integration(
+    let result = certify_analytic_conical_boundary_flux(query, cancelled);
+    charged(
+        result,
         region,
-        flux.integration_subintervals(),
+        &stored.spans,
         request.proof.integration,
-    )?;
+        work,
+    )
+}
+fn charged(
+    result: Result<CertifiedAnalyticConicalFlux, AnalyticConicalFluxError>,
+    region: SurfaceRegionId,
+    spans: &[storage::SpanProof],
+    integration_options: CylindricalFluxOptions,
+    work: &mut storage::Work,
+) -> ConeChecked<CertifiedAnalyticConicalFlux> {
+    let (operations, cells) = result.as_ref().map_or_else(
+        |cause| (cause.operations, cause.integration_subintervals),
+        |proof| {
+            (
+                proof.arithmetic_operations(),
+                proof.integration_subintervals(),
+            )
+        },
+    );
+    let charged = work.charge(region, None, operations);
+    let integration = work.charge_integration(region, cells, integration_options);
+    let flux = match (result, charged, integration) {
+        (Err(cause), _, _) => return Err(failed(region, spans, cause)),
+        (Ok(_), Err(cause), _) | (Ok(_), Ok(()), Err(cause)) => return Err(cause),
+        (Ok(proof), Ok(()), Ok(())) => proof,
+    };
     Ok(flux)
 }
 fn failed(
@@ -34,7 +58,8 @@ fn failed(
     cause: AnalyticConicalFluxError,
 ) -> ConeFailure {
     let index = match &cause.cause {
-        AnalyticConicalFluxFailure::Input { span, .. }
+        AnalyticConicalFluxFailure::Arithmetic { span, .. }
+        | AnalyticConicalFluxFailure::Input { span, .. }
         | AnalyticConicalFluxFailure::Integration { span, .. } => *span,
         AnalyticConicalFluxFailure::Cap { span, .. } => Some(*span),
         AnalyticConicalFluxFailure::ArithmeticPolicy(_)
@@ -46,3 +71,6 @@ fn failed(
         .map(|proof| proof.span);
     storage::failure(region, span, ConeCause::Flux(Box::new(cause)))
 }
+
+#[cfg(test)]
+mod tests;

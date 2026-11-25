@@ -30,6 +30,7 @@ pub struct Graphic3dRenderView {
     pub(crate) options: crate::driver_options::SharedDriverOptions,
     pub(crate) lighting_selection: crate::driver_lighting_capability::SharedLightingSelection,
     presenter: SharedState<Option<crate::backend::WindowPresenter>>,
+    prefer_latest_window_frame: std::sync::atomic::AtomicBool,
     assembly_streaming: SharedState<crate::RenderAssemblyStreaming>,
     window_error: SharedState<Option<RenderError>>,
     pub(crate) outcome: SharedState<Option<FramePublication>>,
@@ -123,6 +124,7 @@ impl Graphic3dRenderView {
             gui_surface,
             line_widths,
             presenter: SharedState::default(),
+            prefer_latest_window_frame: Default::default(),
             assembly_streaming: SharedState::default(),
             window_error: SharedState::default(),
             outcome: SharedState::default(),
@@ -353,6 +355,22 @@ impl Graphic3dRenderView {
         }
         self.render_mapped_target(frame, &mut device)
     }
+    /// Prefer mailbox presentation on this synchronized window, with FIFO as the fallback.
+    /// Mailbox can replace a queued frame while leaving scanout synchronized to the display.
+    /// Example: `view.set_prefer_latest_window_frame(true)` before the first redraw.
+    pub fn set_prefer_latest_window_frame(&self, enabled: bool) {
+        self.prefer_latest_window_frame
+            .store(enabled, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    fn window_frame_queue(&self) -> crate::driver_options::WindowFrameQueue {
+        crate::driver_options::WindowFrameQueue::for_view(
+            self.options.read().vertical_sync,
+            self.prefer_latest_window_frame
+                .load(std::sync::atomic::Ordering::Relaxed),
+        )
+    }
+
     fn render_mapped_target(
         &self,
         frame: &crate::RenderFrame,
@@ -374,7 +392,7 @@ impl Graphic3dRenderView {
         let result = device.render_window(
             complete_frame.as_ref().unwrap_or(frame),
             presenter.as_mut().unwrap(),
-            self.options.read().vertical_sync,
+            self.window_frame_queue(),
             self.gui_surface,
         );
         if result.is_err() {

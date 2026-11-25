@@ -110,13 +110,15 @@ fn contact_bounds(
 ) -> Option<[DyadicBound; 2]> {
     let row = &retained.inspection.contacts[contact];
     let domain = &retained.census.domains[*row.occurrence_domains.first()?];
-    let proof =
-        crate::sketch_region_certification::certificate_in(&retained.census, domain, proofs)?;
+    let proof = crate::sketch_region_certification::unified_certificate_in(
+        &retained.census,
+        domain,
+        proofs,
+    )?;
     let root = (0..proof.contact_count())
         .filter_map(|i| proof.contact(i))
-        .find(|candidate| candidate.candidate_index == row.identity.candidate_root)?;
-    let (first, last) = root.parameter.bounds();
-    Some([first.clone(), last.clone()])
+        .find(|candidate| candidate.key() == row.identity.proof_key)?;
+    root.first_bounds()
 }
 fn world_measurement(
     inputs: &ContactMetricInputs<'_>,

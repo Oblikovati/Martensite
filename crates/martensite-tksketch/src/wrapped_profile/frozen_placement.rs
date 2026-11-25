@@ -68,7 +68,7 @@ pub(super) fn place<E>(
     Ok(result)
 }
 
-fn move_bindings<E>(
+pub(super) fn move_bindings<E>(
     bindings: Vec<(BindingKey, Shape)>,
     location: &Location,
 ) -> Checked<Vec<(BindingKey, Shape)>, E> {

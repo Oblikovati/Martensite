@@ -1,11 +1,14 @@
 //! Whole-operation controls combine independent inequalities, ownership and replay.
 use super::*;
 use std::fmt::Write;
+pub(super) mod atlas;
+mod chart_policy;
 mod concurrency;
-mod native_flux;
+pub(super) mod native_flux;
 pub(super) mod normals;
-mod occurrences;
+pub(super) mod occurrences;
 mod policies;
+mod recentered;
 const WORKER: &str =
     "surface_sketch::wrapped_profile::operation::cone::tests::completed::process_worker";
 const PREFIX: &str = "CONE_COMPLETE_REPLAY=";
@@ -42,10 +45,24 @@ fn check_completed(mut request: WrappedConeNormalRequest) -> WrappedConeNormalRe
     assert_eq!(request, before);
     assert_eq!(result.proof_options(), before.proof);
     assert_eq!(result.support(), before.support);
+    check_legacy_policy(&result);
     check_measure(&result);
     check_coverage(&result);
     check_export_isolation(&result, &mut request, &before);
     result
+}
+fn check_legacy_policy(result: &WrappedConeNormalResult) {
+    assert_eq!(
+        result.execution_selection(),
+        crate::surface_sketch::WrappedConeExecutionSelection::RoundedProxyNativeSearchV1 {
+            domain: crate::surface_sketch::WrappedConeDomainPolicy::LegacySectorV1,
+        }
+    );
+    assert_eq!(
+        result.domain_policy(),
+        crate::surface_sketch::WrappedConeDomainPolicy::LegacySectorV1
+    );
+    assert!(result.chart_domain_receipt().is_none());
 }
 fn check_export_isolation(
     result: &WrappedConeNormalResult,
@@ -136,6 +153,9 @@ fn check_coverage(result: &WrappedConeNormalResult) {
 }
 fn signature() -> String {
     let result = execute(&request(), &mut || false).unwrap_or_else(|cause| panic!("{cause:?}"));
+    result_signature(&result)
+}
+fn result_signature(result: &WrappedConeNormalResult) -> String {
     let mut signature = format!("{:?}|{:?}|", result.history(), result.budget());
     for byte in result.encoded_brep() {
         write!(signature, "{byte:02x}").unwrap();
@@ -155,11 +175,11 @@ fn process_worker() {
 }
 #[test]
 fn complete_cone_two_processes_replay_bytes_and_evidence() {
-    assert_eq!(process_signature(), process_signature());
+    assert_eq!(process_signature(WORKER), process_signature(WORKER));
 }
-fn process_signature() -> String {
+fn process_signature(worker: &str) -> String {
     let output = std::process::Command::new(std::env::current_exe().unwrap())
-        .args(["--exact", WORKER, "--ignored", "--nocapture"])
+        .args(["--exact", worker, "--ignored", "--nocapture"])
         .output()
         .unwrap();
     assert!(

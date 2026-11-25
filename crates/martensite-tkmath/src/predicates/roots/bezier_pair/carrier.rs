@@ -14,12 +14,17 @@ use super::super::{
     certificate_arithmetic::{ExactRatio, RatioInterval, world::HomogeneousCurve},
 };
 use super::operation::{PairContact, PairOperationFailure, PairOperationProof, PairProofEvidence};
-use super::source::{HomogeneousPolynomials, OwnedBezierSource};
+use super::source::{HomogeneousPolynomials, ObservedHomogeneous, OwnedBezierSource};
+use super::source_certificate::{SourceCertificate, certify_observed};
 use super::work_budget::PairWorkBudget;
 use num_bigint::{BigInt, Sign};
 
 type Vector = [BigInt; 3];
 type Point = [ExactRatio; 3];
+
+#[cfg(test)]
+#[path = "carrier_transform_tests.rs"]
+mod transform_tests;
 
 /// Irreducible carrier shared by both sources of a common-carrier certificate.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -52,50 +57,85 @@ enum Carrier {
     },
 }
 
-/// Certify a distinct pair on one carrier, or return `None` to keep the generic route.
+pub(super) struct CarrierInputs<'a> {
+    pub sources: [ObservedHomogeneous<'a>; 2],
+    pub shared: Option<SharedCarrier>,
+}
+
+/// Both branches own the same transforms after classification.
+pub(super) fn prepare<'a>(
+    sources: &'a [OwnedBezierSource; 2],
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<CarrierInputs<'a>, PairOperationFailure> {
+    let left = ObservedHomogeneous::capture(&sources[0], cancelled)
+        .map_err(PairOperationFailure::Source)?;
+    let right = ObservedHomogeneous::capture(&sources[1], cancelled)
+        .map_err(PairOperationFailure::Source)?;
+    let shared = shared_carrier(&left.coefficients, &right.coefficients);
+    Ok(CarrierInputs {
+        sources: [left, right],
+        shared,
+    })
+}
+
 pub(super) fn certify(
     sources: &[OwnedBezierSource; 2],
+    carrier: SharedCarrier,
+    observed: [ObservedHomogeneous<'_>; 2],
     options: RootIsolationOptions,
     requested_error: f64,
     budget: &PairWorkBudget,
     cancelled: &mut impl FnMut() -> bool,
-) -> Result<Option<PairOperationProof>, PairOperationFailure> {
-    let Some((carrier, kind, right)) = shared_carrier(sources, cancelled)? else {
-        return Ok(None);
-    };
+) -> Result<PairOperationProof, PairOperationFailure> {
+    let [left, right] = observed;
     let certificates = [
-        super::source_certificate::certify(&sources[0], options, budget, cancelled)?,
-        super::source_certificate::certify(&sources[1], options, budget, cancelled)?,
+        certify_observed(left, options, budget, cancelled)?,
+        certify_observed(right, options, budget, cancelled)?,
     ];
-    let preimages = preimages(&carrier, &right, sources[1].interval);
+    common_proof(
+        sources,
+        carrier,
+        certificates,
+        requested_error,
+        budget,
+        cancelled,
+    )
+}
+
+pub(super) struct SharedCarrier {
+    carrier: Carrier,
+    kind: BezierPairCarrierKind,
+}
+
+fn common_proof(
+    sources: &[OwnedBezierSource; 2],
+    carrier: SharedCarrier,
+    certificates: [SourceCertificate; 2],
+    requested_error: f64,
+    budget: &PairWorkBudget,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<PairOperationProof, PairOperationFailure> {
+    let SharedCarrier { carrier, kind } = carrier;
+    let preimages = preimages(&carrier, &certificates[1].homogeneous, sources[1].interval);
     let touches = super::carrier_spans::touches(&preimages, sources)?;
     let contacts = contacts(&sources[0], touches, requested_error, cancelled)?;
     let evidence = CommonCarrierEvidence { kind, preimages };
-    Ok(Some(PairOperationProof {
+    Ok(PairOperationProof {
         sources: sources.clone(),
         evidence: PairProofEvidence::CommonCarrier(Box::new(evidence)),
         contacts,
         source_certificates: certificates,
         work: budget.receipt(),
-    }))
+    })
 }
-type SharedCarrier = (Carrier, BezierPairCarrierKind, HomogeneousPolynomials);
 /// Both sources classify to the same proper carrier and the second lies on the first's.
 fn shared_carrier(
-    sources: &[OwnedBezierSource; 2],
-    cancelled: &mut impl FnMut() -> bool,
-) -> Result<Option<SharedCarrier>, PairOperationFailure> {
-    let left = sources[0]
-        .homogeneous(cancelled)
-        .map_err(PairOperationFailure::Source)?;
-    let right = sources[1]
-        .homogeneous(cancelled)
-        .map_err(PairOperationFailure::Source)?;
-    let Some((carrier, kind)) = classify(&left) else {
-        return Ok(None);
-    };
-    let same = classify(&right).map(|(_, other)| other) == Some(kind) && contains(&carrier, &right);
-    Ok(same.then_some((carrier, kind, right)))
+    left: &HomogeneousPolynomials,
+    right: &HomogeneousPolynomials,
+) -> Option<SharedCarrier> {
+    let (carrier, kind) = classify(left)?;
+    let same = classify(right).map(|(_, other)| other) == Some(kind) && contains(&carrier, right);
+    same.then_some(SharedCarrier { carrier, kind })
 }
 fn columns(source: &HomogeneousPolynomials) -> Vec<Vector> {
     let degree = source.components.iter().filter_map(|c| c.degree()).max();

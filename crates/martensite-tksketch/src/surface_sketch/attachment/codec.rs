@@ -11,6 +11,16 @@ pub(super) fn encode(attempt: &Attempt, body: &Shape, face: &Face) -> Checked<Ve
     ))
 }
 pub(super) fn decode(attempt: &Attempt, bytes: &[u8]) -> Checked<DetachedCylinderSupport> {
+    let DecodedFace { body, face } = decode_face(attempt, bytes)?;
+    admission::selection(attempt, &body, &face)?;
+    Ok(DetachedCylinderSupport {
+        body,
+        face,
+        id: attempt.id,
+        revision: attempt.revision,
+    })
+}
+pub(super) fn decode_face(attempt: &Attempt, bytes: &[u8]) -> Checked<DecodedFace> {
     let (body, mut bindings) = attempt.encoding(encoding::decode_with_geometry_policies(
         bytes,
         &[attempt.id],
@@ -22,23 +32,32 @@ pub(super) fn decode(attempt: &Attempt, bytes: &[u8]) -> Checked<DetachedCylinde
         .pop()
         .ok_or_else(|| attempt.reject(AttachmentFailureCause::Membership { occurrences: 0 }))?;
     let face = attempt.native("selected face reference", topods::face(&selected))?;
-    admission::selection(attempt, &body, &face)?;
-    Ok(DetachedCylinderSupport {
-        body,
-        face,
-        id: attempt.id,
-        revision: attempt.revision,
-    })
+    Ok(DecodedFace { body, face })
 }
 pub(super) fn restore(
     record: CylinderAttachmentRecord,
     attempt: Attempt,
 ) -> Checked<CylinderFaceAttachment> {
     let detached = decode(&attempt, &record.brep)?;
-    let replayed = encode(&attempt, &detached.body, &detached.face)?;
-    compare(&attempt, &record.brep, &replayed)?;
-    let validation = admission::validation(&attempt, &detached.body, &record.resolution)?;
+    let validation = validate_frozen(
+        &attempt,
+        &record.brep,
+        &detached.body,
+        &detached.face,
+        &record.resolution,
+    )?;
     Ok(CylinderFaceAttachment { record, validation })
+}
+pub(super) fn validate_frozen(
+    attempt: &Attempt,
+    bytes: &[u8],
+    body: &Shape,
+    face: &Face,
+    resolution: &Resolution,
+) -> Checked<ValidationReport> {
+    let replayed = encode(attempt, body, face)?;
+    compare(attempt, bytes, &replayed)?;
+    admission::validation(attempt, body, resolution)
 }
 pub(super) fn compare(attempt: &Attempt, expected: &[u8], actual: &[u8]) -> Checked<()> {
     if expected == actual {

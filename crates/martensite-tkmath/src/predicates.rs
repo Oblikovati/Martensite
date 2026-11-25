@@ -88,6 +88,22 @@ fn exact_point(point: [f64; 2], index: usize) -> Result<[BigInt; 2], NonFiniteCo
 }
 
 fn exact_coordinate(value: f64, point: usize, axis: usize) -> Result<BigInt, NonFiniteCoordinate> {
+    let parts = binary64_parts(value, point, axis)?;
+    let integer = BigInt::from(parts.significand) << parts.shift;
+    Ok(if parts.negative { -integer } else { integer })
+}
+
+struct Binary64Parts {
+    significand: u64,
+    shift: usize,
+    negative: bool,
+}
+
+fn binary64_parts(
+    value: f64,
+    point: usize,
+    axis: usize,
+) -> Result<Binary64Parts, NonFiniteCoordinate> {
     if !value.is_finite() {
         return Err(NonFiniteCoordinate { point, axis, value });
     }
@@ -97,6 +113,9 @@ fn exact_coordinate(value: f64, point: usize, axis: usize) -> Result<BigInt, Non
     let significand = fraction | if exponent == 0 { 0 } else { 1_u64 << 52 };
     // Every finite binary64 is an integer multiple of 2^-1074. The common
     // positive scale cancels from the sign; subnormals need no rounded arithmetic.
-    let integer = BigInt::from(significand) << exponent.saturating_sub(1);
-    Ok(if bits >> 63 == 0 { integer } else { -integer })
+    Ok(Binary64Parts {
+        significand,
+        shift: exponent.saturating_sub(1),
+        negative: bits >> 63 != 0,
+    })
 }

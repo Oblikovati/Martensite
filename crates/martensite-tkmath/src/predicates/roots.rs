@@ -159,28 +159,58 @@ fn checked_policy_interval(
     interval: [f64; 2],
     options: RootIsolationOptions,
 ) -> Result<([DyadicBound; 2], DyadicBound), RootIsolationError> {
+    validate_policy_interval(interval, options)?;
+    let convert =
+        |value| DyadicBound::from_f64(value).map_err(|_| RootIsolationError::Interval(interval));
+    let width = DyadicBound::from_f64(options.max_width)
+        .map_err(|_| RootIsolationError::Width(options.max_width))?;
+    Ok(([convert(interval[0])?, convert(interval[1])?], width))
+}
+
+fn validate_policy_interval(
+    interval: [f64; 2],
+    options: RootIsolationOptions,
+) -> Result<(), RootIsolationError> {
     if options.version != 1 {
         return Err(RootIsolationError::OptionsVersion(options.version));
     }
-    checked_interval(interval, options.max_width)
-}
-fn checked_interval(
-    interval: [f64; 2],
-    max_width: f64,
-) -> Result<([DyadicBound; 2], DyadicBound), RootIsolationError> {
     if !interval.iter().all(|value| value.is_finite()) || interval[0] > interval[1] {
         return Err(RootIsolationError::Interval(interval));
     }
-    if !max_width.is_finite() || max_width <= 0. {
-        return Err(RootIsolationError::Width(max_width));
+    if !options.max_width.is_finite() || options.max_width <= 0. {
+        return Err(RootIsolationError::Width(options.max_width));
     }
-    let convert =
-        |value| DyadicBound::from_f64(value).map_err(|_| RootIsolationError::Interval(interval));
-    let width =
-        DyadicBound::from_f64(max_width).map_err(|_| RootIsolationError::Width(max_width))?;
-    Ok(([convert(interval[0])?, convert(interval[1])?], width))
+    Ok(())
 }
 
 /// Exact closed quadratic spline extrusion support self-exclusion.
 pub mod closed_extrusion;
 pub mod open_extrusion;
+
+#[cfg(test)]
+mod interval_tests {
+    use super::*;
+
+    #[test]
+    fn scalar_admission_preserves_root_interval_error_priority() {
+        let mut options = RootIsolationOptions::new(-0.);
+        let reversed = [1., 0.];
+        options.version = 2;
+        assert!(matches!(
+            validate_policy_interval(reversed, options),
+            Err(RootIsolationError::OptionsVersion(2))
+        ));
+        options.version = 1;
+        assert!(matches!(
+            validate_policy_interval(reversed, options),
+            Err(RootIsolationError::Interval(value)) if value == reversed
+        ));
+        assert!(matches!(
+            validate_policy_interval([-0., 0.], options),
+            Err(RootIsolationError::Width(value)) if value.to_bits() == (-0_f64).to_bits()
+        ));
+        options.max_width = f64::from_bits(1);
+        assert!(validate_policy_interval([-f64::MAX, f64::MAX], options).is_ok());
+        assert!(checked_policy_interval([-f64::MAX, f64::MAX], options).is_ok());
+    }
+}

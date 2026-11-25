@@ -41,7 +41,7 @@ fn intervals(
     roots: crate::predicates::roots::RootIsolationOptions,
 ) -> Checked<()> {
     for (source_index, source) in query.sources().iter().enumerate() {
-        crate::predicates::roots::checked_policy_interval(source.interval, roots).map_err(
+        crate::predicates::roots::validate_policy_interval(source.interval, roots).map_err(
             |cause| {
                 super::super::operation_failure::source_domain_failure(
                     source_index,

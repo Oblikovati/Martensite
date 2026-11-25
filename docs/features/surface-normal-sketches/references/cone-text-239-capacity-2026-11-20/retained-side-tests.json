@@ -1,0 +1,43 @@
+{
+  "whole-text-refined": {
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "martensite-tkv3d",
+      "--test",
+      "toolkit",
+      "wrapped_text_regions::wrapped::conical_text::",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit": 101,
+    "changed_sources": [],
+    "outcomes": [
+      "test wrapped_text_regions::wrapped::conical_text::inward_multiline_cone_text_completes_under_explicit_input_bound_and_original_spatial_cap ... {\"event\":\"conical_text_api\",\"normal\":\"Inward\",\"seconds\":15.109914982}",
+      "test wrapped_text_regions::wrapped::conical_text::outward_multiline_cone_text_completes_under_explicit_input_bound_and_original_spatial_cap ... {\"event\":\"conical_text_api\",\"normal\":\"Outward\",\"seconds\":12.297293202}",
+      "test result: FAILED. 1 passed; 2 failed; 0 ignored; 0 measured; 692 filtered out; finished in 33.12s",
+      "error: test failed, to rerun pass `-p martensite-tkv3d --test toolkit`"
+    ]
+  },
+  "actual-certificate": {
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "martensite-tkmath",
+      "--lib",
+      "conical_profile::actual_certificate::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit": 0,
+    "changed_sources": [],
+    "outcomes": [
+      "test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 1077 filtered out; finished in 0.01s"
+    ]
+  }
+}

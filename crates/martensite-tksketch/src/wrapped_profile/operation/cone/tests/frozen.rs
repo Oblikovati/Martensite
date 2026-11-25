@@ -10,7 +10,13 @@ pub(super) struct FrozenNative {
 pub(super) fn capture(request: &WrappedConeNormalRequest) -> FrozenNative {
     let inputs = input::capture(request, &mut || false).unwrap();
     let mut work = storage::Work::new(request.proof.arithmetic);
-    let selection = prepare::select(request, &inputs.originals, &mut work, &mut || false).unwrap();
+    let selection = prepare::select(
+        &ConeRun::from(request),
+        &inputs.originals,
+        &mut work,
+        &mut || false,
+    )
+    .unwrap();
     let prepared = &selection.prepared[0];
     let built = native::construct(prepared, request.support).unwrap();
     let keys: Vec<_> = built.bindings.iter().map(|(key, _)| *key).collect();

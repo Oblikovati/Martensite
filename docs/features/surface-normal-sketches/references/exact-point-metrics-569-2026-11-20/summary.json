@@ -1,0 +1,17 @@
+{
+  "source_commit": "93026c2e",
+  "base_commit": "6e176cf0",
+  "main_fix_commit": "a7a705f9",
+  "math_controls_passed": 21,
+  "complete_operations_passed": 2,
+  "source_hash_guards_unchanged": true,
+  "reused_review": "Both main source reviews; identical test files and parent module apart from existing B1-only measure_captured_axes visibility",
+  "failed_command_attempts_retained": {
+    "full-O": "Invalid toolkit Cargo target; zero geometry tests executed",
+    "full-O-r2": "surface_sketch integration target selected zero matching tests; guard correctly refused it"
+  },
+  "accepted_complete_command": "full-O-r3-command.json",
+  "runtime_or_rss_qualification": false,
+  "main_first_integration_pending": true,
+  "archive_sha256": "f82d49025a619ca1b3c36ed0646df5a03e2de484c9a53e496b49210cfc945449"
+}

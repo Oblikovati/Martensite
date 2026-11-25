@@ -1,7 +1,7 @@
 //! Bounded normal volume belongs to the same common-chart q/L reference as the body gate.
 use super::*;
 pub(super) fn certify(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     prepared: &Prepared,
     work: &mut storage::Work,
     cancelled: &mut CancelPoll<'_>,
@@ -52,7 +52,7 @@ fn reference_span<'a>(
     })
 }
 fn query<'a>(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     prepared: &Prepared,
     spans: &'a [ConicalReferenceVolumeSpan<'a>],
     work: &storage::Work,
@@ -70,7 +70,7 @@ fn query<'a>(
 }
 fn charged(
     result: Result<CertifiedConicalReferenceVolume, ConicalReferenceVolumeError>,
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     prepared: &Prepared,
     work: &mut storage::Work,
 ) -> ConeChecked<CertifiedConicalReferenceVolume> {

@@ -93,7 +93,7 @@ fn invalid(
 }
 
 fn integration_policy(o: CylindricalFluxOptions) -> Result<(), Failure> {
-    if o.behavior_version != 1
+    if !(1..=2).contains(&o.behavior_version)
         || o.max_degree > 16
         || !(1..=4096).contains(&o.max_spans)
         || !(1..=65536).contains(&o.max_subintervals_per_span)

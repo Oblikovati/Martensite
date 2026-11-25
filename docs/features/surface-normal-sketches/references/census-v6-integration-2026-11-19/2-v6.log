@@ -1,0 +1,7 @@
+
+running 1 test
+test surface_sketch::wrapped_profile::operation::cone::tests::narrow::complete::directed::geometric_v6_outward_requires_complete_actual_si ... {"event":"directed_narrow_cone_api","sense":"Outward","seconds":7.683580}
+{"event":"narrow_cone_completed_work","arithmetic_operations":989355,"integration_subintervals":444,"retained_spans":148}
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 513 filtered out; finished in 12.12s

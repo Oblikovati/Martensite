@@ -6,7 +6,89 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added per-window mailbox presentation for synchronized native views, with FIFO fallback (#420).
+
+- Added exact support-member bindings for applications that preserve their own names through wrapped cylindrical and conical bosses and pockets (#420).
+
+- Added an opt-in certified conical-frustum attachment that published the final solid and its authored history in one operation (#419).
+
+- Added an opt-in transported cone extrusion selector that certified decoded cap material from its directed outer and hole cycles and reported the work charged to the operation (#425).
+
+- Added an opt-in transported cone extrusion selector that certifies authored planar material with GeometricCompositeV6 and reports its share of the integration allowance (#425).
+
+- Added borrowed comparison methods for captured Bézier pair and self-query sources, so planar certificate rebinding can compare the operands without recopying their control points or weights (#419).
+
+- Added a caller-owned `CylinderAuthoringChart` that opens the selected support once and reuses its face and radius for repeated hit development during sketch editing (#420).
+
+- Added exact native side and periodic cap validation to the opt-in directed cone atlas, including certificate reuse after rigid placement (#419).
+
+- Added an opt-in connected cone atlas that extruded profiles wider than one revolution and certified separation of the decoded solids (#419).
+
+- Added family-wide periodic cone cap certification with shared planar evidence and accounted probe refusals (#419).
+
+- Added cone atlas spatial certification that combines filled-reference error with decoded cap and ruled-side correspondence (#419).
+
+- Added filled cone reference displacement and signed-volume certification under one arithmetic allowance (#419).
+
+- Added periodic clearance under a caller's remaining arithmetic allowance, with work receipts for refusals (#419).
+
+- Added certificates for cone cap separation throughout interpolation and bounded reference volume (#419).
+
+- Added decoded cap contour join certificates across separate local cone charts (#419).
+
+- Added bounded automatic planning of local cone charts over an exact dyadic cover of a Bézier span (#419).
+
+- Added source-bound cone chart certificates for dyadic intervals of authored Bézier curves (#419).
+
+- Added an opt-in placed cone validation mode that rebinds the canonical self-intersection certificate (#425).
+
+- Added an opt-in cone work grant based on the captured profile’s angular extent and span count (#425).
+
+- Added wrapped bosses and pockets on supported shaped cylinder and cone trims (#420).
+
+- Added bounded inner support trims to wrapped cylinder and cone features, including profiles away from existing bores (#420).
+
+- Added non-destructive wrapped bosses and pockets on selected conical trim bands, with validated solid output, composed history and deterministic replay (#420).
+
+- Added cone-normal tools checked against selected partial and full conical trim bands, with whole-profile and retained cap footprint evidence (#420).
+
+- Added revision-bound conical face attachments and reusable native hit development with explicit seams and bounded Cartesian coordinates (#420).
+
+- Added wrapped cone extrusion in oblique frames with explicit chart angles, certified world-space bounds and detached native exports (#418, #425).
+
+- Added separate certified cone charts for disconnected regions whose combined authored angular lift exceeds one physical revolution (#418, #419).
+
+- Added an opt-in conical chart centered on the selected profile, so normal extrusion could cross the datum-centered angular cut within one physical revolution (#418).
+
+- Added opt-in 4096-span conical family admission and captured-input aggregate work requests with a 16-million ceiling, source-bound receipts and unchanged one-million primitive limits while retaining earlier defaults and replay (#425).
+
+- Added conical integration behavior 2 with outward bounded accumulation and typed actual-work failures while retaining version 1 defaults and replay (#570).
+
+- Added the opt-in `GeometricCompositeV6` planar-proof selector with exact source-bound geometric pair certificates, general-solver fallback and bounded integral evidence (#418).
+
+- Added canonical single-chart conical normal extrusion for solved polynomial profiles with holes, using shared keyed construction and returning separate reference, storage and measure bounds, authored history and detached exports, with opt-in positive-X domain-policy and composite-UV entries retaining legacy replay (#418).
+
+- Added revision-bound footprint checks for rectangular cylindrical trim bands, including full bands with a paired native seam (#420).
+
+- Added normal extrusion tools checked against the authored and fitted cap footprints of a selected cylindrical trim band (#420).
+
+- Added non-destructive wrapped bosses and pockets on cylindrical trim bands, with validated solid output and composed Boolean history (#420, #425).
+
+- Added revision-checked extraction of the extrusion chart from a saved cylindrical face, so edits could reuse the selected face's native location, axes and radius (#420).
+
 ### Fixed
+
+- Enabled wrapped bosses and pockets on indirectly parameterized cylindrical sides from planar circle extrusions, with the original seam, trim checks and feature history preserved (#600).
+
+- Fixed directed cone extrusion on radial spans with exact constant non-unit Bézier weights by certifying the native unit-weight representation (#536).
+
+- Avoided duplicate rational interval arithmetic when measuring exact point contacts while preserving native parameter values and errors (#569).
+
+- Reused immutable occurrence and history checks within validated owned-profile graph batches without a per-view cache allocation, while preserving live alias validation and per-domain source and policy checks (#572).
+
+- Rejected non-passing ordered native reports before cone publication while preserving valid non-exact native-search coverage and original diagnostics (#560).
 
 - Removed Intel macOS from release validation after repeated hosted runner disconnects. The release gate covers Linux x86_64, Apple Silicon and Windows x64 (#602).
 

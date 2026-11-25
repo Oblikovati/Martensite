@@ -9,6 +9,7 @@ pub(super) struct CombinedRequest<'a> {
     pub(super) edges: [storage::ConicalStorageQuery<'a>; 2],
 }
 pub(super) struct CombinedEvidence {
+    pub(super) retained: Option<std::sync::Arc<spatial::RetainedSpatial>>,
     pub(super) total: Interval,
     pub(super) ideal: Interval,
     pub(super) original: Interval,
@@ -88,17 +89,35 @@ pub(super) fn certify_combined(
     request: &CombinedRequest<'_>,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<CombinedEvidence, CombinedFailure> {
+    certify_combined_metric(
+        request,
+        None,
+        ConicalPrimitiveRefinement::UnsplitV1,
+        arithmetic,
+    )
+}
+pub(super) fn certify_combined_in_chart_selected(
+    request: &CombinedRequest<'_>,
+    domain: &ConicalChartDomainEvidence,
+    refinement: ConicalPrimitiveRefinement,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<CombinedEvidence, CombinedFailure> {
+    certify_combined_metric(request, Some(domain), refinement, arithmetic)
+}
+fn certify_combined_metric(
+    request: &CombinedRequest<'_>,
+    domain: Option<&ConicalChartDomainEvidence>,
+    refinement: ConicalPrimitiveRefinement,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<CombinedEvidence, CombinedFailure> {
     admit_binding(request)?;
-    let spatial = spatial::certify_spatial_span(&request.spatial, arithmetic)
-        .map_err(CombinedFailure::Spatial)?;
-    let first = storage::storage_discrepancy(&request.edges[0], arithmetic)
-        .map_err(|cause| CombinedFailure::Storage { depth: 0, cause })?;
-    let last = storage::storage_discrepancy(&request.edges[1], arithmetic)
-        .map_err(|cause| CombinedFailure::Storage { depth: 1, cause })?;
+    let (spatial, retained) = spatial_metric(&request.spatial, domain, refinement, arithmetic)?;
+    let [first, last] = storage_metric(request, domain, arithmetic)?;
     let maximum = storage_maximum(&first, &last);
     let total = total_bound(request, &spatial, &maximum, arithmetic)?;
     let total_derivative = total_derivative(request, &spatial, arithmetic)?;
     accept(
+        retained,
         total,
         spatial,
         total_derivative,
@@ -106,6 +125,43 @@ pub(super) fn certify_combined(
         request.spatial.limit,
         arithmetic,
     )
+}
+fn storage_metric(
+    request: &CombinedRequest<'_>,
+    domain: Option<&ConicalChartDomainEvidence>,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<[Interval; 2], CombinedFailure> {
+    if let Some(domain) = domain {
+        return super::storage_pair::certify(request, domain, arithmetic);
+    }
+    let first = storage::storage_discrepancy(&request.edges[0], arithmetic)
+        .map_err(|cause| CombinedFailure::Storage { depth: 0, cause })?;
+    let last = storage::storage_discrepancy(&request.edges[1], arithmetic)
+        .map_err(|cause| CombinedFailure::Storage { depth: 1, cause })?;
+    Ok([first, last])
+}
+fn spatial_metric(
+    request: &spatial::SpatialRequest<'_>,
+    domain: Option<&ConicalChartDomainEvidence>,
+    refinement: ConicalPrimitiveRefinement,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<
+    (
+        spatial::SpatialEvidence,
+        Option<std::sync::Arc<spatial::RetainedSpatial>>,
+    ),
+    CombinedFailure,
+> {
+    if let Some(domain) = domain {
+        let capture =
+            spatial::certify_spatial_in_chart_selected(request, domain, refinement, arithmetic)
+                .map_err(CombinedFailure::Spatial)?;
+        let evidence = capture.evidence.clone();
+        return Ok((evidence, Some(std::sync::Arc::new(capture))));
+    }
+    let evidence =
+        spatial::certify_spatial_span(request, arithmetic).map_err(CombinedFailure::Spatial)?;
+    Ok((evidence, None))
 }
 pub(super) fn admit_binding(request: &CombinedRequest<'_>) -> Result<(), CombinedFailure> {
     for (depth, edge) in request.edges.iter().enumerate() {
@@ -191,6 +247,7 @@ pub(super) fn first_mismatch(actual: &[f64], expected: &[f64]) -> Option<BitsMis
 }
 
 pub(super) fn accept(
+    retained: Option<std::sync::Arc<spatial::RetainedSpatial>>,
     total: Interval,
     spatial: spatial::SpatialEvidence,
     total_angular_derivative: Interval,
@@ -206,6 +263,7 @@ pub(super) fn accept(
         });
     }
     Ok(CombinedEvidence {
+        retained,
         total,
         ideal: spatial.bound,
         original: spatial.original,

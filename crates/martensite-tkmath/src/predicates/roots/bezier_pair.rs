@@ -82,7 +82,7 @@ pub use public_constant_certificate::{BezierPairConstantExclusion, BezierPairSig
 pub use public_graph_certificate::{
     BezierPairGraphCertificate, BezierPairMembership, BezierPairProjection,
 };
-pub use public_query::BezierPairCurve;
+pub use public_query::{BezierPairCurve, CapturedBezierCurve};
 pub use public_report::{BezierPairFailure, BezierPairReport};
 pub use query::{CapturedBezierPair, PairQueryPolicy as BezierPairPolicy};
 pub use sign_policy::{
@@ -114,6 +114,7 @@ mod rational_circle_tests;
 
 mod carrier;
 mod carrier_spans;
+mod checked_equations;
 mod public_carrier;
 pub use carrier::BezierPairCarrierKind;
 pub use public_carrier::{BezierPairCarrierParameter, BezierPairCommonCarrier};
@@ -128,3 +129,9 @@ pub use bernstein_exclusion::{
 
 #[cfg(test)]
 mod filtered_graph_tests;
+
+mod geometric;
+pub use geometric::{
+    BezierPairGeometricCertificate, BezierPairGeometricCompletion, BezierPairGeometricFailure,
+    BezierPairGeometricKind, BezierPairGeometricReport, CertifiedBezierEndpointContact,
+};

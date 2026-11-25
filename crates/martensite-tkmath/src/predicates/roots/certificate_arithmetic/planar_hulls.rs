@@ -6,7 +6,7 @@ use crate::predicates::roots::{DyadicBound, bezier_pair::hull_separation::hull_n
 use std::cmp::Ordering;
 
 pub(in crate::predicates::roots) fn candidate_directions(
-    derivatives: &[Vec<[Interval; 2]>],
+    derivatives: &[impl AsRef<[[Interval; 2]]>],
     bits: u16,
 ) -> impl Iterator<Item = [f64; 2]> + '_ {
     [[1., 0.], [-1., 0.], [0., 1.], [0., -1.]]
@@ -14,10 +14,10 @@ pub(in crate::predicates::roots) fn candidate_directions(
         .chain(std::iter::once_with(move || hull_candidates(derivatives, bits)).flatten())
 }
 
-fn hull_candidates(derivatives: &[Vec<[Interval; 2]>], bits: u16) -> Vec<[f64; 2]> {
+fn hull_candidates(derivatives: &[impl AsRef<[[Interval; 2]]>], bits: u16) -> Vec<[f64; 2]> {
     let mut points: Vec<_> = derivatives
         .iter()
-        .flatten()
+        .flat_map(AsRef::as_ref)
         .map(|p| p.each_ref().map(|v| midpoint(v, bits)))
         .collect();
     points.push([ExactRatio::from_finite(0.), ExactRatio::from_finite(0.)]);

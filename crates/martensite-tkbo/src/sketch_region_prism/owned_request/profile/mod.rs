@@ -14,6 +14,7 @@ pub(in crate::sketch_region_prism) use admission::{
 pub(crate) use certify::{
     ProfileGraphInput, ProfileProofCause, ProfileProofRefusal, ProofEdge, certify_profile_graph,
     certify_profile_graph_version_with_cancel, certify_profile_graph_with_cancel,
+    certify_profile_program_with_cancel,
 };
 pub(in crate::sketch_region_prism) use construction::ConstructedProfileEdge;
 pub(in crate::sketch_region_prism) use pipeline::{

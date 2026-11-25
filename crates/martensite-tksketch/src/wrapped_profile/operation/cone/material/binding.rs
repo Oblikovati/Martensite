@@ -15,7 +15,7 @@ fn span<'a>(
     prepared: &Prepared,
     proof: &'a storage::SpanProof,
 ) -> ConeChecked<ConicalMaterialSpan<'a>> {
-    let source = original_piece(original, proof.span)?;
+    let source = original_piece(original, prepared, proof.span)?;
     retained_fit(prepared, proof)?;
     let interval = CylindricalProfileInterval::new(u64::from(proof.span.index), proof.span.level)
         .map_err(|_| {
@@ -31,15 +31,13 @@ fn span<'a>(
         uv: &proof.pcurves[0],
     })
 }
-fn original_piece(
-    original: &DevelopedRegionRequest,
+fn original_piece<'a>(
+    original: &'a DevelopedRegionRequest,
+    prepared: &Prepared,
     span: CurveSpan,
-) -> ConeChecked<&AuthoredPiece> {
-    original
-        .loops
-        .iter()
-        .flatten()
-        .find(|piece| piece.span.curve == span.curve)
+) -> ConeChecked<&'a AuthoredPiece> {
+    prepared
+        .authored_piece(original, span.curve)
         .ok_or_else(|| {
             mismatch(
                 original.region,
@@ -88,7 +86,7 @@ pub(super) fn validate(
     validate_domain(prepared, proofs, material)?;
     let spans = spans(&material.original, prepared, proofs)?;
     let query = query(prepared, material.carriers, material.options, &spans);
-    if !material.normal.matches(&query) {
+    if !developed::matches(&query, prepared, proofs, material)? {
         return Err(mismatch(
             prepared.source.region,
             None,
@@ -102,18 +100,34 @@ fn validate_domain(
     proofs: &[storage::SpanProof],
     material: &MaterialEvidence,
 ) -> ConeChecked<()> {
-    selected_version(
-        prepared.source.region,
-        material.requested_planar_proof,
-        material.planar_proof,
-    )?;
-    let uv = domain::request(prepared, proofs)?;
-    if !material.uv.matches_request(&uv) {
-        return Err(mismatch(
-            prepared.source.region,
-            None,
-            "filled actual UV material source binding",
-        ));
+    match &material.uv {
+        UvMaterial::Directed(work) if prepared.executed_selection.uses_directed_cap_cycles() => {
+            let uv = domain::request(prepared, proofs)?;
+            directed::validate(&uv, material, *work)?;
+        }
+        UvMaterial::Region(region) if !prepared.executed_selection.uses_directed_cap_cycles() => {
+            selected_version(
+                prepared.source.region,
+                material.requested_planar_proof,
+                material.planar_proof,
+            )?;
+            validate_original_program_policy(prepared.source.region, material)?;
+            let uv = domain::request(prepared, proofs)?;
+            if !region.matches_request(&uv) {
+                return Err(mismatch(
+                    prepared.source.region,
+                    None,
+                    "filled actual UV material source binding",
+                ));
+            }
+        }
+        _ => {
+            return Err(mismatch(
+                prepared.source.region,
+                None,
+                "retained cap proof issuer differs from selection",
+            ));
+        }
     }
     Ok(())
 }
@@ -148,6 +162,22 @@ fn trims(
                 "filled actual carrier/trim source binding",
             ));
         }
+    }
+    Ok(())
+}
+
+fn validate_original_program_policy(
+    region: SurfaceRegionId,
+    material: &MaterialEvidence,
+) -> ConeChecked<()> {
+    if let Some(proof) = material.uv.integral_program_evidence()
+        && proof.requested_proof_version() != material.requested_planar_proof
+    {
+        return Err(mismatch(
+            region,
+            None,
+            "retained original integral program policy",
+        ));
     }
     Ok(())
 }

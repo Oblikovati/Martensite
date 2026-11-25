@@ -1,5 +1,15 @@
 //! Owned geometric receipts survive a later native refusal without a fabricated report (#527).
 use super::super::*;
+use martensite_tkbo::body_check::{CertifiedConicalBody, ConicalNativeMember};
+
+#[test]
+fn conical_qualification_requires_native_bindings_and_issued_body_authority() {
+    let _: fn(
+        &DevelopedRegionRequest,
+        &ConicalNativeMember,
+        &CertifiedConicalBody,
+    ) -> Result<NativeQualification, Refusal> = qualify_native_with_certified_conical;
+}
 
 #[test]
 fn geometric_receipts_remain_owned_after_native_success_and_refusal() {

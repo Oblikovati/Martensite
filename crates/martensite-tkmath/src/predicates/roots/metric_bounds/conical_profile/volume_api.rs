@@ -39,8 +39,20 @@ pub struct ConicalAuthoredFluxQuery<'a> {
     pub arithmetic: ConeClearanceOptions,
 }
 
+/// Explicit authored quadrature behavior; both use the requested fixed Simpson panel count.
+#[non_exhaustive]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ConicalAuthoredFluxMethod {
+    /// Original Bernstein subdivision, polynomial fourth derivative and repeated endpoints.
+    LegacySimpsonV1,
+    /// Newton differences and a scalar majorant when the global radius bound is positive.
+    /// Otherwise retains the existing local Bernstein proof at the same fixed level.
+    ConditionedSimpsonV2,
+}
+
 /// A conditional comparison; it does not establish body validity or flux provenance.
 pub struct ConicalAuthoredFlux {
+    pub(super) method: ConicalAuthoredFluxMethod,
     pub(super) volume: ConditionalVolumeEvidence,
     pub(super) flux: [u64; 2],
     pub(super) difference: DyadicBound,
@@ -106,6 +118,17 @@ impl ConicalAuthoredFluxError {
             _ => None,
         }
     }
+    /// Actual authored contour/span for either integration or depth-clearance failure (#523).
+    /// Global failures have no fabricated source position; `let location = error.span_location();`.
+    pub fn span_location(&self) -> Option<(usize, usize)> {
+        match &self.cause {
+            Failure::Volume(BoundaryFailure::Span { contour, span, .. })
+            | Failure::Volume(BoundaryFailure::DepthClearance { contour, span, .. }) => {
+                Some((*contour, *span))
+            }
+            _ => None,
+        }
+    }
     /// Contour, span, and depth-clearance cause, if present; `error.depth_cause()`.
     pub fn depth_cause(&self) -> Option<(usize, usize, &super::ConicalDepthFailure)> {
         match &self.cause {
@@ -161,8 +184,24 @@ impl ConicalAuthoredFlux {
     pub fn operations(&self) -> u32 {
         self.operations
     }
-    /// Whether all authored inputs, flux endpoints and policy match; `evidence.matches(query)`.
+    /// Selected fixed-panel algorithm version, including its documented fallback; `assert_eq!(proof.method(), ConicalAuthoredFluxMethod::LegacySimpsonV1);`.
+    pub fn method(&self) -> ConicalAuthoredFluxMethod {
+        self.method
+    }
+    /// Bind original sources, flux and policy under the legacy method; `evidence.matches(query)`.
     pub fn matches(&self, query: ConicalAuthoredFluxQuery<'_>) -> bool {
+        self.matches_with_method(query, ConicalAuthoredFluxMethod::LegacySimpsonV1)
+    }
+    /// Bind the explicitly selected method and every original query bit.
+    /// Example: `assert!(proof.matches_with_method(query, proof.method()));`.
+    pub fn matches_with_method(
+        &self,
+        query: ConicalAuthoredFluxQuery<'_>,
+        method: ConicalAuthoredFluxMethod,
+    ) -> bool {
+        self.method == method && self.matches_inputs(query)
+    }
+    fn matches_inputs(&self, query: ConicalAuthoredFluxQuery<'_>) -> bool {
         let Some(contours) = capture(query.contours) else {
             return false;
         };
@@ -181,10 +220,30 @@ pub fn certify_conical_authored_flux(
     query: ConicalAuthoredFluxQuery<'_>,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Result<ConicalAuthoredFlux, ConicalAuthoredFluxError> {
+    certify_selected(
+        query,
+        ConicalAuthoredFluxMethod::LegacySimpsonV1,
+        &mut cancelled,
+    )
+}
+/// Select fixed-panel authored quadrature explicitly, retaining original source and method binding.
+/// Example: `certify_conical_authored_flux_with_method(query, ConicalAuthoredFluxMethod::ConditionedSimpsonV2, || false)?`.
+pub fn certify_conical_authored_flux_with_method(
+    query: ConicalAuthoredFluxQuery<'_>,
+    method: ConicalAuthoredFluxMethod,
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> Result<ConicalAuthoredFlux, ConicalAuthoredFluxError> {
+    certify_selected(query, method, &mut cancelled)
+}
+fn certify_selected(
+    query: ConicalAuthoredFluxQuery<'_>,
+    method: ConicalAuthoredFluxMethod,
+    cancelled: &mut (dyn FnMut() -> bool + Send),
+) -> Result<ConicalAuthoredFlux, ConicalAuthoredFluxError> {
     let contours = admitted_contours(query)?;
-    let mut arithmetic = Arithmetic::new(policy(query.arithmetic), &mut cancelled);
+    let mut arithmetic = Arithmetic::new(policy(query.arithmetic), cancelled);
     let volume =
-        conditional_volume(&input(query, &contours), &mut arithmetic).map_err(|cause| {
+        selected_volume(&input(query, &contours), method, &mut arithmetic).map_err(|cause| {
             ConicalAuthoredFluxError {
                 cause: Failure::Volume(cause),
                 operations: arithmetic.operations(),
@@ -198,7 +257,34 @@ pub fn certify_conical_authored_flux(
             }
         })?;
     let operations = arithmetic.operations();
-    Ok(authored_flux(volume, query.flux, difference, operations))
+    Ok(authored_flux(
+        volume, query.flux, difference, operations, method,
+    ))
+}
+
+fn selected_volume(
+    input: &VolumeInput<'_>,
+    method: ConicalAuthoredFluxMethod,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<ConditionalVolumeEvidence, BoundaryFailure> {
+    match method {
+        ConicalAuthoredFluxMethod::LegacySimpsonV1 => conditional_volume(input, arithmetic),
+        ConicalAuthoredFluxMethod::ConditionedSimpsonV2 => {
+            conditional_volume_using(input, arithmetic, conditioned_sum)
+        }
+    }
+}
+fn conditioned_sum(
+    contours: &[Contour<'_>],
+    level: u8,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<Interval, BoundaryFailure> {
+    sum_contours_using(
+        contours,
+        level,
+        arithmetic,
+        super::quadrature::conditioned::integrate_span,
+    )
 }
 
 pub(super) fn policy(options: ConeClearanceOptions) -> ArithmeticPolicy {
@@ -283,8 +369,10 @@ fn authored_flux(
     flux: [f64; 2],
     difference: DyadicBound,
     operations: u32,
+    method: ConicalAuthoredFluxMethod,
 ) -> ConicalAuthoredFlux {
     ConicalAuthoredFlux {
+        method,
         volume,
         flux: flux.map(f64::to_bits),
         difference,
@@ -304,3 +392,11 @@ impl std::fmt::Display for Failure {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "volume_api/location_tests.rs"]
+mod location_tests;
+
+#[cfg(test)]
+#[path = "volume_api/conditioned_tests.rs"]
+mod conditioned_tests;

@@ -18,6 +18,7 @@ fn execute(
     stop: usize,
 ) -> (Result<BoundaryCensus, CensusCause>, usize) {
     let mut polls = 0;
+    let source_pool = PairSourcePool::capture(&census);
     let mut cancelled = || {
         polls += 1;
         polls == stop
@@ -27,6 +28,7 @@ fn execute(
         &mut cancelled,
         super::super::super::SourceAccess::Live,
         lookup,
+        &source_pool,
     );
     (result, polls)
 }

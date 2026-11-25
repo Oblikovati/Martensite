@@ -85,7 +85,13 @@ fn owned_radial_uv() -> [[f64; 2]; 4] {
     let request = super::super::tests::request();
     let inputs = input::capture(&request, &mut || false).unwrap();
     let mut work = storage::Work::new(request.proof.arithmetic);
-    let selection = prepare::select(&request, &inputs.originals, &mut work, &mut || false).unwrap();
+    let selection = prepare::select(
+        &ConeRun::from(&request),
+        &inputs.originals,
+        &mut work,
+        &mut || false,
+    )
+    .unwrap();
     let prepared = &selection.prepared[0];
     let piece = &prepared.source.loops[0][0];
     assert_eq!(

@@ -1,0 +1,29 @@
+{
+  "source_commit": "abde8bd2e4ddf57000cc4e99ca7d8b1d95fbf3b2",
+  "operation_passed": true,
+  "diagnostic_only": true,
+  "nested_stage_totals_seconds": {
+    "native_analyzer": 2.850048103,
+    "native_inspection": 3.114024585,
+    "body_topology": 0.737755346,
+    "body_geometry": 1.4121526409999998,
+    "certified_member_rebind": 0.06323147800000001,
+    "body_tolerance": 0.00665372,
+    "ordered_cone_validation": 2.227120403,
+    "native_volume_estimate": 0.100139378,
+    "native_qualification": 2.3272943560000003,
+    "publication_family_rebind": 0.065729816,
+    "operation_end": 5.573639244
+  },
+  "sum_nested_rows_is_invalid": true,
+  "work": [
+    994535,
+    444,
+    148
+  ],
+  "source_restored_byte_exact": true,
+  "discarded_probe_artifacts": 13,
+  "discarded_probe_bytes": 143373818,
+  "raw_archive_sha256": "418c46240e668d05e111b482c559275505990983ed92f16fb96e446a680f3083",
+  "limitation": "Single instrumented outward operation on shared host; no time or RSS acceptance. Observations after operation_end are independent oracle runs and excluded."
+}

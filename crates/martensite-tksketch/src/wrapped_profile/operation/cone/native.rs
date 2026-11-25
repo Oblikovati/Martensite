@@ -27,6 +27,20 @@ impl CarrierBuilder for Cone<'_> {
     fn vertex_pair(&self, point: [f64; 2]) -> Result<[Vertex; 2], Failure> {
         Ok([self.vertex(point, 0)?, self.vertex(point, 1)?])
     }
+    fn vertex_pair_at(&self, source: &AuthoredPiece) -> Result<[Vertex; 2], Failure> {
+        let Some(table) = &self.input.final_endpoints else {
+            return self.vertex_pair(source.poles[0]);
+        };
+        let points = table
+            .lookup(
+                self.input.source.region,
+                source.span,
+                source.start,
+                source.poles[0],
+            )
+            .map_err(|cause| Failure::new(&cause.to_string()))?;
+        Ok([self.vertex_at(points[0])?, self.vertex_at(points[1])?])
+    }
     fn curves(
         &self,
         source: &AuthoredPiece,
@@ -65,14 +79,11 @@ impl Cone<'_> {
         })
     }
     fn cap(&self, depth: usize) -> Result<Face, Failure> {
-        let (s, c) = (sin(self.support.semi_angle), cos(self.support.semi_angle));
-        let l0 = self.input.reference_slant;
-        let d = self.input.source.depths[depth];
-        let axis = cap_axis(l0 * c - d * s)?;
+        let CapCarrier { datum, axis } = cap_carrier(self.input, self.support.semi_angle, depth)?;
         let surface = Handle::new(GeomConicalSurface::new(
             axis,
-            self.support.semi_angle,
-            l0 * s + d * c,
+            datum.semi_angle,
+            datum.radius,
         )?)
         .into_upcast();
         let mut face = Face::default();
@@ -84,13 +95,16 @@ impl Cone<'_> {
         Ok(face)
     }
     fn vertex(&self, point: [f64; 2], depth: usize) -> Result<Vertex, Failure> {
-        let [x, y, z] = endpoint(
+        let point = endpoint(
             point,
             self.support.semi_angle,
             self.support.chart_origin,
             self.input.wedge,
             self.input.source.depths[depth],
         );
+        self.vertex_at(point)
+    }
+    fn vertex_at(&self, [x, y, z]: [f64; 3]) -> Result<Vertex, Failure> {
         let p = Point3::new(x, y, z);
         let vertex = BRepBuilderAPIMakeVertex::new(p)?.vertex()?;
         BRepBuilder::default()
@@ -168,4 +182,43 @@ pub(super) fn endpoint(
         r * sin(angle),
         l * cos(semi_angle) - d * sin(semi_angle),
     ]
+}
+
+pub(super) fn cap_datum(input: &Prepared, semi_angle: f64, depth: usize) -> ConicalTrimCarrier {
+    let (s, c) = (sin(semi_angle), cos(semi_angle));
+    let l0 = input.reference_slant;
+    let d = input.source.depths[depth];
+    ConicalTrimCarrier {
+        radius: l0 * s + d * c,
+        axial_origin: l0 * c - d * s,
+        semi_angle,
+    }
+}
+
+pub(super) struct CapCarrier {
+    pub datum: ConicalTrimCarrier,
+    pub axis: Axis3,
+}
+impl CapCarrier {
+    pub(super) fn frame(&self) -> [[f64; 3]; 4] {
+        let origin = self.axis.location();
+        let mut frame = [[origin.x(), origin.y(), origin.z()]; 4];
+        for (row, direction) in frame[1..].iter_mut().zip([
+            self.axis.x_direction(),
+            self.axis.y_direction(),
+            self.axis.direction(),
+        ]) {
+            *row = [direction.x(), direction.y(), direction.z()];
+        }
+        frame
+    }
+}
+pub(super) fn cap_carrier(
+    input: &Prepared,
+    semi_angle: f64,
+    depth: usize,
+) -> Result<CapCarrier, Failure> {
+    let datum = cap_datum(input, semi_angle, depth);
+    let axis = cap_axis(datum.axial_origin)?;
+    Ok(CapCarrier { datum, axis })
 }

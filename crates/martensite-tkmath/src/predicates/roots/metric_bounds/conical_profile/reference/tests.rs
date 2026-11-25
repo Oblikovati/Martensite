@@ -94,3 +94,46 @@ fn reference_arithmetic_work_limit_is_never_success() {
     let one = arithmetic.zero();
     assert!(geometry::angular_coefficient(0.1, &one, &mut arithmetic).is_err());
 }
+
+#[test]
+fn quantitative_component_fingerprint_preserves_exact_original_span_order() {
+    let first = [[80., -18.], [84., 0.]];
+    let second = [[84., 0.], [84., 24.]];
+    let forward = [first.as_slice(), second.as_slice()];
+    let reverse = [second.as_slice(), first.as_slice()];
+    let old = domain_receipt(&forward);
+    let reordered = domain_receipt(&reverse);
+    assert_eq!(old.operations(), reordered.operations());
+    let mut original_bits = Vec::new();
+    let mut reordered_bits = Vec::new();
+    binding::chart_bits(&old, &mut original_bits);
+    binding::chart_bits(&reordered, &mut reordered_bits);
+    assert_ne!(original_bits, reordered_bits);
+    assert_first_span(&original_bits, &first);
+}
+fn domain_receipt(spans: &[&[[f64; 2]]]) -> ConicalChartDomainEvidence {
+    let input = ConicalChartDomainQuery {
+        spans,
+        semi_angle: 0.125,
+        chart_origin: 0.,
+        fit_center: 0.,
+        developed_turn: 0,
+        physical_turn: 0,
+        options: ConeClearanceOptions {
+            fractional_bits: 128,
+            max_operations: 100_000,
+        },
+    };
+    certify_conical_chart_domain(input, || false).unwrap()
+}
+
+fn assert_first_span(original_bits: &[u64], first: &[[f64; 2]]) {
+    assert_eq!(
+        &original_bits[7..11],
+        &first
+            .iter()
+            .flatten()
+            .map(|x| x.to_bits())
+            .collect::<Vec<_>>()
+    );
+}

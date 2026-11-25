@@ -36,7 +36,7 @@ fn exact_exclusion_completes_the_owned_monotone_cubic_without_legacy_evidence() 
     let execution = record.outcome.as_ref().unwrap();
     assert_eq!(
         execution.exclusion.completion(),
-        BezierPairExclusionCompletion::Excluded
+        super::conditioned_stage::ConditionedCompletion::Complete
     );
     assert!(execution.fallback.is_none());
     assert_eq!(census.bisections, record.completed_work());
@@ -110,7 +110,7 @@ pub(super) fn assert_crossing_fallback(record: &super::bernstein_execution::Bern
     let execution = record.outcome.as_ref().unwrap();
     assert_eq!(
         execution.exclusion.completion(),
-        BezierPairExclusionCompletion::Inconclusive
+        super::conditioned_stage::ConditionedCompletion::Inconclusive
     );
     let fallback = execution.fallback.as_ref().unwrap();
     assert_eq!(fallback.complete().unwrap().contact_count(), 1);
@@ -167,12 +167,15 @@ fn cancelled_exact_execution_keeps_actual_work_and_no_fallback() {
     let paired = census.paired.as_mut().unwrap();
     paired.exclusions.clear();
     census.bisections = 0;
+    let mut reports = super::paired_execution::test_report_lookup(&census);
     let evidence = super::bernstein_execution::evaluate(
         &mut census,
         [0, 0],
         [0, 0],
         super::paired_types::PairedQueryMode::SelfOffDiagonal,
         &mut || true,
+        &mut reports,
+        &super::paired_execution::PairSourcePool::default(),
     );
     let DomainEvidence::BernsteinReport { report, .. } = evidence else {
         panic!("actual exact execution")

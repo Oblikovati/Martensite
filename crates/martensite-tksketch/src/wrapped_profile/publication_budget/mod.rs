@@ -14,7 +14,7 @@ mod trace_transport;
 mod volume;
 pub(super) use arithmetic::scale_upper;
 pub(super) use error::{BudgetFailure, Quantity};
-pub(super) use native::certify as certify_native;
+pub(super) use native::{certify as certify_native, certify_with_mode as certify_native_with_mode};
 pub(super) use trace_transport::transport_trace;
 pub(super) use volume::add_upper;
 type Checked<T> = Result<T, BudgetFailure>;

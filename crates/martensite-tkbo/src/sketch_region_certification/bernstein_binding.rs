@@ -4,13 +4,14 @@ use super::{domain_certificate::CertifiedPairDomain, outcome::*, paired_types::*
 use martensite_tkmath::predicates::roots::bezier_pair::*;
 
 pub(super) fn certificate<'a>(
-    census: &'a BoundaryCensus,
+    view: &super::paired_binding::DomainCertificates<'a>,
     domain: &BoundaryDomain,
     index: usize,
 ) -> Option<CertifiedPairDomain<'a>> {
+    let census = view.census();
     let paired = census.paired.as_ref()?;
     let record = paired.exclusions.get(index)?;
-    if !binding_current(census, domain, record) {
+    if !binding_current(view, domain, record) {
         return None;
     }
     execution_certificate(record.outcome.as_ref().ok()?)
@@ -19,7 +20,7 @@ fn execution_certificate(
     execution: &super::bernstein_execution::BernsteinExecution,
 ) -> Option<CertifiedPairDomain<'_>> {
     if let Some(proof) = execution.exclusion.complete() {
-        return Some(CertifiedPairDomain::Excluded { _proof: proof });
+        return Some(proof);
     }
     execution
         .fallback
@@ -28,32 +29,37 @@ fn execution_certificate(
         .map(CertifiedPairDomain::Solver)
 }
 fn binding_current(
-    census: &BoundaryCensus,
+    view: &super::paired_binding::DomainCertificates<'_>,
     domain: &BoundaryDomain,
     record: &super::bernstein_execution::BernsteinStoredReport,
 ) -> bool {
-    super::paired_binding::parameter_binding_current(census, domain)
-        && super::paired_binding::metadata_current(
-            census,
-            domain.occurrences,
-            record.sources,
-            record.mode,
-        )
-        && source_current(census, record)
+    super::paired_binding::parameter_binding_current(view.census(), domain)
+        && view.metadata_current(domain.occurrences, record.sources, record.mode)
+        && source_current(view.census(), record)
 }
 
 fn source_current(
     census: &BoundaryCensus,
     record: &super::bernstein_execution::BernsteinStoredReport,
 ) -> bool {
-    let Ok(query) = super::paired_execution::captured_query(census, record.sources, record.mode)
-    else {
-        return false;
-    };
     let Ok(execution) = &record.outcome else {
         return false;
     };
     let Some(policy) = exclusion_policy(census, record.effective) else {
+        return false;
+    };
+    if let super::conditioned_stage::ConditionedStage::Geometric(report) = &execution.exclusion
+        && execution.fallback.is_none()
+    {
+        return policy.version == 2
+            && report.matches_curves(
+                super::paired_execution::source_views(census, record.sources),
+                record.mode == PairedQueryMode::SelfOffDiagonal,
+                policy.pair_policy,
+            );
+    }
+    let Ok(query) = super::paired_execution::captured_query(census, record.sources, record.mode)
+    else {
         return false;
     };
     execution.exclusion.matches_source(&query, policy)
@@ -74,7 +80,7 @@ fn exclusion_policy(
 }
 
 pub(super) fn work_exact(census: &BoundaryCensus, paired: &PairedCensusEvidence) -> bool {
-    if paired.exclusion_version != Some(1)
+    if !matches!(paired.exclusion_version, Some(1 | 2))
         || !paired.reports.is_empty()
         || !super::paired_binding::paired_policy_current(census, paired)
     {
@@ -102,22 +108,23 @@ fn record_work_current(
     record.effective == expected
         && record.completed_work() <= remaining
         && record.outcome.as_ref().map_or(true, |execution| {
-            execution_work_current(execution, expected)
+            execution_work_current(execution, expected, paired.exclusion_version.unwrap_or(0))
         })
 }
 fn execution_work_current(
     execution: &super::bernstein_execution::BernsteinExecution,
     expected: BezierPairPolicy,
+    version: u32,
 ) -> bool {
     let policy = BezierPairExclusionPolicy {
-        version: 1,
+        version,
         pair_policy: expected,
     };
     if execution.exclusion.policy() != policy {
         return false;
     }
-    let inconclusive =
-        execution.exclusion.completion() == BezierPairExclusionCompletion::Inconclusive;
+    let inconclusive = execution.exclusion.completion()
+        == super::conditioned_stage::ConditionedCompletion::Inconclusive;
     if inconclusive != execution.fallback.is_some() {
         return false;
     }

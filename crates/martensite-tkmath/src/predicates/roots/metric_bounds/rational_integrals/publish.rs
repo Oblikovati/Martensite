@@ -86,6 +86,9 @@ impl BoundsSum {
         self.bounds.upper = self.bounds.upper.add(&part.upper);
         self.subintervals += subintervals;
     }
+    pub(super) fn into_parts(self) -> (ContributionBounds, u64) {
+        (self.bounds, self.subintervals)
+    }
     /// Multiply by an exact factor, swapping the bounds when it is negative.
     pub(super) fn scaled(self, factor: &ExactRatio) -> Self {
         let lower = self.bounds.lower.multiply(factor);
@@ -101,7 +104,7 @@ impl BoundsSum {
         }
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub(super) struct RoundedScalar {
     pub enclosure: [f64; 2],
     pub representative: f64,

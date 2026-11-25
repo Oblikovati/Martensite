@@ -1,0 +1,215 @@
+# Follow-up checks before selecting the next optimization
+
+The current-V6 complete outward O. operation passed a disposable fit-charge
+probe. Its 12 authored curves generated 284 exact boundary-certificate calls:
+148 successful leaves and 136 rejected parent spans. Successful calls consumed
+433797 arithmetic units; rejected calls consumed 254957. These sum to 688754
+fitted-boundary units. The separate 6664 original-radius units bring regional
+preparation to the previously observed 695418. Rejected parents consume 37.0%
+of fitting units and 25.8% of the 989355 whole-operation units.
+
+`prepare/fit.rs::plan` invokes `candidate` before deciding whether to subdivide.
+`candidate` constructs the approximate fit and native edges, then invokes the
+exact boundary certificate. `certify` charges both success and failure using
+that result's actual operation count. Only a spatial Budget proof refusal is
+eligible for subdivision; cancellation, exhausted arithmetic, invalid source
+and other failures do not become fit retries. A refused certificate can stop
+early; it does not necessarily cost as much as a successful one.
+
+A deterministic floating subdivision predictor could avoid many refused
+certificates while leaving exact certification authoritative for every kept
+span. The measured 254957 units are the cost of the current refused attempts,
+not a guaranteed replacement saving. A predictor could change the leaf set,
+its own cost or downstream work. Fitting currently occupies only a few tenths
+of a second, so this addresses budget headroom more directly than the
+five-second operation target. Preserve the existing fit route for replay;
+record the predictor policy and its effective dyadic schedule. Fixed operation
+order and avoiding FMA are necessary controls, but the existing fit also calls
+platform sin, tan, atan2 and hypot: cross-platform replay needs evidence for
+those decisions as well. Approximate samples must never establish acceptance,
+topology or proof coverage.
+
+The current request has a finite arithmetic allowance before `Work` is created.
+`operation/cone/input/policy.rs` rejects values above 1000000;
+Math's `metric_bounds/cylindrical_profile/admission.rs::policy` independently
+applies the same ceiling. An input-sized allowance would need explicit
+admission/policy work; merely passing a larger existing request is refused.
+Compute any new finite grant from captured authored inputs, fit-level and
+precision policy before proofs start; bind its requested/effective values and
+hard ceiling into replay. Refusal must not increase it. No grant changed in
+this investigation.
+
+Current charged reference-volume/flux hooks do not count every BigInt product
+or gcd in their rational integrator. The earlier approximate 134500 figure is
+not the current disjoint stage ledger. Current member geometry charges 54382,
+including material rebuild, reference volume, flux and authored volume; its
+reference-volume/flux coefficient hooks charge 2858 in total and authored
+volume charges 36692. Unit counts cannot establish CPU cost.
+
+Reference-volume and actual-flux integrators use integer polynomials and
+`ExactRatio`, whose arithmetic normalizes with gcd. Their bounds accumulate as
+exact rational sums. Authored-volume and final family-reference checks instead
+use fixed-grid dyadic intervals and round outward after products/divisions.
+The targeted operand probe passed the same complete operation, retaining
+989355 arithmetic units, 444 integration cells and 148 fitted spans. It observed
+the following bit-length maxima; numerator and denominator maxima are reported
+independently.
+
+| Leaf | Input polynomial numerator / denominator | Raw running-sum numerator / denominator before gcd | Reduced running-sum numerator / denominator |
+| --- | ---: | ---: | ---: |
+| O137 reference volume | 219 / 209 | 7500 / 7493 | 7115 / 7108 |
+| O137 actual flux | 336 / 332 | 4947 / 4943 | 4662 / 4656 |
+| dot11 reference volume | 207 / 199 | 1660 / 1660 | 1286 / 1285 |
+| dot11 actual flux | 313 / 310 | 1195 / 1195 | 917 / 917 |
+
+O137 shifted polynomials reached 227/215 bits for reference volume and 362/359
+for flux; exact Taylor remainders reached 297 and 432 bits. The much larger
+values occur in the accumulated rational bounds. This confirms sum growth,
+not its share of runtime. The probe observed the already required numerator
+cross-sum and denominator product immediately before unchanged gcd reduction,
+and observed the reduced result. It did not add integer products, change work
+charges or use global/TLS counters. Exact bounds were still produced by the
+existing arithmetic. Timings from this instrumented run are not acceptance
+measurements.
+
+The next useful arithmetic comparison is a bounded outward accumulator against
+the exact running sum, with its rounding error included in the original volume
+limit. Reuse the existing dyadic arithmetic. That would change numerical
+behavior and therefore needs its own selectable behavior version, independent
+volume oracles and unchanged refusal limits; it is not implemented here.
+
+Exact geometric endpoint certificates carry 0/1 parameters, but B1 still routes
+them through `native_parameter_construction.rs::measure_captured_axes`, then
+general interval map and distance construction. Point intervals multiply all
+four equal corner products; equal distance endpoints repeat subtraction.
+This is interval metric construction, not repeated root isolation. #566 leaves
+these Math/measurement paths unchanged. A conditioned exact-point branch can
+reuse the current admission, both-map-endpoint validation, trim checks, owned
+measurement and threshold decision. It must preserve raw signed-zero fields,
+reversed and extreme maps, subnormals and first-error order. No timing or
+end-to-end saving is established for that candidate.
+
+
+The fit and operand probes each passed the complete outward operation checks.
+All 346 frozen changed Rust paths matched after restoration. Probe source and
+instrumented artifacts were discarded; the operand pass removed 576594744 bytes
+of emitted probe artifacts. These passes changed no production behavior,
+request grant or version.
+
+Evidence: [fit charges](references/fit-charge-attribution-2026-11-19/summary.json),
+[operand sizes](references/volume-bits-attribution-2026-11-19/summary.json), and
+[current stage attribution](references/v6-stage-attribution-2026-11-19/summary.json).
+The raw logs preserve every observed attempt and sum measurement. These are
+Martensite diagnostics, not a PhysCAD comparison or final performance approval.
+
+## Source and incidence audit, 2026-11-20
+
+The wrapped cylinder and cone pipelines were checked at input capture, fitting,
+stored trims, periodic material, native qualification, history and publication.
+The review followed snapshot and lookup calls inside the region, span, edge
+and image loops. A proof that validates new geometry can still require a full
+pass over that geometry. A span that only needs to identify an already captured
+source can use its immutable coefficient record or an indexed reference.
+
+| Path | Repeated work found | Change |
+| --- | --- | --- |
+| Cone chart, boundary, trim and material proofs | Each fitted span copied a chart's complete coefficient list. Material rebinding repeatedly built the serialized list. | Each chart owns one immutable ordered source list. Receipts share it. Material retains one chart binding and span-local inputs. Independent captures compare every coefficient bit. |
+| Cone directed transitions and cap ownership | Every span rebuilt the full side-ID list. Cap and side ownership were repeatedly searched by ID. | Reuse the issued side index and build one cap index. Serialize the full lists only to report a mismatch. |
+| Cone source reconstruction | Clearance scanned the complete set of original curves for each fitted span. Storage and material searched each member's curves again. | Index authored curve ownership once for clearance. Reuse positions into each original member for retained proof queries. |
+| Native cone faces, cap edges and rulings | Each face or edge searched the native member. Shared rulings were found by comparing all pairs of sides. | Index exact native identity and incidence. Visit side pairs that actually share an edge in the original pair order. |
+| Cylinder periodic clearance | Every translated image retained its own copy of the same authored curves and intervals. | Share the source snapshot. Keep separate geometric proof, translation and work receipts for every image. |
+| Shared storage and cylinder placement and material | Repeated linear region and shape lookups ran inside member or witness loops. | Index the member owners and use the existing sorted archive keys and sorted region IDs for lookup. |
+
+This work leaves the arithmetic and geometry policies intact. Native graph
+round trips and body validation still run at the ownership boundaries. The
+geometric pair census and bounded intersection proofs keep their own search
+and work policies. Wider cone charts and general attachment trims are separate
+requirements.
+
+348 selected tests passed, including inward and outward 239-curve cone
+text and the cylinder's periodic material checks. An independent before-and-after
+replay of the curved, holed cone matched its BRep, history and budget byte for
+byte. Three local pairs on the outward text case measured median API time at
+14.94 s before and 14.63 s after. Median process peak RSS rose from 200,360 to
+201,716 KiB. In a separate sampled run, resident file pages accounted for
+1,060 KiB of the 1,080 KiB difference at the observed peaks. The paired result
+still needs to clear the peak-memory gate. [Audit receipt](references/source-incidence-audit-2026-11-20.json)
+
+## Cone reference source coverage, 2026-11-20
+
+The reference proof checked complete coverage by scanning the fitted-source
+list for every original and scanning the original list for every fitted span.
+It now queries the coefficient index captured by the chart or legacy sector.
+It tracks one flag per original entry and checks that every distinct source was
+seen. Fitted spans can repeat an original and arrive in any order. Coverage
+continues to treat signed zeros as equal. The separate chart membership check
+compares the raw coefficient bits, and the chart receipt retains authored order.
+
+The isolated coverage benchmark used four-pole sources, eight fitted
+occurrences per source in reverse source order, five runs per size and the
+workspace Rust toolchain with optimization level 3. It alternated the previous
+and indexed checks on logical CPU 20. Median coverage times exclude the
+one-time index build, listed separately below.
+
+| Original spans | Fitted occurrences | Previous | Indexed | Index build |
+| ---: | ---: | ---: | ---: | ---: |
+| 128 | 1,024 | 0.099 ms | 0.062 ms | 0.001 ms |
+| 1,024 | 8,192 | 3.754 ms | 0.580 ms | 0.004 ms |
+| 4,096 | 32,768 | 59.267 ms | 2.892 ms | 0.012 ms |
+
+The 4,096-source control also refused a missing source and a one-ULP change.
+Before-and-after binary comparisons matched encoded BRep, history and budget
+for both the legacy curved-holed cone and the recentered crossing.
+
+The focused suites passed 242 Math tests and 130 Sketch cone tests. Strict
+Clippy passed for both crates.
+
+Three alternating full-operation pairs on the existing directed outward O.
+fixture compared the indexed build to local checkpoint `84740668`.
+Median API time was 5.422 s before and 5.440 s after. Median peak process
+RSS was 66,804 KiB before and 66,584 KiB after. Every run charged 989,355
+arithmetic operations and used 444 integration cells and 148 retained
+spans. The isolated speedup did not establish an end-to-end speedup or
+meet the five-second target.
+
+## Native replay and planar material
+
+The native cone binder already indexes edges by exact native identity. The
+replay snapshot used to repeat the search over every pair of sides. It now
+records each member's slice of the same sorted incidence list, including both
+side IDs and their edge slots. A new native capture still checks complete
+coverage and rejects shared non-ruling edges, multiple shared edges between a
+pair of sides, and rulings shared across members. Replay compares native
+geometry directly against the issued coefficient stream, without allocating
+another serialized member.
+
+The two caps of a member share one immutable selected UV material. Native
+snapshots keep its version, work counters and a reference to the exact
+coefficient bits that the planar program captured. Rebinding material from
+an independently issued program still compares every bit. The planar
+program checks a supplied source without allocating a temporary coefficient
+array and indexes authored IDs for its lineage and integral replay. The
+cone's directed fitting stages also share a single original-region index.
+
+The cone, placement, footprint and planar/native proof suites passed, as did
+the 239-curve text controls in both directions and strict Clippy for the two
+changed crates. Separate processes reproduced the legacy, recentered, atlas
+and placed cone replay signatures byte for byte against `b486891f`.
+
+Three alternating runs per build pinned the outward directed O. fixture to
+CPU 20 on Linux x86_64. The median API time was 5.291 s before and 5.320 s
+after. Candidate times ranged from 5.304 s to 5.717 s. The median meets the
+revised 5.4 s threshold for this fixture. Median whole-process peak RSS was
+66,524 KiB before and 67,064 KiB after. The run kept 989,355 arithmetic
+operations, 444 integration cells and 148 fitted spans.
+
+With the existing selectable bounded volume accumulator, the same fixture
+ran at a median of 4.717 s before and 4.703 s after. All three candidate
+samples were below 5.4 s. Median process peak RSS was 66,932 KiB before and
+67,036 KiB after. Both builds charged 994,535 arithmetic operations with the
+same cell and span counts.
+
+A separate two-pair residency check of the original accumulation mode
+sampled Linux process memory. At the sampled peak, median anonymous RSS fell
+by 12 KiB and median file-backed RSS rose by 162 KiB. The change in measured
+process peak RSS in the timing runs still needs qualification for integration.

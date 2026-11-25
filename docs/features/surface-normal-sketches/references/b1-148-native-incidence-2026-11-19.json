@@ -1,0 +1,451 @@
+{
+  "kind": "actual_148_side_native_incidence_and_hull_census_not_full_si",
+  "date": "2026-11-19",
+  "terminal": {
+    "started": "2026-11-19T10:42:11.772637+00:00",
+    "scope": "External actual148 incidence/hull diagnostic only; no complete SI or production acceptance",
+    "status": "terminal",
+    "compiler": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.0\nLLVM version: 23.1.1\n",
+    "command": [
+      "/home/vmiguel/.rustup/toolchains/1.99.0-x86_64-unknown-linux-gnu/bin/rustc",
+      "--edition=2024",
+      "--crate-name",
+      "b1_148_native_incidence",
+      "/tmp/martensite-b1-148-native-incidence-draft/consumer.rs",
+      "-C",
+      "opt-level=0",
+      "-C",
+      "debug-assertions=yes",
+      "-C",
+      "overflow-checks=yes",
+      "-C",
+      "debuginfo=0",
+      "-C",
+      "strip=debuginfo",
+      "-L",
+      "dependency=/tmp/martensite-cone-b1-cached-target/debug/deps",
+      "--extern",
+      "num_bigint=/tmp/martensite-cone-b1-cached-target/debug/deps/libnum_bigint-5867d84839ef3c83.rlib",
+      "--extern",
+      "martensite_tkernel=/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkernel-be5b2ad5bebd446a.rlib",
+      "--extern",
+      "martensite_tkmath=/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkmath-a875d45b93c4b370.rlib",
+      "--extern",
+      "martensite_tkg2d=/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkg2d-077044ff5a9be722.rlib",
+      "--extern",
+      "martensite_tkg3d=/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkg3d-fc085c00b210295e.rlib",
+      "--extern",
+      "martensite_tkbrep=/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkbrep-6a803afc7e8b3db7.rlib",
+      "-o",
+      "/tmp/martensite-b1-148-native-incidence-draft/run-20261119T104210Z/incidence-consumer"
+    ],
+    "library_provenance": "Currently present artifacts from successful INSTRUMENTED halfSplit capture; NOT old normal-build binaries. Profile names/metadata reuse existing targeted artifacts; actual bytes hashed now.",
+    "capture_terminal": {
+      "path": "/tmp/martensite-b1-half-split-captured-profile-final/terminal.json",
+      "sha256": "3ff3df2504a4d738fd364dfbaa8e699782f6d1acf3a0541587d22fafce982926"
+    },
+    "capture_source_restoration_manifest": {
+      "path": "/tmp/martensite-b1-half-split-captured-profile-final/source-after-restoration.json",
+      "sha256": "1f90e3c0d5caa36c32f08e5ec110e1c0660d8b1d6cb48062bd98ffb9731acdd5"
+    },
+    "capture_wrapper": {
+      "path": "/tmp/prepare-b1-half-split-capture.py",
+      "sha256": "856c3b72051beecfb6765529ba8ec8d88c0493e595d1cad3e676bdc66c7d74e4"
+    },
+    "snapshots": [
+      {
+        "path": "/tmp/martensite-b1-half-split-capture-artifacts-yl9btiy9/outward.brep",
+        "sha256": "fd09a9b0690b38a0b9478c18ed63299263417b604ab8fd5b79144562791a52a6",
+        "bytes": 322305,
+        "sense": "Outward"
+      },
+      {
+        "path": "/tmp/martensite-b1-half-split-capture-artifacts-yl9btiy9/inward.brep",
+        "sha256": "4a96a3ff4517e4e03b3b80bd6fdefe5e3575be11dc9b93127927cf4630a6bda0",
+        "bytes": 322305,
+        "sense": "Inward"
+      }
+    ],
+    "libraries": {
+      "num_bigint": {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libnum_bigint-5867d84839ef3c83.rlib",
+        "sha256": "2de783c571ead2ddc8e7cbc0b8ac92ce9e6386b4f990a9b22c4df64c49e745c3",
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": false
+        },
+        "package_id": "registry+https://github.com/rust-lang/crates.io-index#num-bigint@0.4.6",
+        "features": []
+      },
+      "martensite_tkernel": {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkernel-be5b2ad5bebd446a.rlib",
+        "sha256": "c436471a7bf7f756a860aeb6271a9c92eaaf240cef5f37095a68d37b4eab9b7d",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": false
+        },
+        "package_id": "path+file:///home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkernel#0.4.5",
+        "features": []
+      },
+      "martensite_tkmath": {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkmath-a875d45b93c4b370.rlib",
+        "sha256": "5a1c7fee83cf27d3f0cd49d82dc3660ec4f96c307c07c21e6f6cf1b22714931a",
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": false
+        },
+        "package_id": "path+file:///home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkmath#0.3.9",
+        "features": []
+      },
+      "martensite_tkg2d": {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkg2d-077044ff5a9be722.rlib",
+        "sha256": "a8c9d86d65e80539a43104e2863135345d624a47830c2d409a6e152dc585d7ee",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": false
+        },
+        "package_id": "path+file:///home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkg2d#0.3.7",
+        "features": []
+      },
+      "martensite_tkg3d": {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkg3d-fc085c00b210295e.rlib",
+        "sha256": "b1c3002529c2b6014a380a09d0e5077bf470703de2a380d41fb0dfa1863682a4",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": false
+        },
+        "package_id": "path+file:///home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkg3d#0.3.9",
+        "features": []
+      },
+      "martensite_tkbrep": {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkbrep-6a803afc7e8b3db7.rlib",
+        "sha256": "2cda8b6572d9ead5c6800d0b506e034d2bc5a1f841dd0f0c4fb118096ea975c9",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": false
+        },
+        "package_id": "path+file:///home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkbrep#0.3.11",
+        "features": []
+      }
+    },
+    "consumer_sources": {
+      "admission.rs": {
+        "sha256": "773e3dc094ef861aaed7ef2f68e8ece5cbdea5d950bac4b04960eed23ec85e83",
+        "bytes": 11459
+      },
+      "consumer.rs": {
+        "sha256": "53fe13751bb3e82bfade922d3833442390bc8ea0ec310a7d3074924b438ba4cf",
+        "bytes": 5850
+      },
+      "hull.rs": {
+        "sha256": "6ca8215a57f7559e0e3ed7b27bab9b0828dc824c63ffb26256e3f6b0d2fcd421",
+        "bytes": 1949
+      },
+      "pairs.rs": {
+        "sha256": "48b10febee9682c1572497b1cbecb45cbdb5d8196e55acc5a36dbd6d84000fab",
+        "bytes": 4511
+      }
+    },
+    "repository_source_before_sha256": "32e45904b952e12e189ec3be564caf47390390db23dcfcfe63cf63ad2c46ec54",
+    "runs": [
+      {
+        "sense": "Outward",
+        "command": [
+          "/tmp/martensite-b1-148-native-incidence-draft/run-20261119T104210Z/incidence-consumer",
+          "/tmp/martensite-b1-half-split-capture-artifacts-yl9btiy9/outward.brep"
+        ],
+        "pid": 222631,
+        "exit": 0,
+        "log": "/tmp/martensite-b1-148-native-incidence-draft/run-20261119T104210Z/Outward.log",
+        "sha256": "1561be7ae8cd527d687bba37af3ad1099514834871f76fc9c3c2cc267837ff28",
+        "bytes": 547081
+      },
+      {
+        "sense": "Inward",
+        "command": [
+          "/tmp/martensite-b1-148-native-incidence-draft/run-20261119T104210Z/incidence-consumer",
+          "/tmp/martensite-b1-half-split-capture-artifacts-yl9btiy9/inward.brep"
+        ],
+        "pid": 222632,
+        "exit": 0,
+        "log": "/tmp/martensite-b1-148-native-incidence-draft/run-20261119T104210Z/Inward.log",
+        "sha256": "f3783085755c0727b0d4693f3c57c9070f4cc3f06829aa1f8750f473bea3fde7",
+        "bytes": 547050
+      }
+    ],
+    "compile_pid": 222602,
+    "compile_exit": 0,
+    "binary_sha256": "fec8ad6506f59a0a779fe4f3246d3d34fb1de7cc064d672e2429e99b6e98678f",
+    "current": {
+      "sense": "Inward",
+      "command": [
+        "/tmp/martensite-b1-148-native-incidence-draft/run-20261119T104210Z/incidence-consumer",
+        "/tmp/martensite-b1-half-split-capture-artifacts-yl9btiy9/inward.brep"
+      ],
+      "pid": 222632,
+      "exit": 0,
+      "log": "/tmp/martensite-b1-148-native-incidence-draft/run-20261119T104210Z/Inward.log",
+      "sha256": "f3783085755c0727b0d4693f3c57c9070f4cc3f06829aa1f8750f473bea3fde7",
+      "bytes": 547050
+    },
+    "repository_source_after_sha256": "32e45904b952e12e189ec3be564caf47390390db23dcfcfe63cf63ad2c46ec54",
+    "repository_source_changes": [],
+    "library_changes": [],
+    "snapshot_changes": [],
+    "consumer_source_changes": [],
+    "finished": "2026-11-19T10:42:13.185401+00:00",
+    "passed_diagnostic": true
+  },
+  "incidence_manifest": {
+    "Outward": "/tmp/martensite-b1-148-native-incidence-draft/run-20261119T104210Z/Outward.log",
+    "Inward": "/tmp/martensite-b1-148-native-incidence-draft/run-20261119T104210Z/Inward.log"
+  },
+  "source_receipt_sha256": {
+    "terminal": "4a7fa85bf07d71689008222285f6f264564c9d19143f1216e11a409b47c9f503",
+    "incidence_manifest": "259f509692c4e471a3d7e441f90127045bf33813c2bc68862da3b9315697b40a"
+  },
+  "cases": {
+    "Outward": {
+      "pair_census": {
+        "event": "side_pair_census",
+        "side_self_domains_unproved": 148,
+        "unordered_distinct_pairs": 10878,
+        "actual_shared_ruling_adjacent_unproved": 148,
+        "nonincident_strict_hull_excluded": 10730,
+        "nonincident_residual_unproved": 0,
+        "cross_member_pairs": 1507,
+        "cross_member_strict_hull_excluded": 1507,
+        "cross_member_residual_unproved": 0,
+        "excluded_by_first_axis": [
+          9708,
+          717,
+          305
+        ],
+        "coverage": "all actual unordered side pairs classified once",
+        "caps_proved": false,
+        "self_or_adjacent_injectivity_proved": false,
+        "SI_claim": false,
+        "production_budget_claim": false
+      },
+      "component_inventory": [
+        {
+          "event": "snapshot_inventory",
+          "argument": 0,
+          "component_occurrence": 0,
+          "caps": 2,
+          "sides": 137,
+          "component_membership": "actual_native_solid",
+          "semantic_region_identity_claim": false
+        },
+        {
+          "event": "snapshot_inventory",
+          "argument": 1,
+          "component_occurrence": 1,
+          "caps": 2,
+          "sides": 11,
+          "component_membership": "actual_native_solid",
+          "semantic_region_identity_claim": false
+        }
+      ],
+      "cap_inventory": [
+        {
+          "event": "actual_cap_inventory",
+          "argument": 0,
+          "face_occurrence": 0,
+          "datum_bits": [
+            4622310098202681752,
+            4635845428193378125,
+            4593671619917905920
+          ]
+        },
+        {
+          "event": "actual_cap_inventory",
+          "argument": 0,
+          "face_occurrence": 1,
+          "datum_bits": [
+            4622477665491847198,
+            4635842796232052424,
+            4593671619917905920
+          ]
+        },
+        {
+          "event": "actual_cap_inventory",
+          "argument": 1,
+          "face_occurrence": 0,
+          "datum_bits": [
+            4621957055617034050,
+            4635494226289430676,
+            4593671619917905920
+          ]
+        },
+        {
+          "event": "actual_cap_inventory",
+          "argument": 1,
+          "face_occurrence": 1,
+          "datum_bits": [
+            4622124622906199496,
+            4635491594328104975,
+            4593671619917905920
+          ]
+        }
+      ],
+      "event_counts": {
+        "snapshot_begin": 1,
+        "side_boundary": 592,
+        "snapshot_inventory": 2,
+        "actual_cap_inventory": 4,
+        "actual_side_inventory": 148,
+        "side_control_hull": 148,
+        "actual_shared_ruling": 148,
+        "side_pair_census": 1,
+        "hull_preflight_completion": 1
+      },
+      "independent_box_pair_recount": {
+        "adjacent_unproved": 148,
+        "nonincident_excluded": 10730,
+        "cross_excluded": 1507
+      },
+      "excluded_by_first_axis_recount": [
+        9708,
+        717,
+        305
+      ],
+      "source_log_sha256": "1561be7ae8cd527d687bba37af3ad1099514834871f76fc9c3c2cc267837ff28",
+      "ordered_hull_records_sha256": "398906658fd5df6973806b4f7925da5ce2645795f54ad45a37ad695e62c02adf",
+      "ordered_native_ruling_admissions_sha256": "55ebecd3f3b1581eb5eb6183f876cf2ae655219f7c0384bad375824a4ca797cc"
+    },
+    "Inward": {
+      "pair_census": {
+        "event": "side_pair_census",
+        "side_self_domains_unproved": 148,
+        "unordered_distinct_pairs": 10878,
+        "actual_shared_ruling_adjacent_unproved": 148,
+        "nonincident_strict_hull_excluded": 10730,
+        "nonincident_residual_unproved": 0,
+        "cross_member_pairs": 1507,
+        "cross_member_strict_hull_excluded": 1507,
+        "cross_member_residual_unproved": 0,
+        "excluded_by_first_axis": [
+          9708,
+          717,
+          305
+        ],
+        "coverage": "all actual unordered side pairs classified once",
+        "caps_proved": false,
+        "self_or_adjacent_injectivity_proved": false,
+        "SI_claim": false,
+        "production_budget_claim": false
+      },
+      "component_inventory": [
+        {
+          "event": "snapshot_inventory",
+          "argument": 0,
+          "component_occurrence": 0,
+          "caps": 2,
+          "sides": 137,
+          "component_membership": "actual_native_solid",
+          "semantic_region_identity_claim": false
+        },
+        {
+          "event": "snapshot_inventory",
+          "argument": 1,
+          "component_occurrence": 1,
+          "caps": 2,
+          "sides": 11,
+          "component_membership": "actual_native_solid",
+          "semantic_region_identity_claim": false
+        }
+      ],
+      "cap_inventory": [
+        {
+          "event": "actual_cap_inventory",
+          "argument": 0,
+          "face_occurrence": 0,
+          "datum_bits": [
+            4622254242439626604,
+            4635846305513820026,
+            4593671619917905920
+          ]
+        },
+        {
+          "event": "actual_cap_inventory",
+          "argument": 0,
+          "face_occurrence": 1,
+          "datum_bits": [
+            4622421809728792050,
+            4635843673552494325,
+            4593671619917905920
+          ]
+        },
+        {
+          "event": "actual_cap_inventory",
+          "argument": 1,
+          "face_occurrence": 0,
+          "datum_bits": [
+            4621901199853978902,
+            4635495103609872577,
+            4593671619917905920
+          ]
+        },
+        {
+          "event": "actual_cap_inventory",
+          "argument": 1,
+          "face_occurrence": 1,
+          "datum_bits": [
+            4622068767143144348,
+            4635492471648546876,
+            4593671619917905920
+          ]
+        }
+      ],
+      "event_counts": {
+        "snapshot_begin": 1,
+        "side_boundary": 592,
+        "snapshot_inventory": 2,
+        "actual_cap_inventory": 4,
+        "actual_side_inventory": 148,
+        "side_control_hull": 148,
+        "actual_shared_ruling": 148,
+        "side_pair_census": 1,
+        "hull_preflight_completion": 1
+      },
+      "independent_box_pair_recount": {
+        "adjacent_unproved": 148,
+        "nonincident_excluded": 10730,
+        "cross_excluded": 1507
+      },
+      "excluded_by_first_axis_recount": [
+        9708,
+        717,
+        305
+      ],
+      "source_log_sha256": "f3783085755c0727b0d4693f3c57c9070f4cc3f06829aa1f8750f473bea3fde7",
+      "ordered_hull_records_sha256": "561dfee30dfb518718f04885bbda8a62612294ab9f9dbbc6bfceadc124f80040",
+      "ordered_native_ruling_admissions_sha256": "55ebecd3f3b1581eb5eb6183f876cf2ae655219f7c0384bad375824a4ca797cc"
+    }
+  },
+  "scope": [
+    "Actual component membership and native edge.is_same incidence; diagnostic ordinals supply no semantic identity.",
+    "Each sense has 137 O sides + 11 dot sides and four caps. All 10878 distinct pairs classified: 148 native adjacent remain unproved, 10730 strict padded-AABB exclusions including 1507 cross-member pairs; zero nonincident residual.",
+    "All repository/library/snapshot/consumer guards unchanged in terminal. Instrumented capture libraries differ from prior normal-build artifacts; exact provenance retained.",
+    "No proof of side self domains, adjacent-union injectivity, caps or whole filled material; no production arithmetic budget, matched performance, five-second or whole SI claim."
+  ]
+}

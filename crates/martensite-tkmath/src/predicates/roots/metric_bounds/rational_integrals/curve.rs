@@ -23,18 +23,75 @@ pub(super) fn curve_integral(
     width_share: &ExactRatio,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<CurveIntegral, RationalIntegralFailure> {
+    let (numerator, weight) = prepare_curve(source, options, cancelled)?;
+    if weight.len() == 1 {
+        return constant_curve(&numerator, &weight[0], cancelled);
+    }
+    let squared = product(&weight, &weight, cancelled)?;
+    quotient_integral(numerator, squared, options, width_share, cancelled)
+}
+
+fn prepare_curve(
+    source: MetricCurve<'_, 2>,
+    options: RationalIntegralOptions,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<(Vec<BigInt>, Vec<BigInt>), RationalIntegralFailure> {
     poll(cancelled)?;
     admit_degree(source, options)?;
     let curve = coefficients::embedded(source, native_plane(), "integral curve", cancelled)?;
     let numerator = green_numerator(&curve, cancelled)?;
-    let weight = trimmed(&curve[3]);
+    Ok((numerator, trimmed(&curve[3])))
+}
+
+fn constant_curve(
+    numerator: &[BigInt],
+    weight: &BigInt,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<CurveIntegral, RationalIntegralFailure> {
+    let denominator = BigInt::from(2) * weight * weight;
+    let exact = integrate_unit(numerator, denominator, cancelled)?;
+    Ok(exact_curve(exact))
+}
+
+pub(super) fn curve_integral_accounted(
+    source: MetricCurve<'_, 2>,
+    options: RationalIntegralOptions,
+    width_share: &ExactRatio,
+    remaining: u64,
+    cancelled: &mut impl FnMut() -> bool,
+) -> (Result<CurveIntegral, RationalIntegralFailure>, u64) {
+    let prepared = prepare_curve(source, options, cancelled);
+    let (numerator, weight) = match prepared {
+        Ok(prepared) => prepared,
+        Err(cause) => return (Err(cause), 0),
+    };
     if weight.len() == 1 {
-        let denominator = BigInt::from(2) * &weight[0] * &weight[0];
-        let exact = integrate_unit(&numerator, denominator, cancelled)?;
-        return Ok(exact_curve(exact));
+        return (constant_curve(&numerator, &weight[0], cancelled), 0);
     }
-    let squared = product(&weight, &weight, cancelled)?;
-    quotient_integral(numerator, squared, options, width_share, cancelled)
+    accounted_quotient(
+        numerator,
+        weight,
+        options,
+        width_share,
+        remaining,
+        cancelled,
+    )
+}
+
+fn accounted_quotient(
+    numerator: Vec<BigInt>,
+    weight: Vec<BigInt>,
+    mut options: RationalIntegralOptions,
+    share: &ExactRatio,
+    remaining: u64,
+    cancelled: &mut impl FnMut() -> bool,
+) -> (Result<CurveIntegral, RationalIntegralFailure>, u64) {
+    let squared = match product(&weight, &weight, cancelled) {
+        Ok(squared) => squared,
+        Err(cause) => return (Err(cause.into()), 0),
+    };
+    options.max_subintervals = u64::from(options.max_subintervals).min(remaining) as u32;
+    quotient_integral_accounted(numerator, squared, options, share, cancelled)
 }
 
 /// Integrate one half of a positive-denominator rational quotient on the full unit interval.

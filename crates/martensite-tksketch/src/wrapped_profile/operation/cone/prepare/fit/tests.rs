@@ -4,8 +4,13 @@ fn fixture() -> (Inputs, Selection, ConeClearanceOptions) {
     let request = super::super::super::tests::request();
     let inputs = input::capture(&request, &mut || false).unwrap();
     let mut work = Work::new(request.proof.arithmetic);
-    let selected =
-        super::super::select(&request, &inputs.originals, &mut work, &mut || false).unwrap();
+    let selected = super::super::select(
+        &ConeRun::from(&request),
+        &inputs.originals,
+        &mut work,
+        &mut || false,
+    )
+    .unwrap();
     (inputs, selected, work.remaining())
 }
 #[test]
@@ -120,3 +125,8 @@ fn check_snapshot_mutations(
         ));
     }
 }
+
+mod chart_joins;
+
+mod chart_transition;
+mod planned_atlas;

@@ -1,0 +1,20 @@
+{
+  "archive": "census-v2-prototype.zip",
+  "archive_sha256": "e199f9628888cfdf7f9c684d5648be37ffcf4bcaa3614e3688b115917216afbe",
+  "files": {
+    "receipts.json": "052d6c6f71b1a8523c316138221300254724c6a78cd7b749b6813ce5e2e40b53",
+    "acceptance-assertions.json": "a06e1eea03dd646f6142fa5c1297b7f80d9b532883fe6ce38ed2c48176fa6406",
+    "underflow-red.log": "c4b82804ceb24acc253e1f97f14943064a396ccb5f64ec0265c485d1bb5dbb63",
+    "finite-range-counterexample.json": "5120e0917b01bc5d665943390d82246f18b5e416df8040d67ffcaf63d35b8f58",
+    "kernel-predicate-green.log": "c060633b6bec507336df0088da04ed8c7f802792fb97197d71df00c5c5926f18",
+    "crosscheck.log": "b4a50171d741f6cff314c71db464c38b4b30cd52e74ffdccc749cc13e54fced7",
+    "kernel-predicate-dev.log": "1cb5ecf1d7be9f044fa118648f0e8b9adb731b2c026806b9b5229952e6bb06db",
+    "python-exact.log": "29bb001eda0e652f8b31a8d2520cf30aca3c596c43e122962b461ce3c417dbc9",
+    "release-checked.log": "8e119b7be98330dbeac1f19ebe8c6eadb2a260c1eb0348f419ef0c624935c4eb",
+    "as-provided-dev.log": "d3cb4766712228dc4eba27b4a652018d9f4c8d5e3e7bf66c604ec66806efdca3"
+  },
+  "production_code_changed": false,
+  "kernel_predicate": "martensite_tkmath::predicates::orient2d",
+  "timing_scope": "Standalone diagnostic averages over 200 iterations; not whole-kernel or matched acceptance benchmarks",
+  "exact_python_assertions": "acceptance-assertions.json"
+}

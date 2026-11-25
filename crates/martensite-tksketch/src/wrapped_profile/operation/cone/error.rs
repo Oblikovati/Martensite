@@ -13,8 +13,23 @@ pub(in crate::surface_sketch::wrapped_profile) enum ConeCause {
     // Admission snapshots stay off the inline fit-refusal path.
     Support(Box<ConeSupport>),
     ProofOptions(Box<WrappedConeProofOptions>),
+    InputBoundProofOptions {
+        actual: Box<WrappedConeProofOptions>,
+        ceiling: u32,
+    },
+    ExecutionProof(Box<martensite_tkbo::profile_extrusion::PlanarProofVersion>),
     Depths([f64; 2]),
+    ActualPatch(Box<ConicalActualPatchError>),
+    ActualPair {
+        cause: Box<ConicalActualPatchError>,
+        entities: Vec<HistorySource>,
+    },
+    DirectedRows(Box<ConicalBoundaryZRowError>),
+    ActualBinding(Box<martensite_tkbo::body_check::ConicalBindingError>),
+    ActualValidation(Box<martensite_tkbo::body_check::ValidationReport>),
     Material(Box<ConicalMaterialError>),
+    DirectedCap(Box<martensite_tkbo::body_check::DirectedCapFailure>),
+    DevelopedMaterial(Box<ConicalDevelopedMaterialError>),
     Reference(Box<ConicalReferenceError>),
     ReferenceVolume(Box<ConicalReferenceVolumeError>),
     Budget(Box<publication_budget::BudgetFailure>),
@@ -44,8 +59,13 @@ pub(in crate::surface_sketch::wrapped_profile) enum ConeCause {
     Boundary(Box<ConicalBoundaryError>),
     Radius(Box<ConeRequestError>),
     Sector(Box<ConicalSectorFailure>),
+    Domain(Box<ConicalChartDomainError>),
+    ChartPlan(Box<ConicalChartPlanError>),
+    Atlas(Box<material::atlas::Refusal>),
     Joins(Box<ConicalJoinsFailure>),
+    ChartJoins(Box<ConicalChartJoinsError>),
     TrimPair(Box<ConicalTrimPairError>),
+    ChartTrimPair(Box<ConicalChartTrimPairError>),
     Clearance(Box<CylindricalClearanceError>),
     Flux(Box<AnalyticConicalFluxError>),
     Authored(Box<ConicalAuthoredFluxError>),
@@ -102,23 +122,56 @@ impl ConeFailure {
 
     fn cancelled(&self) -> bool {
         match &self.cause {
+            DirectedCap(cause) => cause.cancelled,
             Cancelled(_) | Planar(_) | Storage(_) => self.capture_cancelled(),
-            ConeCause::Material(cause) => cause.cause.is_cancelled(),
+            Material(_) | DevelopedMaterial(_) => self.material_cancelled(),
             ConeCause::Reference(cause) => cause.is_cancelled(),
             ConeCause::ReferenceVolume(cause) => reference_volume_cancelled(cause),
             ConeCause::Budget(cause) => budget_cancelled(cause),
-            ConeCause::Boundary(cause) => cause.is_cancelled(),
-            ConeCause::Radius(cause) => cause.is_cancelled(),
-            ConeCause::Sector(cause) => cause.is_cancelled(),
-            ConeCause::Joins(cause) => cause.is_cancelled(),
-            ConeCause::TrimPair(cause) => cause.cause.cause.is_cancelled(),
+            ActualPatch(_) | ActualPair { .. } | DirectedRows(_) => self.actual_cancelled(),
+            Boundary(_) | Radius(_) | Sector(_) | Domain(_) | Joins(_) | ChartJoins(_)
+            | TrimPair(_) | ChartTrimPair(_) => self.local_cancelled(),
+            ChartPlan(cause) => cause.is_cancelled(),
+            Atlas(cause) => cause.cancelled(),
             ConeCause::Clearance(cause) => cause.is_cancelled(),
             ConeCause::Flux(cause) => flux_cancelled(cause),
             ConeCause::Authored(cause) => cause.is_cancelled(),
-            ProofOptions(_) | Support(_) | SourceAnchor { .. } | Depths(_) => false,
+            ProofOptions(_)
+            | InputBoundProofOptions { .. }
+            | ExecutionProof(_)
+            | Support(_)
+            | SourceAnchor { .. }
+            | Depths(_) => false,
             Scalar { .. } | Limit { .. } | Missing(_) | Native(_) | Encoding(_) => false,
             NativeQualification(_) | Coverage(_) | History(_) | Candidate(_) => false,
-            Coefficients(_) | Binding { .. } => false,
+            Coefficients(_) | Binding { .. } | ActualBinding(_) | ActualValidation(_) => false,
+        }
+    }
+    fn material_cancelled(&self) -> bool {
+        match &self.cause {
+            Material(cause) => cause.cause.is_cancelled(),
+            DevelopedMaterial(cause) => cause.is_cancelled(),
+            _ => false,
+        }
+    }
+    fn actual_cancelled(&self) -> bool {
+        match &self.cause {
+            ActualPatch(cause) | ActualPair { cause, .. } => cause.is_cancelled(),
+            DirectedRows(cause) => cause.is_cancelled(),
+            _ => false,
+        }
+    }
+    fn local_cancelled(&self) -> bool {
+        match &self.cause {
+            Boundary(cause) => cause.is_cancelled(),
+            Radius(cause) => cause.is_cancelled(),
+            Sector(cause) => cause.is_cancelled(),
+            Domain(cause) => cause.is_cancelled(),
+            Joins(cause) => cause.is_cancelled(),
+            ChartJoins(cause) => cause.is_cancelled(),
+            TrimPair(cause) => cause.cause.cause.is_cancelled(),
+            ChartTrimPair(cause) => cause.is_cancelled(),
+            _ => false,
         }
     }
     fn capture_cancelled(&self) -> bool {
@@ -171,6 +224,7 @@ fn flux_cancelled(cause: &AnalyticConicalFluxError) -> bool {
     use crate::surface_sketch::wrapped_profile::math_cancellation::MathCancellation;
     use AnalyticConicalFluxFailure as F;
     match &cause.cause {
+        F::Arithmetic { cause, .. } => cause.is_cancelled(),
         F::Input { cause, .. } => cause.is_cancelled(),
         F::Coefficients { cause, .. } => cause.is_cancelled(),
         F::Cap { cause, .. } => cause.is_cancelled(),

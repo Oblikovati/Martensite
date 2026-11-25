@@ -4,6 +4,7 @@ use super::super::super::general_tests::{bridge_for, degenerate_fixture};
 use super::super::super::test_fixture::actual_bridge;
 use super::*;
 use crate::sketch_region_certification::{BoundaryDomain, DomainCertificates, DomainEvidence};
+mod conditioned;
 type Cardinality = (usize, usize, usize);
 fn result(gaps: Vec<ContactTransportGap>) -> Vec<Cardinality> {
     gaps.into_iter()
@@ -41,7 +42,7 @@ fn literal_gap(
     index: usize,
     report: usize,
 ) -> Option<Cardinality> {
-    let proof = certificates.certificate(&retained.census.domains[index])?;
+    let proof = certificates.unified_certificate(&retained.census.domains[index])?;
     let rows = super::super::super::topology::observed_domain_vertices(retained, index);
     let mut vertices = Vec::new();
     for row in rows {

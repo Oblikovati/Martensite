@@ -1,0 +1,326 @@
+{
+  "kind": "operand-size diagnostic; not performance acceptance",
+  "stage_maxima": {
+    "reference-1": {
+      "max_bits": {
+        "input_num_bits": 219,
+        "input_den_bits": 209,
+        "shifted_num_bits": 227,
+        "shifted_den_bits": 215,
+        "remainder_bits": 297,
+        "series_num_bits": 162,
+        "series_den_bits": 158,
+        "raw_num_bits": 7500,
+        "raw_den_bits": 7493,
+        "reduced_num_bits": 7115,
+        "reduced_den_bits": 7108
+      },
+      "records_by_kind": {
+        "cell-polynomials": 274,
+        "sum-lower": 274,
+        "sum-upper": 274
+      }
+    },
+    "flux-1": {
+      "max_bits": {
+        "input_num_bits": 336,
+        "input_den_bits": 332,
+        "shifted_num_bits": 362,
+        "shifted_den_bits": 359,
+        "remainder_bits": 432,
+        "series_num_bits": 156,
+        "series_den_bits": 155,
+        "raw_num_bits": 4947,
+        "raw_den_bits": 4943,
+        "reduced_num_bits": 4662,
+        "reduced_den_bits": 4656
+      },
+      "records_by_kind": {
+        "cell-polynomials": 137,
+        "sum-lower": 411,
+        "sum-upper": 411
+      }
+    },
+    "reference-2": {
+      "max_bits": {
+        "input_num_bits": 207,
+        "input_den_bits": 199,
+        "shifted_num_bits": 215,
+        "shifted_den_bits": 205,
+        "remainder_bits": 289,
+        "series_num_bits": 158,
+        "series_den_bits": 154,
+        "raw_num_bits": 1660,
+        "raw_den_bits": 1660,
+        "reduced_num_bits": 1286,
+        "reduced_den_bits": 1285
+      },
+      "records_by_kind": {
+        "cell-polynomials": 22,
+        "sum-lower": 22,
+        "sum-upper": 22
+      }
+    },
+    "flux-2": {
+      "max_bits": {
+        "input_num_bits": 313,
+        "input_den_bits": 310,
+        "shifted_num_bits": 339,
+        "shifted_den_bits": 337,
+        "remainder_bits": 423,
+        "series_num_bits": 161,
+        "series_den_bits": 158,
+        "raw_num_bits": 1195,
+        "raw_den_bits": 1195,
+        "reduced_num_bits": 917,
+        "reduced_den_bits": 917
+      },
+      "records_by_kind": {
+        "cell-polynomials": 11,
+        "sum-lower": 33,
+        "sum-upper": 33
+      }
+    }
+  },
+  "source_files_verified": 346,
+  "source_changed": [],
+  "whole_operation_test_passed": true,
+  "metric_units": 989355,
+  "integration_cells": 444,
+  "retained_spans": 148,
+  "raw_sum_bits": "observed already-required cross-sum numerator and denominator product immediately before unchanged ExactRatio::new gcd; no added products",
+  "scope": "sum pre/post reduction and polynomial/cell metadata; does not time gcd or observe every transient internal gcd operand",
+  "profiles": [
+    {
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "num_integer",
+        "src_path": "/home/vmiguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-integer-0.1.47/src/lib.rs",
+        "edition": "2018",
+        "doc": true,
+        "doctest": true,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": false
+      },
+      "fresh": true
+    },
+    {
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "num_bigint",
+        "src_path": "/home/vmiguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/lib.rs",
+        "edition": "2021",
+        "doc": true,
+        "doctest": true,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": false
+      },
+      "fresh": true
+    },
+    {
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "martensite_tkmath",
+        "src_path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkmath/src/lib.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": true,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": false
+      },
+      "fresh": false
+    },
+    {
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "martensite_tkbo",
+        "src_path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkbo/src/lib.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": true,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "1",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": false
+      },
+      "fresh": false
+    },
+    {
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "martensite_tksketch",
+        "src_path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tksketch/src/lib.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": true,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": true
+      },
+      "fresh": false
+    }
+  ],
+  "cleanup": {
+    "probe_sources_restored": true,
+    "instrumented_artifacts_removed": [
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkbo-2d5eb07b17b037d4.rlib",
+        "sha256": "de28d95aa89742c1fadc938216fc7e1845f2ae56eedbfe4379fe505511d4c230",
+        "bytes": 48835246
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkbo-2d5eb07b17b037d4.rmeta",
+        "sha256": "a317b9baa6dbf6a2717ecd1662f0f47ae560e5bd8f413d12a257b4431d695d38",
+        "bytes": 19269755
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkbrep-6a803afc7e8b3db7.rlib",
+        "sha256": "cb42b99d77394e212481545c0335605130b43071a5f292ed8526c18c042d04b5",
+        "bytes": 52863996
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkbrep-6a803afc7e8b3db7.rmeta",
+        "sha256": "5f98011fd7f460667a33177ba262ad6c9684564387d7f2c127209cd3d8a7ce9f",
+        "bytes": 9104397
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkg2d-077044ff5a9be722.rlib",
+        "sha256": "3b9484839318e8b4328987f7d6be95f281e0ea47d263d24077fa64daf2900b60",
+        "bytes": 10718940
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkg2d-077044ff5a9be722.rmeta",
+        "sha256": "ccd7bdd9e2bab835e3c73889a13ca8dd79a9de01b90ab7d62814300fd3b2e8fa",
+        "bytes": 2478012
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkg3d-fc085c00b210295e.rlib",
+        "sha256": "f5e5207f4ccbc68521823039faee6a9c21c84488fd3525b6feb66058631f21d5",
+        "bytes": 25511012
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkg3d-fc085c00b210295e.rmeta",
+        "sha256": "988581dcd04ca3e2d7ee413bb89bea8696c932109f2376391f570231dfae2bac",
+        "bytes": 5043141
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkgeomalgo-003e19db0a2ffa7e.rlib",
+        "sha256": "6950e3f77d3b8af62c9c8d47c646a3b71a2e353ab319d5881e6298fe3bd730d4",
+        "bytes": 65353844
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkgeomalgo-003e19db0a2ffa7e.rmeta",
+        "sha256": "00765ef4e8643baa60bd4e139dd0c563d33e630632fe0f4b0a233177c636060f",
+        "bytes": 14562315
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkgeombase-06ef15baf41c614e.rlib",
+        "sha256": "146656845d444c19cb637bd029f39c1cdbe63f5ba54c5fe6c6e1fca140901a80",
+        "bytes": 60502604
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkgeombase-06ef15baf41c614e.rmeta",
+        "sha256": "a8b915e98a38616aca4da5ecfca20de4e856cd7beb0297d89e4e5bfad47c968a",
+        "bytes": 16875636
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkmath-a875d45b93c4b370.rlib",
+        "sha256": "1d896fb9a938f1207c1e63c6ce523e7d66ecf6343c9879a5ad970564062524f3",
+        "bytes": 42475802
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkmath-a875d45b93c4b370.rmeta",
+        "sha256": "ca8673d1ec4fdd8cfd16862062841ee6d326a08d0e73177838505b3eb1c5e951",
+        "bytes": 25493389
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkprim-b1e5de49f62c8bba.rlib",
+        "sha256": "3cd3a9d090baa34d486d7c51bea5784f1974f83e78c0d5cd0f66306720d66c43",
+        "bytes": 4575618
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkprim-b1e5de49f62c8bba.rmeta",
+        "sha256": "9787cef4d44786b37408102b6003987b8b014ee7fcbd0c0be9dd7b1c150cde4c",
+        "bytes": 1070644
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkshhealing-7718b9933e6abd75.rlib",
+        "sha256": "b160ec10200eb36117ebc052d278393f07f2f9b40dff784b56f3dfeb0896c13f",
+        "bytes": 48476964
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tkshhealing-7718b9933e6abd75.rmeta",
+        "sha256": "36524c896d7d3b3308f5ce91443491e22e01096cf748eaab26790cd3022a9389",
+        "bytes": 8121876
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tktopalgo-3c3b3de76272692d.rlib",
+        "sha256": "f003bbe9cc10abdcaaff12f160edbf3eeb61806ff9fe5ec7b55df3bd81a8ad8c",
+        "bytes": 34912266
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/libmartensite_tktopalgo-3c3b3de76272692d.rmeta",
+        "sha256": "6986afc43d81e3f59545e9e6ac3ea5faed5792389a2bfdb8fe18008a93f782a8",
+        "bytes": 6529375
+      },
+      {
+        "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tksketch-1bce81d5a48f0d86",
+        "sha256": "e1e1a1caea9cae123585e393a6ab099febd06460a8b0211b6d6423b40c913e99",
+        "bytes": 73819912
+      }
+    ],
+    "probe_implementation_removed": true
+  }
+}

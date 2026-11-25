@@ -4,14 +4,22 @@ use super::*;
 use martensite_tkmath::predicates::roots::DyadicBound;
 mod authored;
 mod comparison;
+#[cfg(test)]
+pub(super) use authored::certify as authored_volume;
 pub(super) use comparison::member_volume;
 #[cfg(test)]
-pub(super) use comparison::{ComparisonBounds, certify as comparison};
+pub(super) use comparison::{
+    ComparisonBounds, certify as comparison, distance as enclosure_distance,
+};
+#[cfg(test)]
+pub(super) use flux::certify as native_flux;
 mod flux;
+mod member_reference;
 mod reference;
+pub(in crate::surface_sketch::wrapped_profile) use member_reference::MemberReferenceVolume;
 mod totals;
 pub(super) fn geometry(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     original: &DevelopedRegionRequest,
     prepared: &Prepared,
     stored: storage::Stored,
@@ -19,10 +27,10 @@ pub(super) fn geometry(
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<(Geometry, Shape)> {
     let started = work.consumed;
-    let material = material::certify(request, original, prepared, &stored, work, &mut *cancelled)?;
-    let reference_volume = reference::certify(request, prepared, work, cancelled)?;
+    let (material, reference_volume) =
+        member_reference::certify(request, original, prepared, &stored, work, cancelled)?;
     let flux = flux::certify(request, original.region, &stored, work, cancelled)?;
-    let authored = authored::certify(request, original, flux.enclosure(), work, cancelled)?;
+    let authored = authored_for_chart(request, original, prepared, &flux, work, cancelled)?;
     let arithmetic_operations = stored.capture_operations + work.consumed - started;
     let geometry = Geometry {
         coverage: stored.coverage,
@@ -37,11 +45,14 @@ pub(super) fn geometry(
     Ok((geometry, stored.shape))
 }
 pub(super) fn budget(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     family: &OwnedFamily<Selection, Geometry>,
     work: &mut storage::Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<Budget> {
+    if family.selection.executed_selection.is_directed() {
+        actual::validate_family(family, work)?;
+    }
     totals::certify(request, family, work, cancelled)
 }
 pub(super) fn spatial(spans: &[storage::SpanProof]) -> ConeChecked<f64> {
@@ -102,4 +113,22 @@ fn scalar(field: &'static str, actual: f64, expected: &'static str) -> ConeFailu
         },
     )
     .at(WrappedStage::Publication)
+}
+
+fn authored_for_chart(
+    request: &ConeRun<'_>,
+    original: &DevelopedRegionRequest,
+    prepared: &Prepared,
+    flux: &CertifiedAnalyticConicalFlux,
+    work: &mut storage::Work,
+    cancelled: &mut CancelPoll<'_>,
+) -> ConeChecked<ConicalAuthoredFlux> {
+    authored::certify(
+        request,
+        original,
+        prepared.chart_domain.as_deref(),
+        flux.enclosure(),
+        work,
+        cancelled,
+    )
 }

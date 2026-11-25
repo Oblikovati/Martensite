@@ -16,6 +16,9 @@ pub(super) trait CarrierBuilder {
     fn handedness(&self) -> DevelopedMapHandedness;
     fn caps(&self) -> Result<[Face; 2], Failure>;
     fn vertex_pair(&self, point: [f64; 2]) -> Result<[Vertex; 2], Failure>;
+    fn vertex_pair_at(&self, source: &AuthoredPiece) -> Result<[Vertex; 2], Failure> {
+        self.vertex_pair(source.poles[0])
+    }
     fn curves(
         &self,
         source: &AuthoredPiece,
@@ -98,7 +101,7 @@ impl ContourIncidences {
     fn new(contour: &[AuthoredPiece], mapping: &impl CarrierBuilder) -> Result<Self, Failure> {
         let vertices = contour
             .iter()
-            .map(|p| mapping.vertex_pair(p.poles[0]))
+            .map(|p| mapping.vertex_pair_at(p))
             .collect::<Result<Vec<_>, _>>()?;
         let connectors = vertices
             .iter()

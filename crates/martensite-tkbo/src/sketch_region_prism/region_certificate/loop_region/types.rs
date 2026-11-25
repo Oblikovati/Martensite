@@ -57,6 +57,8 @@ pub(crate) enum LoopRegionStage {
 /// Typed refusal; no partial certificate accompanies it.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum LoopRegionCause {
+    IntegralProgram(Box<super::program_trace::ProgramFailure>),
+    IntegralSelection(Box<IntegralSelectionMismatch>),
     GraphPolicy(Box<crate::sketch_region_certification::GraphPolicyMismatch>),
     Version {
         actual: u32,
@@ -194,4 +196,13 @@ pub(crate) struct LoopRegionCertificate {
 pub(crate) type LoopRegionCheck<T> = Result<T, LoopRegionFailure>;
 pub(crate) fn refuse<T>(stage: LoopRegionStage, cause: LoopRegionCause) -> LoopRegionCheck<T> {
     Err(LoopRegionFailure { stage, cause })
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct IntegralSelectionMismatch {
+    pub graph_version: u32,
+    pub retained:
+        Option<martensite_tkmath::predicates::roots::metric_bounds::IntegralProgramOptions>,
+    pub expected:
+        Option<martensite_tkmath::predicates::roots::metric_bounds::IntegralProgramOptions>,
 }

@@ -1,0 +1,35 @@
+{
+  "source_changed": [],
+  "fixture": {
+    "curves": 239,
+    "regions": 18,
+    "semi_angle": 0.125,
+    "depths": [
+      0,
+      0.25
+    ],
+    "spatial_error": 1e-05,
+    "requested_aggregate_operations": 8810496
+  },
+  "tests": 3,
+  "passed": 3,
+  "successful_operations": 2,
+  "fixed_one_million_case": "refused during fitting as expected",
+  "runs": [
+    {
+      "event": "conical_text_api",
+      "normal": "Inward",
+      "seconds": 13.86094374,
+      "arithmetic_operations": 3071263,
+      "integration_subintervals": 1017
+    },
+    {
+      "event": "conical_text_api",
+      "normal": "Outward",
+      "seconds": 13.974353809,
+      "arithmetic_operations": 3057275,
+      "integration_subintervals": 1017
+    }
+  ],
+  "performance_qualified": false
+}

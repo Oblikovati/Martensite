@@ -79,6 +79,10 @@ include an independent developed-area integral and reported numerical error.
 The same case must survive a seam-crossing placement, edits and deterministic
 replay, while leaving its input body and earlier published results isolated.
 
+The local cylindrical fixture now covers both attached normal senses and
+the inward content edit across the native seam. See
+[attachment and replay evidence](FACE-ATTACHMENT.md#multiline-pocket-content-edit-across-the-seam).
+
 Rendering is useful for application review, but cannot replace those kernel
 checks. An apparently wrapped display mesh is not a completed modelling result.
 The cylinder rectangle and cone-sector operations establish bounded surface

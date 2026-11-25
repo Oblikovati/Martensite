@@ -218,12 +218,12 @@ impl DriverBackend {
         &mut self,
         frame: &RenderFrame,
         target: &mut crate::backend::WindowPresenter,
-        vsync: bool,
+        frame_queue: crate::driver_options::WindowFrameQueue,
         policy: crate::RenderGuiSurfacePolicy,
     ) -> Result<RenderedFrame, RenderError> {
         match self {
             Self::Vulkan(device) => device
-                .render_window(frame, target, vsync, policy)
+                .render_window(frame, target, frame_queue, policy)
                 .map(RenderedFrame::Deferred),
             Self::Injected(_) => Err(crate::error::rejected(
                 "injected backend",

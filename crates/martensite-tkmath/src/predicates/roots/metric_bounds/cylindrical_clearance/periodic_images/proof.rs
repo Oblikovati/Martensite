@@ -6,13 +6,23 @@ use types::{PeriodicEnclosure, PeriodicWork};
 pub(super) fn execute(
     source: &CertifiedCylindricalClearance,
     maximum: u32,
+    initial: CylindricalClearanceOptions,
     cancelled: &mut (dyn FnMut() -> bool + Send),
-) -> Checked<CertifiedCylindricalPeriodicClearance> {
-    let plan = planning::plan(source, maximum, cancelled)?;
-    let mut remaining = source.options;
+) -> WorkChecked<CertifiedCylindricalPeriodicClearance> {
+    let plan = planning::plan(source, maximum, initial, cancelled)?;
+    let mut remaining = initial;
     remaining.max_operations -= plan.operations;
-    let images = certify_images(source, &plan.images, &mut remaining, cancelled)?;
-    assemble(source, plan, images, remaining)
+    let images = certify_images(source, &plan.images, &mut remaining, cancelled)
+        .map_err(|cause| (cause, initial.max_operations - remaining.max_operations))?;
+    let work = work_receipt(source.options, initial, remaining, plan.maximum);
+    let enclosure =
+        enclosure(source, plan, images.is_empty()).map_err(|cause| (cause, work.operations))?;
+    Ok(CertifiedCylindricalPeriodicClearance {
+        source: source.clone(),
+        images,
+        enclosure,
+        work,
+    })
 }
 
 fn certify_images(
@@ -41,7 +51,7 @@ fn bind_sources<'a>(
 ) -> Vec<CylindricalClearanceSource<'a>> {
     poles
         .iter()
-        .zip(&source.intervals)
+        .zip(source.intervals.iter())
         .map(|(authored, interval)| CylindricalClearanceSource {
             authored,
             interval: *interval,
@@ -56,7 +66,12 @@ fn certify_and_charge(
     remaining: &mut CylindricalClearanceOptions,
     cancelled: &mut (dyn FnMut() -> bool + Send),
 ) -> Checked<CertifiedCylindricalImage> {
-    let certificate = certify_image(source, inputs, shift, *remaining, cancelled)?;
+    let certificate = certify_image(source, inputs, shift, *remaining, cancelled).map_err(
+        |(cause, operations)| {
+            remaining.max_operations -= operations;
+            cause
+        },
+    )?;
     remaining.max_operations -= certificate.operations();
     remaining.max_domains -= certificate.domain_visits();
     remaining.max_curve_nodes -= certificate.curve_nodes();
@@ -86,15 +101,36 @@ fn certify_image(
     shift: &CylindricalPeriodicTranslation,
     options: CylindricalClearanceOptions,
     cancelled: &mut (dyn FnMut() -> bool + Send),
-) -> Checked<CertifiedCylindricalClearance> {
+) -> WorkChecked<CertifiedCylindricalClearance> {
     let query = image_query(source, inputs, shift, options);
-    certify_cylindrical_clearance(query, cancelled).map_err(|cause| {
-        CylindricalClearanceFailure::PeriodicImage {
-            turn: shift.turn,
-            offset: shift.offset,
-            cause: Box::new(cause),
-        }
-    })
+    super::super::super::execute(query, cancelled)
+        .map(|report| {
+            // Every image query borrows the same controls reconstructed from this snapshot.
+            CertifiedCylindricalClearance::with_sources(
+                query,
+                report,
+                Arc::clone(&source.sources),
+                Arc::clone(&source.intervals),
+            )
+        })
+        .map_err(|(cause, operations)| (image_error(query, shift, cause), operations))
+}
+
+fn image_error(
+    query: CylindricalClearanceQuery<'_>,
+    shift: &CylindricalPeriodicTranslation,
+    cause: CylindricalClearanceFailure,
+) -> CylindricalClearanceFailure {
+    CylindricalClearanceFailure::PeriodicImage {
+        turn: shift.turn,
+        offset: shift.offset,
+        cause: Box::new(CylindricalClearanceError {
+            requested_clearance: query.requested_clearance,
+            requested_options: query.options,
+            source_count: query.sources.len(),
+            cause,
+        }),
+    }
 }
 
 fn image_query<'a>(
@@ -115,32 +151,19 @@ fn image_query<'a>(
     }
 }
 
-fn assemble(
-    source: &CertifiedCylindricalClearance,
-    plan: PeriodicPlan,
-    images: Vec<CertifiedCylindricalImage>,
-    remaining: CylindricalClearanceOptions,
-) -> Checked<CertifiedCylindricalPeriodicClearance> {
-    let work = work_receipt(source, remaining, plan.maximum);
-    let enclosure = enclosure(source, plan, images.is_empty())?;
-    Ok(CertifiedCylindricalPeriodicClearance {
-        source: source.clone(),
-        images,
-        enclosure,
-        work,
-    })
-}
-
 fn work_receipt(
-    source: &CertifiedCylindricalClearance,
+    source: CylindricalClearanceOptions,
+    initial: CylindricalClearanceOptions,
     remaining: CylindricalClearanceOptions,
     image_limit: u32,
 ) -> PeriodicWork {
     PeriodicWork {
         image_limit,
-        operations: source.options.max_operations - remaining.max_operations,
-        domains: source.options.max_domains - remaining.max_domains,
-        nodes: source.options.max_curve_nodes - remaining.max_curve_nodes,
+        operations: initial.max_operations - remaining.max_operations,
+        domains: initial.max_domains - remaining.max_domains,
+        nodes: initial.max_curve_nodes - remaining.max_curve_nodes,
+        operation_limit: (initial.max_operations < source.max_operations)
+            .then_some(initial.max_operations),
     }
 }
 

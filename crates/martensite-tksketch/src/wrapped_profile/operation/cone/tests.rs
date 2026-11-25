@@ -1,8 +1,24 @@
 //! Owned curved outer material and a clockwise hole exercise the actual public input path.
 use super::*;
+mod authored_planar;
 mod completed;
+pub(in crate::surface_sketch::wrapped_profile) use completed::atlas::separated_request as atlas_request;
 mod frozen;
 mod inward;
+mod narrow;
+pub(in crate::surface_sketch::wrapped_profile) fn supported_common_chart_request()
+-> WrappedConeNormalRequest {
+    let mut request =
+        narrow::fixture::request(NormalSense::Outward, narrow::fixture::Quadrant::PositiveX);
+    request.proof.integration.behavior_version = 2;
+    request.proof.planar_proof =
+        martensite_tkbo::profile_extrusion::PlanarProofVersion::GeometricCompositeV6 {
+            max_components: 64,
+            max_total_subintervals: u64::from(request.proof.integration.max_total_subintervals),
+        };
+    request
+}
+
 use martensite_tkbo::profile_extrusion::{
     LoopUse, ProfileCurve, ProfileCurveId, ProfileLoop, ProfilePlane, ProfileVertex,
     ProfileVertexId, SketchProfile,

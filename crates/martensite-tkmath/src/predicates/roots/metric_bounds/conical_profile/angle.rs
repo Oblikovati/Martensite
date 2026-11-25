@@ -4,7 +4,7 @@ use super::*;
 use crate::predicates::roots::certificate_arithmetic::circular_constants;
 
 #[derive(Debug)]
-pub(super) enum InitialAngleFailure {
+pub(in crate::predicates::roots::metric_bounds) enum InitialAngleFailure {
     InvalidPoint([f64; 2]),
     ReductionOutOfRange,
     InvalidSupport {
@@ -44,7 +44,8 @@ impl From<BoundedArithmeticFailure> for InitialAngleFailure {
         Self::Arithmetic(cause)
     }
 }
-pub(super) type AngleResult<T> = Result<T, InitialAngleFailure>;
+pub(in crate::predicates::roots::metric_bounds) type AngleResult<T> =
+    Result<T, InitialAngleFailure>;
 
 #[derive(Clone, Copy)]
 pub(super) struct AnchorRequest {
@@ -57,26 +58,75 @@ pub(super) struct AnchorRequest {
     pub(super) fit_half_angle_tangent: f64,
 }
 
+pub(super) struct AnchorCapture {
+    pub(super) error: Interval,
+    pub(super) sine: Interval,
+    pub(super) fit_phase: Interval,
+}
 pub(super) fn anchor_with_sine(
     request: &AnchorRequest,
     arithmetic: &mut Arithmetic<'_>,
 ) -> AngleResult<(Interval, Interval)> {
+    anchor_metric(request, None, arithmetic).map(|proof| (proof.error, proof.sine))
+}
+#[cfg(test)]
+pub(super) fn anchor_in_chart(
+    request: &AnchorRequest,
+    domain: &ConicalChartDomainEvidence,
+    arithmetic: &mut Arithmetic<'_>,
+) -> AngleResult<(Interval, Interval)> {
+    anchor_capture_in_chart(request, domain, arithmetic).map(|proof| (proof.error, proof.sine))
+}
+pub(super) fn anchor_capture_in_chart(
+    request: &AnchorRequest,
+    domain: &ConicalChartDomainEvidence,
+    arithmetic: &mut Arithmetic<'_>,
+) -> AngleResult<AnchorCapture> {
+    anchor_metric(request, Some(&domain.sine), arithmetic)
+}
+fn anchor_metric(
+    request: &AnchorRequest,
+    sine: Option<&Interval>,
+    arithmetic: &mut Arithmetic<'_>,
+) -> AngleResult<AnchorCapture> {
     if !request.fit_center.is_finite() || !request.fit_half_angle_tangent.is_finite() {
         return Err(InitialAngleFailure::InvalidFit {
             center: request.fit_center,
             half_angle_tangent: request.fit_half_angle_tangent,
         });
     }
-    let (target, sine) = physical_with_sine(
-        request.point,
-        request.semi_angle,
-        request.origin,
-        request.developed_turn,
-        arithmetic,
-    )?;
+    let (target, sine) = physical_anchor(request, sine, arithmetic)?;
     let target = shift_branch(target, request.physical_turn, arithmetic)?;
     let fit = fit_phase(request, arithmetic)?;
-    Ok((arithmetic.subtract(&target, &fit)?, sine))
+    let error = arithmetic.subtract(&target, &fit)?;
+    Ok(AnchorCapture {
+        error,
+        sine,
+        fit_phase: fit,
+    })
+}
+fn physical_anchor(
+    request: &AnchorRequest,
+    sine: Option<&Interval>,
+    arithmetic: &mut Arithmetic<'_>,
+) -> AngleResult<(Interval, Interval)> {
+    match sine {
+        Some(sine) => physical_metric(
+            request.point,
+            request.semi_angle,
+            request.origin,
+            request.developed_turn,
+            Some(sine),
+            arithmetic,
+        ),
+        None => physical_with_sine(
+            request.point,
+            request.semi_angle,
+            request.origin,
+            request.developed_turn,
+            arithmetic,
+        ),
+    }
 }
 pub(super) fn fit_phase(
     request: &AnchorRequest,
@@ -109,10 +159,23 @@ pub(super) fn physical_with_sine(
     developed_turn: i32,
     arithmetic: &mut Arithmetic<'_>,
 ) -> AngleResult<(Interval, Interval)> {
+    physical_metric(point, semi_angle, origin, developed_turn, None, arithmetic)
+}
+fn physical_metric(
+    point: [f64; 2],
+    semi_angle: f64,
+    origin: f64,
+    developed_turn: i32,
+    cached_sine: Option<&Interval>,
+    arithmetic: &mut Arithmetic<'_>,
+) -> AngleResult<(Interval, Interval)> {
     admit_support(semi_angle, origin)?;
     let developed = initial_angle(point, arithmetic)?;
     let developed = shift_branch(developed, developed_turn, arithmetic)?;
-    let (scaled, sine) = scale_developed(&developed, semi_angle, arithmetic)?;
+    let (scaled, sine) = match cached_sine {
+        Some(sine) => (arithmetic.divide(&developed, sine)?, sine.clone()),
+        None => scale_developed(&developed, semi_angle, arithmetic)?,
+    };
     let chart_origin = arithmetic.scalar(origin)?;
     Ok((arithmetic.add(&scaled, &chart_origin)?, sine))
 }
@@ -143,7 +206,7 @@ pub(super) fn scale_developed(
     Ok((scaled, sine[0].clone()))
 }
 
-pub(super) fn initial_angle(
+pub(in crate::predicates::roots::metric_bounds) fn initial_angle(
     point: [f64; 2],
     arithmetic: &mut Arithmetic<'_>,
 ) -> AngleResult<Interval> {

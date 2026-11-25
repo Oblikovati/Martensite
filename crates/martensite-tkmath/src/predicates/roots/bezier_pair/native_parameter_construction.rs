@@ -7,6 +7,8 @@ use super::super::{
 use super::{BezierPairCertificate, ExactBezierPairParameterEnclosure};
 use num_bigint::BigInt;
 use std::cmp::Ordering;
+#[cfg(test)]
+mod point_tests;
 
 /// Completion of an exact interval error comparison, not a contact identity decision.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -101,7 +103,7 @@ struct AxisConstructionSettings {
     limit: f64,
     axis: usize,
 }
-fn measure_captured_axes(
+pub(super) fn measure_captured_axes(
     bounds: [&RatioInterval; 2],
     sources: [super::BezierPairCurve<'_>; 2],
     maps: [MetricParameterMap; 2],
@@ -189,13 +191,25 @@ fn native_image(
     bounds: &RatioInterval,
     map: MetricParameterMap,
 ) -> Result<RatioInterval, ResidualError> {
+    let point = bounds.lower == bounds.upper;
+    if point && matches!(map, MetricParameterMap::Identity) {
+        return Ok(bounds.clone());
+    }
     let [origin, span] = map.exact_coefficients()?;
     let scale: BigInt = BigInt::from(1) << 1074_usize;
     let origin = RatioInterval::point(ExactRatio::new(origin, scale.clone()));
     let span = RatioInterval::point(ExactRatio::new(span, scale));
+    // #569: exact points have one product, while non-point intervals keep all four corners.
+    if point {
+        let product = bounds.lower.multiply(&span.lower);
+        return Ok(RatioInterval::point(origin.lower.add(&product)));
+    }
     Ok(origin.add(&bounds.multiply(&span)))
 }
 fn distance_enclosure(bounds: &RatioInterval, native: &ExactRatio) -> RatioInterval {
+    if bounds.lower == bounds.upper {
+        return RatioInterval::point(absolute(bounds.lower.subtract(native)));
+    }
     let left = absolute(bounds.lower.subtract(native));
     let right = absolute(bounds.upper.subtract(native));
     let minimum = if native < &bounds.lower {

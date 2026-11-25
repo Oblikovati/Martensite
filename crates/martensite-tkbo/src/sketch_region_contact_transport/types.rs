@@ -45,10 +45,10 @@ pub(crate) struct ContactTransportInspection {
     pub completed_bisections: u64,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) struct ReportContactIdentity {
     pub report: usize,
-    pub candidate_root: usize,
+    pub proof_key: crate::sketch_region_certification::ContactProofKey,
 }
 pub(crate) struct ObservedPairedContact {
     pub identity: ReportContactIdentity,
@@ -163,4 +163,44 @@ pub(crate) enum ContactTransportCompletion {
     CompletedEmpty,
     Incomplete,
     Failed,
+}
+
+impl std::fmt::Debug for ReportContactIdentity {
+    fn fmt(&self, output: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use crate::sketch_region_certification::ContactProofKey;
+        let mut row = output.debug_struct("ReportContactIdentity");
+        row.field("report", &self.report);
+        match self.proof_key {
+            ContactProofKey::ProjectedRoot(index) => row.field("candidate_root", &index),
+            ContactProofKey::Endpoint => row.field("proof_key", &self.proof_key),
+        };
+        row.finish()
+    }
+}
+#[cfg(test)]
+mod identity_tests {
+    use super::*;
+    use crate::sketch_region_certification::ContactProofKey;
+    #[test]
+    fn projected_root_debug_preserves_earlier_receipt_bytes() {
+        let identity = ReportContactIdentity {
+            report: 7,
+            proof_key: ContactProofKey::ProjectedRoot(11),
+        };
+        assert_eq!(
+            format!("{identity:?}"),
+            "ReportContactIdentity { report: 7, candidate_root: 11 }"
+        );
+    }
+    #[test]
+    fn endpoint_debug_names_its_actual_proof_without_a_projected_root() {
+        let identity = ReportContactIdentity {
+            report: 7,
+            proof_key: ContactProofKey::Endpoint,
+        };
+        assert_eq!(
+            format!("{identity:?}"),
+            "ReportContactIdentity { report: 7, proof_key: Endpoint }"
+        );
+    }
 }

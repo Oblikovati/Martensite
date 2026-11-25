@@ -13,9 +13,12 @@ pub(super) fn qualify<S: SupportStages>(
 ) -> Result<Members<S::Geometry>, S::Error> {
     let prepared = S::prepared(selection);
     let stored = store(support, originals, prepared, views, context, control)?;
-    control.run_for::<_, S::Error>(FamilyStage::Binding, None, |_| {
-        support.bind(originals, selection, &stored)
+    control.run_for::<_, S::Error>(FamilyStage::Binding, None, |poll| {
+        support.bind(originals, selection, &stored, context, poll)
     })?;
+    if support.defer_native_checks() {
+        return directed::finish(support, originals, selection, stored, context, control);
+    }
     finish(support, originals, prepared, stored, context, control)
 }
 pub(in crate::surface_sketch::wrapped_profile) fn store<S: SupportStages>(
@@ -27,8 +30,10 @@ pub(in crate::surface_sketch::wrapped_profile) fn store<S: SupportStages>(
     control: &mut Control<'_>,
 ) -> Result<BTreeMap<SurfaceRegionId, S::Stored>, S::Error> {
     let mut stored = BTreeMap::new();
+    let originals = source::by_region(originals);
+    let prepared = source::by_region(prepared);
     for view in views {
-        let (original, retained) = sources::<S>(originals, prepared, view.region)?;
+        let (original, retained) = sources::<S>(&originals, &prepared, view.region)?;
         let member =
             control.run_for::<_, S::Error>(FamilyStage::Storage, Some(view.region), |poll| {
                 support.store(original, retained, view, context, poll)
@@ -62,17 +67,19 @@ fn finish<S: SupportStages>(
     Ok(members)
 }
 fn sources<'a, S: SupportStages>(
-    originals: &'a [S::Original],
-    prepared: &'a [S::Prepared],
+    originals: &BTreeMap<SurfaceRegionId, &'a S::Original>,
+    prepared: &BTreeMap<SurfaceRegionId, &'a S::Prepared>,
     region: SurfaceRegionId,
 ) -> Result<(&'a S::Original, &'a S::Prepared), S::Error> {
     let original = originals
-        .iter()
-        .find(|r| r.as_ref().region == region)
+        .get(&region)
+        .copied()
         .ok_or_else(|| S::missing(region))?;
     let retained = prepared
-        .iter()
-        .find(|r| r.as_ref().region == region)
+        .get(&region)
+        .copied()
         .ok_or_else(|| S::missing(region))?;
     Ok((original, retained))
 }
+
+mod directed;

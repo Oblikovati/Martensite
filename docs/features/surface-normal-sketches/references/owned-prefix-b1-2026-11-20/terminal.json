@@ -1,0 +1,75 @@
+{
+  "finished": "2026-11-20T03:38:09.630908+00:00",
+  "base_head": "5696a884ecd989fc78cd2de07cff0db1b8b88b4d",
+  "source_changed": [],
+  "source_manifest_sha256": "e88808643db7f246bf59220d14186bc66883013039b424904462f6face984cf0",
+  "protected_critical_source_changed": [],
+  "exact_main_557_occurrence_and_tests": true,
+  "tests": {
+    "owned-attempt1": {
+      "passed": 29,
+      "failed": 0,
+      "exit": 0
+    },
+    "paired_binding-occurrence": {
+      "passed": 8,
+      "failed": 0,
+      "exit": 0
+    },
+    "paired_validation_tests": {
+      "passed": 6,
+      "failed": 0,
+      "exit": 0
+    },
+    "bernstein_tests": {
+      "passed": 7,
+      "failed": 0,
+      "exit": 0
+    },
+    "geometric_tests": {
+      "passed": 4,
+      "failed": 0,
+      "exit": 0
+    },
+    "full-O-attempt1": {
+      "passed": 2,
+      "failed": 0,
+      "exit": 0
+    }
+  },
+  "owned_predicates": [
+    72,
+    12
+  ],
+  "live_three_reads_predicates": [
+    720,
+    150
+  ],
+  "target_consumers": [],
+  "target_initial_bytes": 2445415718,
+  "target_final_bytes": 2445572160,
+  "target_growth_bytes": 156442,
+  "timing_usable_for_acceptance": false,
+  "push_performed": false,
+  "main_fixes_must_land_before_shipping": true,
+  "api_seconds_diagnostic": {
+    "Inward": 5.612302,
+    "Outward": 5.549263
+  },
+  "full_operation_work": [
+    {
+      "event": "narrow_cone_completed_work",
+      "arithmetic_operations": 994535,
+      "integration_subintervals": 444,
+      "retained_spans": 148
+    },
+    {
+      "event": "narrow_cone_completed_work",
+      "arithmetic_operations": 994535,
+      "integration_subintervals": 444,
+      "retained_spans": 148
+    }
+  ],
+  "commit": "abde8bd2e4ddf57000cc4e99ca7d8b1d95fbf3b2",
+  "git_status_after_commit": ""
+}

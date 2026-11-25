@@ -1,0 +1,290 @@
+{
+  "kind": "single_instrumented_concurrent_ef_seed_diagnostic_no_optimization",
+  "date": "2026-11-19",
+  "conclusion": "No duplicate UV seeds observed; duplicate-seed hypothesis refuted for this recorded workload. No optimization implemented.",
+  "source_receipt_sha256": {
+    "summary": "fc8ed0cf4ebcc49d018be6e7e961f6128026ba44b4ce689017cd95a963e8555c",
+    "terminal": "255bb57c5bb62370ad177056bd1553cc0712b5e1ecdd0d5c5eee8a275688bab4",
+    "patch_manifest": "aac75198454bedc1b65edeb584793d4f7e630b4c17b674a76a153420e9e847ad",
+    "link_plan": "d9557888b05e1048db6b5db902992c620584f72526ff337941f794b47314060b",
+    "build_receipt": "8e7d85ea7e3dfd568b77d63fdd85a3dd6fd6ee398c5e1d0bd991395ea02f8833",
+    "link_plan_generator_script": "2a84eacacf30757831a7cbd0ec963278398a85a38126a1f857c0aad3c26d9403"
+  },
+  "receipt_status_scope": "Patch manifest and link plan retain their original preparation-stage flags; terminal receipt records successful build, link and run plus source restoration.",
+  "link_plan_hash_scope": "Prepared manifest link_plan_sha256 identifies the link-plan.py generator script, SHA256 2a84eacacf30757831a7cbd0ec963278398a85a38126a1f857c0aad3c26d9403. Generated link-plan.json output has its separately recorded source_receipt_sha256.link_plan identity.",
+  "receipts": {
+    "summary": {
+      "source_restored": true,
+      "stage": "diagnostic_no_optimization",
+      "log_sha256": "8e802d47f439f02c890a30e02e8fbbca52255cf44e8e2c3eeac616e25af00240",
+      "log_bytes": 5069314,
+      "by_phase": {
+        "initialize": {
+          "ef_seconds": 0.03691937000000002,
+          "ef_calls": 1229
+        },
+        "bean": {
+          "ef_seconds": 8.977702917999999,
+          "ef_calls": 1229,
+          "projections": 4701,
+          "cold": 156,
+          "projection_seconds": 2.4580586099999966,
+          "grid_seconds": 1.9651519260000048,
+          "solves": 4701,
+          "solver_seconds": 0.19784008399999978,
+          "iterations": 20719,
+          "inner_evaluations": 29551
+        },
+        "outside": {
+          "projections": 624,
+          "cold": 0,
+          "projection_seconds": 0.3234885380000005,
+          "grid_seconds": 0.25448966100000014,
+          "solves": 624,
+          "solver_seconds": 0.03026244799999999,
+          "iterations": 3340,
+          "inner_evaluations": 3105
+        }
+      },
+      "duplicate_result_mismatch_count": 0,
+      "duplicate_result_mismatches": [],
+      "native_status": [
+        {
+          "mode": "si",
+          "seconds": 18.661923542,
+          "completion": "Incomplete { operation: CheckerSI, stage: Worker, class: UnqualifiedStage, cause: None, context: Some(ProgressWorksite { label: \"CheckFaceSelfIntersection: inner search coverage unobserved\", input_ordinal: None, entity_key: None }) }",
+          "level": 9,
+          "phase": "PostTreat",
+          "scheduled_faces": true,
+          "faces": 158,
+          "pairs": 0,
+          "diagnostics": 0,
+          "validity_claim": false
+        }
+      ],
+      "timing_scope": "Instrumented concurrent diagnostic only; no matched performance acceptance"
+    },
+    "terminal": {
+      "settings": {
+        "CARGO_TARGET_DIR": "/tmp/martensite-b1-a-cone-target",
+        "CARGO_BUILD_JOBS": "2",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "CARGO_PROFILE_DEV_STRIP": "debuginfo",
+        "CARGO_PROFILE_TEST_STRIP": "debuginfo",
+        "CARGO_TERM_COLOR": "never"
+      },
+      "started": "2026-11-19T08:26:08.749353+00:00",
+      "stage": "completed",
+      "build_command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "martensite-tkbo",
+        "--lib",
+        "--message-format=json"
+      ],
+      "build_exit": 0,
+      "link_exit": 0,
+      "binary_sha256": "1df018faa37897f0a85e72b321c0e6a99ec70e45eca6711de865abd58bd9b55c",
+      "run_exit": 0,
+      "restored": {
+        "crates/martensite-tkbo/src/int_tools/edge_face/perform.rs": "2cccdb0172560107bedd0f210566b448611bffff09578b469cd69bd755330f77",
+        "crates/martensite-tkgeombase/src/extrema/point_surface/gen_ext_ps/mod.rs": "a949f3aa20c851df7812fd9dba37cb9033e24eed0a1bebc1db9c39efd3cc038d"
+      },
+      "finished": "2026-11-19T08:27:32.874774+00:00"
+    },
+    "patch_manifest": {
+      "stage": "prepared_not_applied",
+      "utc": "2026-11-19T08:23:58.029216+00:00",
+      "a_root": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/wrapped-analytic-cone",
+      "a_head": "7a2aa0814a3f8c5b049aaec74b5d98bd26b296fe",
+      "records": [
+        {
+          "path": "crates/martensite-tkbo/src/int_tools/edge_face/perform.rs",
+          "backup": "/tmp/martensite-b1-body-stage-probe/ef-seed-patch/0.original.rs",
+          "original_sha256": "2cccdb0172560107bedd0f210566b448611bffff09578b469cd69bd755330f77",
+          "staged": "/tmp/martensite-b1-body-stage-probe/ef-seed-patch/0.probed.rs",
+          "proposed_sha256": "1bac8ff6fa9badc224e11bb0f506fc7bd0199a2ab7353ec9b2520ee5d209b4ed",
+          "proposed_lines": 139
+        },
+        {
+          "path": "crates/martensite-tkgeombase/src/extrema/point_surface/gen_ext_ps/mod.rs",
+          "backup": "/tmp/martensite-b1-body-stage-probe/ef-seed-patch/1.original.rs",
+          "original_sha256": "a949f3aa20c851df7812fd9dba37cb9033e24eed0a1bebc1db9c39efd3cc038d",
+          "staged": "/tmp/martensite-b1-body-stage-probe/ef-seed-patch/1.probed.rs",
+          "proposed_sha256": "b30262c47ba73c17bda5e324c467f38120e95aa99546dfc131799283931ae1ac",
+          "proposed_lines": 343
+        }
+      ],
+      "patch_sha256": "40ae21b0286c85959fc011c80a6d414187a91e701056476cb5d28eaf699af6e7",
+      "original_consumer_sha256": "62b7cf1ffc50999806d3d3886b7a46cf9d91882ae36c420e3ae3a1c2c92155c6",
+      "link_plan_sha256": "2a84eacacf30757831a7cbd0ec963278398a85a38126a1f857c0aad3c26d9403",
+      "expected_log_volume": "one JSON per GenExtPS projection, six EF marker records for calls reaching all three phases; ordered seed array ~500\u2013800 bytes per entered solve, no per-seed IO and no truncation. Total projections/seeds not yet measured."
+    },
+    "link_plan": {
+      "executed": false,
+      "command": [
+        "/home/vmiguel/.rustup/toolchains/1.99.0-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "b1_ef_seed_probe",
+        "/tmp/martensite-b1-body-stage-probe/consumer.rs",
+        "-C",
+        "opt-level=0",
+        "-C",
+        "debug-assertions=yes",
+        "-C",
+        "overflow-checks=yes",
+        "-C",
+        "debuginfo=0",
+        "-C",
+        "strip=debuginfo",
+        "-C",
+        "embed-bitcode=no",
+        "-L",
+        "dependency=/tmp/martensite-b1-a-cone-target/debug/deps",
+        "--extern",
+        "martensite_tkbo=/tmp/martensite-b1-a-cone-target/debug/libmartensite_tkbo.rlib",
+        "--extern",
+        "martensite_tkbrep=/tmp/martensite-b1-a-cone-target/debug/deps/libmartensite_tkbrep-6a803afc7e8b3db7.rlib",
+        "--extern",
+        "martensite_tkernel=/tmp/martensite-b1-a-cone-target/debug/deps/libmartensite_tkernel-be5b2ad5bebd446a.rlib",
+        "-o",
+        "/tmp/martensite-b1-body-stage-probe/offline-ef-seed-consumer"
+      ],
+      "profiles": {
+        "metallic": {
+          "profile": {
+            "opt_level": "0",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          },
+          "features": []
+        },
+        "fast_polynomial": {
+          "profile": {
+            "opt_level": "0",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          },
+          "features": [
+            "std"
+          ]
+        },
+        "martensite_tkmath": {
+          "profile": {
+            "opt_level": "3",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          },
+          "features": []
+        },
+        "martensite_tkbo": {
+          "profile": {
+            "opt_level": "1",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          },
+          "features": []
+        },
+        "martensite_tkbrep": {
+          "profile": {
+            "opt_level": "0",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          },
+          "features": []
+        },
+        "martensite_tkernel": {
+          "profile": {
+            "opt_level": "0",
+            "debuginfo": 0,
+            "debug_assertions": true,
+            "overflow_checks": true,
+            "test": false
+          },
+          "features": []
+        }
+      },
+      "libraries": {
+        "martensite_tkbo": {
+          "path": "/tmp/martensite-b1-a-cone-target/debug/libmartensite_tkbo.rlib",
+          "sha256": "a46c2ef73a57a3f44e6d69ed1d3671e78b2e561f853afaa811ad7de44b14ffa9"
+        },
+        "martensite_tkbrep": {
+          "path": "/tmp/martensite-b1-a-cone-target/debug/deps/libmartensite_tkbrep-6a803afc7e8b3db7.rlib",
+          "sha256": "20e7563c954586bf2e488fbd97d2b4d848f32defe5ad1b17a38d37f7e086a37b"
+        },
+        "martensite_tkernel": {
+          "path": "/tmp/martensite-b1-a-cone-target/debug/deps/libmartensite_tkernel-be5b2ad5bebd446a.rlib",
+          "sha256": "1b91a186930795f71ee1dbb10d6d92c06dc50dafce1661544fedee9ce94e48ae"
+        }
+      },
+      "build_json": {
+        "path": "/tmp/martensite-b1-ef-seeds-once/build.log",
+        "sha256": "3558c922920909e40253b9517a0e2f1bb9c412c8a8383b1185b295b8a938b4b0"
+      },
+      "build_receipt": {
+        "path": "/tmp/martensite-b1-ef-seeds-once/build-receipt.json",
+        "sha256": "8e7d85ea7e3dfd568b77d63fdd85a3dd6fd6ee398c5e1d0bd991395ea02f8833"
+      },
+      "consumer_sha256": "62b7cf1ffc50999806d3d3886b7a46cf9d91882ae36c420e3ae3a1c2c92155c6",
+      "runtime": [
+        "/tmp/martensite-b1-body-stage-probe/offline-ef-seed-consumer",
+        "/tmp/martensite-b1-body-stage-probe/region-1.brep",
+        "si"
+      ],
+      "snapshot_sha256": "e9526a2667b84fb327d51ef2f67fb19aa49b49e69208f1560d770484225c0d82"
+    },
+    "build_receipt": {
+      "settings": {
+        "CARGO_TARGET_DIR": "/tmp/martensite-b1-a-cone-target",
+        "CARGO_BUILD_JOBS": "2",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "CARGO_PROFILE_DEV_STRIP": "debuginfo",
+        "CARGO_PROFILE_TEST_STRIP": "debuginfo",
+        "CARGO_TERM_COLOR": "never"
+      },
+      "started": "2026-11-19T08:26:08.749353+00:00",
+      "stage": "build",
+      "build_command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "martensite-tkbo",
+        "--lib",
+        "--message-format=json"
+      ],
+      "build_exit": 0
+    }
+  },
+  "exclusions": [
+    "Diagnostic timings under concurrent instrumentation; no matched performance claim.",
+    "CheckerSI remains incomplete; zero pairs is not self-intersection certification.",
+    "No new B1 qualification, production optimization or build configuration adoption.",
+    "Raw log and temporary patch/source/binaries are not embedded; cleanup is separately owned."
+  ],
+  "timing_caveat": "BeanFace timer includes per-projection JSON serialization/logging outside the projection timer. Bean minus projection time is not a clean numerical remainder; no numerical work attribution or matched performance claim.",
+  "log_seed_recount": {
+    "scope": "All gen_ext_ps_seeds records in the hash-verified raw log; duplicates compare start bit-pairs within each projection.",
+    "projections": 5325,
+    "solves": 5325,
+    "duplicate_seed_starts_within_projection": 0
+  }
+}

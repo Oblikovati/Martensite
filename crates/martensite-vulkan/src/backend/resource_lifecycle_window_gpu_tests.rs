@@ -110,7 +110,7 @@ fn acquire_and_encode_owned_window(
     owned: &OwnedWindowFrame,
 ) {
     let contract = WindowGuiContract::new(frame, RenderGuiSurfacePolicy::CheckedV2);
-    let index = presenter.acquire([64, 64], false, contract).unwrap();
+    let index = presenter.acquire([64, 64], crate::driver_options::WindowFrameQueue::Unrestricted, contract).unwrap();
     renderer
         .encode_gui_window(frame, &owned.commands, &owned.resources, presenter, index)
         .unwrap();

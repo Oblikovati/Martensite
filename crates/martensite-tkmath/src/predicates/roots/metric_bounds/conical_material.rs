@@ -7,7 +7,14 @@ use crate::predicates::roots::certificate_arithmetic::{
     bernstein_curve::{capture_planar, restrict},
     bounded_dyadic::{Arithmetic, ArithmeticPolicy, Interval},
 };
+use conical_profile::developed_boundary::ChartBinding;
 mod bounds;
+pub(super) mod developed;
+pub use developed::{
+    ConicalDevelopedMaterialError, ConicalDevelopedMaterialFailure,
+    certify_conical_material_with_developed_boundaries,
+    certify_conical_material_with_developed_boundaries_and_refinement,
+};
 mod input;
 mod source;
 #[cfg(test)]
@@ -45,6 +52,7 @@ pub struct ConicalMaterialQuery<'a> {
 #[derive(Debug)]
 pub struct ConicalMaterialEvidence {
     bits: Vec<u64>,
+    chart: Option<ChartBinding>,
     spatial: f64,
     operations: u32,
 }
@@ -69,7 +77,7 @@ impl ConicalMaterialEvidence {
     }
     /// Bind the entire original and actual input; `assert!(proof.matches(&query));`.
     pub fn matches(&self, query: &ConicalMaterialQuery<'_>) -> bool {
-        self.bits == input::bits(query)
+        self.chart.is_none() && self.bits == input::bits(query)
     }
 }
 /// Certify normal-map injectivity and filled-cap error over the compact UV material.
@@ -88,6 +96,7 @@ pub fn certify_conical_material(
     let spatial = bounds::certify(&query, &mut arithmetic)?;
     Ok(ConicalMaterialEvidence {
         bits: input::bits(&query),
+        chart: None,
         spatial,
         operations: arithmetic.operations(),
     })

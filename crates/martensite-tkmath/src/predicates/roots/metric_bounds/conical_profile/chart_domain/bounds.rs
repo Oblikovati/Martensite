@@ -1,0 +1,270 @@
+// SPDX-License-Identifier: GPL-2.0-only
+use super::*;
+use crate::predicates::roots::certificate_arithmetic::circular_constants;
+type Failure = ConicalChartDomainFailure;
+pub(super) fn admit(
+    query: &ConicalChartDomainQuery<'_>,
+    version: ConicalChartDomainVersion,
+) -> Result<(), Failure> {
+    admit_sources(query, version)?;
+    if !query.chart_origin.is_finite()
+        || !query.fit_center.is_finite()
+        || (!version.allows_offset() && query.chart_origin.to_bits() != query.fit_center.to_bits())
+        || query.developed_turn != 0
+        || query.physical_turn != 0
+    {
+        return Err(Failure::Chart {
+            centers: [query.chart_origin, query.fit_center],
+            turns: [query.developed_turn, query.physical_turn],
+        });
+    }
+    Ok(())
+}
+fn admit_sources(
+    query: &ConicalChartDomainQuery<'_>,
+    version: ConicalChartDomainVersion,
+) -> Result<(), Failure> {
+    let policy = sector_api::policy(query.options);
+    if version == ConicalChartDomainVersion::OriginalV2 {
+        return sector::admit(query.spans, query.semi_angle, policy).map_err(Failure::Sector);
+    }
+    sector::admit_policy(policy).map_err(Failure::Sector)?;
+    let actual = query.spans.len();
+    let limit = version.span_limit();
+    if !(1..=limit).contains(&actual) {
+        return Err(Failure::SourceCount { actual, limit });
+    }
+    sector::admit_geometry(query.spans, query.semi_angle).map_err(Failure::Sector)
+}
+pub(super) fn certify(
+    query: &ConicalChartDomainQuery<'_>,
+    version: ConicalChartDomainVersion,
+    restriction: Option<ConicalOriginalSpan<'_>>,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<ConicalChartDomainEvidence, Failure> {
+    let (wedge, margin) = sector::common_wedge(query.spans, arithmetic).map_err(Failure::Sector)?;
+    self::wedge(wedge)?;
+    let ranges = ranges(query, restriction, arithmetic)?;
+    let offset = fit_offset(query, version, arithmetic)?;
+    check_chart(&ranges.0, offset.as_ref(), arithmetic)?;
+    arithmetic.check_cancelled()?;
+    let scope = restriction.map_or(0, restriction_key);
+    let sector = captured_sector(query, margin, arithmetic);
+    Ok(evidence(query, version, scope, sector, ranges, offset))
+}
+pub(super) fn evidence(
+    query: &ConicalChartDomainQuery<'_>,
+    version: ConicalChartDomainVersion,
+    source_scope: u64,
+    sector: sector::SectorEvidence,
+    (physical, sine, cosine, minimum_x): (Interval, Interval, Interval, Interval),
+    fit_offset: Option<Interval>,
+) -> ConicalChartDomainEvidence {
+    ConicalChartDomainEvidence {
+        version,
+        source_scope,
+        sector,
+        chart: [query.chart_origin.to_bits(), query.fit_center.to_bits()],
+        turns: [query.developed_turn, query.physical_turn],
+        physical,
+        fit_offset,
+        sine,
+        cosine,
+        minimum_x,
+    }
+}
+pub(super) fn captured_sector(
+    query: &ConicalChartDomainQuery<'_>,
+    margin: Option<num_bigint::BigInt>,
+    arithmetic: &Arithmetic<'_>,
+) -> sector::SectorEvidence {
+    let source = sector::source_bits(query.spans);
+    let original_index = source_index::OriginalSourceIndex::from_sources(&source);
+    sector::SectorEvidence {
+        source,
+        original_index,
+        angle: query.semi_angle.to_bits(),
+        policy: sector_api::policy(query.options),
+        operations: arithmetic.operations(),
+        wedge: 1,
+        margin: DyadicBound::new(
+            margin.unwrap_or_default(),
+            -i32::from(query.options.fractional_bits),
+        ),
+    }
+}
+fn ranges(
+    query: &ConicalChartDomainQuery<'_>,
+    restriction: Option<ConicalOriginalSpan<'_>>,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<(Interval, Interval, Interval, Interval), Failure> {
+    let [cosine, sine] = support_trigonometry(query.semi_angle, arithmetic)?;
+    let (developed, minimum_x) = match restriction {
+        Some(span) => restricted::restricted_range(span, arithmetic)?,
+        None => authored_range(query.spans, arithmetic)?,
+    };
+    let physical = arithmetic.divide(&developed, &sine)?;
+    Ok((physical, sine, cosine, minimum_x))
+}
+pub(super) fn support_trigonometry(
+    semi_angle: f64,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<[Interval; 2], Failure> {
+    let alpha = arithmetic.scalar(semi_angle)?;
+    let [cosine, sine] =
+        crate::predicates::roots::metric_bounds::cylindrical_profile::trigonometric::scalar(
+            &alpha, arithmetic,
+        )
+        .map_err(Failure::Trigonometric)?;
+    positive_lower(&sine, "strictly positive certified sine", arithmetic)?;
+    Ok([cosine, sine])
+}
+pub(super) fn fit_offset(
+    query: &ConicalChartDomainQuery<'_>,
+    version: ConicalChartDomainVersion,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<Option<Interval>, Failure> {
+    if !version.allows_offset() {
+        return Ok(None);
+    }
+    let center = arithmetic.scalar(query.fit_center)?;
+    let datum = arithmetic.scalar(query.chart_origin)?;
+    Ok(Some(arithmetic.subtract(&center, &datum)?))
+}
+pub(super) fn check_chart(
+    physical: &Interval,
+    offset: Option<&Interval>,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<(), Failure> {
+    if let Some(offset) = offset {
+        let local = arithmetic.subtract(physical, offset)?;
+        chart_membership(&local, arithmetic)?;
+    } else {
+        chart_membership(physical, arithmetic)?;
+    }
+    width(physical, arithmetic)
+}
+fn authored_range(
+    spans: &[&[[f64; 2]]],
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<(Interval, Interval), Failure> {
+    let mut angles = None;
+    let mut coordinates = None;
+    for point in spans.iter().flat_map(|span| span.iter()) {
+        let angle = angle::initial_angle(*point, arithmetic)
+            .map_err(|cause| angle_failure(cause, *point))?;
+        include(&mut angles, angle);
+        include(&mut coordinates, arithmetic.scalar(point[0])?);
+    }
+    Ok((
+        angles.unwrap_or_else(|| arithmetic.zero()),
+        coordinates.unwrap_or_else(|| arithmetic.zero()),
+    ))
+}
+
+pub(super) fn include(bounds: &mut Option<Interval>, value: Interval) {
+    // Domain admission retains only the extrema, even for the full source capacity.
+    *bounds = Some(match bounds.take() {
+        Some(existing) => Interval {
+            lower: existing.lower.min(value.lower),
+            upper: existing.upper.max(value.upper),
+        },
+        None => value,
+    });
+}
+
+pub(in super::super) fn width(
+    range: &Interval,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<(), Failure> {
+    let pi = circular_constants::pi(arithmetic)?;
+    let period = arithmetic.fraction(&pi, 2, 1)?;
+    if &range.upper - &range.lower < period.lower {
+        return Ok(());
+    }
+    let limit = DyadicBound::new(
+        period.lower,
+        -i32::from(arithmetic.policy().fractional_bits),
+    );
+    Err(unresolved(
+        "physical angular width strictly below 2pi",
+        range,
+        ConicalChartDomainRequirement::WidthStrictlyBelow(limit),
+        arithmetic,
+    ))
+}
+pub(in super::super) fn chart_membership(
+    relative: &Interval,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<(), Failure> {
+    let pi = circular_constants::pi(arithmetic)?;
+    if relative.lower > -pi.lower.clone() && relative.upper < pi.lower {
+        return Ok(());
+    }
+    let limits = Interval {
+        lower: -pi.lower.clone(),
+        upper: pi.lower,
+    };
+    let expected = ConicalChartDomainRequirement::StrictlyInside(exact_enclosure(
+        &limits,
+        arithmetic.policy().fractional_bits,
+    ));
+    Err(unresolved(
+        "physical lift strictly inside the common chart (-pi,pi)",
+        relative,
+        expected,
+        arithmetic,
+    ))
+}
+pub(in super::super) fn positive_lower(
+    actual: &Interval,
+    field: &'static str,
+    arithmetic: &Arithmetic<'_>,
+) -> Result<(), Failure> {
+    if actual.lower > 0.into() {
+        return Ok(());
+    }
+    Err(unresolved(
+        field,
+        actual,
+        ConicalChartDomainRequirement::PositiveLower,
+        arithmetic,
+    ))
+}
+pub(in super::super) fn unresolved(
+    field: &'static str,
+    actual: &Interval,
+    expected: ConicalChartDomainRequirement,
+    arithmetic: &Arithmetic<'_>,
+) -> Failure {
+    Failure::Unresolved {
+        bound: Box::new(ConicalChartDomainBound {
+            field,
+            actual: exact_enclosure(actual, arithmetic.policy().fractional_bits),
+            expected,
+        }),
+    }
+}
+pub(super) fn wedge(actual_mask: u8) -> Result<(), Failure> {
+    if actual_mask == 1 {
+        return Ok(());
+    }
+    Err(Failure::Wedge {
+        actual_mask,
+        expected: ConicalSectorWedge::PositiveX,
+    })
+}
+
+pub(in super::super) fn angle_failure(
+    cause: angle::InitialAngleFailure,
+    actual: [f64; 2],
+) -> Failure {
+    match cause {
+        angle::InitialAngleFailure::Arithmetic(cause) => Failure::Arithmetic(cause),
+        angle::InitialAngleFailure::Trigonometric(cause) => Failure::Trigonometric(cause),
+        _ => Failure::Point {
+            actual,
+            expected: "finite nonzero point with a bounded principal angle",
+        },
+    }
+}

@@ -1,0 +1,45 @@
+{
+  "source_head": "37d97127a981c3a4ab57fb169ee39bc257de00f5",
+  "public_operation_completed": false,
+  "test_exit": 101,
+  "executed_tests": 1,
+  "domain_refusal": "ConicalSectorFailure::SpanCount(239)",
+  "domain_reported_operations": 0,
+  "legacy_maximum_source_spans": 128,
+  "outer_failure_class": "Unsupported",
+  "inner_failure_class": "Incomplete",
+  "metric_grant": 1000000,
+  "metric_exhaustion_established": false,
+  "source_restored_exact": true,
+  "temporary_probe_code_removed": true,
+  "discarded_source_sha256": "9e7894b33425ba1dbc3ac0fdb513559e27e5af0a48d274a91233eb9761a0b06a",
+  "discarded_artifacts": [
+    {
+      "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/toolkit-8b42000acf67b0b4",
+      "bytes": 137915688
+    },
+    {
+      "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/toolkit-8b42000acf67b0b4.d",
+      "bytes": 49155
+    },
+    {
+      "path": "/tmp/martensite-cone-b1-cached-target/debug/.fingerprint/martensite-tkv3d-8b42000acf67b0b4/invoked.timestamp",
+      "bytes": 48
+    },
+    {
+      "path": "/tmp/martensite-cone-b1-cached-target/debug/.fingerprint/martensite-tkv3d-8b42000acf67b0b4/dep-test-integration-test-toolkit",
+      "bytes": 9760
+    },
+    {
+      "path": "/tmp/martensite-cone-b1-cached-target/debug/.fingerprint/martensite-tkv3d-8b42000acf67b0b4/test-integration-test-toolkit",
+      "bytes": 16
+    },
+    {
+      "path": "/tmp/martensite-cone-b1-cached-target/debug/.fingerprint/martensite-tkv3d-8b42000acf67b0b4/test-integration-test-toolkit.json",
+      "bytes": 1557
+    }
+  ],
+  "discarded_artifact_bytes": 137976224,
+  "next_blocker": "Global domain source-span capacity inherited from legacy primitive, before testing metric scaling",
+  "scope": "Owned239curve/18region whole public cone operation at fixedmetric/spatial limits; no newgrant admitted, no successclaimed"
+}

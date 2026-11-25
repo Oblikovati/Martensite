@@ -53,6 +53,13 @@ impl PieceTable {
         table
     }
 
+    pub(crate) fn integral_parents(&self) -> Vec<(u64, ProfileCurveId, usize)> {
+        self.pieces
+            .iter()
+            .map(|(id, of)| (*id, of.curve, of.index))
+            .collect()
+    }
+
     /// The caller curve of proof edge `piece`.
     pub(crate) fn curve_of(&self, piece: u64) -> ProfileCurveId {
         self.pieces[&piece].curve

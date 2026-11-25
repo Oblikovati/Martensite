@@ -4,28 +4,11 @@ use std::cmp::Ordering;
 
 const MAX_FINITE_BITS: u64 = 0x7fef_ffff_ffff_ffff;
 
+#[path = "rounding_quotient.rs"]
+mod quotient;
+
 pub(in crate::predicates::roots) fn outward_binary64(value: &ExactRatio) -> Option<[f64; 2]> {
-    if value.sign() != Ordering::Less {
-        return positive_bounds(value);
-    }
-    let positive = positive_bounds(&value.negated())?;
-    Some([-positive[1], -positive[0]])
-}
-fn positive_bounds(value: &ExactRatio) -> Option<[f64; 2]> {
-    if value > &ExactRatio::from_finite(f64::MAX) {
-        return None;
-    }
-    let floor = floor_bits(value);
-    let lower = f64::from_bits(floor);
-    if &ExactRatio::from_finite(lower) == value {
-        return Some([lower, lower]);
-    }
-    Some([lower, f64::from_bits(floor + 1)])
-}
-fn floor_bits(value: &ExactRatio) -> u64 {
-    // Positive finite binary64 bit patterns are ordered; every comparison is exact.
-    // Unlike a floating quotient, this also certifies underflow and extreme ratios.
-    greatest_bits_where(|candidate| ExactRatio::from_finite(candidate) <= *value)
+    quotient::outward_binary64(value)
 }
 pub(in crate::predicates::roots) fn outward_sqrt(value: &ExactRatio) -> Option<f64> {
     let bounds = outward_sqrt_bounds(value)?;
@@ -135,3 +118,7 @@ mod tests {
         assert!(outward_sqrt(&two.negated()).is_none());
     }
 }
+
+#[cfg(test)]
+#[path = "rounding_quotient_tests.rs"]
+mod quotient_tests;

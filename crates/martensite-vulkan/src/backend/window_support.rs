@@ -42,16 +42,14 @@ pub(super) fn device_supported(
 }
 pub(super) fn present_mode(
     modes: &[vk::PresentModeKHR],
-    vsync: bool,
+    frame_queue: crate::driver_options::WindowFrameQueue,
 ) -> Result<vk::PresentModeKHR, RenderError> {
-    let preferred = if vsync {
-        &[vk::PresentModeKHR::FIFO][..]
-    } else {
-        &[
-            vk::PresentModeKHR::IMMEDIATE,
-            vk::PresentModeKHR::MAILBOX,
-            vk::PresentModeKHR::FIFO,
-        ][..]
+    use crate::driver_options::WindowFrameQueue;
+    use vk::PresentModeKHR as Mode;
+    let preferred: &[Mode] = match frame_queue {
+        WindowFrameQueue::Synchronized => &[Mode::FIFO],
+        WindowFrameQueue::Latest => &[Mode::MAILBOX, Mode::FIFO],
+        WindowFrameQueue::Unrestricted => &[Mode::IMMEDIATE, Mode::MAILBOX, Mode::FIFO],
     };
     preferred
         .iter()
@@ -122,12 +120,13 @@ pub(super) fn extent(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::driver_options::WindowFrameQueue;
     #[test]
     fn presentation_modes_and_formats_are_explicit() {
         assert_eq!(
             present_mode(
                 &[vk::PresentModeKHR::FIFO, vk::PresentModeKHR::IMMEDIATE],
-                true
+                WindowFrameQueue::Synchronized
             )
             .unwrap(),
             vk::PresentModeKHR::FIFO
@@ -135,12 +134,12 @@ mod tests {
         assert_eq!(
             present_mode(
                 &[vk::PresentModeKHR::FIFO, vk::PresentModeKHR::IMMEDIATE],
-                false
+                WindowFrameQueue::Unrestricted
             )
             .unwrap(),
             vk::PresentModeKHR::IMMEDIATE
         );
-        assert!(present_mode(&[], false).is_err());
+        assert!(present_mode(&[], WindowFrameQueue::Unrestricted).is_err());
         assert!(surface_format(&[]).is_err());
         let f = vk::SurfaceFormatKHR {
             format: vk::Format::UNDEFINED,
@@ -151,6 +150,21 @@ mod tests {
             vk::Format::B8G8R8A8_SRGB
         );
     }
+    #[test]
+    fn latest_window_frame_prefers_mailbox_and_falls_back_to_fifo() {
+        use vk::PresentModeKHR as Mode;
+        let choice = |modes| present_mode(modes, WindowFrameQueue::for_view(true, true)).unwrap();
+        assert_eq!(
+            choice(&[Mode::IMMEDIATE, Mode::FIFO, Mode::MAILBOX]),
+            Mode::MAILBOX
+        );
+        assert_eq!(choice(&[Mode::IMMEDIATE, Mode::FIFO]), Mode::FIFO);
+        assert_eq!(
+            WindowFrameQueue::for_view(false, true),
+            WindowFrameQueue::Unrestricted
+        );
+    }
+
     #[test]
     fn surface_limits_bound_counts_and_dimensions() {
         let mut c = vk::SurfaceCapabilitiesKHR {

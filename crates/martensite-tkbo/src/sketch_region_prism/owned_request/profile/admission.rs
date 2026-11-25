@@ -12,6 +12,11 @@ pub(in crate::sketch_region_prism) enum ProfileAdmissionCause {
         actual: u32,
         expected: u32,
     },
+    IntegralMode {
+        version: u32,
+        options:
+            Option<martensite_tkmath::predicates::roots::metric_bounds::IntegralProgramOptions>,
+    },
     EmptyProfile,
     EmptySelection,
     Plane(OwnedPrismAdmissionCause),
@@ -76,12 +81,21 @@ pub(in crate::sketch_region_prism) const GRAPH_PROFILE_VERSION: u32 = 2;
 pub(in crate::sketch_region_prism) const EXCLUSION_GRAPH_PROFILE_VERSION: u32 = 3;
 /// #544: the same graph pipeline with explicit generated-sign policy version 2.
 pub(in crate::sketch_region_prism) const FILTERED_GRAPH_PROFILE_VERSION: u32 = 4;
+/// Whole-orbit integral programs retain the same filtered exact topology policy.
+pub(in crate::sketch_region_prism) const COMPOSITE_GRAPH_PROFILE_VERSION: u32 = 5;
+/// Exact geometric pair leaves use the existing bounded integral graph pipeline.
+pub(in crate::sketch_region_prism) const GEOMETRIC_GRAPH_PROFILE_VERSION: u32 = 6;
 
 /// Admit an authored profile or a declared graph policy version; `admit(&request)?`.
 pub(super) fn admit(request: &OwnedProfileRequest) -> Result<(), ProfileAdmissionCause> {
+    admit_integral_mode(request)?;
     if matches!(
         request.version,
-        GRAPH_PROFILE_VERSION | EXCLUSION_GRAPH_PROFILE_VERSION | FILTERED_GRAPH_PROFILE_VERSION
+        GRAPH_PROFILE_VERSION
+            | EXCLUSION_GRAPH_PROFILE_VERSION
+            | FILTERED_GRAPH_PROFILE_VERSION
+            | COMPOSITE_GRAPH_PROFILE_VERSION
+            | GEOMETRIC_GRAPH_PROFILE_VERSION
     ) {
         return admit_graph(request);
     }
@@ -269,4 +283,18 @@ fn distinct(quantity: &'static str, values: &[u64]) -> Result<(), ProfileAdmissi
         return Ok(());
     }
     Err(ProfileAdmissionCause::Names { quantity })
+}
+
+fn admit_integral_mode(request: &OwnedProfileRequest) -> Result<(), ProfileAdmissionCause> {
+    if matches!(
+        request.version,
+        COMPOSITE_GRAPH_PROFILE_VERSION | GEOMETRIC_GRAPH_PROFILE_VERSION
+    ) != request.integral_program.is_some()
+    {
+        return Err(ProfileAdmissionCause::IntegralMode {
+            version: request.version,
+            options: request.integral_program,
+        });
+    }
+    Ok(())
 }

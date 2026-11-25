@@ -11,7 +11,7 @@ pub(in crate::surface_sketch::wrapped_profile) fn construct<S: SupportStages>(
     let (root, bindings) = assemble(support, prepared, control)?;
     control.run_for::<_, S::Error>(FamilyStage::Encoding, None, |_| encode::<S>(root, bindings))
 }
-fn assemble<S: SupportStages>(
+pub(super) fn assemble<S: SupportStages>(
     support: &S,
     prepared: &[S::Prepared],
     control: &mut Control<'_>,

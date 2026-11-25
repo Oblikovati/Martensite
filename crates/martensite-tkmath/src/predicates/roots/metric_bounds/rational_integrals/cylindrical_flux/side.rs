@@ -22,15 +22,7 @@ pub(super) fn integrate_boundaries(
     share: &ExactRatio,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<curve::CurveIntegral, RationalIntegralFailure> {
-    let mut a = capture(boundaries[0], cancelled)?;
-    let mut b = capture(boundaries[1], cancelled)?;
-    align(&mut a, &mut b);
-    let numerator = numerator(&a, &b, cancelled)?;
-    let squared = product(&a[3], &a[3], cancelled)?;
-    let denominator = product(&squared, &a[3], cancelled)?
-        .into_iter()
-        .map(|c| c * 3)
-        .collect();
+    let (numerator, denominator) = prepared_boundaries(boundaries, cancelled)?;
     curve::quotient_integral(numerator, denominator, options, share, cancelled)
 }
 
@@ -99,3 +91,34 @@ fn determinant_term(
         cancelled,
     )?)
 }
+
+fn prepared_boundaries(
+    boundaries: [MetricBezier<'_, 3>; 2],
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<(Vec<BigInt>, Vec<BigInt>), RationalIntegralFailure> {
+    let mut a = capture(boundaries[0], cancelled)?;
+    let mut b = capture(boundaries[1], cancelled)?;
+    align(&mut a, &mut b);
+    let numerator = numerator(&a, &b, cancelled)?;
+    let squared = product(&a[3], &a[3], cancelled)?;
+    let denominator = product(&squared, &a[3], cancelled)?
+        .into_iter()
+        .map(|c| c * 3)
+        .collect();
+    Ok((numerator, denominator))
+}
+pub(super) fn integrate_boundaries_accounted(
+    boundaries: [MetricBezier<'_, 3>; 2],
+    options: RationalIntegralOptions,
+    share: &ExactRatio,
+    cancelled: &mut impl FnMut() -> bool,
+) -> (Result<curve::CurveIntegral, RationalIntegralFailure>, u64) {
+    let (numerator, denominator) = match prepared_boundaries(boundaries, cancelled) {
+        Ok(values) => values,
+        Err(cause) => return (Err(cause), 0),
+    };
+    curve::quotient_integral_accounted(numerator, denominator, options, share, cancelled)
+}
+
+#[cfg(test)]
+mod accounting_tests;
