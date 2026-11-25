@@ -914,3 +914,26 @@ Background CPU pressure was lower during the `f39a270a` run. The two p95
 rows describe their own environments. Matched runs of native membership
 reuse and cost-prioritized storage separately reproduced the BRep, history,
 validation, and achieved-error records with reduced stage times.
+
+### Matched conical side proof reuse
+
+The retained conical subpatches reuse exact derived arithmetic within one
+family check. Each cache hit consumes the original work and cancellation
+steps. The same pairs, subdivision bounds, and traversal order apply at
+every cache capacity.
+
+Each latency row includes 20 matched release pairs on the same physical
+core (CPU 4, Linux x86-64, Ryzen AI Max+ 395). The benchmark alternated
+`f39a270a` and the exact reuse trial at `f034f990`. Separate native and
+threaded controls accepted both builds. All nine BRep, history, and
+validation files matched byte for byte.
+
+| Operation | Median before | Median with reuse | p95 before | p95 with reuse |
+| --- | ---: | ---: | ---: | ---: |
+| Cold boss | 704 ms | 644 ms | 828 ms | 695 ms |
+| Cold pocket | 704 ms | 659 ms | 842 ms | 810 ms |
+| Warm depth edit | 672 ms | 647 ms | 742 ms | 767 ms |
+
+Retired user instructions fell by 6.1–7.0%. Peak process RSS increased
+by 1.2–1.9 MiB. The warm edit median improved by 25 ms while its measured
+p95 rose by 25 ms.
