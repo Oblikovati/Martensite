@@ -447,3 +447,18 @@ pinned ThreadSanitizer. Strict Clippy passed. Two independent processes emitted 
 with SHA-256 `0732f1788cfa5599f2083429914deb02597ba94c7e8e1034fa1aca25a6563a40`.
 The earlier full TKG3d run passed all 985 tests before the frame admission correction. BRep storage and
 the desktop spiral command remain separate checks.
+
+## E22. Checked rigid motion
+
+`11a91acd` adds a checked edit for translating or rotating owned points in a constrained sketch. A shared
+point moves once. Geometry admission and the hard-relation checks run on the full draft before an updated
+sketch is published. The edit preserves anchors and captured source points, and prepares a new reference
+frame for subsequent direction-constrained drag.
+
+The rotation acts on offsets relative to its pivot. Exact axis points and zero-angle rotations keep their
+original coordinates. The point-placement check compares the stored output with the exact translation or
+with the native binary64 rotation matrix acting on exact offsets. It refuses error beyond the constraint
+policy's length limit. Independent controls cover the owned translation and quarter turn, fixed and frozen
+refusal, a large pivot, a lost translation unit at `2^53`, wrong selection and cancellation. The native
+Parallel fixture also drags after a 90-degree rotation. The toolkit passed 74 tests on Rust `1.98.1`, plus
+strict toolkit and TKMath Clippy. A separate package run exercised 1,269 TKMath library and 3,118 toolkit tests.

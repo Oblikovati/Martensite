@@ -24,6 +24,13 @@ when the geometry and the caller's physical tolerances pass an independent check
 Use `inspect_rank` outside interactive drag when numerical rank needs inspection.
 Frozen points contribute exact fixed coordinates to either solve and keep their source stamp.
 
+Use `ConstrainedSketch::transform_points` for a rigid translation or rotation of
+owned points. The operation checks the resulting geometry and existing hard
+relations together before adopting. The length tolerance also caps each stored
+position's error relative to the exact translation or the native rotation matrix.
+A rotation keeps exact axis points in place and refreshes the prepared relation
+frames for the next drag.
+
 Supply a positive finite minimum in model units when creating the snapshot.
 Admission compares the squared distance of the supplied coordinates with the
 squared minimum using exact arithmetic. Equality is allowed. Line geometry
