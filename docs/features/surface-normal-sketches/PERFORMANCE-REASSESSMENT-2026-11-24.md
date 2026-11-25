@@ -852,6 +852,17 @@ cells. Independent rational Green integrals fell within the reported
 area enclosures. The selected face comes from an indirect Circle →
 Extrude cylinder, and six glyph curves cross its native seam.
 
+A development build based on `99a016b9` ran the outward attachment on
+the archived desktop solid and text. The fitted angular hull
+`[5.8716684611, 7.0309479418]` fits the relocated native sheet
+`[π, 3π]`. The assembly rebound the original cylinder carrier and
+stock history, 270 sewn pcurves in the reflected native chart,
+18 far caps and 270 side domains. The independent full native check
+passed. Preparation took 2.17 s in the debug build and the complete
+test took 50.22 s. This run exercises the actual desktop source. The
+final exact contact proof still needs the trimmed stock and side checks
+inside the contact collar.
+
 App revision `c0e96d753` batched identical display segments into one indexed
 draw and retained byte-identical RGBA for the layout and extrusion previews.
 On an isolated
