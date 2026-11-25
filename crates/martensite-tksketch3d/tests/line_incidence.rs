@@ -13,6 +13,8 @@ use martensite_tksketch3d::{
 use martensite_tksolve::preview::{Incomplete, PreviewError};
 use std::time::Instant;
 
+const CORPUS_FIRST_LINE: u64 = 1000;
+
 #[test]
 fn point_on_line_solves_the_rotated_infinite_support_with_one_free_axial_coordinate() {
     let data = geometry(
@@ -336,7 +338,7 @@ fn measured_native_incidence_chart_crossings_and_prepared_drag() {
                 } else {
                     steady.push(sample);
                 }
-                assert_incident(moved.sketch.geometry(), lid(10), pid(3));
+                assert_incident(moved.sketch.geometry(), lid(CORPUS_FIRST_LINE), pid(3));
                 sketch = moved.sketch;
             }
         }
@@ -365,9 +367,12 @@ fn incidence_corpus(groups: usize) -> ConstrainedSketch {
         points.extend([[x, 0., 0.], [x + 2., 0., 0.], [x + 4., 0., 0.]]);
         lines.push((3 * i + 1, 3 * i + 2));
         specs.push(RelationSpec::FixPoint(pid(3 * i + 1)));
-        specs.push(RelationSpec::PointOnLine(pid(3 * i + 3), lid(10 + i)));
+        specs.push(RelationSpec::PointOnLine(
+            pid(3 * i + 3),
+            lid(CORPUS_FIRST_LINE + i),
+        ));
     }
-    author(geometry(&points, &lines), &specs)
+    author(geometry_from(&points, &lines, CORPUS_FIRST_LINE), &specs)
 }
 
 fn rotating_sketch() -> ConstrainedSketch {
@@ -415,6 +420,10 @@ fn assert_restore(sketch: ConstrainedSketch) {
 }
 
 fn geometry(points: &[[f64; 3]], lines: &[(u64, u64)]) -> Snapshot {
+    geometry_from(points, lines, 10)
+}
+
+fn geometry_from(points: &[[f64; 3]], lines: &[(u64, u64)], first_line: u64) -> Snapshot {
     let edits = points
         .iter()
         .enumerate()
@@ -423,7 +432,7 @@ fn geometry(points: &[[f64; 3]], lines: &[(u64, u64)]) -> Snapshot {
             lines
                 .iter()
                 .enumerate()
-                .map(|(i, &(a, b))| line(i as u64 + 10, a, b)),
+                .map(|(i, &(a, b))| line(i as u64 + first_line, a, b)),
         )
         .collect::<Vec<_>>();
     Snapshot::empty(length(0.001))
