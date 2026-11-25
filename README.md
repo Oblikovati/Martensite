@@ -21,6 +21,7 @@ The improvememt roadmap for this project can be found on [Milestones](https://gi
 | `martensite-tkexpress` | Symbolic expressions, differentiation, relations and a text interpreter. |
 | `martensite-tkg2d` | Planar curves, splines, offsets, adaptors, evaluation and hashing. |
 | `martensite-tkmath` | Geometry, linear algebra, solvers, splines, bounding volumes, meshes and exact predicates. |
+| `martensite-tksolve` | Constraint residuals, numerical rank, coordinate preferences and bounded drag previews. [Solver guide](crates/martensite-tksolve/README.md) |
 | `martensite-tkcdf` | Application documents, document references and metadata, format drivers and a light XML parser. |
 | `martensite-tklcaf` | Labels and attributes, transactions with undo and redo, standard attributes, functions and documents. |
 | `martensite-tkservice` | Windows and events, images, fonts, the presentation data model and graphic driver interfaces. |

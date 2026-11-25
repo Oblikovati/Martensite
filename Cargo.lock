@@ -1120,6 +1120,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tksolve"
+version = "0.1.0"
+dependencies = [
+ "martensite-cmath",
+ "num-rational",
+ "num-traits",
+]
+
+[[package]]
 name = "martensite-tktobj"
 version = "0.4.0"
 dependencies = [

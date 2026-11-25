@@ -1,0 +1,20 @@
+[package]
+name = "martensite-tksolve"
+version = "0.1.0"
+description = "Martensite numerical constraint solver toolkit for nonlinear equations and geometric preferences."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+sketch3d-preview = []
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+num-rational = "=0.4.2"
+num-traits = "=0.2.19"
