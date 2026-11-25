@@ -43,6 +43,11 @@ fn workspace() -> tempfile::TempDir {
     root
 }
 
+fn fixture_output(root: &Path) -> PathBuf {
+    // The runner matches the executable's spelling, including native separators.
+    root.join("target").join("occt-parity").join("tkernel")
+}
+
 #[test]
 fn the_bench_executable_comes_from_its_compiler_artifact() {
     let path = bench_executable(&bench_messages(), "occt_parity").unwrap();
@@ -131,7 +136,7 @@ fn case_programs_run_pinned_and_filtered() {
 #[test]
 fn a_slower_case_fails_after_the_report_is_written() {
     let root = workspace();
-    let occt = root.path().join("target/occt-parity/tkernel/occt_parity");
+    let occt = fixture_output(root.path()).join("occt_parity");
     let runner = RecordingRunner::default()
         .with_stdout(
             "git rev-parse --show-toplevel",
@@ -154,8 +159,7 @@ fn a_slower_case_fails_after_the_report_is_written() {
             .contains("1 of 2 cases are slower than OCCT: a (3.00x)"),
         "{error}"
     );
-    let report =
-        std::fs::read_to_string(root.path().join("target/occt-parity/tkernel/report.json"));
+    let report = std::fs::read_to_string(fixture_output(root.path()).join("report.json"));
     let report: serde_json::Value = serde_json::from_str(&report.unwrap()).unwrap();
     assert_eq!(report["cases"][1]["standing"], "faster");
     assert_eq!(report["rounds"], 2);
@@ -164,7 +168,7 @@ fn a_slower_case_fails_after_the_report_is_written() {
 #[test]
 fn each_round_runs_occt_before_rust() {
     let root = workspace();
-    let occt = root.path().join("target/occt-parity/tkernel/occt_parity");
+    let occt = fixture_output(root.path()).join("occt_parity");
     let occt_run = format!("taskset -c 8-15 {} --bench", occt.display());
     let rust_run = "taskset -c 8-15 /t/occt_parity-1 --bench";
     let runner = RecordingRunner::default()
