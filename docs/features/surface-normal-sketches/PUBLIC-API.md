@@ -20,6 +20,7 @@ signatures and behavior.
 | Cylinder with explicit chart placement | `normal_extrude_profile_on_chart`, `normal_extrude_profile_on_chart_with_cancel` | Existing cylinder request and `WrappedChartNormalResult`; see [frame contract](OBLIQUE-FRAMES.md). |
 | Canonical cone | `normal_extrude_cone_profile`, `normal_extrude_cone_profile_with_cancel` | `WrappedConeNormalRequest`, `WrappedConeNormalResult` |
 | Placed cone | `normal_extrude_cone_profile_on_chart`, `normal_extrude_cone_profile_on_chart_with_cancel` | Existing request and execution selector, `WrappedPlacedConeResult`. See [cone placement](CONE-PLACEMENT.md). |
+| Certified conical frustum | `ConeFaceAttachment::apply_certified_wrapped_profile`, `apply_certified_wrapped_profile_with_cancel` | `WrappedConeNormalRequest` with the V9 family-chart selector and a `CertifiedConeFeatureResult`. |
 
 A request owns a solved `SketchProfile`, explicit `WrappedRegionSelection`
 values, analytic support, increasing signed normal depths and
@@ -115,6 +116,22 @@ subdivision level 6, clearance level 0 and enclosure width `1e-7`.
 tighter requests are not silently enlarged. `proof_options()` returns the
 original values, while leaf receipts retain actual remaining/effective settings
 and consumed work. Zero work can refuse as incomplete; it is not a no-limit mode.
+
+## Certified conical-frustum attachment
+
+The explicit attachment entry admits a full, axis-aligned conical frustum
+with two retained planar disks and one proved periodic seam. It uses the
+V9 family-chart selector, zero first depth, the material sense prescribed
+by the selected face and a `Report` volume policy. The result carries
+the committed B-rep, composed authored history, physical spatial budget,
+certified sewing gap and ordered validation coverage. The individual tool's
+volume comparison belongs to the separate tool result.
+
+The operation constructs the tool in one owner and validates the decoded
+final solid. Its checks account for every cap, ruled side, stock trim,
+shared seam, oriented edge use and vertex link. The exact contact policy
+covers the declared native tolerances on those domains. An unsupported
+source or an incomplete proof returns a refusal at the failing stage.
 
 ## Reference body and native representation
 

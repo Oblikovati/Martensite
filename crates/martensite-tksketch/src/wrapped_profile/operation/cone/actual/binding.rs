@@ -12,38 +12,43 @@ type BindingIndex<'a> = BTreeMap<BindingKey, Option<&'a Shape>>;
 type Family = super::super::super::stages::OwnedFamily<Selection, Geometry>;
 
 pub(super) fn members(
-    selection: &Selection,
-    members: &BTreeMap<SurfaceRegionId, (Geometry, Shape)>,
+    prepared: &[Prepared],
+    members: &ActualMembers<'_>,
     work: &storage::Work,
 ) -> ConeChecked<Vec<ConicalNativeMember>> {
     let mut found = Vec::new();
-    for prepared in &selection.prepared {
+    for prepared in prepared {
         let region = prepared.source.region;
-        let (geometry, shape) = members
+        let owner = members
             .get(&region)
             .ok_or_else(|| missing(region, "actual geometry member"))?;
         let bindings = work
             .actual_bindings
             .get(&region)
             .ok_or_else(|| missing(region, "actual source/native bindings"))?;
-        found.push(member(prepared, geometry, shape, &binding_index(bindings))?);
+        found.push(member(
+            prepared,
+            owner.material,
+            owner.shape,
+            &binding_index(bindings),
+        )?);
     }
     Ok(found)
 }
 fn member(
     prepared: &Prepared,
-    geometry: &Geometry,
+    material: CapMaterial<'_>,
     shape: &Shape,
     bindings: &BindingIndex<'_>,
 ) -> ConeChecked<ConicalNativeMember> {
     let actual = FaceBindings::capture(prepared.source.region, shape, bindings)?;
     let sides = side_bindings(prepared, &actual)?;
-    let curves = match &geometry.material.periodic_curves {
+    let curves = match material.periodic_curves {
         Some(curves) => std::borrow::Cow::Borrowed(curves.as_slice()),
         None => std::borrow::Cow::Owned(curves(prepared, &retained_family(prepared)?.inventory)?),
     };
     let caps = (0..2)
-        .map(|row| cap(prepared, geometry, row, &actual, &curves))
+        .map(|row| cap(prepared, material, row, &actual, &curves))
         .collect::<ConeChecked<_>>()?;
     Ok(ConicalNativeMember {
         id: ConicalActualMemberId(prepared.source.region.0),
@@ -82,16 +87,14 @@ fn side_bindings(
 }
 fn cap(
     prepared: &Prepared,
-    geometry: &Geometry,
+    material: CapMaterial<'_>,
     row: usize,
     actual: &FaceBindings<'_, '_>,
     curves: &[(ProfileCurveId, ConicalActualSideId)],
 ) -> ConeChecked<ConicalNativeCap> {
     let region = prepared.source.region;
-    let material = geometry
-        .material
-        .selected_material
-        .as_ref()
+    let material = material
+        .selected
         .ok_or_else(|| missing(region, "issued selected actual UV material"))?;
     let role = [HistoryRole::FirstDepthFace, HistoryRole::LastDepthFace][row];
     let key = BindingKey {
@@ -219,7 +222,12 @@ fn published_member(
         .get(&region)
         .ok_or_else(|| missing(region, "published actual member"))?
         .geometry;
-    member(prepared, geometry, root(region, bindings)?, bindings)
+    member(
+        prepared,
+        (&geometry.material).into(),
+        root(region, bindings)?,
+        bindings,
+    )
 }
 fn root<'a>(region: SurfaceRegionId, bindings: &BindingIndex<'a>) -> ConeChecked<&'a Shape> {
     let key = BindingKey {
@@ -267,5 +275,24 @@ pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn retained_memb
         .prepared
         .iter()
         .map(|prepared| published_member(family, prepared, &lookup))
+        .collect()
+}
+
+pub(super) fn replay(
+    prepared: &[Prepared],
+    selected: &BTreeMap<SurfaceRegionId, martensite_tkbo::body_check::CertifiedPlanarMaterial>,
+    bindings: &[(BindingKey, Shape)],
+) -> ConeChecked<Vec<ConicalNativeMember>> {
+    let lookup = binding_index(bindings);
+    prepared
+        .iter()
+        .map(|prepared| {
+            let region = prepared.source.region;
+            let material = CapMaterial {
+                selected: selected.get(&region),
+                periodic_curves: None,
+            };
+            member(prepared, material, root(region, &lookup)?, &lookup)
+        })
         .collect()
 }

@@ -18,11 +18,12 @@
 mod admission;
 mod certified_conical;
 pub use certified_conical::{
-    CertifiedConicalBody, CertifiedPlanarMaterial, ConicalBindingError, ConicalNativeCap,
-    ConicalNativeCensus, ConicalNativeGeometry, ConicalNativeMember, DirectedCapCause,
-    DirectedCapFailure, DirectedCapPairCause, DirectedCapPolicy, DirectedCapWork,
-    bind_conical_actual_family, capture_conical_actual_family,
-    validate_body_with_certified_conical, validate_body_with_transported_conical,
+    CertifiedConicalBody, CertifiedDirectedPlanarFamily, CertifiedPlanarMaterial,
+    ConicalBindingError, ConicalNativeCap, ConicalNativeCensus, ConicalNativeGeometry,
+    ConicalNativeMember, DirectedCapCause, DirectedCapFailure, DirectedCapPairCause,
+    DirectedCapPolicy, DirectedCapWork, DirectedPlanarFace, bind_conical_actual_family,
+    capture_conical_actual_family, validate_body_with_certified_conical,
+    validate_body_with_transported_conical,
 };
 mod census;
 mod ledger;

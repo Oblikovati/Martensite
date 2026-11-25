@@ -5,6 +5,7 @@ use crate::surface_sketch::wrapped_profile::operation::cone::{self as operation_
 use martensite_tkmath::predicates::roots::metric_bounds::{
     CertifiedRotatedFrameSpatialBudget, CertifiedRotatedFrameTransport,
 };
+pub(in crate::surface_sketch::wrapped_profile::api) mod attachment_tool;
 mod members;
 mod qualification;
 

@@ -117,6 +117,28 @@ pub(super) fn freeze(
     resolution: &Resolution,
     cancelled: &mut CancelPoll<'_>,
 ) -> FeatureChecked<(Vec<u8>, ValidationReport)> {
+    let (bytes, decoded) = capture_archive(attempt, captured, cancelled)?;
+    let validation = validate(attempt, &decoded.body, resolution, cancelled)?;
+    replay(attempt, &bytes, &decoded)?;
+    attempt.poll(cancelled, CylinderFeatureStage::Publication)?;
+    Ok((bytes, validation))
+}
+
+pub(super) fn detach(
+    attempt: Attempt,
+    captured: &history::Captured,
+    cancelled: &mut CancelPoll<'_>,
+) -> FeatureChecked<(Vec<u8>, DetachedCylinderFeature)> {
+    let (bytes, decoded) = capture_archive(attempt, captured, cancelled)?;
+    replay(attempt, &bytes, &decoded)?;
+    Ok((bytes, decoded))
+}
+
+fn capture_archive(
+    attempt: Attempt,
+    captured: &history::Captured,
+    cancelled: &mut CancelPoll<'_>,
+) -> FeatureChecked<(Vec<u8>, DetachedCylinderFeature)> {
     let stage = CylinderFeatureStage::Encoding;
     attempt.poll(cancelled, stage)?;
     let bindings = captured
@@ -128,15 +150,24 @@ pub(super) fn freeze(
         encoding::encode(&captured.solid, &bindings).map_err(|cause| attempt.encoding(cause))?;
     let keys = bindings.iter().map(|(key, _)| *key).collect();
     let decoded = decode(&bytes, keys, attempt)?;
-    let validation = validate(attempt, &decoded.body, resolution, cancelled)?;
-    let references: Vec<_> = decoded.entities.into_iter().collect();
+    Ok((bytes, decoded))
+}
+
+fn replay(attempt: Attempt, bytes: &[u8], decoded: &DetachedCylinderFeature) -> FeatureChecked<()> {
+    let references: Vec<_> = decoded
+        .entities
+        .iter()
+        .map(|(&key, shape)| (key, shape.clone()))
+        .collect();
     let replay =
         encoding::encode(&decoded.body, &references).map_err(|cause| attempt.encoding(cause))?;
     if replay != bytes {
-        return Err(attempt.fail(stage, CylinderFeatureCause::ArchiveMismatch));
+        return Err(attempt.fail(
+            CylinderFeatureStage::Encoding,
+            CylinderFeatureCause::ArchiveMismatch,
+        ));
     }
-    attempt.poll(cancelled, CylinderFeatureStage::Publication)?;
-    Ok((bytes, validation))
+    Ok(())
 }
 
 fn validate(

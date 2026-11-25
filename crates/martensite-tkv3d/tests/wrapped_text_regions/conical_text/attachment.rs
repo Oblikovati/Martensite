@@ -16,6 +16,9 @@ use martensite_tksketch::surface_sketch::{
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
 use std::collections::BTreeSet;
 
+#[path = "attachment/certified.rs"]
+mod certified;
+
 const REVISION: SupportRevision = SupportRevision(3);
 const SEAM: f64 = 2.5;
 

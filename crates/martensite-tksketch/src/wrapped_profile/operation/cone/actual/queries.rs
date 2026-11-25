@@ -1,31 +1,30 @@
 //! Actual side queries reuse complete retained authored/chart/transition sources.
 use super::*;
-pub(super) fn family(selection: &Selection) -> ConeChecked<&prepare::directed::DirectedFamily> {
-    selection
-        .prepared
+pub(super) fn family(prepared: &[Prepared]) -> ConeChecked<&prepare::directed::DirectedFamily> {
+    prepared
         .first()
         .and_then(|prepared| prepared.directed_family.as_deref())
         .ok_or_else(|| global_missing("directed actual family"))
 }
 pub(super) fn sides<'a>(
     originals: &'a [DevelopedRegionRequest],
-    selection: &'a Selection,
-    members: &'a BTreeMap<SurfaceRegionId, (Geometry, Shape)>,
+    prepared: &'a [Prepared],
+    members: &'a ActualMembers<'_>,
     actual: &martensite_tkbo::body_check::ConicalNativeGeometry,
 ) -> ConeChecked<Vec<ConicalActualSideQuery<'a>>> {
     let mut sides = Vec::new();
-    let family = family(selection)?;
+    let family = family(prepared)?;
     let originals = operation::source::by_region(originals);
-    for prepared in &selection.prepared {
+    for prepared in prepared {
         let region = prepared.source.region;
         let original = originals
             .get(&region)
             .copied()
             .ok_or_else(|| missing(region, "actual original member"))?;
-        let (geometry, _) = members
+        let owner = members
             .get(&region)
             .ok_or_else(|| missing(region, "actual retained geometry"))?;
-        append_sides(original, prepared, geometry, family, actual, &mut sides)?;
+        append_sides(original, prepared, owner.spans, family, actual, &mut sides)?;
     }
     sides.sort_by_key(|side| side.id);
     Ok(sides)
@@ -33,7 +32,7 @@ pub(super) fn sides<'a>(
 fn append_sides<'a>(
     original: &'a DevelopedRegionRequest,
     prepared: &'a Prepared,
-    geometry: &'a Geometry,
+    proofs: &'a [storage::SpanProof],
     family: &prepare::directed::DirectedFamily,
     actual: &martensite_tkbo::body_check::ConicalNativeGeometry,
     sides: &mut Vec<ConicalActualSideQuery<'a>>,
@@ -42,7 +41,7 @@ fn append_sides<'a>(
     for piece in prepared.source.loops.iter().flatten() {
         by_span.entry(piece.span).or_insert(piece);
     }
-    for proof in &geometry.spans {
+    for proof in proofs {
         let piece = by_span
             .get(&proof.span)
             .copied()

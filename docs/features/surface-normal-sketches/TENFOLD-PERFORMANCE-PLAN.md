@@ -19,6 +19,12 @@ the full extrusion on the same trace, including sketch material,
 tool, Boolean and final validation. The kernel benchmarks below cover
 extrusion; the application trace will establish the interaction baseline.
 
+The public certified conical-frustum entry met the kernel commit target on
+the cold boss, cold pocket and warm depth edit. The application trace
+still needs the wrapped authoring workflow.
+[Measured kernel results](PERFORMANCE-REASSESSMENT-2026-11-24.md#public-certified-attachment).
+
+
 ### Keep mouse movement on the frame path
 
 Retain the revision-bound authoring chart and last solved coordinates for

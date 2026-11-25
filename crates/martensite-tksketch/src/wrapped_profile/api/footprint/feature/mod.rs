@@ -15,6 +15,8 @@ use std::collections::BTreeMap;
 mod body;
 mod cone;
 pub use cone::*;
+mod direct;
+pub use direct::{CertifiedConeAttachmentReport, CertifiedConeFeatureResult};
 mod failure;
 mod history;
 use failure::{Attempt, FeatureChecked};

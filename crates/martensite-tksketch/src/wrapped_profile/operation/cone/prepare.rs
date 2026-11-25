@@ -1,6 +1,7 @@
 //! Select owned planar material and admit one cone mapping before fitting its spans.
 use super::storage::Work;
 use super::*;
+pub(super) mod authored_cycles;
 mod canonicalize;
 mod clearance;
 pub(super) mod directed;
@@ -44,13 +45,10 @@ pub(super) fn select_with_execution(
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<Selection> {
     directed::admit(request, execution)?;
-    let policy = execution_domain(execution);
     let started = work.consumed;
     let planar = selection::planar(request, originals, execution, work, cancelled)?;
-    let domain = domain::certify(request, originals, policy, work, cancelled)?;
-    let mut prepared = prepare_regions(request, originals, &domain, execution, work, cancelled)?;
-    let clearance = clearance::certify(originals, &prepared, work, cancelled)?;
-    directed::finalize(execution, originals, &mut prepared, work, cancelled)?;
+    let (prepared, domain, clearance) =
+        admitted_geometry(request, originals, execution, work, cancelled)?;
     Ok(selection::completed(
         execution,
         planar,
@@ -59,6 +57,25 @@ pub(super) fn select_with_execution(
         clearance,
         work.consumed - started,
     ))
+}
+
+pub(super) fn admitted_geometry(
+    request: &ConeRun<'_>,
+    originals: &[DevelopedRegionRequest],
+    execution: WrappedConeExecutionSelection,
+    work: &mut Work,
+    cancelled: &mut CancelPoll<'_>,
+) -> ConeChecked<(
+    Vec<Prepared>,
+    domain::DomainEvidence,
+    CertifiedCylindricalClearance,
+)> {
+    let policy = execution_domain(execution);
+    let domain = domain::certify(request, originals, policy, work, cancelled)?;
+    let mut prepared = prepare_regions(request, originals, &domain, execution, work, cancelled)?;
+    let clearance = clearance::certify(originals, &prepared, work, cancelled)?;
+    directed::finalize(execution, originals, &mut prepared, work, cancelled)?;
+    Ok((prepared, domain, clearance))
 }
 
 struct AdmittedConeChart<'a> {

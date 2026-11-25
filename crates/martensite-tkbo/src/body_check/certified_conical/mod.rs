@@ -15,8 +15,8 @@ use martensite_tkbrep::topods::{Face, Shape};
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::predicates::roots::metric_bounds::*;
 pub use material::{
-    CertifiedPlanarMaterial, DirectedCapCause, DirectedCapFailure, DirectedCapPairCause,
-    DirectedCapPolicy, DirectedCapWork,
+    CertifiedDirectedPlanarFamily, CertifiedPlanarMaterial, DirectedCapCause, DirectedCapFailure,
+    DirectedCapPairCause, DirectedCapPolicy, DirectedCapWork, DirectedPlanarFace,
 };
 pub use ordered::{validate_body_with_certified_conical, validate_body_with_transported_conical};
 mod transport;

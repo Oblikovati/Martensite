@@ -177,7 +177,13 @@ pub(super) fn bind(
     selection: &Selection,
     stored: &BTreeMap<SurfaceRegionId, Stored>,
 ) -> ConeChecked<()> {
-    binding::certify(originals, selection, stored)
+    bind_geometry(
+        originals,
+        &selection.prepared,
+        &selection.domain,
+        &selection.clearance,
+        stored,
+    )
 }
 
 fn retain_actual_bindings(prepared: &Prepared, view: &coverage::MemberView, work: &mut Work) {
@@ -185,4 +191,14 @@ fn retain_actual_bindings(prepared: &Prepared, view: &coverage::MemberView, work
         work.actual_bindings
             .insert(prepared.source.region, view.bindings.clone());
     }
+}
+
+pub(super) fn bind_geometry(
+    originals: &[DevelopedRegionRequest],
+    prepared: &[Prepared],
+    domain: &domain::DomainEvidence,
+    clearance: &CertifiedCylindricalClearance,
+    stored: &BTreeMap<SurfaceRegionId, Stored>,
+) -> ConeChecked<()> {
+    binding::certify(originals, prepared, domain, clearance, stored)
 }

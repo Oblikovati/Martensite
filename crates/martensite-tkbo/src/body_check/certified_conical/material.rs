@@ -5,6 +5,7 @@ use crate::profile_extrusion::{
     PlanarIntegralEvidence, PlanarProofVersion, PlanarRegion, PlanarRegionSet, ProfileCurve,
     ProfileCurveId, ProfileLoop, RegionId, Resolution, SketchProfile,
 };
+pub use known::family::{CertifiedDirectedPlanarFamily, DirectedPlanarFace};
 pub use known::{
     DirectedCapCause, DirectedCapFailure, DirectedCapPairCause, DirectedCapPolicy, DirectedCapWork,
 };

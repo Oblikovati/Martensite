@@ -86,6 +86,26 @@ impl ConeAuthoringChart {
         self.extrude_within_trim_band_with_cancel(revision, request, selection, || false)
     }
 
+    pub(in crate::surface_sketch::wrapped_profile::api) fn materialize_attachment_tool(
+        &self,
+        revision: SupportRevision,
+        request: &WrappedConeNormalRequest,
+        selection: WrappedConeExecutionSelection,
+        cancelled: &mut CancelPoll<'_>,
+    ) -> ConeChecked<placement::attachment_tool::AttachmentTool> {
+        input::poll(cancelled, WrappedStage::Admission)?;
+        let mut plan = TrimPlan::capture(self, revision, request.support)?;
+        let (tool, authored) = placement::attachment_tool::on_chart(
+            request,
+            selection,
+            cancelled,
+            |sources, poll| authored_envelopes(&mut plan.checks, sources, poll),
+        )?;
+        plan.check_attachment_regions(&tool, &authored, request.support.normal, cancelled)?;
+        input::poll(cancelled, WrappedStage::Publication)?;
+        Ok(tool)
+    }
+
     /// Check cancellation throughout capture, extrusion and the final footprint walk.
     /// Example: `chart.extrude_within_trim_band_with_cancel(revision, &request, selection, || stop())?`.
     pub fn extrude_within_trim_band_with_cancel(
@@ -179,6 +199,36 @@ impl<'a> TrimPlan<'a> {
         })
     }
 
+    fn check_attachment_regions(
+        &mut self,
+        tool: &placement::attachment_tool::AttachmentTool,
+        authored: &BTreeMap<SurfaceRegionId, AuthoredEnvelope>,
+        normal: NormalSense,
+        cancelled: &mut CancelPoll<'_>,
+    ) -> ConeChecked<()> {
+        for &region in tool.regions() {
+            input::poll(cancelled, WrappedStage::Publication)?;
+            let (wedge, carriers, spans) = tool
+                .fitted(region)
+                .ok_or(ConeFootprintFailure::MissingRegion(region))?;
+            let bounds = authored
+                .get(&region)
+                .copied()
+                .ok_or(ConeFootprintFailure::MissingRegion(region))?;
+            let authored = bounds.check(&mut self.checks, region, wedge)?;
+            checked_caps(
+                &mut self.checks,
+                region,
+                carriers,
+                spans,
+                normal,
+                authored,
+                cancelled,
+            )?;
+        }
+        Ok(())
+    }
+
     fn check_regions(
         &mut self,
         extrusion: &WrappedPlacedConeResult,
@@ -202,7 +252,8 @@ impl<'a> TrimPlan<'a> {
             let caps = checked_caps(
                 &mut self.checks,
                 region,
-                geometry,
+                geometry.material.carriers(),
+                &geometry.spans,
                 extrusion.support().normal,
                 authored,
                 cancelled,
@@ -216,12 +267,13 @@ impl<'a> TrimPlan<'a> {
 fn checked_caps(
     checks: &mut TrimChecks<'_>,
     region: SurfaceRegionId,
-    geometry: &operation::cone::Geometry,
+    carriers: [martensite_tkmath::predicates::roots::metric_bounds::ConicalTrimCarrier; 2],
+    spans: &[operation::cone::SpanProof],
     normal: NormalSense,
     authored: ConicalFootprint,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<ConeRegionFootprint> {
-    let mut caps = cap_envelopes(geometry, cancelled)?;
+    let mut caps = cap_envelopes(carriers, spans, cancelled)?;
     if normal == NormalSense::Inward {
         caps.reverse();
     }
@@ -232,7 +284,7 @@ fn checked_caps(
             first.check(checks, region, 0)?,
             last.check(checks, region, 1)?,
         ],
-        fitted_spans: geometry.spans.len(),
+        fitted_spans: spans.len(),
     })
 }
 
@@ -257,14 +309,15 @@ impl CapEnvelope {
 }
 
 fn cap_envelopes(
-    geometry: &operation::cone::Geometry,
+    carriers: [martensite_tkmath::predicates::roots::metric_bounds::ConicalTrimCarrier; 2],
+    spans: &[operation::cone::SpanProof],
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<[CapEnvelope; 2]> {
-    let mut caps = geometry.material.carriers().map(|carrier| CapEnvelope {
+    let mut caps = carriers.map(|carrier| CapEnvelope {
         bounds: Envelope::empty(),
         carrier,
     });
-    for span in &geometry.spans {
+    for span in spans {
         input::poll(cancelled, WrappedStage::Publication)?;
         for (cap, pcurve) in caps.iter_mut().zip(&span.pcurves) {
             cap.bounds.include(pcurve);
@@ -404,3 +457,6 @@ impl Envelope {
         }
     }
 }
+
+#[cfg(test)]
+mod attachment_tests;

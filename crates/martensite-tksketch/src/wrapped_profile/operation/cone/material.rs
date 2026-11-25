@@ -107,6 +107,28 @@ pub(super) fn certify(
         planar_work: captured.work,
     })
 }
+pub(super) fn certify_attachment_uv(
+    request: &ConeRun<'_>,
+    prepared: &Prepared,
+    stored: &storage::Stored,
+    work: &mut storage::Work,
+    cancelled: &mut CancelPoll<'_>,
+) -> ConeChecked<(
+    martensite_tkbo::body_check::CertifiedPlanarMaterial,
+    martensite_tkbo::body_check::DirectedCapWork,
+)> {
+    let uv_request = domain::request(prepared, &stored.spans)?;
+    let captured = directed::certify(request, &uv_request, work, cancelled)?;
+    let (Some(selected), UvMaterial::Directed(observed)) = (captured.selected, captured.uv) else {
+        return Err(mismatch(
+            prepared.source.region,
+            None,
+            "directed attachment cap authority",
+        ));
+    };
+    Ok((selected, observed))
+}
+
 fn certify_uv(
     request: &ConeRun<'_>,
     original: &DevelopedRegionRequest,

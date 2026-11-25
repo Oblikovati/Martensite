@@ -299,3 +299,8 @@ pub use conical_profile::{
     ConicalDevelopedBoundarySpan, certify_conical_trim_pair_in_chart,
     certify_conical_trim_pair_with_developed_boundary,
 };
+
+/// Checked separation of decoded ruled faces and cap trims from a coaxial stock carrier.
+///
+/// See [`conical_separation::certify_separation`] for admitted frames and caller obligations.
+pub mod conical_separation;

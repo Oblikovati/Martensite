@@ -83,8 +83,34 @@ pub(super) fn capture(
                 "filled native Boolean history",
             )
         })?;
-    let mut audit = Audit::new(attempt, &index, native, &solid)?;
+    let mut audit = Audit::new(attempt, &index, ImageSource::Boolean(native), &solid)?;
     audit.support(selected_face, source_solid, cancelled)?;
+    audit.tool(tool, cancelled)?;
+    let history = audit.finish()?;
+    Ok(Captured {
+        solid,
+        index,
+        history,
+    })
+}
+
+enum ImageSource<'a> {
+    Boolean(&'a History),
+    Direct(&'a [Shape]),
+}
+
+pub(super) fn capture_direct(
+    attempt: Attempt,
+    selected: &Face,
+    stock: &Shape,
+    tool: &DetachedWrappedBodies,
+    solid: Shape,
+    replacement: &[Shape],
+    cancelled: &mut CancelPoll<'_>,
+) -> FeatureChecked<Captured> {
+    let index = Index::new(attempt, &solid, CylinderFeatureStage::History)?;
+    let mut audit = Audit::new(attempt, &index, ImageSource::Direct(replacement), &solid)?;
+    audit.support(selected, stock, cancelled)?;
     audit.tool(tool, cancelled)?;
     let history = audit.finish()?;
     Ok(Captured {
@@ -97,7 +123,7 @@ pub(super) fn capture(
 struct Audit<'a> {
     attempt: Attempt,
     output: &'a Index,
-    native: &'a History,
+    source: ImageSource<'a>,
     root: CylinderBodyRef,
     history: CylinderFeatureHistory,
 }
@@ -106,7 +132,7 @@ impl<'a> Audit<'a> {
     fn new(
         attempt: Attempt,
         output: &'a Index,
-        native: &'a History,
+        source: ImageSource<'a>,
         solid: &Shape,
     ) -> FeatureChecked<Self> {
         let root = output.reference(solid, attempt)?.ok_or_else(|| {
@@ -118,7 +144,7 @@ impl<'a> Audit<'a> {
         let mut result = Self {
             attempt,
             output,
-            native,
+            source,
             root,
             history: CylinderFeatureHistory {
                 images: BTreeMap::new(),
@@ -189,7 +215,10 @@ impl<'a> Audit<'a> {
     }
 
     fn member(&mut self, source: CylinderFeatureSource, shape: &Shape) -> FeatureChecked<()> {
-        let images = self.read_native(source, shape)?;
+        let images = match self.source {
+            ImageSource::Boolean(native) => self.read_native(native, source, shape)?,
+            ImageSource::Direct(replacement) => self.read_direct(replacement, source, shape)?,
+        };
         self.check_required(source, &images)?;
         if images.removed {
             self.history.removed.push(source);
@@ -246,26 +275,60 @@ impl<'a> Audit<'a> {
 
     fn read_native(
         &self,
+        native: &History,
         source: CylinderFeatureSource,
         shape: &Shape,
     ) -> FeatureChecked<NativeImages> {
         let stage = CylinderFeatureStage::History;
         let unchanged = self.output.reference(shape, self.attempt)?;
-        let removed =
-            self.attempt
-                .native(stage, "Boolean removed", self.native.is_removed(shape))?;
-        let modified =
-            self.attempt
-                .native(stage, "Boolean modified", self.native.modified(shape))?;
-        let generated =
-            self.attempt
-                .native(stage, "Boolean generated", self.native.generated(shape))?;
+        let removed = self
+            .attempt
+            .native(stage, "Boolean removed", native.is_removed(shape))?;
+        let modified = self
+            .attempt
+            .native(stage, "Boolean modified", native.modified(shape))?;
+        let generated = self
+            .attempt
+            .native(stage, "Boolean generated", native.generated(shape))?;
         Ok(NativeImages {
             unchanged,
             removed,
             modified: self.images(source, modified)?,
             generated: self.images(source, generated)?,
         })
+    }
+
+    fn read_direct(
+        &self,
+        replacement: &[Shape],
+        source: CylinderFeatureSource,
+        shape: &Shape,
+    ) -> FeatureChecked<NativeImages> {
+        let unchanged = self.output.reference(shape, self.attempt)?;
+        let mut images = NativeImages {
+            unchanged,
+            modified: Vec::new(),
+            generated: Vec::new(),
+            removed: false,
+        };
+        match source {
+            CylinderFeatureSource::SupportFace(_) => {
+                if unchanged.is_some() || replacement.is_empty() {
+                    return Err(self
+                        .attempt
+                        .history(source, "complete replacement of the selected support face"));
+                }
+                images.modified = self.images(source, replacement.to_vec())?;
+            }
+            CylinderFeatureSource::Tool(WrappedHistoryKey {
+                role: HistoryRole::FirstDepthFace,
+                ..
+            }) => {
+                images.removed = true;
+            }
+            _ => {}
+        }
+        Ok(images)
     }
 
     fn images(

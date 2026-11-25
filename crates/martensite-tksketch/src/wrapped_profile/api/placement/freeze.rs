@@ -43,7 +43,7 @@ fn physical(archive: archive::PhysicalArchive) -> Physical {
     }
 }
 
-fn project(cause: ArchivePlacementFailure<Failure>) -> WrappedNormalFailure {
+pub(super) fn project(cause: ArchivePlacementFailure<Failure>) -> WrappedNormalFailure {
     use ArchivePlacementFailure as A;
     let cause = match cause {
         A::Decode { step, cause } => PlacementFailure::Native { step, cause },

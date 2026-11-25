@@ -8,6 +8,7 @@ use martensite_tkmath::predicates::roots::{
 use std::collections::BTreeSet;
 
 mod contract;
+pub(super) mod family;
 mod pairs;
 mod snapshot;
 #[cfg(test)]
@@ -34,6 +35,14 @@ pub(super) fn preflight(
     holes: &[ProfileLoop],
     policy: DirectedCapPolicy,
 ) -> Result<(), Cause> {
+    check_policy(policy)?;
+    let count = profile_count(profile)?;
+    let uses = face_uses(outer, holes, policy, count)?;
+    complete_uses(uses, count)?;
+    polynomial(profile)
+}
+
+fn check_policy(policy: DirectedCapPolicy) -> Result<(), Cause> {
     let limits = RationalIntegralOptions::default();
     let maximum = u64::from(limits.max_curves) * u64::from(limits.max_subintervals);
     if !(1..=64).contains(&policy.max_components) {
@@ -52,6 +61,10 @@ pub(super) fn preflight(
             maximum,
         });
     }
+    Ok(())
+}
+
+fn profile_count(profile: &SketchProfile) -> Result<usize, Cause> {
     let count = profile.curves.len();
     if !(1..=2048).contains(&count) {
         return Err(Cause::Shape {
@@ -67,6 +80,16 @@ pub(super) fn preflight(
             expected: count,
         });
     }
+    Ok(count)
+}
+
+fn face_uses(
+    outer: &ProfileLoop,
+    holes: &[ProfileLoop],
+    policy: DirectedCapPolicy,
+    count: usize,
+) -> Result<usize, Cause> {
+    let limits = RationalIntegralOptions::default();
     if holes.len() >= usize::from(policy.max_components) {
         return Err(Cause::Components {
             actual: holes.len() + 1,
@@ -93,6 +116,10 @@ pub(super) fn preflight(
             limit: policy.max_components,
         });
     }
+    Ok(uses)
+}
+
+fn complete_uses(uses: usize, count: usize) -> Result<(), Cause> {
     if uses != count {
         return Err(Cause::Shape {
             field: "complete face uses",
@@ -100,6 +127,10 @@ pub(super) fn preflight(
             expected: count,
         });
     }
+    Ok(())
+}
+
+fn polynomial(profile: &SketchProfile) -> Result<(), Cause> {
     for curve in &profile.curves {
         let ProfileCurve::Spline {
             degree: 1..=3,
@@ -134,6 +165,7 @@ struct Use {
     reversed: bool,
 }
 struct Ring {
+    outer: Option<usize>,
     uses: Vec<Use>,
     bounds: Bounds,
     witness: Point,
@@ -147,9 +179,24 @@ pub(super) fn seal(
     policy: DirectedCapPolicy,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<Seal, DirectedCapFailure> {
+    let sources = std::iter::once((outer, None)).chain(holes.iter().map(|wire| (wire, Some(0))));
+    let work = prove(profile, sources, resolution, policy, cancelled)?;
+    Ok(Seal {
+        bits: snapshot(profile, outer, holes, resolution, work).into(),
+        work,
+    })
+}
+
+fn prove<'a>(
+    profile: &SketchProfile,
+    sources: impl IntoIterator<Item = (&'a ProfileLoop, Option<usize>)>,
+    resolution: Resolution,
+    policy: DirectedCapPolicy,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<DirectedCapWork, DirectedCapFailure> {
     let pieces = pieces(profile).map_err(|err| unobserved(Cause::Topology(err)))?;
     let (rings, expected) =
-        rings(&pieces, outer, holes).map_err(|err| unobserved(Cause::Topology(err)))?;
+        rings(&pieces, sources).map_err(|err| unobserved(Cause::Topology(err)))?;
     let mut work = DirectedCapWork::start(policy);
     work.loops = rings.len();
     let run = certify_pairs(&pieces, &expected, resolution, &mut work, cancelled)
@@ -159,10 +206,7 @@ pub(super) fn seal(
         observed: Some(work),
         cancelled: false,
     })?;
-    Ok(Seal {
-        bits: snapshot(profile, outer, holes, resolution, work).into(),
-        work,
-    })
+    Ok(work)
 }
 
 pub(super) fn unobserved(cause: Cause) -> DirectedCapFailure {
@@ -241,10 +285,9 @@ fn piece<'a>(
     })
 }
 
-fn rings(
+fn rings<'a>(
     pieces: &[Piece<'_>],
-    outer: &ProfileLoop,
-    holes: &[ProfileLoop],
+    sources: impl IntoIterator<Item = (&'a ProfileLoop, Option<usize>)>,
 ) -> Result<(Vec<Ring>, Expected), Failure> {
     let by_id: BTreeMap<_, _> = pieces
         .iter()
@@ -255,7 +298,7 @@ fn rings(
     let mut vertices = BTreeSet::new();
     let mut expected = Expected::new();
     let mut rings = Vec::new();
-    for wire in std::iter::once(outer).chain(holes) {
+    for (wire, outer) in sources {
         let uses = wire
             .uses
             .iter()
@@ -303,6 +346,7 @@ fn rings(
             first.poles[0]
         };
         rings.push(Ring {
+            outer,
             uses,
             bounds,
             witness,

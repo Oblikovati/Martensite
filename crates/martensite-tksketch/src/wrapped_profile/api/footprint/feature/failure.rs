@@ -52,6 +52,11 @@ pub enum CylinderFeatureCause {
     ConeFootprint(Box<ConeFootprintFailure>),
     /// The qualified normal tool could not be exported.
     ToolExport(Box<WrappedNormalFailure>),
+    /// The explicit attached proof cannot admit the source or qualify its result.
+    DirectAttachment {
+        /// The source shape or proof invariant requiring evidence.
+        expected: &'static str,
+    },
     /// A native query failed during the stated stage.
     Native {
         /// Native query name.

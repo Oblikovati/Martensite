@@ -618,3 +618,77 @@ The ordinary ordered validator then ran on the same body as an
 independent comparison. Both senses reproduced the reference
 800,459-byte archives, history and validation reports. Contact coverage
 and an ordered publication path within one second remain open.
+
+### Checked cold and warm prototypes
+
+The prototype qualified the final topology, literal stored geometry,
+contact domains and tolerance order on one decoded archive. Each sense
+covered 153,181 trim-piece pairs and 678 directed incident paths. The
+ordinary validator accepted the same archives in a separate comparison.
+
+| Fixture | Fresh processes | Median | p95 | Maximum |
+| --- | ---: | ---: | ---: | ---: |
+| Cold boss, CPU 7 | 20 | 813 ms | 825 ms | 828 ms |
+| Cold pocket, CPU 7 | 20 | 818 ms | 843 ms | 1,311 ms |
+| Warm depth edit, CPU 7 | 20 | 828 ms | 1,142 ms | 1,256 ms |
+| Warm depth edit, CPU 9 | 40 | 759 ms | 841 ms | 960 ms |
+
+The timers start before attachment admission and end after exact
+qualification. The warm run preserves the earlier immutable result and
+measures a depth change through the same source attachment. The earlier
+native report, archive and history matched on the independent warm
+comparison. Both timing samples remain part of the assessment. The
+application drag and preview goals still require an application run.
+
+### Public certified attachment
+
+The release build measured the public certified frustum entry from the
+first admission step through the immutable result. Each fixture ran in
+20 fresh processes pinned to CPU 8 on the Linux AMD Ryzen AI Max+ 395
+host. The boss, pocket and warm depth edit were interleaved in each round.
+
+| Fixture | Median | p95 | Maximum | Peak process RSS |
+| --- | ---: | ---: | ---: | ---: |
+| Cold conical text boss | 757 ms | 797 ms | 806 ms | 65.6 MiB |
+| Cold conical text pocket | 757 ms | 771 ms | 772 ms | 65.8 MiB |
+| Warm conical text depth edit | 747 ms | 779 ms | 817 ms | 69.2 MiB |
+
+Two individual controls on the same release binary took 18.62 s for
+the boss and 18.64 s for the pocket through the earlier V8 entry.
+Each control passed its native checks.
+
+Each fixture uses 239 authored curves, 18 selected regions and two
+counter islands. All samples retained every selected cap and the
+expected closed-body census. A separate run passed the ordinary validator
+and checked the signed material change for each case. Two independent
+processes reproduced each 800,459-byte B-rep, composed history and
+validation report byte for byte. In ten fresh stress runs, two concurrent calls on the same input
+reproduced the serial boss result and exported independent native owners.
+
+Build the toolkit test binary with the standard release profile.
+
+```sh
+cargo test --locked --release -p martensite-tkv3d --test toolkit --no-run
+```
+
+Run one of `multiline_cone_certified_boss`,
+`multiline_cone_certified_pocket` or
+`multiline_cone_certified_depth_edit` per fresh process with its exact test
+name and `--include-ignored --nocapture`. The JSON timing ends before
+the independent checks. Set `MARTENSITE_CERTIFIED_ATTACHMENT_P95=1` to
+omit the extra ordinary validation during repetition. For byte replay,
+set `MARTENSITE_CERTIFIED_ATTACHMENT_RECEIPT_DIR` to an existing empty
+directory and compare the three files emitted by each process.
+
+ThreadSanitizer's startup control exited with a segmentation fault on the
+host. The default Ubuntu container reported an incompatible memory layout
+before running the control. The shared-input test ran in the ordinary
+release build. The separate Oblikovati application still needs the SDK
+migration and the wrapped-sketch interaction before input-to-present
+and first-preview timing can be measured there.
+
+The offscreen Radeon Vulkan proxy also ran alongside repeated calls to
+the public warm edit. At 3840×2560 it missed zero of 400 paced
+deadlines. At 60 Hz, p95 input-to-GPU completion was 1.74 ms for drag
+and 1.17 ms for the first height preview. At 120 Hz it was 0.91 ms
+and 2.02 ms. The proxy supplies synthetic input and ends at GPU completion.

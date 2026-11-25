@@ -77,7 +77,9 @@ fn project_history(
     .map_err(history_failure)
 }
 
-fn history_failure(cause: history_projection::HistoryMapFailure) -> WrappedNormalFailure {
+pub(super) fn history_failure(
+    cause: history_projection::HistoryMapFailure,
+) -> WrappedNormalFailure {
     public_error::failure(
         WrappedStage::History,
         WrappedFailureClass::Incomplete,

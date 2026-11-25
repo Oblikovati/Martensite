@@ -4,6 +4,7 @@ use crate::surface_sketch::{ConeSupport, HistoryRole, NormalSense};
 use martensite_tkmath::predicates::roots::metric_bounds::*;
 use std::collections::BTreeMap;
 mod actual;
+pub(in crate::surface_sketch::wrapped_profile) mod attachment_tool;
 pub(in crate::surface_sketch::wrapped_profile) use actual::placed_members;
 mod domain;
 mod error;
@@ -17,6 +18,7 @@ mod publication;
 mod source_positions;
 mod stages;
 mod storage;
+pub(in crate::surface_sketch::wrapped_profile) use storage::SpanProof;
 #[cfg(test)]
 pub(in crate::surface_sketch::wrapped_profile) mod tests;
 type ConeChecked<T> = Result<T, ConeFailure>;

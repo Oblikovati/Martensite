@@ -261,3 +261,59 @@ fn material_refuses_disjoint_outer_and_wrongly_nested_holes_after_pair_proof() {
     ));
     assert_eq!(nested_failure.observed.unwrap().pair_domains, 78);
 }
+
+#[test]
+fn authored_family_checks_cross_face_nesting_and_rebinds_each_selected_owner() {
+    use crate::body_check::{CertifiedDirectedPlanarFamily, DirectedPlanarFace};
+
+    fn send_sync<T: Send + Sync>() {}
+    send_sync::<CertifiedDirectedPlanarFamily>();
+    send_sync::<DirectedPlanarFace>();
+
+    let separate = OUTER.map(|[x, y]| [x + 5., y]);
+    let (profile, faces) = family_input(&[&OUTER, &separate]);
+    let policy = policy(2, 200, 7);
+    let proof = CertifiedDirectedPlanarFamily::issue(
+        profile.clone(),
+        faces.clone(),
+        resolution(),
+        policy,
+        || false,
+    )
+    .unwrap();
+    assert_eq!(proof.work().pair_domains, 36);
+    assert_eq!(proof.work().requested, policy);
+    assert!(proof.matches(&profile, &faces, resolution(), policy));
+    let mut swapped = faces;
+    swapped.swap(0, 1);
+    assert!(!proof.matches(&profile, &swapped, resolution(), policy));
+
+    let nested = HOLE.map(|[x, y]| [y, x]);
+    let (profile, faces) = family_input(&[&OUTER, &nested]);
+    let wrong =
+        CertifiedDirectedPlanarFamily::issue(profile, faces, resolution(), policy, || false)
+            .unwrap_err();
+    assert!(matches!(
+        *wrong.cause,
+        DirectedCapCause::Nesting {
+            ring: 1,
+            against: 0,
+            expected: false
+        }
+    ));
+    assert_eq!(wrong.observed.unwrap().pair_domains, 36);
+}
+
+fn family_input(
+    rings: &[&[[f64; 2]]],
+) -> (SketchProfile, Vec<crate::body_check::DirectedPlanarFace>) {
+    let (profile, cycles) = source(rings);
+    let faces = cycles
+        .into_iter()
+        .map(|outer| crate::body_check::DirectedPlanarFace {
+            outer,
+            holes: Vec::new(),
+        })
+        .collect();
+    (profile, faces)
+}

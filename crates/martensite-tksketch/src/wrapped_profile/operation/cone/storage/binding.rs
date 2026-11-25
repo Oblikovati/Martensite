@@ -2,13 +2,15 @@
 use super::*;
 pub(super) fn certify(
     originals: &[DevelopedRegionRequest],
-    selection: &Selection,
+    prepared: &[Prepared],
+    domain: &domain::DomainEvidence,
+    clearance_bound: &CertifiedCylindricalClearance,
     stored: &BTreeMap<SurfaceRegionId, Stored>,
 ) -> ConeChecked<()> {
-    sector(originals, selection)?;
+    sector(originals, prepared, domain)?;
     let originals = operation::source::by_region(originals);
     let mut clearance = Vec::new();
-    for prepared in &selection.prepared {
+    for prepared in prepared {
         let original = originals
             .get(&prepared.source.region)
             .copied()
@@ -18,28 +20,30 @@ pub(super) fn certify(
             .ok_or_else(|| missing(original.region))?;
         bind_member(original, prepared, member, &mut clearance)?;
     }
-    if !selection.clearance.matches_sources(&clearance) {
+    if !clearance_bound.matches_sources(&clearance) {
         return Err(family_mismatch("clearance original source binding"));
     }
     Ok(())
 }
-fn sector(originals: &[DevelopedRegionRequest], selection: &Selection) -> ConeChecked<()> {
-    if let domain::DomainEvidence::Connected { reference_slant } = &selection.domain {
-        return connected(originals, &selection.prepared, *reference_slant);
+fn sector(
+    originals: &[DevelopedRegionRequest],
+    prepared: &[Prepared],
+    domain: &domain::DomainEvidence,
+) -> ConeChecked<()> {
+    if let domain::DomainEvidence::Connected { reference_slant } = domain {
+        return connected(originals, prepared, *reference_slant);
     }
-    if let domain::DomainEvidence::Atlas(charts) = &selection.domain {
-        return atlas(originals, &selection.prepared, charts);
+    if let domain::DomainEvidence::Atlas(charts) = domain {
+        return atlas(originals, prepared, charts);
     }
     let spans = domain::original_spans(originals);
-    let prepared = selection
-        .prepared
+    let first = prepared
         .first()
         .ok_or_else(|| family_mismatch("domain member owner"))?;
-    let matches = domain_matches(&selection.domain, prepared, &spans);
-    let owners_match = selection
-        .prepared
+    let matches = domain_matches(domain, first, &spans);
+    let owners_match = prepared
         .iter()
-        .all(|member| authority_matches(&selection.domain, prepared, member, &spans));
+        .all(|member| authority_matches(domain, first, member, &spans));
     if !matches || !owners_match {
         return Err(family_mismatch("domain original source binding"));
     }

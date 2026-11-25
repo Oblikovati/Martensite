@@ -11,10 +11,10 @@ pub(super) fn certify_rings(
     for (i, ring) in rings.iter().enumerate() {
         poll(cancelled)?;
         let sign = green(pieces, ring, i, work, cancelled)?;
-        if sign != expected_sign(i) {
+        if sign != expected_sign(ring) {
             return Err(Cause::Orientation {
                 ring: i,
-                expected: expected_sign(i),
+                expected: expected_sign(ring),
                 actual: sign,
             });
         }
@@ -24,7 +24,7 @@ pub(super) fn certify_rings(
             }
             let inside = !other.bounds.excludes(ring.witness)
                 && winding(pieces, other, ring.witness, [i, j], work, cancelled)?;
-            let expected = i > 0 && j == 0;
+            let expected = ring.outer == Some(j);
             if inside != expected {
                 return Err(Cause::Nesting {
                     ring: i,
@@ -36,8 +36,8 @@ pub(super) fn certify_rings(
     }
     Ok(())
 }
-fn expected_sign(index: usize) -> i64 {
-    if index == 0 { 1 } else { -1 }
+fn expected_sign(ring: &Ring) -> i64 {
+    if ring.outer.is_none() { 1 } else { -1 }
 }
 
 fn green(
@@ -131,7 +131,7 @@ fn winding(
     })?;
     match proof.location() {
         BezierWireLocation::Outside => Ok(false),
-        BezierWireLocation::Inside { winding } if *winding == expected_sign(against) => Ok(true),
+        BezierWireLocation::Inside { winding } if *winding == expected_sign(ring) => Ok(true),
         other => Err(Cause::Location {
             ring: owner,
             against,

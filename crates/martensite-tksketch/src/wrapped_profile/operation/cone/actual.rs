@@ -5,6 +5,7 @@ use martensite_tkbo::body_check::{
     capture_conical_actual_family,
 };
 use std::sync::Arc;
+pub(super) mod attachment;
 pub(super) mod binding;
 mod errors;
 mod periodic;
@@ -15,6 +16,27 @@ pub(in crate::surface_sketch::wrapped_profile) struct NativeFamily {
     body: Arc<CertifiedConicalBody>,
     members: BTreeMap<SurfaceRegionId, ConicalNativeMember>,
 }
+#[derive(Clone, Copy)]
+struct CapMaterial<'a> {
+    selected: Option<&'a martensite_tkbo::body_check::CertifiedPlanarMaterial>,
+    periodic_curves: Option<&'a material::NativeCurveMap>,
+}
+impl<'a> From<&'a material::MaterialEvidence> for CapMaterial<'a> {
+    fn from(material: &'a material::MaterialEvidence) -> Self {
+        Self {
+            selected: material.selected_material.as_ref(),
+            periodic_curves: material.periodic_curves.as_ref(),
+        }
+    }
+}
+struct ActualMember<'a> {
+    shape: &'a Shape,
+    spans: &'a [storage::SpanProof],
+    joins: &'a ConicalJoinsEvidence,
+    material: CapMaterial<'a>,
+}
+type ActualMembers<'a> = BTreeMap<SurfaceRegionId, ActualMember<'a>>;
+
 pub(super) fn certify_family(
     _request: &ConeRun<'_>,
     originals: &[DevelopedRegionRequest],
@@ -23,15 +45,54 @@ pub(super) fn certify_family(
     work: &mut storage::Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<NativeEvidence> {
-    let directed = queries::family(selection)?;
-    let native = binding::members(selection, members, work)?;
+    let views = members
+        .iter()
+        .map(|(region, (geometry, shape))| {
+            (
+                *region,
+                ActualMember {
+                    shape,
+                    spans: &geometry.spans,
+                    joins: &geometry.joins,
+                    material: (&geometry.material).into(),
+                },
+            )
+        })
+        .collect();
+    certify_views(
+        originals,
+        SelectedGeometry {
+            execution: selection.executed_selection,
+            prepared: &selection.prepared,
+        },
+        &views,
+        work,
+        cancelled,
+    )
+}
+
+#[derive(Clone, Copy)]
+struct SelectedGeometry<'a> {
+    execution: WrappedConeExecutionSelection,
+    prepared: &'a [Prepared],
+}
+
+fn certify_views(
+    originals: &[DevelopedRegionRequest],
+    selection: SelectedGeometry<'_>,
+    members: &ActualMembers<'_>,
+    work: &mut storage::Work,
+    cancelled: &mut CancelPoll<'_>,
+) -> ConeChecked<NativeEvidence> {
+    let directed = queries::family(selection.prepared)?;
+    let native = binding::members(selection.prepared, members, work)?;
     let captured = capture_conical_actual_family(&native)
         .map_err(|cause| errors::binding(&directed.inventory, cause))?;
-    let sides = queries::sides(originals, selection, members, &captured)?;
+    let sides = queries::sides(originals, selection.prepared, members, &captured)?;
     let periodic = selection
-        .executed_selection
+        .execution
         .is_connected_atlas()
-        .then(|| periodic::capture(selection, members))
+        .then(|| periodic::capture(selection.prepared, members))
         .transpose()?;
     let options = remaining(work, originals)?;
     let certificate = certify(
@@ -175,7 +236,7 @@ pub(super) fn validate_family(
         .as_ref()
         .ok_or_else(|| global_missing("complete actual family publication certificate"))?;
     let bindings = binding::published_members(family, work)?;
-    let inventory = &queries::family(&family.selection)?.inventory;
+    let inventory = &queries::family(&family.selection.prepared)?.inventory;
     body.rebind_family(&bindings)
         .map_err(|cause| errors::binding(inventory, cause))
 }

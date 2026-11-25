@@ -7,25 +7,23 @@ pub(super) struct Member<'a> {
     sides: Vec<ConicalActualSideId>,
 }
 pub(super) fn capture<'a>(
-    selection: &Selection,
-    members: &'a BTreeMap<SurfaceRegionId, (Geometry, Shape)>,
+    prepared: &[Prepared],
+    members: &'a ActualMembers<'_>,
 ) -> ConeChecked<Vec<Member<'a>>> {
-    selection
-        .prepared
+    prepared
         .iter()
         .map(|prepared| {
             let region = prepared.source.region;
-            let (geometry, _) = members
+            let owner = members
                 .get(&region)
                 .ok_or_else(|| missing(region, "periodic native geometry owner"))?;
-            let curves = geometry
+            let curves = owner
                 .material
                 .periodic_curves
-                .as_ref()
                 .ok_or_else(|| missing(region, "periodic native contour source keys"))?;
             Ok(Member {
                 member: ConicalActualMemberId(region.0),
-                joins: &geometry.joins,
+                joins: owner.joins,
                 sides: curves.iter().map(|(_, side)| *side).collect(),
             })
         })
