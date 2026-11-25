@@ -4,6 +4,7 @@ mod admission;
 mod arcs;
 mod constraints;
 mod construction;
+mod control_splines;
 mod fixture;
 mod frozen_point;
 mod line_angle;

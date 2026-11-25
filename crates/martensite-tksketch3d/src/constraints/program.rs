@@ -36,7 +36,7 @@ impl Program {
             .owned_ids()
             .filter_map(|key| match key {
                 EntityId::Point(point) => Some(point),
-                EntityId::Line(_) | EntityId::Arc(_) => None,
+                EntityId::Line(_) | EntityId::Arc(_) | EntityId::ControlSpline(_) => None,
             })
             .collect::<Vec<_>>();
         let point_columns = points
@@ -243,6 +243,9 @@ fn admit(
     )?;
     if let Some(&arc) = geometry.arcs.keys().next() {
         return Err(Failure::UnsupportedEntity(EntityId::Arc(arc)));
+    }
+    if let Some(&spline) = geometry.control_splines.keys().next() {
+        return Err(Failure::UnsupportedEntity(EntityId::ControlSpline(spline)));
     }
     let points = geometry
         .owned_ids()

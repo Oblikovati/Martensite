@@ -1,14 +1,19 @@
 // SPDX-License-Identifier: GPL-2.0-only
-//! Owned spatial sketch points, lines and arcs with atomic edit validation.
+//! Owned spatial sketch geometry with atomic edit validation.
 mod admission;
 mod arc;
 pub mod constraints;
+mod control_spline;
 mod edit;
 mod failure;
 mod source;
 pub mod wire;
 
 pub use arc::{ArcDefinition, ArcFailure, ArcFitTolerance, ArcGeometry, ArcId, SketchArc};
+pub use control_spline::{
+    ControlSplineFailure, ControlSplineGeometry, ControlSplineId, ControlSplineJet,
+    ControlSplineJetFailure, ControlSplineProofPolicy, SketchControlSpline,
+};
 pub use failure::{BatchPhase, EditFailure, InvalidMinimumLength};
 use martensite_tkmath::gp::{Line3, Point3};
 pub use source::{FrozenPointSource, FrozenSourceRevision};
@@ -58,6 +63,8 @@ pub enum EntityId {
     Line(LineId),
     /// Circular arc identity.
     Arc(ArcId),
+    /// Open cubic control spline identity.
+    ControlSpline(ControlSplineId),
 }
 
 /// A sketch curve whose modelling participation can change without replacing its identity.
@@ -67,6 +74,8 @@ pub enum CurveId {
     Line(LineId),
     /// A circular arc.
     Arc(ArcId),
+    /// An open cubic control spline.
+    ControlSpline(ControlSplineId),
 }
 
 impl CurveId {
@@ -74,6 +83,7 @@ impl CurveId {
         match self {
             Self::Line(id) => EntityId::Line(id),
             Self::Arc(id) => EntityId::Arc(id),
+            Self::ControlSpline(id) => EntityId::ControlSpline(id),
         }
     }
 }
@@ -186,6 +196,8 @@ pub enum Edit {
     InsertLine(SketchLine),
     /// Add a circular arc. Its placement points must exist by the end of the batch.
     InsertArc(SketchArc),
+    /// Add an open cubic. Its control points must exist by the end of the batch.
+    InsertControlSpline(SketchControlSpline),
     /// Change a curve's modelling participation while retaining its authored geometry.
     SetCurveRole {
         /// Existing curve identity.
@@ -201,6 +213,8 @@ pub enum Edit {
     RemoveLine(LineId),
     /// Remove an arc. A batch with any deletion retires all unused defining points.
     RemoveArc(ArcId),
+    /// Remove a control spline. A batch with any deletion retires all unused defining points.
+    RemoveControlSpline(ControlSplineId),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -208,6 +222,7 @@ enum Entity {
     Point(SketchPoint),
     Line(SketchLine),
     Arc(SketchArc),
+    ControlSpline(SketchControlSpline),
 }
 
 impl Entity {
@@ -216,6 +231,7 @@ impl Entity {
             Self::Point(point) => EntityId::Point(point.id),
             Self::Line(line) => EntityId::Line(line.id),
             Self::Arc(arc) => EntityId::Arc(arc.id),
+            Self::ControlSpline(spline) => EntityId::ControlSpline(spline.id),
         }
     }
     fn curve(self) -> Option<CurveId> {
@@ -223,6 +239,7 @@ impl Entity {
             Self::Point(_) => None,
             Self::Line(line) => Some(CurveId::Line(line.id)),
             Self::Arc(arc) => Some(CurveId::Arc(arc.id)),
+            Self::ControlSpline(spline) => Some(CurveId::ControlSpline(spline.id)),
         }
     }
 }
@@ -233,6 +250,7 @@ impl EntityId {
             Self::Point(point) => point.get(),
             Self::Line(line) => line.get(),
             Self::Arc(arc) => arc.get(),
+            Self::ControlSpline(spline) => spline.get(),
         }
     }
 }
@@ -247,6 +265,7 @@ pub struct Snapshot {
     entities: BTreeMap<NonZeroU64, Entity>,
     geometry: BTreeMap<LineId, LineGeometry>,
     arcs: BTreeMap<ArcId, ArcGeometry>,
+    control_splines: BTreeMap<ControlSplineId, ControlSplineGeometry>,
     construction: BTreeSet<CurveId>,
     frozen: BTreeMap<PointId, FrozenPointSource>,
 }
@@ -259,6 +278,7 @@ impl Snapshot {
             entities: BTreeMap::new(),
             geometry: BTreeMap::new(),
             arcs: BTreeMap::new(),
+            control_splines: BTreeMap::new(),
             construction: BTreeSet::new(),
             frozen: BTreeMap::new(),
         }
@@ -285,6 +305,11 @@ impl Snapshot {
     /// Return a validated circular arc value. Example: `snapshot.arc(arc_id)`.
     pub fn arc(&self, key: ArcId) -> Option<ArcGeometry> {
         self.arcs.get(&key).copied()
+    }
+
+    /// Borrow validated cubic geometry. Example: `snapshot.control_spline(spline_id)`.
+    pub fn control_spline(&self, key: ControlSplineId) -> Option<&ControlSplineGeometry> {
+        self.control_splines.get(&key)
     }
 
     /// Return the authored role of an existing curve. Example: `snapshot.curve_role(curve_id)`.

@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Stage values first so complete geometry, including shared endpoints, admits together.
 use crate::{
-    ArcGeometry, ArcId, BatchPhase, CurveId, CurveRole, Edit, EditFailure, Entity, EntityId,
-    LineId, PointId, PointRole, SketchLine, SketchPoint, Snapshot, admission, arc,
+    ArcGeometry, ArcId, BatchPhase, ControlSplineGeometry, ControlSplineId, CurveId, CurveRole,
+    Edit, EditFailure, Entity, EntityId, LineId, PointId, PointRole, SketchLine, SketchPoint,
+    Snapshot, admission, arc, control_spline,
 };
 use martensite_tkmath::gp::Point3;
 use std::{
@@ -30,6 +31,7 @@ impl Snapshot {
             entities: self.entities.clone(),
             geometry: Default::default(),
             arcs: Default::default(),
+            control_splines: Default::default(),
             construction: self.construction.clone(),
             frozen: self.frozen.clone(),
         };
@@ -46,6 +48,14 @@ impl Snapshot {
         // Line-only edits keep the single geometry scan used by the drag path.
         if !self.arcs.is_empty() || edits.iter().any(|edit| matches!(edit, Edit::InsertArc(_))) {
             draft.arcs = draft.check_arcs(&self.arcs, &mut cancelled)?;
+        }
+        if !self.control_splines.is_empty()
+            || edits
+                .iter()
+                .any(|edit| matches!(edit, Edit::InsertControlSpline(_)))
+        {
+            draft.control_splines =
+                draft.check_control_splines(&self.control_splines, &mut cancelled)?;
         }
         poll(&mut cancelled, BatchPhase::Completion)?;
         Ok(draft)
@@ -66,12 +76,18 @@ impl Snapshot {
             }
             Edit::InsertLine(line) => self.insert(Entity::Line(line), retired),
             Edit::InsertArc(arc) => self.insert(Entity::Arc(arc), retired),
+            Edit::InsertControlSpline(spline) => {
+                self.insert(Entity::ControlSpline(spline), retired)
+            }
             Edit::SetCurveRole { curve, role } => self.set_curve_role(curve, role),
             Edit::MovePoint { point, position } => self.move_point(point, position),
             Edit::DetachFrozenPoint(point) => self.detach_frozen_point(point),
             Edit::RemovePoint(point) => self.remove_point(point, retired, cancelled),
             Edit::RemoveLine(line) => self.remove(EntityId::Line(line), retired),
             Edit::RemoveArc(arc) => self.remove(EntityId::Arc(arc), retired),
+            Edit::RemoveControlSpline(spline) => {
+                self.remove(EntityId::ControlSpline(spline), retired)
+            }
         }
     }
 
@@ -167,6 +183,9 @@ impl Snapshot {
                 Entity::Arc(arc) if arc.points().contains(&point) => {
                     incident.push(EntityId::Arc(arc.id));
                 }
+                Entity::ControlSpline(spline) if spline.poles.contains(&point) => {
+                    incident.push(EntityId::ControlSpline(spline.id));
+                }
                 _ => {}
             }
         }
@@ -237,6 +256,7 @@ impl Snapshot {
             match entity {
                 Entity::Line(line) => used.extend(line.endpoints),
                 Entity::Arc(arc) => used.extend(arc.points()),
+                Entity::ControlSpline(spline) => used.extend(spline.poles),
                 Entity::Point(_) => {}
             }
         }
@@ -276,6 +296,26 @@ impl Snapshot {
                     recipe.id,
                     arc::admit(self, recipe, previous.get(&recipe.id))?,
                 ))
+            })
+            .collect()
+    }
+
+    fn check_control_splines(
+        &self,
+        previous: &BTreeMap<ControlSplineId, ControlSplineGeometry>,
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<BTreeMap<ControlSplineId, ControlSplineGeometry>, EditFailure> {
+        self.entities
+            .values()
+            .filter_map(|entity| match entity {
+                Entity::ControlSpline(recipe) => Some(*recipe),
+                _ => None,
+            })
+            .map(|recipe| {
+                poll(cancelled, BatchPhase::Validation)?;
+                let geometry =
+                    control_spline::admit(self, recipe, previous.get(&recipe.id), cancelled)?;
+                Ok((recipe.id, geometry))
             })
             .collect()
     }
