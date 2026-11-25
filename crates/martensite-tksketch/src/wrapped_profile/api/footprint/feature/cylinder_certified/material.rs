@@ -25,6 +25,16 @@ pub(super) struct Admitted {
     inputs: input::Inputs,
 }
 
+impl Admitted {
+    pub(super) fn fit_ceiling(&self) -> f64 {
+        self.inputs
+            .requests
+            .iter()
+            .map(|request| subdivision::effective_fit_limit(request, self.resolution.sew))
+            .fold(0_f64, f64::max)
+    }
+}
+
 pub(super) fn admit(
     attachment: &CylinderFaceAttachment,
     attempt: Attempt,
@@ -90,6 +100,22 @@ pub(super) struct Tool {
     pub clearance: planar_clearance::OriginalClearance,
 }
 
+impl Tool {
+    pub(super) fn authored_fit_upper(&self) -> f64 {
+        self.spans
+            .values()
+            .map(|span| span.storage.profile.developed_position_bound())
+            .fold(0_f64, f64::max)
+    }
+
+    pub(super) fn normal_storage_upper(&self) -> f64 {
+        self.spans
+            .values()
+            .map(|span| span.storage.depths.normal_sweep_error_bound())
+            .fold(0_f64, f64::max)
+    }
+}
+
 pub(super) struct Span {
     pub storage: storage::StoredProof,
     pub directions: Vec<[f64; 2]>,
@@ -101,25 +127,31 @@ pub(super) fn prepare(
     input: &Admitted,
     planar: PlanarProofVersion,
     cancelled: &mut CancelPoll<'_>,
+    complete: &mut impl FnMut(Phase),
 ) -> Checked<Tool> {
     let originals = &input.inputs.requests;
-    let selected = certify(
+    let selected = certify_cancellable(
         attempt,
         TOOL,
         "source-bound selected material",
-        selection::certify_with_proof(
-            originals,
-            Default::default(),
-            request.options.planar_work,
-            selection::Preparation {
-                proof: planar,
-                maximum_fit_error: Some(input.resolution.sew),
-            },
-            &mut *cancelled,
-        ),
+        cancelled,
+        |poll| {
+            selection::certify_with_proof(
+                originals,
+                Default::default(),
+                request.options.planar_work,
+                selection::Preparation {
+                    proof: planar,
+                    maximum_fit_error: Some(input.resolution.sew),
+                },
+                poll,
+            )
+        },
     )?;
+    complete(Phase::AuthoredPlan);
     let prepared = &selected.prepared.prepared;
     let work = build_members(attempt, originals, prepared, cancelled)?;
+    complete(Phase::ToolStorage);
     let keys: Vec<_> = work.bindings.iter().map(|(key, _)| *key).collect();
     let lineages = certify(
         attempt,
@@ -150,14 +182,16 @@ pub(super) fn prepare(
         "source-bound family clearance",
         planar_clearance::bind_many(&clearance, originals, prepared, &references),
     )?;
-    finish(
+    let tool = finish(
         attempt,
         work,
         history,
         keys,
         input.support.origin,
         clearance,
-    )
+    )?;
+    complete(Phase::ToolFamily);
+    Ok(tool)
 }
 
 struct Working {
@@ -213,17 +247,16 @@ impl Working {
             "place source member in operation-local compound",
             Builder.add(&mut self.root, &member.solid),
         )?;
-        let receipts = certify(
-            attempt,
-            TOOL,
-            "source member storage",
-            storage::certify_with_cancel(original, request, &member.bindings, &mut *cancelled),
-        )?;
-        let cones = certify(
+        let receipts =
+            certify_cancellable(attempt, TOOL, "source member storage", cancelled, |poll| {
+                storage::certify_with_cancel(original, request, &member.bindings, poll)
+            })?;
+        let cones = certify_cancellable(
             attempt,
             TOOL,
             "source span and join projections",
-            planar_cones::certify_with_cancel(original, request, &receipts, &mut *cancelled),
+            cancelled,
+            |poll| planar_cones::certify_with_cancel(original, request, &receipts, poll),
         )?;
         certify(
             attempt,

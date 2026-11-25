@@ -19,6 +19,7 @@ pub(super) struct Candidate {
     pub original: proof::Trims,
     pub stock_sheet: [f64; 2],
     pub native_stock_error: f64,
+    pub recut_clearance: Option<f64>,
     pub height_sign: f64,
 }
 
@@ -79,6 +80,13 @@ impl StockBoundary {
         }
     }
 
+    fn recut_clearance(&self) -> Option<f64> {
+        match self {
+            Self::Unchanged(_) => None,
+            Self::Recut(stock) => Some(stock.clear_distance),
+        }
+    }
+
     fn error(&self) -> f64 {
         match self {
             Self::Unchanged(stock) => stock.spatial_upper(),
@@ -136,6 +144,7 @@ fn freeze(
         original,
         stock_sheet: boundary.sheet(),
         native_stock_error: boundary.error(),
+        recut_clearance: boundary.recut_clearance(),
         height_sign,
     })
 }

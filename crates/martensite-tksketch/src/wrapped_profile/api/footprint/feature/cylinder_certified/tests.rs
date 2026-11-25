@@ -93,7 +93,7 @@ fn certified_cylinder_checks_both_normals_and_inherited_stock_bindings() {
             .unwrap();
         assert_ordered(feature.validation());
         let native = feature.export_native().unwrap();
-        let exact = 400. * std::f64::consts::PI + (radius.powi(2) - 100.) / 40.;
+        let exact = 400. * std::f64::consts::PI + (radius * radius - 100.) / 40.;
         assert!((volume(&native.body) - exact).abs() < 1e-4);
         assert!(
             validate_body(&native.body, &stock.record().resolution)

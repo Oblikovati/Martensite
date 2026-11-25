@@ -8,7 +8,7 @@ use std::f64::consts::TAU;
 
 pub(super) struct Boundary {
     radius: f64,
-    pub(super) contact: f64,
+    contact: f64,
     floor: f64,
     angular: [f64; 2],
     seam: f64,
@@ -83,19 +83,24 @@ impl Boundary {
             add(phase_width, pad) < period,
             "no other periodic image can reach the decoded contact windows",
         )?;
-        for (&pair, &[angle, z]) in joins {
-            attempt.poll(cancelled, VALIDATION)?;
-            let members = pair.map(|key| tubes.get(&key));
-            let [Some(a), Some(b)] = members else {
-                return Err(missing(
-                    attempt,
-                    VALIDATION,
-                    "both retained tubes of each directed join",
-                ));
-            };
-            let direction = [angle * support_radius / self.radius, z];
-            self.certify_join(attempt, [a, b], cap, direction, pad, cancelled)?;
-        }
+        let adjacent: Vec<_> = joins.iter().collect();
+        work::ordered(
+            attempt,
+            VALIDATION,
+            &adjacent,
+            cancelled,
+            |&(&pair, &[angle, z]), poll| {
+                let [Some(a), Some(b)] = pair.map(|key| tubes.get(&key)) else {
+                    return Err(missing(
+                        attempt,
+                        VALIDATION,
+                        "both retained tubes of each directed join",
+                    ));
+                };
+                let direction = [angle * support_radius / self.radius, z];
+                self.certify_join(attempt, [a, b], cap, direction, pad, poll)
+            },
+        )?;
         Ok(())
     }
 

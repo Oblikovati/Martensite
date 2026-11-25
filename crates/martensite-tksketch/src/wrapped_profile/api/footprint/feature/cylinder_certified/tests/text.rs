@@ -18,7 +18,7 @@ fn certified_cylinder_one_lift_owned_239_curve_text() {
         &stock,
         &mut sketch,
         "owned-239",
-        226802403. / 134217728.,
+        outward(226802403. / 134217728.),
         444,
         CylinderFeatureKind::Boss,
     );
@@ -26,7 +26,7 @@ fn certified_cylinder_one_lift_owned_239_curve_text() {
         &stock,
         &mut sketch,
         "owned-239",
-        -226802403. / 134217728. * (79. / 81.),
+        outward(-226802403. / 134217728. * (79. / 81.)),
         444,
         CylinderFeatureKind::Pocket,
     );
@@ -44,7 +44,7 @@ fn certified_cylinder_seam_crossing_desktop_265_curve_text() {
         &stock,
         &mut sketch,
         "desktop-265",
-        area * depth * (1. + depth / (2. * radius)),
+        signed_sweep(area, radius, depth, false),
         270,
         CylinderFeatureKind::Boss,
     );
@@ -52,17 +52,34 @@ fn certified_cylinder_seam_crossing_desktop_265_curve_text() {
         &stock,
         &mut sketch,
         "desktop-265",
-        -area * depth * (1. - depth / (2. * radius)),
+        signed_sweep(area, radius, depth, true),
         270,
         CylinderFeatureKind::Pocket,
     );
+}
+
+fn outward(value: f64) -> [f64; 2] {
+    [value.next_down(), value.next_up()]
+}
+
+fn signed_sweep(area: [f64; 2], radius: f64, depth: f64, inward: bool) -> [f64; 2] {
+    let [lo, hi] = outward(depth / (2. * radius));
+    let [a, b] = if inward {
+        [(1. - hi).next_down(), (1. - lo).next_up()]
+    } else {
+        [(1. + lo).next_down(), (1. + hi).next_up()]
+    };
+    assert!(a > 0. && b.is_finite());
+    let low = ((area[0] * depth).next_down() * a).next_down();
+    let high = ((area[1] * depth).next_up() * b).next_up();
+    if inward { [-high, -low] } else { [low, high] }
 }
 
 fn check(
     stock: &CylinderFaceAttachment,
     sketch: &mut WrappedNormalRequest,
     workload: &str,
-    expected: f64,
+    expected: [f64; 2],
     sides: usize,
     kind: CylinderFeatureKind,
 ) {
@@ -79,7 +96,15 @@ fn check(
     assert_ordered(feature.validation());
     let native = feature.export_native().unwrap();
     let body = stock.export_native(REVISION).unwrap().body;
-    assert!((volume(&native.body) - volume(&body) - expected).abs() < 1e-5);
+    let volume_estimate = volume(&native.body) - volume(&body);
+    let fixture_check_tolerance = 1e-5;
+    eprintln!(
+        "workload={workload} operation={kind:?} certified_authored_volume={expected:?} native_volume_estimate={volume_estimate:.12} fixture_check_tolerance={fixture_check_tolerance}"
+    );
+    assert!(
+        volume_estimate > expected[0] - fixture_check_tolerance
+            && volume_estimate < expected[1] + fixture_check_tolerance
+    );
     assert_history(sketch, feature.history(), sides);
     let start = Instant::now();
     let oracle = validate_body(&native.body, &stock.record().resolution).unwrap();

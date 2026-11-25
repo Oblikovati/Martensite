@@ -8,6 +8,7 @@ mod material;
 mod proof;
 #[cfg(test)]
 mod tests;
+mod work;
 
 type Checked<T> = FeatureChecked<T>;
 
@@ -40,12 +41,42 @@ fn certify<T, E: std::fmt::Debug>(
     result.map_err(|cause| {
         attempt.fail(
             stage,
-            CylinderFeatureCause::Native {
+            CylinderFeatureCause::NumericalProof {
                 query,
-                cause: Box::new(Failure::new(&format!("{cause:?}"))),
+                detail: format!("{cause:?}"),
             },
         )
     })
+}
+
+fn certify_cancellable<T, E: std::fmt::Debug>(
+    attempt: Attempt,
+    stage: CylinderFeatureStage,
+    query: &'static str,
+    cancelled: &mut CancelPoll<'_>,
+    operation: impl FnOnce(&mut CancelPoll<'_>) -> Result<T, E>,
+) -> Checked<T> {
+    let mut observed = false;
+    let result = operation(&mut || {
+        observed = observed || cancelled();
+        observed
+    });
+    if observed {
+        return Err(attempt.fail(stage, CylinderFeatureCause::Cancelled));
+    }
+    certify(attempt, stage, query, result)
+}
+
+#[derive(Clone, Copy, Debug)]
+enum Phase {
+    Admission,
+    AuthoredPlan,
+    ToolStorage,
+    ToolFamily,
+    Archive,
+    OrderedGeometry,
+    ExactContact,
+    LateTolerance,
 }
 
 /// Final solid, directed authored lineage, and ordered validation for a certified cylinder feature.
@@ -65,6 +96,12 @@ pub struct CertifiedCylinderAttachmentReport {
     pub requested_spatial_error: f64,
     /// Unchanged sewing limit for attaching the actual stock traces.
     pub requested_sew_limit: f64,
+    /// Effective planning ceiling, after accounting for the canonical fit allocation and sew.
+    pub effective_fit_ceiling: f64,
+    /// Maximum certified developed discrepancy between authored and stored reference profiles.
+    pub authored_fit_upper: f64,
+    /// Maximum certified spatial discrepancy of the retained normal sweep under its depth budgets.
+    pub normal_storage_upper: f64,
     /// Full-interval upper residual of the attached stock pcurves.
     pub seam_residual_upper: f64,
     /// Full-interval upper residual of the exposed cap pcurves.
@@ -151,19 +188,21 @@ fn execute(
     request: &WrappedNormalRequest,
     planar: PlanarProofVersion,
     cancelled: &mut CancelPoll<'_>,
-    mut complete: impl FnMut(CylinderFeatureStage),
+    mut complete: impl FnMut(Phase),
 ) -> Checked<CertifiedCylinderFeatureResult> {
     let input = material::admit(attachment, attempt, request, planar, cancelled)?;
-    complete(CylinderFeatureStage::Admission);
-    let tool = material::prepare(attempt, request, &input, planar, cancelled)?;
-    complete(CylinderFeatureStage::Tool);
+    complete(Phase::Admission);
+    let tool = material::prepare(attempt, request, &input, planar, cancelled, &mut complete)?;
     let candidate = assembly::build(attempt, &input, &tool, cancelled)?;
-    complete(CylinderFeatureStage::Boolean);
-    let (validation, spatial) = proof::validate(attempt, &input, &tool, &candidate, cancelled)?;
-    complete(CylinderFeatureStage::Validation);
+    complete(Phase::Archive);
+    let (validation, spatial) =
+        proof::validate(attempt, &input, &tool, &candidate, cancelled, &mut complete)?;
     let coverage = CertifiedCylinderAttachmentReport {
         requested_spatial_error: request.options.spatial_error,
         requested_sew_limit: input.resolution.sew,
+        effective_fit_ceiling: input.fit_ceiling(),
+        authored_fit_upper: tool.authored_fit_upper(),
+        normal_storage_upper: tool.normal_storage_upper(),
         seam_residual_upper: spatial[0],
         exposed_cap_residual_upper: spatial[1],
         stock_boundary_residual_upper: candidate.native_stock_error,
