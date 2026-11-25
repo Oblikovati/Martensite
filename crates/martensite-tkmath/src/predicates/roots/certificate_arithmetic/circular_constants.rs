@@ -4,6 +4,13 @@ use super::{
     bounded_dyadic::{Arithmetic, Interval},
     bounded_failure::Checked,
 };
+use num_bigint::{BigInt, Sign};
+
+const MACHIN_GRID_BITS: u16 = 128;
+const MACHIN_GRID_STEPS: u32 = 135;
+// Endpoints from the rounded Machin sum on this grid, in little-endian limbs.
+const MACHIN_LOWER: [u32; 5] = [0x0370_71f8, 0x1319_8a2e, 0x85a3_08d3, 0x243f_6a88, 3];
+const MACHIN_UPPER: [u32; 5] = [0x0370_7448, 0x1319_8a2e, 0x85a3_08d3, 0x243f_6a88, 3];
 
 fn atan_inverse(
     divisor: u64,
@@ -38,6 +45,20 @@ fn alternating_tail(result: Interval, arithmetic: &mut Arithmetic<'_>) -> Checke
 }
 
 pub(in crate::predicates::roots) fn pi(arithmetic: &mut Arithmetic<'_>) -> Checked<Interval> {
+    if arithmetic.fractional_bits() != MACHIN_GRID_BITS {
+        return machin_pi(arithmetic);
+    }
+    // Charge and poll each original step so reuse cannot change admission or receipts.
+    for _ in 0..MACHIN_GRID_STEPS {
+        arithmetic.certificate_step()?;
+    }
+    Ok(Interval {
+        lower: BigInt::from_slice(Sign::Plus, &MACHIN_LOWER),
+        upper: BigInt::from_slice(Sign::Plus, &MACHIN_UPPER),
+    })
+}
+
+fn machin_pi(arithmetic: &mut Arithmetic<'_>) -> Checked<Interval> {
     // Machin's identity; the alternating tails are bounded by one dyadic quantum.
     let fifth = atan_inverse(5, 4, arithmetic)?;
     let other = atan_inverse(239, 14, arithmetic)?;
