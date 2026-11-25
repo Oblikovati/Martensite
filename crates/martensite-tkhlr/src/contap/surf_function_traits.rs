@@ -1,6 +1,6 @@
 //! The solver and template sides of `ContapSurfFunction`: `math_FunctionSetWithDerivatives`
 //! with the failure capture, `TheInsideFunction` and `TheIWFunction`.
-use super::surf_function::ContapSurfFunction;
+use super::{ContapSamplingContext, surf_function::ContapSurfFunction};
 use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::adaptor3d::h_surface_tool::{self as hst, Adaptor3dSurfaceHandle};
 use martensite_tkgeomalgo::int_start::TheInsideFunction;
@@ -38,7 +38,8 @@ impl ContapSurfFunction {
     /// `Set(S)` from a template, whose `Set` cannot fail: a failure of the sampling is
     /// kept and raised by the next `take_failure`.
     fn set_surface_captured(&mut self, surface: &Adaptor3dSurfaceHandle) {
-        let result = self.set_surface(surface);
+        let mut sampling = ContapSamplingContext::new();
+        let result = self.set_surface_with_context(surface, &mut sampling);
         self.capture.keep(result);
     }
 
