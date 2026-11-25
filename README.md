@@ -35,7 +35,7 @@ The improvememt roadmap for this project can be found on [Milestones](https://gi
 | `martensite-tkshhealing` | Shape analysis, repair, geometry conversion and subdivision. |
 | `martensite-tkmesh` | Mesh elements, discretization, triangulation and incremental meshing. |
 | `martensite-tktobj` | Document objects, partitions, references, attributes and model iteration. |
-| `martensite-tkbo` | Boolean operations: general fuse, builders, intersection tools, splitting and defeaturing. |
+| `martensite-tkbo` | Boolean operations, general fuse, builders, sections with face ancestry, intersection tools, splitting and defeaturing. |
 | `martensite-tksketch` | [Surface-bound sketches](docs/features/martensite-tksketch/README.md) with cylindrical and conical normal extrusion, periodic bands and apertures, and selected-face bosses and pockets. |
 | `martensite-tkbool` | Topological operations, sweeps, evolved shapes and projections. |
 | `martensite-tkfillet` | Fillets and chamfers. |

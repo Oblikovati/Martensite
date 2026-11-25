@@ -13,6 +13,8 @@ use martensite_tktopalgo::brep_builder_api::{
 };
 use std::ops::{Deref, DerefMut};
 
+mod boundary_ancestry;
+
 /// The section of two shapes: the section edges and vertices, with optional approximation
 /// and p-curves on the faces of each shape.
 ///
@@ -210,18 +212,20 @@ impl BRepAlgoAPISection {
     }
 
     /// The face of the first shape the section edge comes from (`HasAncestorFaceOn1`).
+    /// A boundary-coincident edge needs a unique source face pair.
     /// `section.has_ancestor_face_on1(&edge)`.
     pub fn has_ancestor_face_on1(&self, edge: &Shape) -> Result<Option<Shape>, Failure> {
         Ok(self.ancestor_faces(edge)?.map(|(first, _)| first))
     }
 
     /// The face of the second shape the section edge comes from (`HasAncestorFaceOn2`).
+    /// A boundary-coincident edge needs a unique source face pair.
     /// `section.has_ancestor_face_on2(&edge)`.
     pub fn has_ancestor_face_on2(&self, edge: &Shape) -> Result<Option<Shape>, Failure> {
         Ok(self.ancestor_faces(edge)?.map(|(_, second)| second))
     }
 
-    /// The faces of the face/face interference the section edge comes from
+    /// Face/face interference takes precedence over boundary incidence
     /// (`HasAncestorFaces`).
     fn ancestor_faces(&self, edge: &Shape) -> Result<Option<(Shape, Shape)>, Failure> {
         if edge.is_null() || edge.shape_type()? != martensite_tkg3d::top_abs::ShapeEnum::Edge {
@@ -244,7 +248,7 @@ impl BRepAlgoAPISection {
                 }
             }
         }
-        Ok(None)
+        boundary_ancestry::unique_boundary_pair(self, structure, edge)
     }
 }
 

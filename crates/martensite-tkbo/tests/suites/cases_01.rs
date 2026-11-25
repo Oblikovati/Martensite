@@ -112,6 +112,8 @@ pub mod pair_selector;
 pub mod periodic_pcurve;
 #[path = "../profile_extrusion/main.rs"]
 pub mod profile_extrusion;
+#[path = "../section_boundary_ancestry.rs"]
+mod section_boundary_ancestry;
 #[path = "../shape_set.rs"]
 pub mod shape_set;
 #[path = "../shrunk_range_behavior.rs"]

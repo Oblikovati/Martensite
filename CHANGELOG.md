@@ -96,6 +96,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Isolated Contap surface sampling per operation and made contour diagnostics opt-in through the caller's writer (#611).
 
+- Fixed section ancestry queries for boundary-coincident edges with a unique source face on each operand (#613).
+
 - Enabled wrapped bosses and pockets on indirectly parameterized cylindrical sides from planar circle extrusions, with the original seam, trim checks and feature history preserved (#600).
 
 - Fixed directed cone extrusion on radial spans with exact constant non-unit Bézier weights by certifying the native unit-weight representation (#536).
