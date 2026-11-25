@@ -79,6 +79,14 @@ pub(super) fn certify_with_limits(
     limits: BudgetLimits,
 ) -> Checked<BudgetEvidence> {
     owners(originals, family)?;
+    if let Some(region) = family
+        .selection
+        .prepared
+        .planar
+        .integral_mismatch(originals)
+    {
+        return Err(BudgetFailure::Source(region));
+    }
     let members = member_budgets(originals, family, limits)?;
     member::clearance(family, limits.clearance)?;
     let cap_homotopy = cap_homotopy::certify(family)?;
