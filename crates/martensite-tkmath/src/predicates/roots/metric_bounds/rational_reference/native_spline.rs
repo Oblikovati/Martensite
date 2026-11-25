@@ -23,6 +23,33 @@ pub struct NativeSplineSource<'a> {
     pub knots: &'a [f64],
 }
 
+impl NativeSplineSource<'_> {
+    /// Check the bounded pole and flat-knot counts before reading their contents.
+    /// Example: `source.check_extent()?;`.
+    pub fn check_extent(self) -> NativeResult<()> {
+        let [poles, knots] = [self.poles.len(), self.knots.len()];
+        let degree = self.degree;
+        if !(1..=16).contains(&degree)
+            || poles <= degree
+            || poles.checked_add(degree + 1) != Some(knots)
+        {
+            return Err(NativeSplineFailure::Knots {
+                degree,
+                poles,
+                knots,
+            });
+        }
+        let minimum_spans = (poles - 1).div_ceil(degree);
+        if minimum_spans > MAX_SPANS {
+            return Err(NativeSplineFailure::SpanCount {
+                spans: minimum_spans,
+                limit: MAX_SPANS,
+            });
+        }
+        Ok(())
+    }
+}
+
 /// Literal coefficients and an outward proof against an original native span.
 pub struct CertifiedNativeSplineSpan {
     /// Exact native binary64 interval endpoints, without normalization.
@@ -54,7 +81,7 @@ pub enum NativeSplineFailure {
     },
     /// Certificate's supported work shape was exceeded.
     SpanCount {
-        /// Number of required spans.
+        /// Lower bound on the number of required spans.
         spans: usize,
         /// Maximum number of spans.
         limit: usize,
@@ -130,6 +157,7 @@ pub fn lower_native_bspline(
 }
 
 fn admit_spline(source: NativeSplineSource<'_>) -> NativeResult<()> {
+    source.check_extent()?;
     check_knots(source.degree, source.poles.len(), source.knots)?;
     let spans = source
         .knots

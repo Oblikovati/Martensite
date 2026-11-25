@@ -43,16 +43,16 @@ not converted. Errors retain offending source IDs or values and the expected
 shape.
 
 The rational entry points handle the additional profile representations below.
-Longer analytic sweeps still require a certified map from the fitted spans
-to the original angular interval.
 
 ## Positive rational reference
 
-The rational normal entries accept lines, polynomial or positive-weight splines
-with certified monotone spans, and exact circular or axis-aligned elliptic
-quarters, plus closed circles and axis-aligned ellipses with exact coefficients.
-Shorter analytic sweeps can use exact affine-carrier endpoints even when their
-stereographic weights require rounding.
+The rational normal entries accept lines, polynomial or positive-weight
+clamped splines, circular and elliptic arcs, circles, and ellipses. For conics
+with rounded endpoints or rotated axes, the planar proof works on the sewn
+spans captured by TKBO. A bounded trigonometric calculation relates those
+spans to the admitted analytic carrier. Each endpoint must still fit the
+original sewing limit. The position, derivative, and signed area bounds
+include the transfer, and the sewn span joins use exact separation tests.
 The outer and hole loops may mix those curves. The entries require increasing
 signed depths and one angular chart. The cone also requires the profile to
 lie in the positive developed halfplane, clear of the apex. The rational cylinder
@@ -78,7 +78,9 @@ reference error tubes. The normal map bounds the error in world coordinates.
 History records the original curve and its dyadic parameter intervals. For an analytic quarter it
 also records how the stereographic parameter maps to the native angle. Closed
 conics record a native-angle key at each quarter, including the seam at zero.
-For a shorter sweep, the key records the original angular endpoints. A
+Keys for a sewn sweep store the admitted angle and signed sweep, the exact
+fraction covered by each native piece, and its rational parameter map. The
+anchors between pieces carry the same authored curve identity. A
 nonuniform spline records the two original knots alongside each local dyadic
 interval. A vertex at a native knot has one key shared by its two neighbors.
 The position, derivative and Green-area bounds include coefficient rounding.

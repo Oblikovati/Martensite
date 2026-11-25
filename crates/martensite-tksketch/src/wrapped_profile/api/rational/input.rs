@@ -27,10 +27,11 @@ pub(super) struct NativeSpan<'a> {
     pub map: Option<ParameterMap>,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub(super) enum ParameterMap {
     Quarter(WrappedConicParameterMap),
     Analytic(WrappedAnalyticArcMap),
+    Admitted(WrappedAdmittedArcMap),
     Spline(WrappedSplineParameterMap),
 }
 
@@ -38,6 +39,7 @@ enum NativeControls<'a> {
     Spline(MetricBezier<'a, 2>),
     Quarter([[f64; 2]; 3]),
     TransportedConic(Box<CertifiedRationalConicSegment>),
+    SewnConic(Box<conic::SewnConic>),
     TransportedSpline(CertifiedNativeSplineSpan),
 }
 
@@ -61,6 +63,9 @@ pub(super) fn read<'a>(
 ) -> Checked<Source<'a>> {
     let selection = selected(profile, selections)?;
     let uses = resolve_uses(selection, profile)?;
+    for (_, curve) in &uses {
+        spline::preflight(curve, cancelled)?;
+    }
     let vertices = vertices(profile)?;
     let profile = selected_profile(&uses, &vertices)?;
     let mut lines = Vec::new();
@@ -91,7 +96,13 @@ pub(super) fn read<'a>(
                 )?);
             }
             ProfileCurve::Circle { .. } | ProfileCurve::Ellipse { .. } => {
-                curves.push(conic::closed_conic(*used, &profile, options)?);
+                curves.push(conic::closed_conic(
+                    *used,
+                    &profile,
+                    options,
+                    &mut transport_policy,
+                    cancelled,
+                )?);
             }
         }
     }
@@ -147,7 +158,9 @@ impl Source<'_> {
     }
 
     pub(super) fn poles(&self) -> impl Iterator<Item = [f64; 2]> + '_ {
-        self.curves.iter().flat_map(Curve::poles)
+        self.curves
+            .iter()
+            .flat_map(|curve| curve.spans.iter().flat_map(NativeSpan::support_hull))
     }
 
     pub(super) fn area_wire(
@@ -210,7 +223,12 @@ impl Curve<'_> {
     }
 
     pub(super) fn needs_planar_partition(&self) -> bool {
-        self.is_mapped_spline() || self.ends.is_some() && self.spans.len() > 1
+        self.is_mapped_spline()
+            || self.spans.len() > 1 && matches!(self.spans[0].controls, NativeControls::Spline(_))
+    }
+
+    pub(super) fn has_sewn_conic_partition(&self) -> bool {
+        self.spans.len() > 1 && matches!(self.spans[0].controls, NativeControls::SewnConic(_))
     }
 
     fn metric_spans(&self, reversed: bool) -> impl Iterator<Item = OrientedMetricCurve<'_>> {
@@ -238,6 +256,7 @@ impl NativeSpan<'_> {
         match &self.controls {
             NativeControls::TransportedConic(value) => Some(value.transport),
             NativeControls::TransportedSpline(value) => Some(value.transport),
+            NativeControls::SewnConic(value) => Some(value.proof.transport),
             _ => None,
         }
     }
@@ -246,6 +265,7 @@ impl NativeSpan<'_> {
         match &self.controls {
             NativeControls::TransportedConic(value) => Some(value.area_transfer),
             NativeControls::TransportedSpline(value) => Some(value.area_transfer),
+            NativeControls::SewnConic(value) => Some(value.proof.area_transfer),
             _ => None,
         }
     }
@@ -259,10 +279,35 @@ impl NativeSpan<'_> {
         )
     }
 
+    fn support_hull(&self) -> impl Iterator<Item = [f64; 2]> + '_ {
+        let sewn = match &self.controls {
+            NativeControls::SewnConic(value) => Some(value.as_ref()),
+            _ => None,
+        };
+        self.hull_points().chain(sewn.into_iter().flat_map(|value| {
+            let error = value.proof.transport.position;
+            value.poles.iter().flat_map(move |p| {
+                enclosure_corners(p.map(|x| [(x - error).next_down(), (x + error).next_up()]))
+            })
+        }))
+    }
+
+    pub(super) fn sewn_center(&self) -> Option<[f64; 2]> {
+        if let NativeControls::SewnConic(value) = &self.controls {
+            Some(value.center)
+        } else {
+            None
+        }
+    }
+
     pub(super) fn metric(&self) -> MetricBezier<'_, 2> {
         match &self.controls {
             NativeControls::Spline(curve) => *curve,
             NativeControls::TransportedConic(lowered) => MetricBezier {
+                poles: &lowered.poles,
+                weights: Some(&lowered.weights),
+            },
+            NativeControls::SewnConic(lowered) => MetricBezier {
                 poles: &lowered.poles,
                 weights: Some(&lowered.weights),
             },

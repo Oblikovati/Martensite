@@ -52,7 +52,8 @@ pub use crate::measured::{Evidence, IntegrationMethod, Measured, MeasuredPoint};
 pub use crate::sketch_region_certification::CensusWorkReceipt as PlanarProofWorkReceipt;
 pub use bernstein_partition::{NativeBernsteinSpan, exact_bernstein_partition};
 pub use bezier::{
-    ExactConicQuarter, exact_closed_conic, exact_conic_arc_source, exact_conic_quarter,
+    ExactConicQuarter, admitted_conic_spans, exact_closed_conic, exact_conic_arc_source,
+    exact_conic_quarter,
 };
 pub use build_regions::{
     build_planar_regions, build_planar_regions_with_integration_budget_and_cancel,

@@ -78,3 +78,35 @@ fn preserves_polynomial_splines_and_finite_typed_refusals() {
         Err(NativeSplineFailure::Knots { .. })
     ));
 }
+
+#[test]
+fn oversized_pole_and_flat_knot_counts_refuse_before_coefficient_reads() {
+    let poles = [[f64::NAN; 2]; 66];
+    let knots = [f64::NAN; 68];
+    let source = NativeSplineSource {
+        degree: 1,
+        poles: &poles,
+        weights: None,
+        knots: &knots,
+    };
+    assert!(matches!(
+        source.check_extent(),
+        Err(NativeSplineFailure::SpanCount {
+            spans: 65,
+            limit: 64
+        })
+    ));
+    assert!(matches!(
+        lower_native_bspline(source, Default::default(), || false),
+        Err(NativeSplineFailure::SpanCount {
+            spans: 65,
+            limit: 64
+        })
+    ));
+    assert!(matches!(
+        lower_native_bspline(source, Default::default(), || true),
+        Err(NativeSplineFailure::Reference(
+            RationalReferenceFailure::Arithmetic(BoundedArithmeticFailure::Cancelled)
+        ))
+    ));
+}

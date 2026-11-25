@@ -39,6 +39,13 @@ pub enum RationalWrappedFailure {
         /// Exact incidence, sweep, or transport failure.
         cause: Box<RationalConicSegmentFailure>,
     },
+    /// Transport from an admitted analytic conic to its sewn planar coefficients failed.
+    AdmittedConicTransport {
+        /// Original authored conic identity.
+        curve: ProfileCurveId,
+        /// Bounded analytic carrier or transport cause.
+        cause: Box<RationalReferenceFailure>,
+    },
     /// The original native knot partition could not be transported.
     NativeSplineTransport {
         /// Original authored spline identity.
@@ -62,6 +69,9 @@ impl std::fmt::Display for RationalWrappedFailure {
             Self::NativeSplineTransport { curve, cause } => {
                 write!(f, "authored spline {curve:?}: {cause}")
             }
+            Self::AdmittedConicTransport { curve, cause } => {
+                write!(f, "admitted conic {curve:?}: {cause}")
+            }
             Self::ConicTransport { curve, cause } => write!(f, "authored conic {curve:?}: {cause}"),
             Self::Measure(cause) => cause.fmt(f),
             Self::Reference(cause) => cause.fmt(f),
@@ -76,6 +86,7 @@ impl std::error::Error for RationalWrappedFailure {
             Self::Planar(cause) => Some(cause.as_ref()),
             Self::Analytic(cause) => Some(cause.as_ref()),
             Self::NativeSplineTransport { cause, .. } => Some(cause.as_ref()),
+            Self::AdmittedConicTransport { cause, .. } => Some(cause.as_ref()),
             Self::ConicTransport { cause, .. } => Some(cause.as_ref()),
             Self::Measure(cause) => Some(cause.as_ref()),
             Self::Reference(cause) => Some(cause.as_ref()),
@@ -132,11 +143,14 @@ impl RationalWrappedResult {
     pub fn authored_planar_work(&self) -> PlanarProofWorkReceipt {
         self.source.planar_work
     }
-    /// Error-bounded integration receipt before any source transport. Example: `result.authored_area_receipt().enclosure()`.
+    /// Certified area integral of the working planar boundary.
+    /// Use `authored_area()` for the enclosure with the `area_transport_error()` allowance.
+    /// Example: `let integral = result.authored_area_receipt();`.
     pub fn authored_area_receipt(&self) -> &CertifiedRationalMeasure {
         &self.source.area
     }
-    /// Certified area change from rounding exact native coefficients. Example: `result.area_transport_error().upper`.
+    /// Certified area transfer from the authored geometry to the working representation.
+    /// Example: `result.area_transport_error().upper`.
     pub fn area_transport_error(&self) -> WrappedCertifiedBound {
         WrappedCertifiedBound {
             upper: self.source.area_transport_error,
@@ -172,7 +186,7 @@ impl RationalWrappedResult {
     }
 }
 
-/// Extrude a selected region with lines, Bernstein splines, or exact analytic quarters.
+/// Extrude a selected region with lines, clamped splines, or analytic curves on a cylinder.
 /// Requires one material region and increasing depths away from the cylindrical axis.
 /// The reference level specifies the dyadic intervals used in the original curve parameter.
 /// Example: `let body = normal_extrude_rational_cylinder(&request, 4, || false)?;`.
@@ -208,7 +222,7 @@ pub fn normal_extrude_rational_cylinder(
     prepared.finish(retained.into(), request.options.volume, &mut cancelled)
 }
 
-/// Extrude a selected region with lines, Bernstein splines, or exact analytic quarters on a cone.
+/// Extrude a selected region with lines, clamped splines, or analytic curves on a cone.
 /// Requires increasing depths, one chart in the positive developed halfplane, and clearance
 /// from the apex throughout the sweep. Example: `normal_extrude_rational_cone(&request, 4, || false)?`.
 pub fn normal_extrude_rational_cone(

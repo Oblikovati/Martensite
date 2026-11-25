@@ -6,6 +6,40 @@ use martensite_tkmath::predicates::roots::metric_bounds::{
     NativeSplineSource, lower_native_bspline,
 };
 
+pub(super) fn preflight(curve: &ProfileCurve, cancelled: &mut CancelPoll<'_>) -> Checked<()> {
+    super::super::super::input::poll(cancelled, WrappedStage::Input).map_err(wrapped_failure)?;
+    if let ProfileCurve::Spline {
+        id,
+        degree,
+        poles,
+        weights,
+        knots,
+        ..
+    } = curve
+    {
+        let source = NativeSplineSource {
+            degree: *degree as usize,
+            poles,
+            weights: weights.as_deref(),
+            knots,
+        };
+        source
+            .check_extent()
+            .map_err(|cause| spline_failure(*id, cause))?;
+    }
+    Ok(())
+}
+
+fn spline_failure(
+    id: ProfileCurveId,
+    cause: martensite_tkmath::predicates::roots::metric_bounds::NativeSplineFailure,
+) -> RationalWrappedFailure {
+    RationalWrappedFailure::NativeSplineTransport {
+        curve: id,
+        cause: Box::new(cause),
+    }
+}
+
 pub(super) fn rational<'a>(
     curve: &'a ProfileCurve,
     used: LoopUse,
@@ -100,12 +134,8 @@ fn transported_partition<'a>(
             "an open spline with a strict full-curve projection, or an exact closed Bernstein partition",
         ));
     }
-    let pieces = lower_native_bspline(source, *policy, cancelled).map_err(|cause| {
-        RationalWrappedFailure::NativeSplineTransport {
-            curve: id,
-            cause: Box::new(cause),
-        }
-    })?;
+    let pieces = lower_native_bspline(source, *policy, cancelled)
+        .map_err(|cause| spline_failure(id, cause))?;
     Ok(pieces
         .into_iter()
         .map(|piece| transported_span(piece, policy))
