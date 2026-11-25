@@ -1,16 +1,13 @@
 # Wrapped-profile API contract
 
-The current candidate exposes cylinder and cone solved-profile operations from
+The cylinder and cone solved-profile operations live in
 `martensite_tksketch::surface_sketch` (#418). Phase A was integrated by
 [PR #549](https://github.com/Oblikovati/Martensite/pull/549) into `release/next`
 at `8f2b423103d13b22d9724747946b43ee1ca15ded`. Required hosted checks passed on
-PR head `7a2aa0814a3f8c5b049aaec74b5d98bd26b296fe`, including actual new cone
-TSan execution. The receipts were captured before merge and retain that tested
-head. Phase A's curved outer contour with a hole completes through the public
-entry, and the case-specific footprint tradeoff was accepted on 2026-11-18.
-This is an unreleased bounded contract, not completion of general cone wrapping
-or B/C qualification. Existing cylinder-rectangle and conical-sector APIs retain their
-signatures and behavior.
+PR head `7a2aa0814a3f8c5b049aaec74b5d98bd26b296fe`, including the cone
+ThreadSanitizer control. Martensite v0.14.0 shipped this single-chart cone
+contract for curved outer contours with holes. The case-specific footprint
+tradeoff was accepted on 2026-11-18.
 
 ## Entries and owned input
 
@@ -91,8 +88,8 @@ replay_request.proof.planar_proof = PlanarProofVersion::BernsteinV3;
 let replay = normal_extrude_cone_profile_with_cancel(&replay_request, || false)?;
 ```
 
-`WrappedConeProofOptions::default()` selects `FilteredBernsteinV4` only for the
-new unreleased cone request's retained UV material proof. Explicit
+`WrappedConeProofOptions::default()` selects `FilteredBernsteinV4` for the
+cone request's retained UV material proof. Explicit
 `BernsteinV3` remains available for same-policy replay; V3 and V4 may have
 different work/cancellation traces. Existing cylinder and toolkit defaults stay
 unchanged. The requested selector is rebound to the actual UV capture receipt

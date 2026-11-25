@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added explicit full-turn cylinder and cone bands with authored rim history and paired native seams (#419).
+
 - Added wrapped cylinder and cone profiles for weighted Bernstein spans with a proven same-parameter polynomial identity and source-bound planar evidence (#418).
 
 - Added per-window mailbox presentation for synchronized native views, with FIFO fallback (#420).
