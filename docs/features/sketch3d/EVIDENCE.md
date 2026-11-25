@@ -423,3 +423,11 @@ closure, cancellation and signed-zero replay. The independent review found the o
 verified exact projected opposition on the corrected code. The point and line solver gives a typed refusal
 for an arc layout. Arc equations, spline interaction, native curved wires and desktop authoring have separate
 acceptance cases.
+
+## E20. Construction participation
+
+`0842c375` keeps spatial construction roles separate from the point and curve recipes. Changing a role
+preserves geometry and identity. A line with the construction role can drive a length in the native solver.
+New wire recipes refuse it with its line ID. A previously captured recipe still materializes its own
+inputs. The tests also cover atomic cancellation, typed lookup, point-deletion closure and construction
+arcs. Independent review, 64 Sketch3D tests and strict toolkit Clippy passed on Rust `1.98.1`.

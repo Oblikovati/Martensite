@@ -42,6 +42,11 @@ placement points. The output preserves their original coordinates and reports
 the sampled deviation separately from the nominal circle. The point and line
 solver refuses arc-bearing snapshots until it has an arc layout.
 
+`Edit::SetCurveRole` marks a line or arc as construction geometry without
+changing its ID or placement. A construction line stays available to
+measurement and the constraint solver. The wire constructor refuses it in a
+new modelling path, and an already detached recipe keeps its captured inputs.
+
 Use `Snapshot::wire_recipe` with a directed list of line IDs and a pair-check
 budget. A wire joins consecutive uses through shared point IDs and checks exact
 contact on the authored segments. `WireRecipe::materialize` returns a fresh BRep
