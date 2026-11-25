@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Storage bounds in the support's local cylinder chart; no topology or angular claim (#418).
 mod admission;
+mod contact_prefix;
 mod error;
 mod proof;
 mod radial_sweep;
@@ -13,6 +14,11 @@ use crate::predicates::roots::certificate_arithmetic::{
     bernstein_bounds as polynomial,
     bounded_dyadic::{Arithmetic, ArithmeticPolicy, Interval},
     bounded_failure::BoundedArithmeticFailure,
+};
+pub use contact_prefix::{
+    CertifiedCylindricalContactPrefix, CylindricalContactPrefixError,
+    CylindricalContactPrefixFailure, CylindricalContactPrefixQuery,
+    certify_cylindrical_contact_prefix,
 };
 use error::Checked;
 pub use error::{CylindricalStorageError, CylindricalStorageFailure};
