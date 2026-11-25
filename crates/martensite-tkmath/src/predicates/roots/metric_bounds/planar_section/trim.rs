@@ -67,16 +67,16 @@ pub(super) fn validate_edge(
     use_edge: &SectionBorder,
     index: usize,
 ) -> Checked<[Vector; 2]> {
-    let inconsistent = Failure::InconsistentBorder(index);
+    let inconsistent = || Failure::InconsistentBorder(index);
     let mut actual = space_endpoints(use_edge.space).map_err(|cause| {
         if cause == Failure::CandidateDomain {
-            inconsistent
+            inconsistent()
         } else {
             cause
         }
     })?;
     if actual[0] == actual[1] || actual.iter().any(|point| !zero(&chart.dist(point))) {
-        return Err(inconsistent);
+        return Err(inconsistent());
     }
     if let Some(pcurve) = use_edge.pcurve
         && (pcurve.range != use_edge.space.range
@@ -85,14 +85,14 @@ pub(super) fn validate_edge(
                 .map(|uv| chart.lift(uv))
                 != actual)
     {
-        return Err(inconsistent);
+        return Err(inconsistent());
     }
     if use_edge.reversed {
         actual.swap(0, 1);
     }
     let [a, b] = use_edge.vertices;
     if [vertex(a)?, vertex(b)?] != actual {
-        return Err(inconsistent);
+        return Err(inconsistent());
     }
     Ok(actual)
 }
