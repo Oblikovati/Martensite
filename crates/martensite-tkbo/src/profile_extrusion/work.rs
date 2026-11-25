@@ -27,6 +27,14 @@ pub enum PlanarProofVersion {
         /// Graph-wide examined integration cells shared by every program.
         max_total_subintervals: u64,
     },
+    /// Directed selected-cap proof issued by `CertifiedPlanarMaterial`.
+    /// The generic planar graph builder requires a graph selector.
+    DirectedSelectedCapV1 {
+        /// Maximum components across the complete selected cap.
+        max_components: u16,
+        /// Effective cap on integrated subintervals.
+        max_total_subintervals: u64,
+    },
 }
 impl PlanarProofVersion {
     pub(crate) fn integral_options(
@@ -73,6 +81,7 @@ impl PlanarProofVersion {
             Self::FilteredBernsteinV4 => 4,
             Self::FilteredCompositeBernsteinV5 { .. } => 5,
             Self::GeometricCompositeV6 { .. } => 6,
+            Self::DirectedSelectedCapV1 { .. } => 7,
         }
     }
 }

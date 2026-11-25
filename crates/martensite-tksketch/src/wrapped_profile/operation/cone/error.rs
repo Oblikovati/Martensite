@@ -28,6 +28,7 @@ pub(in crate::surface_sketch::wrapped_profile) enum ConeCause {
     ActualBinding(Box<martensite_tkbo::body_check::ConicalBindingError>),
     ActualValidation(Box<martensite_tkbo::body_check::ValidationReport>),
     Material(Box<ConicalMaterialError>),
+    DirectedCap(Box<martensite_tkbo::body_check::DirectedCapFailure>),
     DevelopedMaterial(Box<ConicalDevelopedMaterialError>),
     Reference(Box<ConicalReferenceError>),
     ReferenceVolume(Box<ConicalReferenceVolumeError>),
@@ -121,6 +122,7 @@ impl ConeFailure {
 
     fn cancelled(&self) -> bool {
         match &self.cause {
+            DirectedCap(cause) => cause.cancelled,
             Cancelled(_) | Planar(_) | Storage(_) => self.capture_cancelled(),
             Material(_) | DevelopedMaterial(_) => self.material_cancelled(),
             ConeCause::Reference(cause) => cause.is_cancelled(),

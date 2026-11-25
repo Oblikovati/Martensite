@@ -220,7 +220,7 @@ impl std::fmt::Debug for PlanarEvidence {
     }
 }
 
-fn combined_profile(
+pub(super) fn combined_profile(
     requests: &[impl AsRef<DevelopedRegionRequest>],
 ) -> Result<SketchProfile, PlanarFailure> {
     let mut combined = SketchProfile {

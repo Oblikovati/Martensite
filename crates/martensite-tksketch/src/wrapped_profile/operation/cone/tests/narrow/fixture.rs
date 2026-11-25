@@ -136,7 +136,8 @@ fn contour(first: u64, reversed: bool) -> ProfileLoop {
     ProfileLoop { uses }
 }
 
-pub(super) fn two_ovals_and_dot() -> WrappedConeNormalRequest {
+pub(in crate::surface_sketch::wrapped_profile::operation::cone::tests) fn two_ovals_and_dot()
+-> WrappedConeNormalRequest {
     let mut request = request(NormalSense::Outward, Quadrant::PositiveX);
     for (first, scales) in [(17, [4., 18.]), (21, [3., 16.])] {
         append_oval(

@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added an opt-in transported cone extrusion selector that certified decoded cap material from its directed outer and hole cycles and reported the work charged to the operation (#425).
+
 - Added an opt-in transported cone extrusion selector that certifies authored planar material with GeometricCompositeV6 and reports its share of the integration allowance (#425).
 
 - Added borrowed comparison methods for captured Bézier pair and self-query sources, so planar certificate rebinding can compare the operands without recopying their control points or weights (#419).

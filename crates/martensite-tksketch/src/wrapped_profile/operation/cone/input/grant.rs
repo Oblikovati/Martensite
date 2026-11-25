@@ -38,6 +38,7 @@ fn grant_policy(execution: WrappedConeExecutionSelection) -> WrappedConeArithmet
         | DirectedRegionAtlasRequireCertifiedV4 { arithmetic }
         | DirectedTransportedPlacementV5 { arithmetic, .. }
         | DirectedTransportedAuthoredPlanarV8 { arithmetic, .. }
+        | DirectedTransportedAuthoredPlanarAndCapCyclesV9 { arithmetic, .. }
         | ConnectedChartAtlasV6 { arithmetic }
         | DirectedConnectedChartAtlasV7 { arithmetic } => arithmetic,
         _ => OriginalV1,

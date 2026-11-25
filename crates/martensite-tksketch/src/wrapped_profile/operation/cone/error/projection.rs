@@ -38,6 +38,7 @@ fn shared_context(failure: &ConeFailure) -> Option<shared::Context> {
         }
         ActualPatch(_) | ActualPair { .. } | DirectedRows(_) => None,
         ChartPlan(_) => None,
+        DirectedCap(_) => None,
         Atlas(cause) => match cause.as_ref() {
             material::atlas::Refusal::Material(cause) => {
                 let mut context = shared::material_context(cause);
@@ -72,6 +73,15 @@ fn admission_class(cause: &ConeCause) -> Option<Class> {
         ActualBinding(_) | ActualValidation(_) => Some(Class::Incomplete),
         Storage(cause) => Some(cause.public_class()),
         Cancelled(_) => Some(Class::Cancelled),
+        DirectedCap(failure) => {
+            use martensite_tkbo::body_check::DirectedCapCause;
+            Some(match failure.cause.as_ref() {
+                DirectedCapCause::Policy { .. }
+                | DirectedCapCause::Shape { .. }
+                | DirectedCapCause::Profile(_) => Class::InvalidInput,
+                _ => Class::Incomplete,
+            })
+        }
         SourceAnchor { .. } | Missing(_) => Some(Class::Incomplete),
         Scalar { .. } | Limit { .. } | Binding { .. } => None,
         Budget(_) | Planar(_) | NativeQualification(_) | Coverage(_) | History(_) => None,
@@ -109,6 +119,7 @@ fn mathematical_class(cause: &ConeCause) -> Option<Class> {
         NativeQualification(_) | Storage(_) | Coverage(_) | History(_) => None,
         ActualBinding(_) | ActualValidation(_) => None,
         Budget(_) | Planar(_) | Cancelled(_) | Binding { .. } => None,
+        DirectedCap(_) => None,
     }
 }
 

@@ -177,9 +177,9 @@ fn has_program_members(family: &ConeBudgeted) -> bool {
         member
             .geometry
             .material
-            .uv
             .integral_program_evidence()
             .is_some()
+            || member.geometry.material.directed_cap_work().is_some()
     })
 }
 fn validate_member_loan(
@@ -194,6 +194,16 @@ fn validate_member_loan(
         .get(&region)
         .ok_or_else(|| mismatch(region, None, "integral member owner"))?;
     let geometry = &member.geometry;
+    if let Some(actual) = geometry.material.directed_cap_work() {
+        if limit.checked_sub(consumed) != Some(actual.requested.remaining_integration_cells) {
+            return Err(mismatch(
+                region,
+                None,
+                "ordered directed cap integration entry allowance",
+            ));
+        }
+        return member_cells(region, consumed, actual.integration_cells, geometry);
+    }
     let proof = geometry
         .material
         .uv

@@ -61,6 +61,16 @@ pub enum WrappedConeExecutionSelection {
         /// Maximum authored integration cells, subject to the original operation allowance.
         authored_max_subintervals: u64,
     },
+    /// Transported family-chart placement with directed selected-cap proof on retained UV.
+    /// Requests use GeometricCompositeV6 limits for the cap proof and retain authored V6.
+    DirectedTransportedAuthoredPlanarAndCapCyclesV9 {
+        /// Finite aggregate arithmetic admission.
+        arithmetic: WrappedConeArithmeticGrantPolicy,
+        /// Maximum components in a complete authored integral program.
+        authored_max_components: u16,
+        /// Original authored integration cap, subject to the operation allowance.
+        authored_max_subintervals: u64,
+    },
 }
 impl WrappedConeExecutionSelection {
     pub(in crate::surface_sketch::wrapped_profile) fn is_connected_atlas(self) -> bool {
@@ -75,6 +85,7 @@ impl WrappedConeExecutionSelection {
             Self::DirectedTransportedPlacementV5 { .. }
                 | Self::DirectedConnectedChartAtlasV7 { .. }
                 | Self::DirectedTransportedAuthoredPlanarV8 { .. }
+                | Self::DirectedTransportedAuthoredPlanarAndCapCyclesV9 { .. }
         )
     }
 
@@ -88,18 +99,30 @@ impl WrappedConeExecutionSelection {
                 | Self::DirectedTransportedPlacementV5 { .. }
                 | Self::DirectedConnectedChartAtlasV7 { .. }
                 | Self::DirectedTransportedAuthoredPlanarV8 { .. }
+                | Self::DirectedTransportedAuthoredPlanarAndCapCyclesV9 { .. }
+        )
+    }
+    pub(in crate::surface_sketch::wrapped_profile) fn uses_directed_cap_cycles(self) -> bool {
+        matches!(
+            self,
+            Self::DirectedTransportedAuthoredPlanarAndCapCyclesV9 { .. }
         )
     }
     pub(in crate::surface_sketch::wrapped_profile) fn authored_planar_program(
         self,
     ) -> Option<martensite_tkbo::profile_extrusion::PlanarProofVersion> {
-        let Self::DirectedTransportedAuthoredPlanarV8 {
-            authored_max_components,
-            authored_max_subintervals,
-            ..
-        } = self
-        else {
-            return None;
+        let (authored_max_components, authored_max_subintervals) = match self {
+            Self::DirectedTransportedAuthoredPlanarV8 {
+                authored_max_components,
+                authored_max_subintervals,
+                ..
+            }
+            | Self::DirectedTransportedAuthoredPlanarAndCapCyclesV9 {
+                authored_max_components,
+                authored_max_subintervals,
+                ..
+            } => (authored_max_components, authored_max_subintervals),
+            _ => return None,
         };
         Some(
             martensite_tkbo::profile_extrusion::PlanarProofVersion::GeometricCompositeV6 {
@@ -133,6 +156,7 @@ impl WrappedConeNormalResult {
 
 /// Execute the selected complete cone behavior without changing request defaults.
 /// Request FilteredCompositeBernsteinV5 or GeometricCompositeV6 for directed or connected-atlas selections.
+/// The directed selected-cap selection requires GeometricCompositeV6 limits.
 /// Example: `request.proof.planar_proof = PlanarProofVersion::FilteredCompositeBernsteinV5 { max_components: 64, max_total_subintervals: 100_000 }; normal_extrude_cone_profile_with_selection(&request, selection)?;`.
 pub fn normal_extrude_cone_profile_with_selection(
     request: &WrappedConeNormalRequest,

@@ -97,6 +97,15 @@ different work/cancellation traces. Existing cylinder and toolkit defaults stay
 unchanged. The requested selector is rebound to the actual UV capture receipt
 and reported by `reports()[&region].material.planar_proof`.
 
+`DirectedTransportedAuthoredPlanarAndCapCyclesV9` uses the positive-X family
+chart and the V8 authored GeometricCompositeV6 program. For each decoded
+cap it checks every self and distinct curve domain, verifies the exact join
+parameters, and proves the orientation and nesting of the directed outer
+cycle and holes. It requires `GeometricCompositeV6` as the request's cap
+policy. Its work receipt records the original cap, the remaining operation
+allowance, the effective cap and the work spent. Native cap rebinding and
+ordered self-intersection checks still run on the frozen tool.
+
 The cone proof defaults retain 128 fractional arithmetic bits and one finite
 aggregate allowance of 1,000,000 charged operations. `integration` uses
 `CylindricalFluxOptions::default()` as a shared finite reference-volume and
@@ -154,6 +163,8 @@ Both result families own frozen bytes and authored history. For cones:
 | `encoded_brep()`, `export_native()` | Immutable keyed archive and independently decoded native owners. |
 | `reports()[&region]` | `WrappedConeMemberReport`: counted incidence, native validation, boundary/trace/tolerance, actual storage, material and measure evidence. |
 | `budget()` | `WrappedConeBudgetReport`: source and aggregate planar work, aggregate arithmetic/integration work, requested/achieved spatial bounds, reference/bridge bounds and family volume comparisons. |
+| `planar_integral_receipt(region)` | The decoded face and orbit integral program for V5 or V6. |
+| `directed_cap_receipt(region)` | The V9 decoded cap cycle census, pair and winding work, and integration allowance and consumption. |
 | `reference_body_receipt()` | Actual source-bound reference topology, filled-body and storage composition. |
 | `reference_volume_receipt(region)` | `CertifiedConicalReferenceVolume`, with integration enclosure, effective policies and work. |
 | `authored_receipt(region)`, `flux_receipt(region)` | Original-source volume and conditional proxy-flux receipts. |

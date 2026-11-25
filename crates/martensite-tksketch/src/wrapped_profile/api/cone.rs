@@ -102,6 +102,20 @@ impl WrappedConeNormalResult {
             .material
             .integral_program_evidence()
     }
+    /// Measured work for the directed selected-cap proof, when explicitly selected.
+    /// Example: `let work = result.directed_cap_receipt(region);`.
+    pub fn directed_cap_receipt(
+        &self,
+        region: SurfaceRegionId,
+    ) -> Option<martensite_tkbo::body_check::DirectedCapWork> {
+        self.family
+            .family
+            .members
+            .get(&region)?
+            .geometry
+            .material
+            .directed_cap_work()
+    }
     /// Original, effective and consumed integration work; `result.flux_receipt(region)`.
     pub fn flux_receipt(
         &self,

@@ -100,19 +100,34 @@ fn validate_domain(
     proofs: &[storage::SpanProof],
     material: &MaterialEvidence,
 ) -> ConeChecked<()> {
-    selected_version(
-        prepared.source.region,
-        material.requested_planar_proof,
-        material.planar_proof,
-    )?;
-    validate_original_program_policy(prepared.source.region, material)?;
-    let uv = domain::request(prepared, proofs)?;
-    if !material.uv.matches_request(&uv) {
-        return Err(mismatch(
-            prepared.source.region,
-            None,
-            "filled actual UV material source binding",
-        ));
+    match &material.uv {
+        UvMaterial::Directed(work) if prepared.executed_selection.uses_directed_cap_cycles() => {
+            let uv = domain::request(prepared, proofs)?;
+            directed::validate(&uv, material, *work)?;
+        }
+        UvMaterial::Region(region) if !prepared.executed_selection.uses_directed_cap_cycles() => {
+            selected_version(
+                prepared.source.region,
+                material.requested_planar_proof,
+                material.planar_proof,
+            )?;
+            validate_original_program_policy(prepared.source.region, material)?;
+            let uv = domain::request(prepared, proofs)?;
+            if !region.matches_request(&uv) {
+                return Err(mismatch(
+                    prepared.source.region,
+                    None,
+                    "filled actual UV material source binding",
+                ));
+            }
+        }
+        _ => {
+            return Err(mismatch(
+                prepared.source.region,
+                None,
+                "retained cap proof issuer differs from selection",
+            ));
+        }
     }
     Ok(())
 }

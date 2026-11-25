@@ -51,6 +51,16 @@ pub(super) fn build_selected(
     if cancelled() {
         return Err(cancelled_failure(requested, Stage::Admission, None));
     }
+    if matches!(
+        version,
+        feature::PlanarProofVersion::DirectedSelectedCapV1 { .. }
+    ) {
+        return Err(unsupported_policy(
+            requested,
+            version,
+            allowance.unwrap_or(0),
+        ));
+    }
     validate_requested(requested, version, allowance)?;
     let profile = admit_closed_profile(source, resolution, requested)?;
     let effective = effective_version(version, allowance);

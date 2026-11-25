@@ -69,6 +69,7 @@ impl ConeCause {
     fn material_message(&self) -> Option<Message<'_>> {
         match self {
             Material(cause) => Some(("filled UV material", cause.as_ref())),
+            DirectedCap(cause) => Some(("directed UV material", cause.as_ref())),
             DevelopedMaterial(cause) => {
                 Some(("source-bound developed UV material", cause.as_ref()))
             }

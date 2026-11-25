@@ -278,9 +278,10 @@ fn execution_domain(execution: WrappedConeExecutionSelection) -> WrappedConeDoma
         WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1 => {
             WrappedConeDomainPolicy::PositiveXCommonChartV2
         }
-        WrappedConeExecutionSelection::DirectedFamilyChartRequireCertifiedV2 { .. } => {
-            WrappedConeDomainPolicy::PositiveXFamilyChartV3
-        }
+        WrappedConeExecutionSelection::DirectedFamilyChartRequireCertifiedV2 { .. }
+        | WrappedConeExecutionSelection::DirectedTransportedAuthoredPlanarAndCapCyclesV9 {
+            ..
+        } => WrappedConeDomainPolicy::PositiveXFamilyChartV3,
         WrappedConeExecutionSelection::DirectedRecenteredChartRequireCertifiedV3 { .. } => {
             WrappedConeDomainPolicy::PositiveXRecenteredChartV4
         }

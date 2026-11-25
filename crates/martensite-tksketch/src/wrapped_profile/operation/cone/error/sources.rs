@@ -8,6 +8,7 @@ fn native_source(cause: &ConeCause) -> Option<&(dyn std::error::Error + 'static)
         Budget(cause) => Some(cause.as_ref()),
         Native(cause) => Some(cause.as_ref()),
         ActualBinding(cause) => Some(cause.as_ref()),
+        DirectedCap(_) => None,
         NativeQualification(cause) => native_qualification(cause),
         Storage(cause) => Some(cause.as_ref()),
         Planar(cause) => planar(cause),
@@ -47,6 +48,7 @@ fn extended_mathematical(cause: &ConeCause) -> Option<&(dyn std::error::Error + 
     match cause {
         ActualPatch(cause) | ActualPair { cause, .. } => Some(cause.as_ref()),
         DirectedRows(cause) => Some(cause.as_ref()),
+        DirectedCap(cause) => Some(cause.as_ref()),
         Clearance(_) | Flux(_) | Authored(_) => integral_source(cause),
         Material(_) | DevelopedMaterial(_) | Reference(_) | ReferenceVolume(_) => {
             material_source(cause)

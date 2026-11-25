@@ -373,7 +373,7 @@ fn member_receipt(
         });
     let material = MaterialEvidence {
         original: original.clone(),
-        uv,
+        uv: UvMaterial::Region(uv),
         selected_material,
         periodic_curves,
         normal: MaterialRealization::Decoded(cap_error(cap)?),

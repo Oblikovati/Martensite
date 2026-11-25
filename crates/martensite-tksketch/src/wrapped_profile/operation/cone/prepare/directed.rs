@@ -150,6 +150,20 @@ pub(in super::super) fn admit(
     execution: WrappedConeExecutionSelection,
 ) -> ConeChecked<()> {
     use martensite_tkbo::profile_extrusion::PlanarProofVersion;
+    if execution.uses_directed_cap_cycles()
+        && !matches!(
+            request.proof.planar_proof,
+            PlanarProofVersion::GeometricCompositeV6 { .. }
+        )
+    {
+        return Err(ConeFailure::new(
+            None,
+            None,
+            WrappedFailureClass::Unsupported,
+            ConeCause::ExecutionProof(Box::new(request.proof.planar_proof)),
+        )
+        .at(WrappedStage::Admission));
+    }
     if (execution.is_directed() || execution.is_connected_atlas())
         && !matches!(
             request.proof.planar_proof,

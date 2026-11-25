@@ -7,6 +7,7 @@ pub(super) type NativeCurveMap = Vec<(
     ConicalActualSideId,
 )>;
 mod binding;
+mod directed;
 mod domain;
 pub(super) use domain::curve_ids as source_curve_ids;
 #[cfg(test)]
@@ -18,7 +19,7 @@ mod tests;
 /// Every field is produced by an executed proof and remains bound to retained geometry.
 pub(in crate::surface_sketch::wrapped_profile) struct MaterialEvidence {
     original: DevelopedRegionRequest,
-    uv: planar::PlanarEvidence,
+    uv: UvMaterial,
     pub(super) selected_material: Option<martensite_tkbo::body_check::CertifiedPlanarMaterial>,
     pub(super) periodic_curves: Option<NativeCurveMap>,
     normal: MaterialRealization,
@@ -28,6 +29,20 @@ pub(in crate::surface_sketch::wrapped_profile) struct MaterialEvidence {
     requested_planar_proof: PlanarProofVersion,
     pub(super) census: martensite_tkbo::profile_extrusion::RegionCertificate,
     pub(super) planar_work: martensite_tkbo::profile_extrusion::PlanarProofWorkReceipt,
+}
+enum UvMaterial {
+    Region(planar::PlanarEvidence),
+    Directed(martensite_tkbo::body_check::DirectedCapWork),
+}
+impl UvMaterial {
+    fn integral_program_evidence(
+        &self,
+    ) -> Option<&martensite_tkbo::profile_extrusion::PlanarIntegralEvidence> {
+        match self {
+            Self::Region(region) => region.integral_program_evidence(),
+            Self::Directed(_) => None,
+        }
+    }
 }
 enum MaterialRealization {
     Common(ConicalMaterialEvidence),
@@ -43,6 +58,15 @@ impl MaterialEvidence {
     ) -> Option<&martensite_tkbo::profile_extrusion::PlanarIntegralEvidence> {
         self.uv.integral_program_evidence()
     }
+    pub(in crate::surface_sketch::wrapped_profile) fn directed_cap_work(
+        &self,
+    ) -> Option<martensite_tkbo::body_check::DirectedCapWork> {
+        match &self.uv {
+            UvMaterial::Directed(work) => Some(*work),
+            UvMaterial::Region(_) => None,
+        }
+    }
+
     pub(super) fn proof_version(&self) -> PlanarProofVersion {
         self.planar_proof
     }
@@ -92,6 +116,9 @@ fn certify_uv(
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<CapturedUvMaterial> {
     let uv_request = domain::request(prepared, &stored.spans)?;
+    if prepared.executed_selection.uses_directed_cap_cycles() {
+        return directed::certify(request, &uv_request, work, cancelled);
+    }
     let captured = capture_uv(
         &uv_request,
         request.options.planar_work,
@@ -118,7 +145,7 @@ fn finish_uv(
         .map_err(|cause| planar_failure(original.region, cause))?;
     let selected = retain_selected_material(prepared, &uv, &captured)?;
     Ok(CapturedUvMaterial {
-        uv,
+        uv: UvMaterial::Region(uv),
         selected,
         census: captured.certificate(),
         work: captured.proof_work(),
@@ -302,7 +329,7 @@ fn composite_options(version: PlanarProofVersion) -> Option<(u16, u64)> {
 }
 
 struct CapturedUvMaterial {
-    uv: planar::PlanarEvidence,
+    uv: UvMaterial,
     selected: Option<martensite_tkbo::body_check::CertifiedPlanarMaterial>,
     census: martensite_tkbo::profile_extrusion::RegionCertificate,
     work: martensite_tkbo::profile_extrusion::PlanarProofWorkReceipt,

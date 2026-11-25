@@ -14,6 +14,7 @@
 //! Every operation is non-destructive and either succeeds completely or returns a typed
 //! decline; no partial result exists.
 mod admission;
+pub(crate) use admission::admit_profile;
 mod admit_curves;
 mod admitted;
 mod bezier;
