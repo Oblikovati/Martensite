@@ -291,7 +291,7 @@ fn shared_outer_only_capture_accepts_the_straight_curve_across_its_interior() {
             .unwrap();
     let result = proof
         .certify_straight_curve(
-            [[-2., 0., 0.], [2., 0., 0.]],
+            [[58., 0., 9.], [70., 0., 9.]],
             [[-2., 0.], [2., 0.]],
             0.,
             || false,
