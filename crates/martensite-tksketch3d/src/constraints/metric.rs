@@ -94,16 +94,20 @@ fn scaled_direction([a, b]: [Point3; 2]) -> Option<[Interval; 3]> {
 }
 
 fn sum_bounds(left: f64, right: f64) -> Interval {
-    let sum = left + right;
+    let (large, small) = if left.abs() >= right.abs() {
+        (left, right)
+    } else {
+        (right, left)
+    };
+    let sum = large + small;
     if !sum.is_finite() {
         return Interval {
             lo: sum.next_down(),
             hi: sum.next_up(),
         };
     }
-    // The error-free sum preserves representable closed endpoints exactly.
-    let right_part = sum - left;
-    let remainder = (left - (sum - right_part)) + (right - right_part);
+    // FastTwoSum's magnitude order keeps the subtraction finite near binary64 extremes.
+    let remainder = small - (sum - large);
     Interval {
         lo: if remainder < 0. { sum.next_down() } else { sum },
         hi: if remainder > 0. { sum.next_up() } else { sum },
@@ -156,4 +160,24 @@ fn dot(a: [Interval; 3], b: [Interval; 3]) -> Option<Interval> {
 fn cross(a: [Interval; 3], b: [Interval; 3]) -> Option<[Interval; 3]> {
     let component = |i: usize, j: usize| a[i].mul(b[j])?.sub(a[j].mul(b[i])?);
     Some([component(1, 2)?, component(2, 0)?, component(0, 1)?])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::sum_bounds;
+
+    #[test]
+    fn finite_near_max_sum_keeps_both_neighbors_of_the_exact_midpoint() {
+        let half_ulp = f64::from_bits((970_u64 + 1023) << 52);
+        let large = f64::MAX;
+        let small = -3. * half_ulp;
+        let high = large.next_down();
+        let low = high.next_down();
+        for (left, right) in [(small, large), (large, small)] {
+            let positive = sum_bounds(left, right);
+            assert_eq!([positive.lo, positive.hi], [low, high]);
+            let negative = sum_bounds(-left, -right);
+            assert_eq!([negative.lo, negative.hi], [-high, -low]);
+        }
+    }
 }
