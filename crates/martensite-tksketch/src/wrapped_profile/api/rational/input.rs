@@ -8,7 +8,6 @@ use martensite_tkbo::profile_extrusion::{
 use martensite_tkmath::predicates::roots::metric_bounds::{
     MetricBezier, MetricCurve, OrientedMetricCurve,
 };
-use std::collections::{BTreeMap, BTreeSet};
 
 pub(super) struct Source<'a> {
     pub selection: &'a WrappedRegionSelection,
@@ -36,8 +35,9 @@ pub(super) struct Line {
     pub points: [[f64; 2]; 2],
 }
 
-type Use<'a> = (LoopUse, &'a ProfileCurve);
-type VertexMap = BTreeMap<ProfileVertexId, [f64; 2]>;
+mod selection;
+pub(super) use selection::select_cell;
+use selection::{VertexMap, point, resolve_uses, selected, selected_profile, vertices};
 
 pub(super) fn read<'a>(
     profile: &'a SketchProfile,
@@ -87,98 +87,6 @@ pub(super) fn read<'a>(
         map,
         lines,
     })
-}
-
-fn selected<'a>(
-    profile: &SketchProfile,
-    selections: &'a [WrappedRegionSelection],
-) -> Checked<&'a WrappedRegionSelection> {
-    let [selection] = selections else {
-        return Err(invalid(
-            format!("selected regions={}", selections.len()),
-            "one requested rational material region",
-        ));
-    };
-    if !selection.holes.is_empty() || !(1..=64).contains(&selection.outer.uses.len()) {
-        return Err(invalid(
-            format!(
-                "{} outer uses and {} holes",
-                selection.outer.uses.len(),
-                selection.holes.len()
-            ),
-            "one through 64 directed outer uses and no holes",
-        ));
-    }
-    if profile.plane != ProfilePlane::world_xy() {
-        return Err(invalid(
-            format!("authored plane={:?}", profile.plane),
-            "world-XY developed coordinates",
-        ));
-    }
-    Ok(selection)
-}
-
-fn resolve_uses<'a>(
-    selection: &WrappedRegionSelection,
-    profile: &'a SketchProfile,
-) -> Checked<Vec<Use<'a>>> {
-    let mut curves = BTreeMap::new();
-    for curve in &profile.curves {
-        if curves.insert(curve.id(), curve).is_some() {
-            return Err(invalid(
-                format!("duplicate profile curve={:?}", curve.id()),
-                "unique authored curve identifiers",
-            ));
-        }
-    }
-    let mut seen = BTreeSet::new();
-    selection
-        .outer
-        .uses
-        .iter()
-        .map(|&used| {
-            let curve = curves
-                .get(&used.curve)
-                .copied()
-                .filter(|_| seen.insert(used.curve))
-                .ok_or_else(|| {
-                    invalid(
-                        format!("missing or repeated selected curve={:?}", used.curve),
-                        "one existing curve per selected use",
-                    )
-                })?;
-            Ok((used, curve))
-        })
-        .collect()
-}
-
-fn vertices(profile: &SketchProfile) -> Checked<VertexMap> {
-    let mut indexed = BTreeMap::new();
-    for vertex in &profile.vertices {
-        if indexed.insert(vertex.id, vertex.point).is_some() {
-            return Err(invalid(
-                format!("duplicate profile vertex={:?}", vertex.id),
-                "unique authored vertex identifiers",
-            ));
-        }
-    }
-    Ok(indexed)
-}
-
-fn point(vertices: &VertexMap, vertex: ProfileVertexId) -> Checked<[f64; 2]> {
-    vertices
-        .get(&vertex)
-        .copied()
-        .filter(|point| point.iter().all(|coordinate| coordinate.is_finite()))
-        .ok_or_else(|| {
-            invalid(
-                format!(
-                    "profile vertex={vertex:?}, position={:?}",
-                    vertices.get(&vertex)
-                ),
-                "one finite authored endpoint",
-            )
-        })
 }
 
 fn line(
@@ -341,28 +249,6 @@ fn dyadic_cell([first, last]: [f64; 2]) -> Option<WrappedSourceSpan> {
     None
 }
 
-fn selected_profile(uses: &[Use<'_>], vertices: &VertexMap) -> Checked<SketchProfile> {
-    let ids: BTreeSet<_> = uses
-        .iter()
-        .flat_map(|(_, c)| c.ends().into_iter().flatten())
-        .collect();
-    let vertices = ids
-        .into_iter()
-        .map(|id| {
-            Ok(ProfileVertex {
-                id,
-                point: point(vertices, id)?,
-            })
-        })
-        .collect::<Checked<_>>()?;
-    let curves = uses.iter().map(|(_, curve)| (**curve).clone()).collect();
-    Ok(SketchProfile {
-        plane: ProfilePlane::world_xy(),
-        vertices,
-        curves,
-    })
-}
-
 impl Source<'_> {
     pub(super) fn poles(&self) -> impl Iterator<Item = [f64; 2]> + '_ {
         self.spans
@@ -370,9 +256,12 @@ impl Source<'_> {
             .flat_map(|span| span.metric().poles.iter().copied())
     }
 
-    pub(super) fn area_wire(&self) -> Checked<Vec<OrientedMetricCurve<'_>>> {
+    pub(super) fn area_wire(
+        &self,
+        boundary: &ProfileLoop,
+    ) -> Checked<Vec<OrientedMetricCurve<'_>>> {
         let mut wire = Vec::new();
-        for used in &self.selection.outer.uses {
+        for used in &boundary.uses {
             if used.curve == self.occurrence.curve {
                 wire.extend(self.metric_spans(used.reversed));
             } else {
@@ -412,34 +301,6 @@ impl Source<'_> {
             reversed: false,
         })
     }
-}
-
-pub(super) fn matches_boundary(
-    selection: &WrappedRegionSelection,
-    outer: &ProfileLoop,
-    holes: &[ProfileLoop],
-) -> Checked<()> {
-    let requested = &selection.outer.uses;
-    let actual = &outer.uses;
-    let same = actual.len() == requested.len()
-        && actual
-            .iter()
-            .position(|used| *used == requested[0])
-            .is_some_and(|start| {
-                actual
-                    .iter()
-                    .cycle()
-                    .skip(start)
-                    .take(requested.len())
-                    .eq(requested)
-            });
-    if !holes.is_empty() || !same {
-        return Err(invalid(
-            format!("certified outer={actual:?}, holes={}", holes.len()),
-            "the original selected directed outer material boundary with no holes",
-        ));
-    }
-    Ok(())
 }
 
 impl NativeSpan<'_> {

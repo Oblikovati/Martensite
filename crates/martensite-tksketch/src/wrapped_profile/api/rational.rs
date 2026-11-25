@@ -2,8 +2,9 @@
 use super::*;
 use martensite_tkbo::body_check::ValidationReport;
 use martensite_tkbo::profile_extrusion::{
-    OperationDecline, PlanarProofWorkLimit, PlanarProofWorkReceipt, PlanarRegionWorkFailure,
-    ProfileCurveId, SketchProfile, build_planar_regions_with_work_and_cancel,
+    OperationDecline, PlanarProofVersion, PlanarProofWorkLimit, PlanarProofWorkReceipt,
+    PlanarRegionWorkFailure, ProfileCurveId, SketchProfile,
+    build_planar_regions_with_work_and_cancel,
 };
 use martensite_tkmath::predicates::roots::metric_bounds::{
     CertifiedRationalMeasure, RationalIntegralError, RationalReferenceFailure,
@@ -12,6 +13,7 @@ use martensite_tkmath::predicates::roots::metric_bounds::{
 mod domain;
 mod fit;
 mod input;
+mod measure;
 mod proxy;
 mod retained;
 
@@ -137,7 +139,7 @@ impl RationalWrappedResult {
 }
 
 /// Extrude a rational spline or exact analytic quarter with optional straight outer edges.
-/// Requires one material region and symmetric depths away from the cylindrical axis.
+/// Requires one material region and increasing depths away from the cylindrical axis.
 /// The reference level specifies the dyadic intervals used in the original curve parameter.
 /// Example: `let body = normal_extrude_rational_cylinder(&request, 4, || false)?;`.
 pub fn normal_extrude_rational_cylinder(
@@ -156,18 +158,18 @@ pub fn normal_extrude_rational_cylinder(
         &mut cancelled,
     )?;
     let native = prepared.proxy.cylinder(request);
-    let retained =
-        normal_extrude_profile_with_cancel(&native, &mut cancelled).map_err(wrapped_failure)?;
-    prepared.finish(
-        retained.into(),
-        request.depths[1],
-        request.options.volume,
-        &mut cancelled,
-    )
+    let inputs = super::input::read(&native, &mut cancelled).map_err(wrapped_failure)?;
+    let proof = PlanarProofVersion::GeometricCompositeV6 {
+        max_components: 64,
+        max_total_subintervals: 100_000,
+    };
+    let retained = operation::from_inputs_with_proof(&native, inputs, proof, &mut cancelled)
+        .map_err(wrapped_failure)?;
+    prepared.finish(retained.into(), request.options.volume, &mut cancelled)
 }
 
 /// Extrude a rational spline or exact analytic quarter with optional straight outer edges on a cone.
-/// Requires symmetric depths, one chart in the positive developed halfplane, and clearance
+/// Requires increasing depths, one chart in the positive developed halfplane, and clearance
 /// from the apex throughout the sweep. Example: `normal_extrude_rational_cone(&request, 4, || false)?`.
 pub fn normal_extrude_rational_cone(
     request: &WrappedConeNormalRequest,
@@ -187,12 +189,7 @@ pub fn normal_extrude_rational_cone(
     let native = prepared.proxy.cone(request);
     let retained = normal_extrude_cone_profile_with_cancel(&native, &mut cancelled)
         .map_err(wrapped_failure)?;
-    prepared.finish(
-        retained.into(),
-        request.depths[1],
-        request.options.volume,
-        &mut cancelled,
-    )
+    prepared.finish(retained.into(), request.options.volume, &mut cancelled)
 }
 
 fn wrapped_failure(cause: WrappedNormalFailure) -> RationalWrappedFailure {
@@ -202,6 +199,7 @@ fn wrapped_failure(cause: WrappedNormalFailure) -> RationalWrappedFailure {
 struct Prepared {
     proxy: proxy::Proxy,
     source: AuthoredSource,
+    inverse_slant_error: f64,
 }
 
 struct AuthoredSource {
@@ -236,7 +234,12 @@ fn prepare(
         area,
         planar_work,
     };
-    Ok(Prepared { proxy, source })
+    let inverse_slant_error = support.inverse_slant_error(&reference);
+    Ok(Prepared {
+        proxy,
+        source,
+        inverse_slant_error,
+    })
 }
 
 fn reference_options(
@@ -260,11 +263,14 @@ impl Prepared {
     fn finish(
         self,
         mut retained: retained::Retained,
-        depth: f64,
         policy: WrappedVolumePolicy,
         cancelled: &mut CancelPoll<'_>,
     ) -> Checked<RationalWrappedResult> {
-        let authored_volume = volume(area_range(&self.source.area), depth)?;
+        let authored_volume = retained.authored_volume(
+            area_range(&self.source.area),
+            self.proxy.selection.region,
+            self.inverse_slant_error,
+        )?;
         self.proxy.history(retained.history_mut())?;
         let (validation, boundary_flux) = retained.report(self.proxy.selection.region)?;
         let volume_discrepancy = verify_volume(policy, boundary_flux, authored_volume)?;
@@ -303,28 +309,18 @@ fn original_area(
         &mut *cancelled,
     )
     .map_err(|cause| RationalWrappedFailure::Planar(Box::new(cause)))?;
-    let [region] = regions.regions() else {
-        return Err(invalid(
-            format!("planar regions={}", regions.regions().len()),
-            "one certified original region",
-        ));
-    };
-    input::matches_boundary(selection, region.outer(), region.holes())?;
-    let area = certify_rational_face_area(&source.area_wire()?, &[], Default::default(), cancelled)
+    input::select_cell(selection, regions.regions())?;
+    let outer = source.area_wire(&source.selection.outer)?;
+    let holes = source
+        .selection
+        .holes
+        .iter()
+        .map(|boundary| source.area_wire(boundary))
+        .collect::<Checked<Vec<_>>>()?;
+    let holes: Vec<_> = holes.iter().map(Vec::as_slice).collect();
+    let area = certify_rational_face_area(&outer, &holes, Default::default(), cancelled)
         .map_err(|cause| RationalWrappedFailure::Measure(Box::new(cause)))?;
     Ok((area, regions.proof_work()))
-}
-
-fn volume(area: WrappedCertifiedRange, depth: f64) -> Checked<WrappedCertifiedRange> {
-    let lower = (area.lower * (depth + depth)).next_down();
-    let upper = (area.upper * (depth + depth)).next_up();
-    if lower <= 0. || !lower.is_finite() || !upper.is_finite() {
-        return Err(invalid(
-            format!("authored normal volume enclosure={lower}..{upper}"),
-            "positive finite bounds",
-        ));
-    }
-    Ok(WrappedCertifiedRange { lower, upper })
 }
 
 fn verify_volume(
