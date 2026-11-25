@@ -154,7 +154,15 @@ impl Cholesky {
             .map(|&(axis, _)| basis.iter().map(|column| column[axis]).collect())
             .collect();
         let matrix = DenseMatrix::new(targets.len(), observed)?;
-        let coeffs = ColumnPivotedQr::factor(&matrix, tolerance)?.least_squares(&rhs)?;
+        let factor = ColumnPivotedQr::factor(&matrix, tolerance)?;
+        let coeffs = if factor.rank() == targets.len() {
+            factor.least_squares(&rhs)?
+        } else {
+            // The hard equations can leave fewer free directions than observed coordinates.
+            // This rank reduction is confined to the admitted soft-target matrix.
+            ColumnPivotedQr::factor(&matrix.transpose(), tolerance)?
+                .best_fit_transpose(&rhs, tolerance)?
+        };
         let mut step = vec![0.; columns];
         for (column, coefficient) in basis.into_iter().zip(coeffs) {
             for (value, direction) in step.iter_mut().zip(column) {

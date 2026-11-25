@@ -145,7 +145,7 @@ impl Run<'_> {
             self.meter.charge(
                 linear_work(component, &rows)
                     .saturating_mul(width)
-                    .saturating_add(width.saturating_pow(3)),
+                    .saturating_add(width.saturating_pow(3).saturating_mul(3)),
             )?;
             let motion = factor.preference(
                 &rows.rows,

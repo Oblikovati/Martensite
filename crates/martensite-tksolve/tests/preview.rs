@@ -26,6 +26,54 @@ const LIMITS: Limits = Limits {
     work: 4096,
 };
 
+struct FixedRadius;
+
+impl ResidualSource for FixedRadius {
+    fn tolerance_kind(&self) -> ResidualTolerance {
+        ResidualTolerance::Unitless
+    }
+
+    fn evaluate(&self, point: &[Dual]) -> Result<Vec<Dual>, ResidualError> {
+        let radius = point[0].hypot(&point[1])?.hypot(&point[2])?;
+        Ok(vec![radius.shifted(-5.)?])
+    }
+}
+
+#[test]
+fn three_target_coordinates_follow_two_independent_tangent_directions() {
+    let inputs = [3., 4., 0.];
+    let target = [4., 3., 0.];
+    let block = Block {
+        source: Arc::new(FixedRadius),
+        variables: vec![0, 1, 2],
+        equations: 1,
+    };
+    let program = Prepared::new(
+        vec![block],
+        vec![Domain::Length(1.); 3],
+        &[],
+        1.,
+        SolveOptions::default(),
+        Limits {
+            targets: 3,
+            ..LIMITS
+        },
+    )
+    .unwrap();
+    let result = program
+        .update(
+            &inputs,
+            &[(0, target[0]), (1, target[1]), (2, target[2])],
+            || false,
+        )
+        .unwrap();
+    assert_eq!((result.rank, result.dof), (1, 2));
+    for (found, target) in result.values.into_iter().zip(target) {
+        assert!((found - target).abs() < 1e-10);
+    }
+    assert!(result.hard_error <= 1e-10);
+}
+
 struct Coupled {
     evaluations: Arc<AtomicUsize>,
     redundant: bool,
