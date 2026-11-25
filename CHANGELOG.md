@@ -12,7 +12,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added exact support-member bindings for applications that preserve their own names through wrapped cylindrical and conical bosses and pockets (#420).
 
-- Added an opt-in certified conical-frustum attachment that published the final solid and its authored history in one operation (#419).
+- Added an opt-in certified conical-frustum attachment that published the final solid and its authored history in one operation, with typed stock and decoded coverage failures (#419).
 
 - Added an opt-in transported cone extrusion selector that certified decoded cap material from its directed outer and hole cycles and reported the work charged to the operation (#425).
 

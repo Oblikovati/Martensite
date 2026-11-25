@@ -33,6 +33,7 @@ pub use request::*;
 pub use result::{
     DetachedNormalBody, NormalExtrusionResult, SurfaceDiagnostic, VolumeErrorEstimates,
 };
+pub use wrapped_profile::ConicalStockFailure;
 pub use wrapped_profile::{
     CertifiedConeAttachmentReport, CertifiedConeFeatureResult, ConeFeatureResult,
     ConeFootprintFailure, ConeFootprintReport, ConeRegionFootprint, ConeTrimmedTool,

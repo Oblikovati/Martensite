@@ -1,5 +1,5 @@
 use super::{
-    stock::{Faces, OriginalBoundary, StockFrustumReceipt, StockRefusal},
+    stock::{Faces, OriginalBoundary, StockFrustumReceipt},
     *,
 };
 
@@ -58,7 +58,11 @@ impl FrozenStock {
         };
         let face = |key: CylinderBodyRef| -> FeatureChecked<Face> {
             let bound = decoded.entities.get(&key).ok_or_else(refused)?;
-            topods::face(bound).map_err(|_| refused())
+            attempt.native(
+                CylinderFeatureStage::Encoding,
+                "decoded stock face",
+                topods::face(bound),
+            )
         };
         let [band, base, lid] = self.images;
         let (band, base, lid) = (face(band)?, face(base)?, face(lid)?);
@@ -72,7 +76,7 @@ impl FrozenStock {
                     lid: &lid,
                 },
             )
-            .map_err(|_| refused())?;
+            .map_err(|cause| stock_refusal(attempt, CylinderFeatureStage::Validation, cause))?;
         let [band, base, lid] = self.images;
         Ok(BoundStock {
             band,
@@ -83,12 +87,58 @@ impl FrozenStock {
     }
 }
 
-pub(super) fn stock_refusal(attempt: Attempt, cause: StockRefusal) -> CylinderFeatureFailure {
-    attempt.fail(
-        ASSEMBLY,
-        CylinderFeatureCause::Native {
-            query: "direct stock frustum certificate",
-            cause: Box::new(Failure::new(&cause.to_string())),
-        },
-    )
+pub(super) fn stock_refusal(
+    attempt: Attempt,
+    stage: CylinderFeatureStage,
+    cause: ConicalStockFailure,
+) -> CylinderFeatureFailure {
+    attempt.fail(stage, CylinderFeatureCause::ConicalStock(Box::new(cause)))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const ATTEMPT: Attempt = Attempt {
+        attachment: FaceAttachmentId(3),
+        revision: SupportRevision(5),
+        kind: CylinderFeatureKind::Pocket,
+    };
+
+    #[test]
+    fn source_stock_refusal_retains_the_computed_numeric_limits() {
+        let cause = ConicalStockFailure::SpatialLimit {
+            upper: 2e-7,
+            limit: 1e-7,
+            collar_guard: 1e-8,
+        };
+        let failure = stock_refusal(ATTEMPT, CylinderFeatureStage::Admission, cause);
+        assert_eq!(failure.stage, CylinderFeatureStage::Admission);
+        let CylinderFeatureCause::ConicalStock(cause) = *failure.cause else {
+            panic!("expected typed stock refusal");
+        };
+        assert!(matches!(
+            *cause,
+            ConicalStockFailure::SpatialLimit {
+                upper: 2e-7,
+                limit: 1e-7,
+                collar_guard: 1e-8,
+            }
+        ));
+    }
+
+    #[test]
+    fn decoded_stock_refusal_preserves_the_original_native_failure() {
+        let native = Failure::with_type("Standard_OutOfRange", "rim index 7", "stock curve");
+        let failure = stock_refusal(
+            ATTEMPT,
+            CylinderFeatureStage::Validation,
+            native.clone().into(),
+        );
+        assert_eq!(failure.stage, CylinderFeatureStage::Validation);
+        let CylinderFeatureCause::ConicalStock(cause) = *failure.cause else {
+            panic!("expected typed stock refusal");
+        };
+        assert!(matches!(*cause, ConicalStockFailure::Native(actual) if actual == native));
+    }
 }

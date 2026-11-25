@@ -16,7 +16,7 @@ mod body;
 mod cone;
 pub use cone::*;
 mod direct;
-pub use direct::{CertifiedConeAttachmentReport, CertifiedConeFeatureResult};
+pub use direct::{CertifiedConeAttachmentReport, CertifiedConeFeatureResult, ConicalStockFailure};
 mod failure;
 mod history;
 mod source_members;

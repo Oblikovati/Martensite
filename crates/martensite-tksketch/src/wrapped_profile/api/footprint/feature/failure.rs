@@ -57,6 +57,17 @@ pub enum CylinderFeatureCause {
         /// The source shape or proof invariant requiring evidence.
         expected: &'static str,
     },
+    /// The original or decoded stock failed its frustum certificate.
+    ConicalStock(Box<ConicalStockFailure>),
+    /// The decoded stock trim proof must be nonempty and cover every retained side.
+    ConicalCoverage {
+        /// Checked stock trim domains, required to be positive.
+        stock_trim_domains: usize,
+        /// Retained sides established by the geometry proof.
+        retained_sides: usize,
+        /// Retained sides established by the contact proof.
+        qualified_sides: usize,
+    },
     /// A native query failed during the stated stage.
     Native {
         /// Native query name.
