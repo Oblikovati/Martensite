@@ -12,8 +12,8 @@ feature replaces that with Rust's own model: plain structs in `Arc<T>`, traits i
 `Arc<dyn Trait>`, compile-time upcasts and `Any` downcasts.
 
 The migration started in `martensite-tkernel` and moved through the toolkits in
-dependency order. Pull request #593 integrates the complete migration into
-`release/next`. A release and its version require separate maintainer approval.
+dependency order. Pull request #593 integrated the migration into the former
+`release/next` branch. It reached `main` in #597.
 
 ## Why
 
@@ -170,7 +170,7 @@ include `tkbo` and `geometry-raster`. `tkv3d` uses it in tests.
    for geometry toolkits a release timing of a representative workload when one exists.
 
 Run crate-scoped checks during the migration. Before opening the integration PR,
-run `cargo xtask pr --base origin/release/next` for the full workspace gate.
+run `cargo xtask pr --base origin/main` for the workspace gate.
 The [TKernel migration guide](TKERNEL-MIGRATION.md) shows how to convert class
 declarations, handles, and persistent objects.
 
@@ -205,4 +205,4 @@ All-target Clippy and the source unsafe inventory check passed on that checkpoin
 - Removing the `delete` hook: only a `tkernel` test overrides it today.
 - Peak memory: objects lose the 8-byte native counter and handles shrink, so memory should
   fall; record it per step.
-- The branch lives long. Forward-merge `release/next` into it regularly.
+- Keep long-running migration branches current with `main`.

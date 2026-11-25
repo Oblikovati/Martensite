@@ -76,6 +76,9 @@ test jobs use the cache.
 
 ## Required gates before push/merge
 
+Start topic branches from current `main` and target `main` when opening a
+pull request for a feature, fix, documentation change, or release preparation.
+
 CI runs one workflow, `.github/workflows/martensite.yml`. It only installs the
 toolchain; every check is the `scripts/build` driver, so you can run the same
 gates locally before you push:
@@ -156,10 +159,10 @@ Releases need explicit maintainer approval for the version number and the tag.
    changed and affected package suites since the previous release,
    builds in release mode, and writes the packages to `target/dist/vX.Y.Z/`.
    It never publishes.
-3. Run the full matrix on the release-candidate commit: start the `Martensite`
-   workflow manually (Actions tab, or `gh workflow run martensite.yml -f
-   mode=release -f version=X.Y.Z --ref <branch>`) and wait until all targets
-   are green. A manual run never publishes.
+3. Merge release preparation into `main`. Run the full matrix from that
+   commit with `gh workflow run martensite.yml --ref main -f mode=release -f
+   version=X.Y.Z`. Confirm the run used the intended commit and wait until
+   all targets are green. The manual rehearsal only validates and stages artifacts.
 4. Push the tag `vX.Y.Z` on that commit. The workflow runs the release on
    every target again, then creates the GitHub release with the packages and
    the changelog section as notes.
