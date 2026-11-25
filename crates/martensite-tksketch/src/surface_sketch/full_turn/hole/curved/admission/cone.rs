@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
-//! In a developed +X cone chart the physical zero meridian is the positive X ray.
+//! Intersect each developed cone contour with one exact lift of the physical zero meridian.
 use super::*;
 use martensite_tkmath::predicates::roots::metric_bounds::{
-    DevelopedScale, certify_developed_period,
+    certify_developed_cone_ray, enclose_developed_cone_angle,
 };
+use martensite_tkmath::predicates::{OrientationSign, orient2d};
 
 impl AperturePlan {
     pub(in crate::surface_sketch::full_turn::hole::curved) fn admit_cone(
@@ -56,35 +57,30 @@ fn cone_contour(
     options: NormalExtrusionOptions,
     source: SourceModel,
 ) -> Checked<Aperture> {
-    let mut curves = contour_curves(profile, selection, source)?;
-    let (meridian, maximum_x) = certify_cone_hull(&curves, support, slant, options)?;
-    // atan(y/x) has magnitude at least |y|/(2 max(x)) when |y| <= x.
-    // Division by sin(half angle) only increases this bound.
-    let denominator = (2. * maximum_x).next_up();
+    let curves = contour_curves(profile, selection, source)?;
+    let meridian = certify_cone_hull(&curves, slant, options)?;
+    let lattice = crossed::CutLattice::new(FullTurnSupport::Cone { support, slant }, options)?;
+    let developed = extreme_angles(&curves)?;
+    let Some(cut) = lattice.cut_in_hull(developed)? else {
+        return aperture(selection, curves, meridian, Vec::new());
+    };
+    let ray = certify_developed_cone_ray(cut.coordinate)
+        .map_err(|cause| incomplete("certified developed cut ray", format!("{cause:?}")))?;
     let angular = effective_limits(options).angular_clearance;
-    for curve in &mut curves {
-        for point in &mut curve.points {
-            point.swap(0, 1);
-        }
+    let mut roots = Vec::new();
+    for curve in &curves {
+        // Along the entire hull, the physical angle is at least transverse distance
+        // divided by the upper slant, since |sin(delta)| <= |delta| and sin(alpha) <= 1.
+        roots.extend(curve.crossing_on_cone(cut.turn, &ray, meridian[1], angular)?);
     }
-    let roots = curves
-        .iter()
-        .map(|curve| curve.crossing(denominator, angular))
-        .collect::<Checked<Vec<_>>>()?;
-    aperture(
-        selection,
-        curves,
-        meridian,
-        roots.into_iter().flatten().collect(),
-    )
+    aperture(selection, curves, meridian, roots)
 }
 
 fn certify_cone_hull(
     curves: &[DirectedCurve],
-    support: ConeSupport,
     slant: [f64; 2],
     options: NormalExtrusionOptions,
-) -> Checked<([f64; 2], f64)> {
+) -> Checked<[f64; 2]> {
     let mut bounds = [[f64::INFINITY, f64::NEG_INFINITY]; 2];
     for curve in curves {
         extend_bounds(&mut bounds, &curve.points);
@@ -99,18 +95,40 @@ fn certify_cone_hull(
     )?;
     let l1 = (max_x + y).next_up();
     require_rim_clearance(slant, [min_x, l1], options)?;
-    certify_phase(support, y, min_x)?;
-    Ok(([min_x, l1], max_x))
+    Ok([min_x, l1])
 }
 
-fn certify_phase(support: ConeSupport, y: f64, min_x: f64) -> Checked<()> {
-    let developed = certify_developed_period(DevelopedScale::ConeSemiAngle(support.semi_angle))
-        .map_err(|cause| incomplete("conical aperture angular scale", format!("{cause:?}")))?;
-    let phase = ((y / min_x).next_up() / developed.scale[0]).next_up();
-    cylinder_admission::require(
-        phase < PI,
-        "curved cone periodic overlap",
-        phase,
-        "entire developed contour within the two sheets adjoining the zero ray",
-    )
+fn extreme_angles(curves: &[DirectedCurve]) -> Checked<[f64; 2]> {
+    let mut points = curves.iter().flat_map(|curve| curve.points.iter().copied());
+    let first = points
+        .next()
+        .ok_or_else(|| incomplete("developed source contour", "no controls"))?;
+    let extremes = points.try_fold([first; 2], extend_angle_extremes)?;
+    let [a, b] = extremes.map(|point| {
+        enclose_developed_cone_angle(point).map_err(|cause| {
+            incomplete(
+                "exact source contour developed angles",
+                format!("{cause:?}"),
+            )
+        })
+    });
+    Ok([a?[0], b?[1]])
+}
+
+fn extend_angle_extremes([lo, hi]: [[f64; 2]; 2], point: [f64; 2]) -> Checked<[[f64; 2]; 2]> {
+    let orient = |edge| {
+        orient2d([0.; 2], edge, point)
+            .map_err(|cause| incomplete("strict positive-X angular hull", format!("{cause:?}")))
+    };
+    let a = if orient(lo)? == OrientationSign::Negative {
+        point
+    } else {
+        lo
+    };
+    let b = if orient(hi)? == OrientationSign::Positive {
+        point
+    } else {
+        hi
+    };
+    Ok([a, b])
 }

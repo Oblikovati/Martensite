@@ -74,7 +74,8 @@ pub fn normal_extrude_cylinder_band_with_curved_hole(
 
 /// Make a curved aperture across the actual seam of a canonical full conical band.
 /// Admits one loop of lines and clamped polynomial quadratics in a positive-X developed
-/// chart, with two transverse crossings of the zero meridian ray.
+/// chart, with two transverse crossings of one lift of the zero meridian ray.
+/// A nonzero lift requires a single aperture and an explicit certified V5 or V6 planar proof.
 /// Example: `let cut = normal_extrude_cone_band_with_curved_hole(&band, &profile, options)?;`.
 pub fn normal_extrude_cone_band_with_curved_hole(
     band: &FullTurnBand,
@@ -89,8 +90,7 @@ pub fn normal_extrude_cone_band_with_curved_hole(
         SourceModel::Polynomial,
     )
     .map_err(|cause| admission_failure(band, cause))?;
-    let cutter =
-        normal_extrude_cone_profile(request).map_err(|cause| tool_failure(&plan, cause))?;
+    let cutter = fitted_cone(&plan, request)?;
     let report = report(&plan, cutter.reports())?;
     let evidence = FitEvidence::cone(&plan, &report)
         .map_err(|cause| plan.stock.sweep.failure(SurfaceStage::Validation, cause))?;
@@ -151,8 +151,7 @@ pub fn normal_extrude_cone_band_with_curved_holes(
         SourceModel::Polynomial,
     )
     .map_err(|cause| admission_failure(band, cause))?;
-    let cutter =
-        normal_extrude_cone_profile(&request).map_err(|cause| tool_failure(&plan, cause))?;
+    let cutter = fitted_cone(&plan, &request)?;
     let reports = cutter.reports();
     let evidence = batch_evidence(&plan, reports, |report| FitEvidence::cone(&plan, report))?;
     let detached = cutter
@@ -293,6 +292,42 @@ fn tool_failure(plan: &AperturePlan, cause: WrappedNormalFailure) -> SurfaceSket
         SurfaceStage::Construction,
         incomplete("certified wrapped aperture", format!("{cause:?}")),
     )
+}
+
+fn fitted_cone(
+    plan: &AperturePlan,
+    request: &WrappedConeNormalRequest,
+) -> Result<WrappedConeNormalResult, SurfaceSketchFailure> {
+    let tool = match cone_execution(plan)? {
+        Some(selection) => normal_extrude_cone_profile_with_selection(request, selection),
+        None => normal_extrude_cone_profile(request),
+    };
+    tool.map_err(|cause| tool_failure(plan, cause))
+}
+
+fn cone_execution(
+    plan: &AperturePlan,
+) -> Result<Option<WrappedConeExecutionSelection>, SurfaceSketchFailure> {
+    if !plan
+        .crossings()
+        .any(|crossing| crossing.report.id.turn != 0)
+    {
+        return Ok(None);
+    }
+    if plan.contours.len() != 1 {
+        return Err(admission_failure(
+            &plan.band,
+            incomplete(
+                "one curved conical aperture at a nonzero signed lift",
+                format!("{} contours", plan.contours.len()),
+            ),
+        ));
+    }
+    Ok(Some(
+        WrappedConeExecutionSelection::DirectedRecenteredChartRequireCertifiedV3 {
+            arithmetic: WrappedConeArithmeticGrantPolicy::OriginalV1,
+        },
+    ))
 }
 
 fn fitted_cutter(

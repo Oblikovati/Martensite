@@ -6,6 +6,7 @@ mod conic_aperture;
 pub(super) mod curved_aperture;
 mod curved_batch;
 mod curved_cone_aperture;
+mod lifted_cone;
 mod multiple;
 mod placed;
 mod rational_aperture;

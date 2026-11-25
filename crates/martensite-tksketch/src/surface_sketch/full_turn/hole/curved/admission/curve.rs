@@ -4,7 +4,9 @@ use super::*;
 use martensite_tkbo::profile_extrusion::{
     ProfileCurve, ProfileVertexId, Resolution, exact_conic_quarter,
 };
-use martensite_tkmath::predicates::roots::{RootIsolationOptions, isolate_bernstein_roots};
+use martensite_tkmath::predicates::roots::{
+    RootIsolationOptions, isolate_bernstein_roots, metric_bounds::DevelopedConeRay,
+};
 use martensite_tkmath::predicates::{OrientationSign, orient2d};
 
 mod repeated;
@@ -76,15 +78,23 @@ impl DirectedCurve {
         )
     }
 
-    pub(super) fn crossing(&self, scale: f64, angular: f64) -> Checked<Vec<Crossing>> {
-        self.crossing_at(
-            crossed::ScalarCut {
-                turn: 0,
-                coordinate: [0.; 2],
-            },
-            scale,
-            angular,
-        )
+    pub(super) fn crossing_on_cone(
+        &self,
+        turn: i64,
+        ray: &DevelopedConeRay,
+        scale: f64,
+        angular: f64,
+    ) -> Checked<Vec<Crossing>> {
+        let projections = self
+            .points
+            .iter()
+            .map(|&point| {
+                ray.project(point).map_err(|cause| {
+                    incomplete("original conical cut ray projection", format!("{cause:?}"))
+                })
+            })
+            .collect::<Checked<Vec<_>>>()?;
+        self.projected_crossings(turn, &projections, scale, angular)
     }
 
     pub(super) fn crossing_at(
@@ -93,7 +103,22 @@ impl DirectedCurve {
         scale: f64,
         angular: f64,
     ) -> Checked<Vec<Crossing>> {
-        let signed = self.points.iter().map(|p| cut.signed(p[0]));
+        let projections = self
+            .points
+            .iter()
+            .map(|&[x, y]| [cut.signed(x), [y; 2]])
+            .collect::<Vec<_>>();
+        self.projected_crossings(cut.turn, &projections, scale, angular)
+    }
+
+    fn projected_crossings(
+        &self,
+        turn: i64,
+        projections: &[[[f64; 2]; 2]],
+        scale: f64,
+        angular: f64,
+    ) -> Checked<Vec<Crossing>> {
+        let signed = projections.iter().map(|entry| entry[0]);
         let (bounds, denominator) = self.homogeneous(signed);
         let scale = (scale * denominator).next_up();
         let margin = (scale * angular).next_up();
@@ -101,7 +126,7 @@ impl DirectedCurve {
             return Ok(Vec::new());
         };
         if sides[0] == sides[1] {
-            return self.repeated_crossings(cut.turn, &bounds, sides, scale);
+            return self.repeated_crossings(turn, &bounds, sides, scale, projections);
         }
         let direction = direction(sides[0]);
         let speed = monotone(&bounds, direction, margin, scale)?;
@@ -109,13 +134,13 @@ impl DirectedCurve {
         let crossing = self.crossing_record(
             PeriodicCrossingId {
                 curve: self.id,
-                turn: cut.turn,
+                turn,
                 ordinal: 0,
                 transition: direction,
             },
             parameter,
             AngularSpeed::Whole(speed),
-            self.height_hull(),
+            meridian_hull(projections),
         );
         Ok(vec![crossing])
     }
@@ -126,6 +151,7 @@ impl DirectedCurve {
         bounds: &[[f64; 2]],
         sides: [i8; 2],
         scale: f64,
+        projections: &[[[f64; 2]; 2]],
     ) -> Checked<Vec<Crossing>> {
         let controls = bounds.try_into().map_err(|_| {
             incomplete(
@@ -136,8 +162,8 @@ impl DirectedCurve {
         let events = repeated::isolate_two(controls, sides)?;
         let [a, b] = events;
         Ok(vec![
-            self.repeated_record(turn, 0, a, scale)?,
-            self.repeated_record(turn, 1, b, scale)?,
+            self.repeated_record(turn, 0, a, scale, projections)?,
+            self.repeated_record(turn, 1, b, scale, projections)?,
         ])
     }
 
@@ -147,6 +173,7 @@ impl DirectedCurve {
         ordinal: u8,
         event: repeated::Event,
         scale: f64,
+        projections: &[[[f64; 2]; 2]],
     ) -> Checked<Crossing> {
         let id = PeriodicCrossingId {
             curve: self.id,
@@ -154,7 +181,7 @@ impl DirectedCurve {
             ordinal,
             transition: event.transition,
         };
-        let meridian = self.height_bound_at(event.parameter)?;
+        let meridian = self.height_bound_at(event.parameter, projections)?;
         cylinder_admission::finite("repeated source root meridian enclosure", &meridian)?;
         let speed = AngularSpeed::Restricted {
             derivative: event.derivative,
@@ -194,8 +221,8 @@ impl DirectedCurve {
         (bounds.collect(), max)
     }
 
-    fn height_bound_at(&self, t: [f64; 2]) -> Checked<[f64; 2]> {
-        let [a, b, c] = self.points.as_slice() else {
+    fn height_bound_at(&self, t: [f64; 2], projections: &[[[f64; 2]; 2]]) -> Checked<[f64; 2]> {
+        let [a, b, c] = projections else {
             return Err(incomplete(
                 "quadratic meridian controls",
                 format!("{:?}", self.id),
@@ -203,10 +230,9 @@ impl DirectedCurve {
         };
         let heights = [a[1], b[1], c[1]];
         let Some(weights) = self.weights else {
-            return Ok(repeated::bezier_value(heights.map(|h| [h; 2]), t));
+            return Ok(repeated::bezier_value(heights, t));
         };
-        let controls: [[f64; 2]; 3] =
-            std::array::from_fn(|i| scale_bounds([heights[i]; 2], weights[i]));
+        let controls: [[f64; 2]; 3] = std::array::from_fn(|i| scale_bounds(heights[i], weights[i]));
         let numerator = repeated::bezier_value(controls, t);
         let denominator = repeated::bezier_value(weights.map(|w| [w; 2]), t);
         cylinder_admission::require(
@@ -221,15 +247,15 @@ impl DirectedCurve {
         ];
         Ok(repeated::multiply(numerator, reciprocal))
     }
+}
 
-    fn height_hull(&self) -> [f64; 2] {
-        self.points
-            .iter()
-            .map(|point| point[1])
-            .fold([f64::INFINITY, f64::NEG_INFINITY], |[lo, hi], v| {
-                [lo.min(v), hi.max(v)]
-            })
-    }
+fn meridian_hull(projections: &[[[f64; 2]; 2]]) -> [f64; 2] {
+    projections
+        .iter()
+        .map(|item| item[1])
+        .fold([f64::INFINITY, f64::NEG_INFINITY], |[lo, hi], bound| {
+            [lo.min(bound[0]), hi.max(bound[1])]
+        })
 }
 
 struct SourceNet {
