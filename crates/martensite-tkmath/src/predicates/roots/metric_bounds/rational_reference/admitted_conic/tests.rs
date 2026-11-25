@@ -18,10 +18,10 @@ fn unsnapped_circle() -> AdmittedConicSpan {
         },
         poles: [
             [5., 0.],
-            [5., FRAC_PI_8.tan()],
+            [5., martensite_cmath::tan(FRAC_PI_8)],
             [4. + FRAC_1_SQRT_2, FRAC_1_SQRT_2],
         ],
-        weights: [1., FRAC_PI_8.cos(), 1.],
+        weights: [1., martensite_cmath::cos(FRAC_PI_8), 1.],
     }
 }
 

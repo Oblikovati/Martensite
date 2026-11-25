@@ -152,7 +152,10 @@ fn set_ends(profile: &mut SketchProfile, ends: [[f64; 2]; 2]) {
 }
 
 fn ellipse_point(major: f64, minor: f64, angle: f64) -> [f64; 2] {
-    let [along, across] = [major * angle.cos(), minor * angle.sin()];
+    let [along, across] = [
+        major * martensite_cmath::cos(angle),
+        minor * martensite_cmath::sin(angle),
+    ];
     [
         CENTER[0] + 0.6 * along - 0.8 * across,
         0.8 * along + 0.6 * across,
