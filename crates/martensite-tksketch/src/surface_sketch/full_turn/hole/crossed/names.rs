@@ -93,24 +93,22 @@ pub enum PeriodicImageKey {
     },
 }
 
-pub(super) fn crossings(hole: &tool::Contour) -> Checked<[PeriodicCrossing; 2]> {
-    let [a, b] = hole.lift;
-    let width = b - a;
-    let lower = crossing(hole.boundaries[0], SheetTransition::Increasing, -a, width);
-    let upper = crossing(hole.boundaries[2], SheetTransition::Decreasing, b, width);
+pub(super) fn crossings(
+    hole: tool::Contour,
+    turn: i64,
+    [lower, upper]: [[f64; 2]; 2],
+) -> Checked<[PeriodicCrossing; 2]> {
+    let lower = crossing(hole.boundaries[0], turn, SheetTransition::Increasing, lower);
+    let upper = crossing(hole.boundaries[2], turn, SheetTransition::Decreasing, upper);
     Ok([lower?, upper?])
 }
 
 fn crossing(
     curve: SurfaceCurveId,
+    turn: i64,
     transition: SheetTransition,
-    offset: f64,
-    width: f64,
+    [low, high]: [f64; 2],
 ) -> Checked<PeriodicCrossing> {
-    // The real denominator is the exact difference of the input binary64 numbers.
-    // The enclosing predecessor/successor make both final quotients outward.
-    let low = (offset / width.next_up()).next_down();
-    let high = (offset / width.next_down()).next_up();
     if !low.is_finite() || !high.is_finite() || !(0. < low && low <= high && high < 1.) {
         return Err(incomplete(
             "interior directed aperture source parameter",
@@ -120,7 +118,7 @@ fn crossing(
     Ok(PeriodicCrossing {
         id: PeriodicCrossingId {
             curve,
-            turn: 0,
+            turn,
             transition,
         },
         normalized_parameter: [low, high],

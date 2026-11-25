@@ -34,6 +34,10 @@ pub use cylindrical_clearance::{
     CylindricalProbeError, CylindricalProbeFailure, CylindricalProbeOptions, CylindricalProbeSense,
     CylindricalProbeWorkError,
 };
+mod developed_period;
+pub use developed_period::{
+    DevelopedPeriod, DevelopedPeriodError, DevelopedScale, certify_developed_period,
+};
 mod cylindrical_measure;
 pub use cylindrical_measure::{
     CertifiedCylindricalMeasureComparison, CylindricalMeasureComparisonError,

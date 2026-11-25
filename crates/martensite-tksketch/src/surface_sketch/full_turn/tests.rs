@@ -3,6 +3,7 @@ use super::*;
 use martensite_tkbo::profile_extrusion::{DisplayTolerance, Resolution, ToleranceCap};
 mod cone_aperture;
 mod multiple;
+mod placed;
 
 use std::f64::consts::{FRAC_PI_6, PI, TAU};
 

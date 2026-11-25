@@ -45,7 +45,7 @@ impl ApertureOperand {
         depths: [f64; 2],
         options: NormalExtrusionOptions,
     ) -> Checked<Self> {
-        let operand = match band.support {
+        match band.support {
             FullTurnSupport::Cylinder { .. } => {
                 let hole = CylinderBandHole {
                     arc_length: contour.lift,
@@ -53,37 +53,19 @@ impl ApertureOperand {
                     corners: contour.corners,
                     boundaries: contour.boundaries,
                 };
-                Self::Cylinder(Box::new(admit_aperture(band, &hole, depths, options)?))
+                Ok(Self::Cylinder(Box::new(admit_aperture(
+                    band, &hole, depths, options,
+                )?)))
             }
             FullTurnSupport::Cone { support, slant } => {
                 require_rim_clearance(slant, contour.meridian, options)?;
                 require_distinct_sources(band.rims, contour.boundaries)?;
                 let sector = contour.sector(support, band.region);
-                Self::Cone(Box::new(cone_admission::admit(&sector, depths, options)?))
+                Ok(Self::Cone(Box::new(cone_admission::admit(
+                    &sector, depths, options,
+                )?)))
             }
-        };
-        operand.require_authored_crossing(contour.lift)?;
-        Ok(operand)
-    }
-
-    fn require_authored_crossing(&self, lift: [f64; 2]) -> Checked<()> {
-        let (seam, angle, options) = match self {
-            Self::Cylinder(a) => (a.rectangle.support.chart_origin, a.angle, a.options),
-            Self::Cone(a) => (
-                a.sector.support.chart_origin,
-                a.sweep.angle,
-                a.sweep.options,
-            ),
-        };
-        let rounding = 64. * f64::EPSILON * (seam.abs() + angle + TAU);
-        let reserve = (effective_limits(options).angular_clearance + rounding) * self.lift_scale();
-        let clearance = (-lift[0]).min(lift[1]);
-        cylinder_admission::require(
-            clearance > reserve,
-            "authored seam crossing clearance",
-            clearance,
-            "two transverse aperture rim crossings strictly inside their original intervals",
-        )
+        }
     }
 
     pub(super) fn export(&self) -> Result<DetachedNormalBody, SurfaceSketchFailure> {
@@ -100,13 +82,6 @@ impl ApertureOperand {
         match self {
             Self::Cylinder(a) => account_aperture(sweep, a),
             Self::Cone(a) => account_operand(sweep, &a.sweep),
-        }
-    }
-
-    pub(in crate::surface_sketch::full_turn) fn lift_scale(&self) -> f64 {
-        match self {
-            Self::Cylinder(a) => a.rectangle.support.radius,
-            Self::Cone(a) => a.sine,
         }
     }
 
