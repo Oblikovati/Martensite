@@ -3,6 +3,7 @@
 use super::*;
 
 mod binding;
+pub(super) use binding::oriented_edge;
 mod names;
 mod placement;
 mod plan;
@@ -14,8 +15,8 @@ pub(in crate::surface_sketch::full_turn) use tool::Contour;
 /// Published periodic band and its independently named periodic edge fragments.
 #[derive(Clone, Debug)]
 pub struct CrossedBandResult {
-    geometry: NormalExtrusionResult<PeriodicImageKey>,
-    crossings: Vec<PeriodicCrossing>,
+    pub(super) geometry: NormalExtrusionResult<PeriodicImageKey>,
+    pub(super) crossings: Vec<PeriodicCrossing>,
 }
 
 impl CrossedBandResult {

@@ -30,11 +30,12 @@ mod wrapped_profile;
 pub use cone_request::{ConeSector, ConeSupport};
 pub use failure::{SurfaceFailureCause, SurfaceSketchFailure, SurfaceStage};
 pub use full_turn::{
-    ConeBandHole, CrossedBandResult, CylinderBandHole, FullTurnBand, FullTurnSupport,
-    PeriodicCrossing, PeriodicCrossingId, PeriodicDepth, PeriodicImageKey, PeriodicSeamEnd,
-    PeriodicSourceEnd, SheetTransition, normal_extrude_cone_band_at_authored_seam,
+    ConeBandHole, CrossedBandResult, CurvedBandResult, CylinderBandHole, FullTurnBand,
+    FullTurnSupport, PeriodicCrossing, PeriodicCrossingId, PeriodicDepth, PeriodicImageKey,
+    PeriodicSeamEnd, PeriodicSourceEnd, SheetTransition, normal_extrude_cone_band_at_authored_seam,
     normal_extrude_cone_band_holes_at_authored_seam, normal_extrude_cylinder_band_at_authored_seam,
-    normal_extrude_cylinder_band_holes_at_authored_seam, normal_extrude_cylinder_band_with_hole,
+    normal_extrude_cylinder_band_holes_at_authored_seam,
+    normal_extrude_cylinder_band_with_curved_hole, normal_extrude_cylinder_band_with_hole,
     normal_extrude_full_turn_band,
 };
 pub use history::{HistoryKey, HistoryRole, HistorySource};

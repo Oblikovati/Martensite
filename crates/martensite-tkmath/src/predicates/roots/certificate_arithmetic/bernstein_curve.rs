@@ -34,6 +34,43 @@ pub(in crate::predicates::roots) fn restrict(
     Ok(result)
 }
 
+pub(in crate::predicates::roots) fn restrict_range(
+    poles: &[Interval],
+    [first, last]: [f64; 2],
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<Vec<Interval>> {
+    if poles.len() == 1 || [first, last] == [0., 1.] {
+        return Ok(poles.to_vec());
+    }
+    let one = arithmetic.scalar(1.)?;
+    let first = arithmetic.scalar(first)?;
+    let last = arithmetic.scalar(last)?;
+    let low = [arithmetic.subtract(&one, &first)?, first];
+    let high = [arithmetic.subtract(&one, &last)?, last];
+    let degree = poles.len() - 1;
+    (0..=degree)
+        .map(|i| blossom(poles, [&low, &high], i, arithmetic))
+        .collect()
+}
+
+fn blossom(
+    poles: &[Interval],
+    [low, high]: [&[Interval; 2]; 2],
+    high_args: usize,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<Interval> {
+    let mut work = poles.to_vec();
+    for count in (1..poles.len()).rev() {
+        let [a, b] = if count <= high_args { high } else { low };
+        for i in 0..count {
+            let left = arithmetic.multiply(a, &work[i])?;
+            let right = arithmetic.multiply(b, &work[i + 1])?;
+            work[i] = arithmetic.add(&left, &right)?;
+        }
+    }
+    Ok(work.remove(0))
+}
+
 pub(in crate::predicates::roots) fn bisect(
     poles: &[Interval],
     arithmetic: &mut Arithmetic<'_>,

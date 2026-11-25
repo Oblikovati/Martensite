@@ -2,6 +2,7 @@
 use super::*;
 use martensite_tkbo::profile_extrusion::{DisplayTolerance, Resolution, ToleranceCap};
 mod cone_aperture;
+mod curved_aperture;
 mod multiple;
 mod placed;
 

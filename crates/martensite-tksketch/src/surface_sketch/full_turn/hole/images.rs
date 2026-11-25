@@ -5,7 +5,7 @@ use martensite_tkbo::{bop_algo::Operation, brep_algo_api::BRepAlgoAPIBooleanOper
 use martensite_tkbrep::{topexp, topods::ShapeIterator, toptools::IndexedMapOfShape};
 use martensite_tkernel::ncollection::List;
 use martensite_tkg3d::top_abs::ShapeEnum;
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, fmt::Debug};
 
 pub(super) struct Candidate {
     pub(super) body: topods::Shape,
@@ -82,9 +82,19 @@ impl Candidate {
         key: HistoryKey,
         parent: &topods::Shape,
     ) -> Checked<(HistoryKey, topods::Shape)> {
+        self.image_by_role(key, key.role, parent)
+            .map(|image| (key, image))
+    }
+
+    pub(super) fn image_by_role(
+        &self,
+        key: impl Debug + Copy,
+        role: HistoryRole,
+        parent: &topods::Shape,
+    ) -> Checked<topods::Shape> {
         let members = self
             .members
-            .get(&role_kind(key.role))
+            .get(&role_kind(role))
             .ok_or_else(|| incomplete("indexed aperture result kind", format!("{key:?}")))?;
         let modified = self
             .cut
@@ -98,10 +108,10 @@ impl Candidate {
         let image = members
             .find_key(one)
             .map_err(|e| native("bound aperture image", e))?;
-        Ok((key, image.clone()))
+        Ok(image.clone())
     }
 
-    fn require_unsplit(&self, key: HistoryKey, parent: &topods::Shape) -> Checked<()> {
+    fn require_unsplit(&self, key: impl Debug, parent: &topods::Shape) -> Checked<()> {
         let generated = self
             .cut
             .generated(parent)
@@ -118,7 +128,7 @@ impl Candidate {
         Ok(())
     }
 
-    pub(super) fn deleted_cap(&self, key: HistoryKey, image: &topods::Shape) -> Checked<()> {
+    pub(super) fn deleted_cap(&self, key: impl Debug, image: &topods::Shape) -> Checked<()> {
         if self
             .cut
             .is_deleted(image)
@@ -135,7 +145,7 @@ impl Candidate {
     pub(super) fn split_edges(
         &self,
         parent: &topods::Shape,
-        key: HistoryKey,
+        key: impl Debug,
     ) -> Checked<[topods::Shape; 2]> {
         fixed(self.split_edges_count(parent, key, 2)?)
     }
@@ -143,7 +153,7 @@ impl Candidate {
     pub(super) fn split_edges_count(
         &self,
         parent: &topods::Shape,
-        key: HistoryKey,
+        key: impl Debug,
         count: usize,
     ) -> Checked<Vec<topods::Shape>> {
         let modified = self
@@ -156,7 +166,7 @@ impl Candidate {
     pub(super) fn crossing_vertices<const N: usize>(
         &self,
         parent: &topods::Shape,
-        key: HistoryKey,
+        key: impl Debug,
     ) -> Checked<[topods::Shape; N]> {
         fixed(self.crossing_vertices_count(parent, key, N)?)
     }
@@ -164,7 +174,7 @@ impl Candidate {
     pub(super) fn crossing_vertices_count(
         &self,
         parent: &topods::Shape,
-        key: HistoryKey,
+        key: impl Debug,
         count: usize,
     ) -> Checked<Vec<topods::Shape>> {
         let generated = self
@@ -178,7 +188,7 @@ impl Candidate {
         &self,
         images: Vec<topods::Shape>,
         kind: ShapeEnum,
-        key: HistoryKey,
+        key: impl Debug,
         count: usize,
     ) -> Checked<Vec<topods::Shape>> {
         let members = self.members.get(&kind).ok_or_else(|| {
@@ -219,7 +229,7 @@ fn fixed<const N: usize>(images: Vec<topods::Shape>) -> Checked<[topods::Shape; 
     })
 }
 
-fn unique_member(indices: impl Iterator<Item = usize>, key: HistoryKey) -> Checked<usize> {
+fn unique_member(indices: impl Iterator<Item = usize>, key: impl Debug) -> Checked<usize> {
     let mut one = 0;
     for image in indices.filter(|&index| index != 0) {
         if one != 0 && one != image {

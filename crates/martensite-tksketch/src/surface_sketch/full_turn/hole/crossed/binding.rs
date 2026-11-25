@@ -265,7 +265,7 @@ fn same_crossings(
     ))
 }
 
-fn oriented_edge(
+pub(in crate::surface_sketch::full_turn::hole) fn oriented_edge(
     candidates: &[topods::Shape],
     first: &topods::Shape,
     last: &topods::Shape,

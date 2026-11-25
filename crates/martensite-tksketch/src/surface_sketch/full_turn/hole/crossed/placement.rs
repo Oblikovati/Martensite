@@ -20,16 +20,7 @@ pub(super) struct CutPlacement {
 
 impl CutPlacement {
     pub(super) fn check_linear(&self, radius: f64, floor: f64) -> Checked<()> {
-        // For the nearest cut the physical angle is at most pi. Concavity
-        // gives 2r sin(angle/2) >= (2/pi) r angle over that interval.
-        let chord_factor = (2. / PI.next_up()).next_down();
-        let chord = ((self.angular_clearance * chord_factor).next_down() * radius).next_down();
-        cylinder_admission::require(
-            chord > floor,
-            "aperture seam fragment clearance",
-            chord,
-            "certified physical chord greater than effective spatial separation",
-        )
+        require_periodic_chord(self.angular_clearance, radius, floor)
     }
 }
 
