@@ -294,6 +294,18 @@ magnitude, so the far-origin comparison qualifies acceptance behavior. The timin
 accepted controls. The planar app adapter preserved the existing dense iteration and tested local AD. The static
 assembly proof used synthetic joints. The current application assembly code has no numerical solver caller.
 
-The warm 120-variable latency target passed. Before choosing the production solver and numerical limits, verify
-per-relation rank, application parity and a bounded interactive factorization that can defer dense recovery. Bind
-the equation inputs and tolerance policy to the immutable request and validate final geometry before adoption.
+The follow-up replaced the preview fallback with capped work and typed deferral. Nine independent rank and refusal
+groups passed, including arc singularities, lifted UV and G2. Four focused preview tests covered structural limits,
+work exhaustion, cancellation during sparse construction and explicit noninteractive rank recovery. Three further
+100-tick release runs for each fixture accepted all 2,100 preview updates. They used no dense factorizations and
+reported no missed solver targets. Preview p95 was `0.233–0.368 ms` at 60 variables, `0.511–0.814 ms` at 120 and
+`1.010–1.130 ms` at 240. The corresponding dense p95 ranges were `4.374–5.735`, `28.761–33.931` and
+`127.070–141.799 ms`. The far-origin acceptance difference persisted.
+
+The tested preview policy admitted up to 240 coordinates, 118 blocks and equations, 12 inputs per block,
+and three soft targets. Per update it capped Gram terms at 8,000, factor updates at 2,200, and total charged work
+at 250,000. The 240-variable fixture peaked at 5,540, 1,436 and 198,785 respectively. These limits bound the tested
+numerical work. Each admitted residual evaluator also needs a work contract. The observations establish a warm
+headless latency target. They leave desktop timing, model-space and parameter tolerances, fit-point distortion,
+and the app solver migration for their own verification. Bind all equation inputs and tolerance policy to the
+immutable request and validate final geometry before adoption.
