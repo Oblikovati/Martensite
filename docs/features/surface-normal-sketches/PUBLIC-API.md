@@ -45,10 +45,11 @@ reserves a canonical error allowance before fitting.
 A selected chart must retain positive radius throughout its filled
 material and depth interval. The fitted reference must also satisfy the
 chart and perturbation margins. The [cone region atlas](CONE-REGION-ATLAS.md)
-can use multiple charts for disconnected regions. Connected profiles
-requiring multiple charts, seam occurrences, larger text families, and
-cone-face attachment remain Phase B. Exact primitive-span lowering and
-replacement deletion remain Phase C.
+supports admitted disconnected and connected profiles across multiple
+charts. Complete bands have separate [periodic entries](README.md#full-turn-bands)
+that record native seam uses and the authored intervals of split aperture
+edges. The certified attachment below binds the fitted text regions to the
+selected stock and validates the assembled solid.
 
 ## Cone request example
 
