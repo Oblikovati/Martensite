@@ -6,7 +6,8 @@ Supporting documents:
 
 - [RELATION-EQUATIONS.md](RELATION-EQUATIONS.md): variables, equation rows, rank, singular sets and branch checks.
 - [SCENARIO-MAP.md](SCENARIO-MAP.md): the class and phase of each scenario.
-- [EVIDENCE.md](EVIDENCE.md): measurements and source findings.
+- [EVIDENCE.md](EVIDENCE.md): design experiments and source findings.
+- [IMPLEMENTATION-EVIDENCE.md](IMPLEMENTATION-EVIDENCE.md): native implementation and performance receipts.
 - [OWNED-FIXTURES.md](OWNED-FIXTURES.md): native behavior and independent geometry for cases without a committed capture.
 - [CORPUS.sha256](CORPUS.sha256): the corpus manifest.
 
