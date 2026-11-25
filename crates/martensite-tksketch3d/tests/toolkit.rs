@@ -10,6 +10,7 @@ mod frozen_point;
 mod line_angle;
 mod line_relations;
 mod line_seed;
+mod mirror;
 mod motion;
 mod restore;
 mod split_plane;

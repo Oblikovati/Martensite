@@ -6,6 +6,7 @@ pub mod constraints;
 mod control_spline;
 mod edit;
 mod failure;
+mod mirror;
 mod source;
 pub mod split_plane;
 pub mod wire;
@@ -17,6 +18,7 @@ pub use control_spline::{
 };
 pub use failure::{BatchPhase, EditFailure, InvalidMinimumLength};
 use martensite_tkmath::gp::{Line3, Point3};
+pub use mirror::{MirrorDerivation, MirrorFailure, MirrorResult};
 pub use source::{FrozenPointSource, FrozenSourceRevision};
 use std::{
     collections::{BTreeMap, BTreeSet},

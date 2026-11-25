@@ -26,6 +26,17 @@ pub use cubic_bernstein::{CubicBernsteinFailure, CubicBernsteinJet, ExactCubicBe
 pub use dyadic::DyadicBound;
 pub use error::RootIsolationError;
 
+pub(super) fn round_positive_ratio_binary64(
+    numerator: num_bigint::BigInt,
+    denominator: num_bigint::BigInt,
+) -> Option<f64> {
+    if denominator.sign() != num_bigint::Sign::Plus {
+        return None;
+    }
+    let ratio = certificate_arithmetic::ExactRatio::new(numerator, denominator);
+    certificate_arithmetic::rounding::nearest_binary64(&ratio)
+}
+
 /// Explicit approximation and work policy. Width is not a modelling tolerance.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct RootIsolationOptions {

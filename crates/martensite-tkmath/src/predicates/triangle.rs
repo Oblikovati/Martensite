@@ -101,7 +101,7 @@ fn square_norm(vector: &[BigInt; 3]) -> BigInt {
     dot3(vector, vector)
 }
 
-fn dot3(first: &[BigInt; 3], second: &[BigInt; 3]) -> BigInt {
+pub(super) fn dot3(first: &[BigInt; 3], second: &[BigInt; 3]) -> BigInt {
     first.iter().zip(second).map(|(a, b)| a * b).sum()
 }
 

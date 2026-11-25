@@ -8,6 +8,7 @@ pub mod bilinear_patch;
 mod compare;
 mod line_trace;
 mod plane_sign;
+mod reflected_point;
 /// Certified polynomial roots for extension topology.
 pub mod roots;
 mod segment_contact;
@@ -23,6 +24,9 @@ pub use line_trace::{
     point_distance_upper_bound,
 };
 pub use plane_sign::{compare_plane_direction_3d, compare_tetrahedron_orientation_3d};
+pub use reflected_point::{
+    ReflectionComparisonError, compare_reflected_point_error_3d, round_reflected_point_3d,
+};
 pub use segment_contact::{SegmentContact3d, exact_segment_contact_3d};
 pub use triangle::{
     compare_triangle_altitude_3d, compare_triangle_orientation_3d,
