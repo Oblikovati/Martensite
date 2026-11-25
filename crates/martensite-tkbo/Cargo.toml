@@ -187,3 +187,7 @@ path = "tests/classify_faces_progress_public.rs"
 [[test]]
 name = "modeling_fixture_box_cut"
 path = "tests/modeling_fixture_box_cut.rs"
+
+[[test]]
+name = "surface_projection"
+path = "tests/surface_projection.rs"

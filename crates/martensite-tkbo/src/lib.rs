@@ -9,6 +9,7 @@ pub mod int_tools;
 pub mod measured;
 pub mod planar_section;
 pub mod profile_extrusion;
+pub mod surface_projection;
 
 #[allow(dead_code)]
 // Owned snapshots serve private stages until operation acceptance.

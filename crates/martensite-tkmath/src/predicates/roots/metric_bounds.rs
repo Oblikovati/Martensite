@@ -10,6 +10,7 @@ mod curve_identity_tests;
 mod mapped;
 pub use affine_coordinate::exact_affine_coordinate;
 mod cylindrical_generators;
+pub mod cylindrical_projection;
 mod planar_section;
 pub use planar_section::*;
 mod placed_plane;
