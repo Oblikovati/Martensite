@@ -58,7 +58,7 @@ pub(super) fn validate(
         &candidate.native.body,
         &input.resolution,
         &bounds,
-        NATIVE_FACE_WORKERS,
+        execution.worker_limit.min(NATIVE_FACE_WORKERS),
     )
     .map_err(|cause| attempt.fail(VALIDATION, CylinderFeatureCause::Resolution(cause)))?;
     let ordered = match ready {
