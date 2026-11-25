@@ -85,6 +85,7 @@ fn dot3(first: &[BigInt; 3], second: &[BigInt; 3]) -> BigInt {
 
 #[cfg(test)]
 mod tests {
+    use super::compare_triangle_projected_dot_3d as projected_dot;
     use super::{
         compare_triangle_altitude_3d as altitude, compare_triangle_orientation_3d as side,
     };
