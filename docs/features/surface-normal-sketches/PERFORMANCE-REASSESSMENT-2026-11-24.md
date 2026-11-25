@@ -785,5 +785,14 @@ and 4.28 ms at 120 Hz input. All 800 samples met their frame budget.
 The same fixture verified cancellation and reconstructed the edited
 part from a saved recipe against the analytic volume.
 
+App revision `384c03341` also tested a rectangle dragged across the
+cylinder seam. The boss left two axial stock edges and four split tool
+edges. The app used exact endpoint names to distinguish the fragments,
+and all six names survived save and reopen. Over 20 runs, the exact
+seam-crossing boss reached the next completed frame in 564.03 ms p95.
+In the same run, the ordinary new boss took 431.24 ms p95 and the edited
+boss 631.29 ms p95.
+
 [Oblikovati #4187](https://github.com/Oblikovati/Oblikovati/issues/4187),
+[Oblikovati #4188](https://github.com/Oblikovati/Oblikovati/issues/4188),
 [Martensite #600](https://github.com/Oblikovati/Martensite/issues/600).
