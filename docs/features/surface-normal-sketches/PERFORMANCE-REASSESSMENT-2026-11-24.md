@@ -870,3 +870,20 @@ accelerated Xwayland window at 960×720, layout drag changed from 59.32 to
 10.74 ms p95 at 60 Hz input and from 64.74 to 10.77 ms at 120 Hz input.
 First boss and pocket previews reached 29.45 and 34.91 ms p95. Depth
 updates took 18.70 ms p95 at 60 Hz and 20.48 ms at 120 Hz.
+
+After retaining the display curves and updating only changed vertices, app
+revision `ee4df2c1d` passed the preview budgets in two uninstrumented
+release runs on the default RADV queue. Each run used 400 layout inputs
+per rate, 30 first previews per sense, and 120 depth inputs per rate.
+
+| Interaction | Slower p95 of the two runs |
+| --- | ---: |
+| Layout drag, 60 Hz input | 7.93 ms |
+| Layout drag, 120 Hz input | 5.72 ms |
+| First emboss preview | 17.88 ms |
+| First engrave preview | 17.41 ms |
+| Depth update, 60 Hz input | 8.65 ms |
+| Depth update, 120 Hz input | 8.10 ms |
+
+The private Xwayland output ran at 59.94 Hz. The 120 Hz series times
+injected inputs through completed native frames.
