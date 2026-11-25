@@ -12,6 +12,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added rectangular and curved apertures across native seams in full-turn cylinder and cone bands, with exact authored split intervals and stable replay (#419).
 
+- Added certified cylindrical bosses and pockets for selected full cylinders, including multiline glyph contours and source-bound seam and topology history (#420, #425).
+
 - Added source-bound radial motion and stock-contact bounds for stored cylindrical ruled sides (#420).
 
 - Added checked cylindrical and conical normal extrusions for mixed line, clamped spline, circular and elliptic boundaries, including rotated axes and sewn endpoints, with directed holes, signed normal depths, original parameter history and certified material measurements (#418).

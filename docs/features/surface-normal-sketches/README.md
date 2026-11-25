@@ -157,12 +157,15 @@ axially or meridionally separated apertures whose combined angular coverage
 leaves no clear cut. Moving the native seam changes its split occurrences
 while preserving the authored curves and material volume.
 
-`normal_extrude_cylinder_band_with_curved_hole` and
-`normal_extrude_cone_band_with_curved_hole` admit a solved line-and-quadratic
-aperture with two transverse crossings of the zero meridian. They certify the
-original crossing intervals and check the decoded native trims and ruled
-walls before publishing the solid. The result retains the authored curve
-keys alongside each crossed edge's split images.
+The curved cylinder and cone entries accept a simply connected aperture
+with line and polynomial quadratic boundaries or exact circular and
+elliptic quarters. The rational entries also accept positive-weight
+quadratic spline boundaries. An aperture can occupy one clear sheet or
+cross the selected cut transversely twice. Each crossing has an ordinal in
+the original curve's parameter order. The result retains the authored
+curve keys, the crossing intervals and the split images. The decoded
+native trims and ruled walls must satisfy the original bounds before the
+operation returns a solid.
 
 ## General wrapped profiles
 

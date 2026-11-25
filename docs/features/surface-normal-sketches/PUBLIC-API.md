@@ -18,6 +18,7 @@ tradeoff was accepted on 2026-11-18.
 | Rational cylinder or cone | `normal_extrude_rational_cylinder`, `normal_extrude_rational_cone`, `normal_extrude_rational_cone_with_selection` | Existing support requests, an explicit dyadic reference level, and `RationalWrappedResult`; see [rational input](PROFILE-INPUT.md#positive-rational-reference). |
 | Canonical cone | `normal_extrude_cone_profile`, `normal_extrude_cone_profile_with_cancel` | `WrappedConeNormalRequest`, `WrappedConeNormalResult` |
 | Placed cone | `normal_extrude_cone_profile_on_chart`, `normal_extrude_cone_profile_on_chart_with_cancel` | Existing request and execution selector, `WrappedPlacedConeResult`. See [cone placement](CONE-PLACEMENT.md). |
+| Certified full cylinder | `CylinderFaceAttachment::apply_certified_wrapped_profile`, `apply_certified_wrapped_profile_with_cancel` | `WrappedNormalRequest` with `GeometricCompositeV6`, returning a `CertifiedCylinderFeatureResult`. |
 | Certified conical frustum | `ConeFaceAttachment::apply_certified_wrapped_profile`, `apply_certified_wrapped_profile_with_cancel` | `WrappedConeNormalRequest` with the V9 family-chart selector and a `CertifiedConeFeatureResult`. |
 
 A request owns a solved `SketchProfile`, explicit `WrappedRegionSelection`
@@ -115,6 +116,32 @@ subdivision level 6, clearance level 0 and enclosure width `1e-7`.
 tighter requests are not silently enlarged. `proof_options()` returns the
 original values, while leaf receipts retain actual remaining/effective settings
 and consumed work. Zero work can refuse as incomplete; it is not a no-limit mode.
+
+## Certified full-cylinder attachment
+
+The explicit cylindrical entry binds the selected face and support revision
+before construction. The stock is a single solid with one full lateral
+cylinder and two planar end disks. Use the chart returned by the attachment.
+This entry accepts a +Z extrusion axis, +X radial direction, zero chart angle
+and finite translation. The native cylinder from a planar circle extrusion
+can use an indirect frame. The chart preserves its angular seam and reflects
+the axial coordinate.
+
+The sketch supplies the selected outer and hole cycles, with zero first
+depth, positive last depth and the appropriate normal sense for the boss or
+pocket. The operation can re-cut the native stock seam when the contours
+cross it and a clear alternate cut can be proved. The result carries the
+seam's change in the support history, the authored curve and span history,
+and a detached native export. An application can name each counter island
+from the selected stock face and the island's authored boundary incidences.
+An old attachment revision, uncertain contact or unsupported stock
+returns a typed refusal.
+
+`attachment_report()` separates the requested spatial and sewing limits
+from the certified authored-to-stored bound and the residuals for the
+stock, attachment and exposed cap. The ordered validation report records
+the coverage of each native check. The desktop fixture checks the signed
+volume change against the authored area and cylinder radius independently.
 
 ## Certified conical-frustum attachment
 
