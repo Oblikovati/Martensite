@@ -221,3 +221,18 @@ At `59f5869a`, three independent optimized runs of 4,096 calls each measured `4.
 ordinary spatial jet fixture and at most `6.60 µs` across the numerical controls. Peak process RSS was
 `5.40 MiB`. This measures warmed evaluation of an admitted curve. Rust `1.98.1` passed 4,473 tests,
 strict Clippy and bitwise replay. The concurrent rebuild/evaluation control passed pinned ThreadSanitizer.
+
+## E28. Directed line split at a work plane
+
+`ee5f619ef` classifies a directed line from exact signed distances to the work plane. A transverse
+interior hit yields two ordered fragments. The original outer endpoint IDs and construction role
+remain in the new snapshot. Both fragments share a caller-reserved cut point and carry the original
+line and source interval. Endpoint touches and misses return the original sketch. An overlap is refused.
+
+An exact normalized parameter has adjacent floating-point bounds, including a subnormal interval
+whose rounded parameter would be an endpoint. Authored cut placement uses the position limit and a
+certified outward error bound. The normal edit gate still requires a nonzero length for each fragment.
+The controls cover the `x=0` split, reversed direction, an oblique plane, large coordinates, no-change
+outcomes, identity collision and cancellation at every poll. Rust `1.98.1` passed 1,276 math unit tests,
+3,118 math toolkit tests, 88 Sketch3D tests and strict Clippy. Two fresh processes produced identical
+receipts with SHA-256 `7923e08494f11645d6913f7daafd5f5b6ffc332b7ed8e72db65ace8e0779dcd6`.

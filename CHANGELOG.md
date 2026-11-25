@@ -34,6 +34,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added open clamped spatial control cubics with certified regularity and exact binary64-rounded position and derivative evaluation (#611).
 
+- Added exact work-plane splits for spatial lines with ordered fragment history and bounded cut placement (#611).
+
 - Added explicit full-turn cylinder and cone bands with authored rim history and paired native seams (#419).
 
 - Added rectangular and curved apertures across native seams in full-turn cylinder and cone bands, with exact authored split intervals and stable replay (#419).
