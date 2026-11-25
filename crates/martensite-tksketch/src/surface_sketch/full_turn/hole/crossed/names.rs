@@ -42,16 +42,25 @@ pub struct PeriodicCrossingId {
     pub transition: SheetTransition,
 }
 
+/// Exact connection from a conic's stereographic parameter to the authored angle.
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]
+pub enum PeriodicConicMap {
+    /// A complete quarter with an exact signed cardinal start.
+    Quarter(WrappedConicParameterMap),
+    /// A short arc with exact original angular endpoint incidence.
+    Arc(WrappedAnalyticArcMap),
+}
+
 /// Numerical enclosure of the exact source intersection.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct PeriodicCrossing {
     /// Persistent authored address.
     pub id: PeriodicCrossingId,
     /// Outward enclosure in the original source parameter, normalized to `[0,1]`.
-    /// For a conic quarter, this is its exact stereographic parameter.
+    /// For a conic, this is its exact stereographic parameter.
     pub normalized_parameter: [f64; 2],
     /// Exact map from the reported stereographic interval to an authored analytic angle.
-    pub conic_map: Option<WrappedConicParameterMap>,
+    pub conic_map: Option<PeriodicConicMap>,
 }
 
 /// One endpoint of a retained interval on the original directed contour.
@@ -61,12 +70,12 @@ pub enum PeriodicSourceEnd {
     Start,
     /// A fitter's exact interior dyadic endpoint in the original curve.
     Dyadic(WrappedSourcePoint),
-    /// Exact interior stereographic parameter on a selected analytic conic quarter.
+    /// Exact interior stereographic parameter on a selected analytic conic.
     ConicDyadic {
-        /// Reduced dyadic coordinate on the authored quarter.
+        /// Reduced dyadic coordinate on the authored arc.
         point: WrappedSourcePoint,
         /// Exact conversion to the original native angle.
-        map: WrappedConicParameterMap,
+        map: PeriodicConicMap,
     },
     /// Certified cut parameter.
     Cut(PeriodicCrossingId),

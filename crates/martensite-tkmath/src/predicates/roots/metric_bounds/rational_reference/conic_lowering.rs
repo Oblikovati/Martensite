@@ -24,6 +24,8 @@ pub struct CertifiedRationalConicSegment {
     pub weights: [f64; 3],
     /// Exact pole component enclosures for topology tests, indexed by pole and coordinate.
     pub control_enclosures: [[[f64; 2]; 2]; 3],
+    /// Exact weight enclosures in the same stereographic basis as the poles.
+    pub weight_enclosures: [[f64; 2]; 3],
     /// Full-interval error between the exact source and the literal representation.
     pub transport: RationalReferenceBounds,
     /// Outward Green-area transfer error. Shared exact endpoints close the homotopy sides.
@@ -191,7 +193,8 @@ fn output(
         control_enclosures[1].map(|bound| bound[0]),
         endpoints[1],
     ];
-    let weights = [1., 1., rounded(&exact.weights[2])?[0]];
+    let weight_enclosures = [[1.; 2], [1.; 2], rounded(&exact.weights[2])?];
+    let weights = weight_enclosures.map(|range| range[0]);
     let original = capture_exact(&exact, arithmetic)?;
     let target = capture(
         MetricBezier {
@@ -210,6 +213,7 @@ fn output(
         poles,
         weights,
         control_enclosures,
+        weight_enclosures,
         transport,
         area_transfer,
     })
