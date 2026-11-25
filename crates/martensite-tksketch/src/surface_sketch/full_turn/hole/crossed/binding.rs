@@ -4,25 +4,15 @@ use super::*;
 use crate::surface_sketch::full_turn::history::lookup;
 use crate::surface_sketch::history as primitive_history;
 use martensite_tkbrep::topexp;
+use std::collections::BTreeMap;
 
 pub(super) type SplitBindings = Vec<(PeriodicImageKey, topods::Shape)>;
 
 pub(super) fn bind(
-    proposal: images::Candidate,
-    stock: &Bindings,
-    aperture: &Bindings,
-    band: &FullTurnBand,
-    hole: &CylinderBandHole,
-    crossings: &[PeriodicCrossing; 2],
+    plan: &CrossedPlan,
+    native: plan::NativeCut,
 ) -> Checked<(topods::Shape, SplitBindings)> {
-    let inputs = SplitInputs {
-        proposal,
-        stock,
-        aperture,
-        band,
-        hole,
-        crossings,
-    };
+    let inputs = SplitInputs { plan, native };
     let direct = inputs.retained()?;
     let mut result = Vec::new();
     for depth in [PeriodicDepth::First, PeriodicDepth::Last] {
@@ -34,43 +24,32 @@ pub(super) fn bind(
             .map(|(key, shape)| (PeriodicImageKey::Retained(key), shape)),
     );
     result.sort_by_key(|(key, _)| *key);
-    Ok((inputs.proposal.body, result))
+    Ok((inputs.native.proposal.body, result))
 }
 
 struct SplitInputs<'a> {
-    proposal: images::Candidate,
-    stock: &'a Bindings,
-    aperture: &'a Bindings,
-    band: &'a FullTurnBand,
-    hole: &'a CylinderBandHole,
-    crossings: &'a [PeriodicCrossing; 2],
+    plan: &'a CrossedPlan,
+    native: plan::NativeCut,
 }
 
 impl SplitInputs<'_> {
     fn retained(&self) -> Checked<Bindings> {
-        let stock = self.stock.iter().filter(|(key, _)| !split_stock(*key));
-        let aperture = self
-            .aperture
+        let proposal = &self.native.proposal;
+        let stock = self
+            .native
+            .stock
             .iter()
-            .filter(|(key, _)| !self.split_hole(*key));
+            .filter(|(key, _)| !split_stock(*key));
         let mut direct = stock
-            .map(|(key, image)| self.proposal.image(*key, image))
+            .map(|(key, image)| proposal.image(*key, image))
             .collect::<Checked<Bindings>>()?;
-        for (key, image) in aperture {
-            if matches!(key.source, HistorySource::Region(_)) {
-                self.proposal.deleted_cap(*key, image)?;
-            } else {
-                direct.push(self.proposal.image(*key, image)?);
+        for (hole, raw) in self.plan.holes.iter().zip(&self.native.holes) {
+            for (key, image) in raw.iter().filter(|(key, _)| !split_hole(hole, *key)) {
+                retain_aperture(proposal, &mut direct, *key, image)?;
             }
         }
-        root_face_orientations(&self.proposal.body, &mut direct)?;
+        root_face_orientations(&proposal.body, &mut direct)?;
         Ok(direct)
-    }
-
-    fn split_hole(&self, key: HistoryKey) -> bool {
-        let source =
-            |crossing: &PeriodicCrossing| key.source == HistorySource::Curve(crossing.id.curve);
-        is_depth_edge(key.role) && self.crossings.iter().any(source)
     }
 
     fn bind_depth(
@@ -79,17 +58,36 @@ impl SplitInputs<'_> {
         direct: &Bindings,
         output: &mut SplitBindings,
     ) -> Checked<()> {
-        let lower = self.bind_crossing(depth, direct, output, self.crossings[0].id)?;
-        let upper = self.bind_crossing(depth, direct, output, self.crossings[1].id)?;
-        let roots = [lower, upper];
+        let roots = self.bind_crossings(depth, direct, output)?;
         let seam_key = HistoryKey {
-            source: HistorySource::Region(self.band.region),
+            source: HistorySource::Region(self.plan.band.region),
             role: primitive_history::edge_role(depth.index()),
         };
-        let parent = lookup(self.stock, seam_key)?;
-        let native = self.proposal.crossing_vertices::<2>(parent, seam_key)?;
+        let parent = lookup(&self.native.stock, seam_key)?;
+        let native = self.native.proposal.crossing_vertices_count(
+            parent,
+            seam_key,
+            self.plan.crossing_count(),
+        )?;
         same_crossings(&native, &roots)?;
-        self.bind_seams(depth, direct, output, parent, roots, seam_key)
+        self.bind_seams(depth, direct, output, parent, &roots, seam_key)
+    }
+
+    fn bind_crossings(
+        &self,
+        depth: PeriodicDepth,
+        direct: &Bindings,
+        output: &mut SplitBindings,
+    ) -> Checked<BTreeMap<PeriodicCrossingId, topods::Shape>> {
+        let mut roots = BTreeMap::new();
+        for (hole, raw) in self.plan.holes.iter().zip(&self.native.holes) {
+            for crossing in hole.crossings {
+                let root =
+                    self.bind_crossing(depth, direct, output, &hole.source, raw, crossing.id)?;
+                roots.insert(crossing.id, root);
+            }
+        }
+        Ok(roots)
     }
 
     fn bind_crossing(
@@ -97,16 +95,18 @@ impl SplitInputs<'_> {
         depth: PeriodicDepth,
         direct: &Bindings,
         output: &mut SplitBindings,
+        hole: &CylinderBandHole,
+        raw: &Bindings,
         id: PeriodicCrossingId,
     ) -> Checked<topods::Shape> {
         let key = HistoryKey {
             source: HistorySource::Curve(id.curve),
             role: primitive_history::edge_role(depth.index()),
         };
-        let parent = lookup(self.aperture, key)?;
-        let [root] = self.proposal.crossing_vertices(parent, key)?;
-        let native = self.proposal.split_edges(parent, key)?;
-        let ends = self.aperture_ends(id, depth, direct)?;
+        let parent = lookup(raw, key)?;
+        let [root] = self.native.proposal.crossing_vertices(parent, key)?;
+        let native = self.native.proposal.split_edges(parent, key)?;
+        let ends = aperture_ends(hole, id, depth, direct)?;
         let pieces = [
             oriented_edge(&native, ends[0], &root)?,
             oriented_edge(&native, &root, ends[1])?,
@@ -135,59 +135,27 @@ impl SplitInputs<'_> {
         Ok(root)
     }
 
-    fn aperture_ends<'a>(
-        &self,
-        id: PeriodicCrossingId,
-        depth: PeriodicDepth,
-        direct: &'a Bindings,
-    ) -> Checked<[&'a topods::Shape; 2]> {
-        let index = self
-            .hole
-            .boundaries
-            .iter()
-            .position(|curve| *curve == id.curve)
-            .ok_or_else(|| incomplete("authored aperture crossing curve", format!("{id:?}")))?;
-        let [a, b] = [index, (index + 1) % 4].map(|position| {
-            lookup(
-                direct,
-                HistoryKey {
-                    source: HistorySource::Vertex(self.hole.corners[position]),
-                    role: primitive_history::vertex_role(depth.index()),
-                },
-            )
-        });
-        Ok([a?, b?])
-    }
-
     fn bind_seams(
         &self,
         depth: PeriodicDepth,
         direct: &Bindings,
         output: &mut SplitBindings,
         parent: &topods::Shape,
-        roots: [topods::Shape; 2],
+        roots: &BTreeMap<PeriodicCrossingId, topods::Shape>,
         key: HistoryKey,
     ) -> Checked<()> {
-        let native = self.proposal.split_edges(parent, key)?;
-        let name = |rim| {
-            lookup(
-                direct,
-                HistoryKey {
-                    source: HistorySource::Curve(rim),
-                    role: primitive_history::vertex_role(depth.index()),
-                },
-            )
-        };
-        let [lower_rim, upper_rim] = self.band.rims.map(name);
-        let endpoints = [[lower_rim?, &roots[0]], [&roots[1], upper_rim?]];
-        let names = seam_endpoints(self.band.rims, self.crossings);
-        for ([first, last], ends) in endpoints.into_iter().zip(names) {
-            let segment = oriented_edge(&native, first, last)?;
+        let native = self
+            .native
+            .proposal
+            .split_edges_count(parent, key, self.plan.rails.len())?;
+        for rail in &self.plan.rails {
+            let [first, last] = rail.ends.map(|end| seam_vertex(direct, roots, depth, end));
+            let segment = oriented_edge(&native, first?, last?)?;
             output.push((
                 PeriodicImageKey::SeamSegment {
-                    region: self.band.region,
+                    region: self.plan.band.region,
                     depth,
-                    ends,
+                    ends: rail.ends,
                 },
                 segment,
             ));
@@ -196,20 +164,68 @@ impl SplitInputs<'_> {
     }
 }
 
-pub(in crate::surface_sketch::full_turn) fn seam_endpoints(
-    rims: [SurfaceCurveId; 2],
-    crossings: &[PeriodicCrossing; 2],
-) -> [[PeriodicSeamEnd; 2]; 2] {
-    [
-        [
-            PeriodicSeamEnd::Rim(rims[0]),
-            PeriodicSeamEnd::Crossing(crossings[0].id),
-        ],
-        [
-            PeriodicSeamEnd::Crossing(crossings[1].id),
-            PeriodicSeamEnd::Rim(rims[1]),
-        ],
-    ]
+fn retain_aperture(
+    proposal: &images::Candidate,
+    direct: &mut Bindings,
+    key: HistoryKey,
+    image: &topods::Shape,
+) -> Checked<()> {
+    if matches!(key.source, HistorySource::Region(_)) {
+        return proposal.deleted_cap(key, image);
+    }
+    direct.push(proposal.image(key, image)?);
+    Ok(())
+}
+
+fn split_hole(hole: &ApprovedHole, key: HistoryKey) -> bool {
+    is_depth_edge(key.role)
+        && hole
+            .crossings
+            .iter()
+            .any(|crossing| key.source == HistorySource::Curve(crossing.id.curve))
+}
+
+fn aperture_ends<'a>(
+    hole: &CylinderBandHole,
+    id: PeriodicCrossingId,
+    depth: PeriodicDepth,
+    direct: &'a Bindings,
+) -> Checked<[&'a topods::Shape; 2]> {
+    let index = hole
+        .boundaries
+        .iter()
+        .position(|curve| *curve == id.curve)
+        .ok_or_else(|| incomplete("authored aperture crossing curve", format!("{id:?}")))?;
+    let [a, b] = [index, (index + 1) % 4].map(|position| {
+        lookup(
+            direct,
+            HistoryKey {
+                source: HistorySource::Vertex(hole.corners[position]),
+                role: primitive_history::vertex_role(depth.index()),
+            },
+        )
+    });
+    Ok([a?, b?])
+}
+
+fn seam_vertex<'a>(
+    direct: &'a Bindings,
+    roots: &'a BTreeMap<PeriodicCrossingId, topods::Shape>,
+    depth: PeriodicDepth,
+    end: PeriodicSeamEnd,
+) -> Checked<&'a topods::Shape> {
+    match end {
+        PeriodicSeamEnd::Rim(curve) => lookup(
+            direct,
+            HistoryKey {
+                source: HistorySource::Curve(curve),
+                role: primitive_history::vertex_role(depth.index()),
+            },
+        ),
+        PeriodicSeamEnd::Crossing(id) => roots
+            .get(&id)
+            .ok_or_else(|| incomplete("bound periodic crossing", format!("{id:?}"))),
+    }
 }
 
 fn split_stock(key: HistoryKey) -> bool {
@@ -223,22 +239,24 @@ fn is_depth_edge(role: HistoryRole) -> bool {
     )
 }
 
-fn same_crossings(reported: &[topods::Shape; 2], exact: &[topods::Shape; 2]) -> Checked<()> {
-    if !exact[0].is_same(&exact[1])
-        && exact
-            .iter()
-            .all(|root| reported.iter().any(|image| image.is_same(root)))
-    {
+fn same_crossings(
+    reported: &[topods::Shape],
+    exact: &BTreeMap<PeriodicCrossingId, topods::Shape>,
+) -> Checked<()> {
+    let all_bound = reported
+        .iter()
+        .all(|image| exact.values().any(|root| image.is_same(root)));
+    if reported.len() == exact.len() && all_bound {
         return Ok(());
     }
     Err(incomplete(
-        "same generated crossing vertices from stock seam and aperture",
+        "same generated crossing vertices from stock seam and apertures",
         "incompatible Boolean ancestry",
     ))
 }
 
 fn oriented_edge(
-    candidates: &[topods::Shape; 2],
+    candidates: &[topods::Shape],
     first: &topods::Shape,
     last: &topods::Shape,
 ) -> Checked<topods::Shape> {

@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Rebind and qualify the native split body after immutable decoding.
 use super::*;
-use crate::surface_sketch::full_turn::FullTurnBand;
-use crate::surface_sketch::full_turn::hole::{Cutout, seam_endpoints, *};
+use crate::surface_sketch::full_turn::hole::{ApprovedHole, CrossedPlan, *};
+use crate::surface_sketch::full_turn::{FullTurnBand, FullTurnSupport};
 use crate::surface_sketch::{history as primitive, validation};
+use martensite_tkbo::body_check::ValidationReport;
 use martensite_tkbrep::toptools::IndexedMapOfShape;
 
 mod depth;
@@ -12,45 +13,43 @@ mod walls;
 type Image = (PeriodicImageKey, topods::Shape);
 
 pub(in crate::surface_sketch::full_turn) fn validate_crossed(
-    prepared: &Cutout,
-    band: &FullTurnBand,
-    hole: &CylinderBandHole,
-    crossings: &[PeriodicCrossing; 2],
+    prepared: &CrossedPlan,
     body: &topods::Shape,
     bindings: &[Image],
 ) -> Checked<validation::CheckedBody> {
-    unique_rooted_images(body, bindings)?;
-    let proof = Verification::new(prepared, band, hole, crossings, bindings);
+    let count = prepared.holes.len();
+    unique_rooted_images(body, bindings, count)?;
+    let proof = Verification::new(prepared, bindings);
     proof.check()?;
     let sweep = &prepared.stock.sweep;
     let report = validation::ordered_report(body, sweep)?;
-    if !matches!(report.census.as_slice(), [census] if census.shells == 1 && census.loops == 10 && census.genus == Some(2))
-    {
-        return Err(incomplete(
-            "one genus-two periodic aperture shell",
-            format!("{:?}", report.census),
-        ));
-    }
+    check_census(&report, count)?;
     validation::finish(report, bindings, sweep)
 }
 
+fn check_census(report: &ValidationReport, count: usize) -> Checked<()> {
+    let genus = i64::try_from(count + 1)
+        .map_err(|e| incomplete("representable periodic aperture genus", e.to_string()))?;
+    let loops = 6 + 4 * count;
+    if matches!(report.census.as_slice(), [census] if census.shells == 1 && census.loops == loops && census.genus == Some(genus))
+    {
+        return Ok(());
+    }
+    Err(incomplete(
+        "one shell with one handle per aperture and one for the band",
+        format!("{:?}", report.census),
+    ))
+}
+
 struct Verification<'a> {
-    prepared: &'a Cutout,
+    prepared: &'a CrossedPlan,
     band: &'a FullTurnBand,
-    hole: &'a CylinderBandHole,
-    crossings: &'a [PeriodicCrossing; 2],
     bindings: &'a [Image],
     direct: Bindings,
 }
 
 impl<'a> Verification<'a> {
-    fn new(
-        prepared: &'a Cutout,
-        band: &'a FullTurnBand,
-        hole: &'a CylinderBandHole,
-        crossings: &'a [PeriodicCrossing; 2],
-        bindings: &'a [Image],
-    ) -> Self {
+    fn new(prepared: &'a CrossedPlan, bindings: &'a [Image]) -> Self {
         let direct = bindings
             .iter()
             .filter_map(|(key, shape)| match key {
@@ -60,9 +59,7 @@ impl<'a> Verification<'a> {
             .collect();
         Self {
             prepared,
-            band,
-            hole,
-            crossings,
+            band: &prepared.band,
             bindings,
             direct,
         }
@@ -96,14 +93,16 @@ impl<'a> Verification<'a> {
         lookup(&self.direct, HistoryKey { source, role })
     }
 
-    fn aperture_edges(&self, curve: usize, depth: PeriodicDepth) -> Checked<Vec<&topods::Shape>> {
-        let Some(crossing) = self
-            .crossings
-            .iter()
-            .find(|item| item.id.curve == self.hole.boundaries[curve])
-        else {
+    fn aperture_edges(
+        &self,
+        hole: &ApprovedHole,
+        index: usize,
+        depth: PeriodicDepth,
+    ) -> Checked<Vec<&topods::Shape>> {
+        let curve = hole.source.boundaries[index];
+        let Some(crossing) = hole.crossings.iter().find(|item| item.id.curve == curve) else {
             return Ok(vec![self.retained(
-                HistorySource::Curve(self.hole.boundaries[curve]),
+                HistorySource::Curve(curve),
                 primitive::edge_role(depth.index()),
             )?]);
         };
@@ -128,15 +127,22 @@ impl<'a> Verification<'a> {
         })
     }
 
-    fn point(&self, depth: PeriodicDepth, axial: f64, arc: f64) -> [f64; 3] {
-        let support = &self.prepared.aperture.rectangle.support;
-        let radius = self.prepared.aperture.radii[depth.index()];
-        let phase = support.chart_origin + arc / support.radius;
-        frame::point(support, phase, radius, axial)
+    fn seam_point(&self, depth: PeriodicDepth, axial: f64) -> Checked<[f64; 3]> {
+        let FullTurnSupport::Cylinder { support, .. } = self.band.support else {
+            return Err(incomplete("cylindrical periodic stock", "unexpected cone"));
+        };
+        let stock = &self.prepared.stock;
+        let index = usize::from(depth.index() != stock.sweep.first_depth);
+        Ok(frame::point(
+            &support,
+            support.chart_origin,
+            stock.meridian[index][0],
+            axial,
+        ))
     }
 }
 
-fn unique_rooted_images(body: &topods::Shape, bindings: &[Image]) -> Checked<()> {
+fn unique_rooted_images(body: &topods::Shape, bindings: &[Image], count: usize) -> Checked<()> {
     if bindings.windows(2).any(|pair| pair[0].0 >= pair[1].0) {
         return Err(incomplete(
             "unique periodic semantic keys in total order",
@@ -145,9 +151,9 @@ fn unique_rooted_images(body: &topods::Shape, bindings: &[Image]) -> Checked<()>
     }
     for (kind, count) in [
         (ShapeEnum::Solid, 1),
-        (ShapeEnum::Face, 8),
-        (ShapeEnum::Edge, 24),
-        (ShapeEnum::Vertex, 16),
+        (ShapeEnum::Face, 4 + 4 * count),
+        (ShapeEnum::Edge, 6 + 18 * count),
+        (ShapeEnum::Vertex, 4 + 12 * count),
     ] {
         unique_kind(body, bindings, kind, count)?;
     }

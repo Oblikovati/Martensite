@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Qualify both clipped lifts of the aperture on each actual periodic face.
 use super::*;
-use crate::surface_sketch::FullTurnSupport;
 use martensite_tkbrep::brep::EdgePCurve;
 
 pub(super) fn check(proof: &Verification<'_>, depth: PeriodicDepth) -> Checked<()> {
@@ -21,7 +20,7 @@ pub(super) fn check(proof: &Verification<'_>, depth: PeriodicDepth) -> Checked<(
     };
     require_surface(&surface, SurfaceType::Cylinder)?;
     verify_cylinder(stock, &surface, index)?;
-    let uses = directed_edges(&face)?;
+    let uses = directed_edges(&face, proof.prepared.holes.len())?;
     let row = DepthFace {
         proof,
         depth,
@@ -44,11 +43,17 @@ impl DepthFace<'_, '_> {
     fn check(&self) -> Checked<()> {
         let lower_direction = self.rims()?;
         self.seams()?;
-        let [a, b] = *self.proof.crossings;
-        self.aperture_pieces(a.id, 0, !lower_direction)?;
-        self.aperture_pieces(b.id, 1, lower_direction)?;
-        let right = self.vertical(1)?;
-        let left = self.vertical(3)?;
+        for aperture in &self.proof.prepared.holes {
+            self.check_aperture(aperture, lower_direction)?;
+        }
+        Ok(())
+    }
+
+    fn check_aperture(&self, hole: &ApprovedHole, lower_direction: bool) -> Checked<()> {
+        self.aperture_pieces(hole, 0, !lower_direction)?;
+        self.aperture_pieces(hole, 1, lower_direction)?;
+        let right = self.vertical(hole, 1)?;
+        let left = self.vertical(hole, 3)?;
         if right == left {
             return Err(incomplete(
                 "oppositely directed vertical aperture coedges",
@@ -82,39 +87,29 @@ impl DepthFace<'_, '_> {
     }
 
     fn seams(&self) -> Checked<()> {
-        let ends = seam_endpoints(self.proof.band.rims, self.proof.crossings);
-        let axial = self.proof.prepared.aperture.rectangle.z;
-        let stock_axial = self.stock_axial()?;
-        let points = [[stock_axial[0], axial[0]], [axial[1], stock_axial[1]]];
-        for (ends, meridian) in ends.into_iter().zip(points) {
+        for rail in &self.proof.prepared.rails {
             let key = PeriodicImageKey::SeamSegment {
                 region: self.proof.band.region,
                 depth: self.depth,
-                ends,
+                ends: rail.ends,
             };
             let shape = self.proof.resolve(key)?;
             let [a, b] = self.coedges(shape)?;
-            let expected = meridian.map(|z| self.proof.point(self.depth, z, 0.));
+            let [first, last] = rail.axial.map(|z| self.proof.seam_point(self.depth, z));
             trim::verify_seam_fragment(
                 self.stock(),
                 &self.face,
                 &self.surface,
                 [&a, &b],
-                expected,
+                [first?, last?],
             )?;
         }
         Ok(())
     }
 
-    fn stock_axial(&self) -> Checked<[f64; 2]> {
-        let FullTurnSupport::Cylinder { axial, .. } = self.proof.band.support else {
-            return Err(incomplete("cylindrical periodic stock", "unexpected cone"));
-        };
-        Ok(axial)
-    }
-
-    fn aperture_pieces(&self, id: PeriodicCrossingId, rim: usize, direction: bool) -> Checked<()> {
-        let axial = self.proof.hole.axial[rim];
+    fn aperture_pieces(&self, hole: &ApprovedHole, rim: usize, direction: bool) -> Checked<()> {
+        let id = hole.crossings[rim].id;
+        let axial = hole.source.axial[rim];
         let crossing = PeriodicImageKey::CrossingVertex {
             depth: self.depth,
             crossing: id,
@@ -123,7 +118,7 @@ impl DepthFace<'_, '_> {
             .map_err(|e| native("named crossing", e))?;
         let point = BRepTool::pnt(&root).map_err(|e| native("crossing point", e))?;
         close(
-            distance(point, self.proof.point(self.depth, axial, 0.)),
+            distance(point, self.proof.seam_point(self.depth, axial)?),
             0.,
             tolerance(self.stock()),
             "crossing meridian point",
@@ -131,20 +126,21 @@ impl DepthFace<'_, '_> {
         let pieces = self.proof.piece_keys(id, self.depth);
         let increasing = id.transition == SheetTransition::Increasing;
         for (key, negative) in pieces.into_iter().zip([increasing, !increasing]) {
-            self.aperture_piece(key, axial, negative, direction)?;
+            self.aperture_piece(hole, key, axial, negative, direction)?;
         }
         Ok(())
     }
 
     fn aperture_piece(
         &self,
+        hole: &ApprovedHole,
         key: PeriodicImageKey,
         axial: f64,
         negative: bool,
         direction: bool,
     ) -> Checked<()> {
         let [edge] = self.coedges(self.proof.resolve(key)?)?;
-        self.aperture_circle(&edge, axial, negative)?;
+        self.aperture_circle(hole, &edge, axial, negative)?;
         let trim = self.pcurve(&edge)?;
         if trim::increasing(&edge, &trim, 0)? != direction {
             return Err(incomplete(
@@ -156,7 +152,13 @@ impl DepthFace<'_, '_> {
         trim::verify_representation(self.stock(), &self.surface, &edge, &trim)
     }
 
-    fn aperture_circle(&self, edge: &topods::Edge, axial: f64, negative: bool) -> Checked<()> {
+    fn aperture_circle(
+        &self,
+        hole: &ApprovedHole,
+        edge: &topods::Edge,
+        axial: f64,
+        negative: bool,
+    ) -> Checked<()> {
         let curve =
             BRepAdaptorCurve::with_edge(edge).map_err(|e| native("split aperture arc", e))?;
         check_curve_kind(&curve, true)?;
@@ -164,10 +166,10 @@ impl DepthFace<'_, '_> {
             .circle()
             .map_err(|e| native("split aperture circle", e))?;
         axis_direction(self.stock(), circle.axis())?;
-        let aperture = &self.proof.prepared.aperture;
+        let aperture = &hole.admitted;
         let radius = aperture.radii[self.depth.index()];
         let azimuth =
-            self.proof.hole.arc_length[usize::from(!negative)] / aperture.rectangle.support.radius;
+            hole.source.arc_length[usize::from(!negative)] / aperture.rectangle.support.radius;
         close(
             circle.radius(),
             radius,
@@ -188,9 +190,9 @@ impl DepthFace<'_, '_> {
         )
     }
 
-    fn vertical(&self, curve: usize) -> Checked<bool> {
+    fn vertical(&self, hole: &ApprovedHole, curve: usize) -> Checked<bool> {
         let shape = self.proof.retained(
-            HistorySource::Curve(self.proof.hole.boundaries[curve]),
+            HistorySource::Curve(hole.source.boundaries[curve]),
             primitive::edge_role(self.depth.index()),
         )?;
         let [edge] = self.coedges(shape)?;
@@ -261,7 +263,7 @@ impl DepthFace<'_, '_> {
     }
 }
 
-fn directed_edges(face: &topods::Face) -> Checked<Vec<topods::Edge>> {
+fn directed_edges(face: &topods::Face, apertures: usize) -> Checked<Vec<topods::Edge>> {
     let mut explorer = Explorer::new(face, ShapeEnum::Edge, ShapeEnum::Shape)
         .map_err(|e| native("seam-cut face coedges", e))?;
     let mut found = Vec::new();
@@ -272,10 +274,11 @@ fn directed_edges(face: &topods::Face) -> Checked<Vec<topods::Edge>> {
             .next()
             .map_err(|e| native("next seam-cut coedge", e))?;
     }
-    if found.len() != 12 {
+    let expected = 4 + 8 * apertures;
+    if found.len() != expected {
         return Err(incomplete(
             "complete seam-cut aperture boundary",
-            format!("{} directed uses, expected 12", found.len()),
+            format!("{} directed uses, expected {expected}", found.len()),
         ));
     }
     Ok(found)

@@ -11,7 +11,6 @@ use std::f64::consts::{PI, TAU};
 
 mod crossed;
 mod images;
-pub(super) use crossed::seam_endpoints;
 pub use crossed::*;
 
 /// One authored rectangular through hole on a cylinder, expressed in the band's chart.
@@ -73,10 +72,7 @@ impl Cutout {
         choose_seam: impl FnOnce(&cylinder_admission::Admitted) -> Checked<f64>,
     ) -> Checked<Self> {
         let (support, axial) = cylinder(band.support)?;
-        let aperture =
-            cylinder_admission::admit(&hole.source(band.region, support), depths, options)?;
-        require_rim_clearance(axial, hole.axial, options)?;
-        require_distinct_sources(band.rims, hole.boundaries)?;
+        let aperture = admit_aperture(band, hole, depths, options)?;
         let chart_origin = choose_seam(&aperture)?;
         let support = CylinderSupport {
             chart_origin,
@@ -105,11 +101,7 @@ impl Cutout {
     }
 
     fn subtract_analytic_measure(&mut self) {
-        let sweep = &mut self.stock.sweep;
-        let cutter = cylinder_sweep::prepare(&self.aperture);
-        sweep.expected_volume -= cutter.expected_volume;
-        sweep.surface_area += cutter.surface_area;
-        sweep.coordinate_error = sweep.coordinate_error.max(cutter.coordinate_error);
+        account_aperture(&mut self.stock.sweep, &self.aperture);
     }
 
     fn proposal(
@@ -117,15 +109,8 @@ impl Cutout {
         rims: [SurfaceCurveId; 2],
     ) -> Result<(images::Candidate, Bindings, Bindings), SurfaceSketchFailure> {
         let sweep = &self.stock.sweep;
-        let stock = pipeline::build(sweep, &|bindings| {
-            verification::validate(&self.stock, rims, bindings)
-        })?;
-        let cutter = cylinder_sweep::prepare(&self.aperture);
-        let aperture = pipeline::build(&cutter, &|bindings| {
-            semantic::validate(&self.aperture, bindings)
-        })?;
-        let stock = stock.export_brep()?;
-        let aperture = aperture.export_brep()?;
+        let stock = export_stock(&self.stock, rims)?;
+        let aperture = export_aperture(&self.aperture)?;
         let proposal = images::subtract(&stock.solid, &aperture.solid)
             .map_err(|cause| sweep.failure(SurfaceStage::Construction, cause))?;
         Ok((proposal, stock.entities, aperture.entities))
@@ -151,6 +136,43 @@ impl Cutout {
             sweep, bytes, keys, checked, volume, errors,
         ))
     }
+}
+
+fn admit_aperture(
+    band: &FullTurnBand,
+    hole: &CylinderBandHole,
+    depths: [f64; 2],
+    options: NormalExtrusionOptions,
+) -> Checked<cylinder_admission::Admitted> {
+    let (support, axial) = cylinder(band.support)?;
+    let aperture = cylinder_admission::admit(&hole.source(band.region, support), depths, options)?;
+    require_rim_clearance(axial, hole.axial, options)?;
+    require_distinct_sources(band.rims, hole.boundaries)?;
+    Ok(aperture)
+}
+
+fn export_stock(
+    stock: &band_admission::BandSection,
+    rims: [SurfaceCurveId; 2],
+) -> Result<DetachedNormalBody, SurfaceSketchFailure> {
+    pipeline::build(&stock.sweep, &|bindings| {
+        verification::validate(stock, rims, bindings)
+    })?
+    .export_brep()
+}
+
+fn export_aperture(
+    aperture: &cylinder_admission::Admitted,
+) -> Result<DetachedNormalBody, SurfaceSketchFailure> {
+    let sweep = cylinder_sweep::prepare(aperture);
+    pipeline::build(&sweep, &|bindings| semantic::validate(aperture, bindings))?.export_brep()
+}
+
+fn account_aperture(sweep: &mut sweep::Sweep, aperture: &cylinder_admission::Admitted) {
+    let cutter = cylinder_sweep::prepare(aperture);
+    sweep.expected_volume -= cutter.expected_volume;
+    sweep.surface_area += cutter.surface_area;
+    sweep.coordinate_error = sweep.coordinate_error.max(cutter.coordinate_error);
 }
 
 impl CylinderBandHole {

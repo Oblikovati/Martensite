@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::*;
 use martensite_tkbo::profile_extrusion::{DisplayTolerance, Resolution, ToleranceCap};
+mod multiple;
+
 use std::f64::consts::{FRAC_PI_6, PI, TAU};
 
 static_assertions::assert_impl_all!(FullTurnBand: Send, Sync);
@@ -261,16 +263,13 @@ fn full_turn_archives_match_across_fresh_processes() {
         );
         return;
     }
-    assert_eq!(fresh_archive(CHILD), fresh_archive(CHILD));
+    let test = "surface_sketch::full_turn::tests::full_turn_archives_match_across_fresh_processes";
+    assert_eq!(fresh_archive(CHILD, test), fresh_archive(CHILD, test));
 }
 
-fn fresh_archive(child: &str) -> String {
+fn fresh_archive(child: &str, test: &str) -> String {
     let output = std::process::Command::new(std::env::current_exe().unwrap())
-        .args([
-            "--exact",
-            "surface_sketch::full_turn::tests::full_turn_archives_match_across_fresh_processes",
-            "--nocapture",
-        ])
+        .args(["--exact", test, "--nocapture"])
         .env(child, "1")
         .output()
         .unwrap();

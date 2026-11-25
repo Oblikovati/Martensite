@@ -14,11 +14,18 @@ pub(super) struct Candidate {
 }
 
 pub(super) fn subtract(stock: &topods::Shape, hole: &topods::Shape) -> Checked<Candidate> {
+    subtract_all(stock, [hole.clone()])
+}
+
+pub(super) fn subtract_all(
+    stock: &topods::Shape,
+    holes: impl IntoIterator<Item = topods::Shape>,
+) -> Checked<Candidate> {
     let mut cut = BRepAlgoAPIBooleanOperation::new();
     cut.set_operation(Operation::Cut);
     cut.set_non_destructive(true);
     cut.set_arguments(&List::from_iter([stock.clone()]));
-    cut.set_tools(&List::from_iter([hole.clone()]));
+    cut.set_tools(&List::from_iter(holes));
     cut.build()
         .map_err(|e| native("subtract admitted aperture", e))?;
     if cut.has_errors() {
@@ -130,11 +137,20 @@ impl Candidate {
         parent: &topods::Shape,
         key: HistoryKey,
     ) -> Checked<[topods::Shape; 2]> {
+        fixed(self.split_edges_count(parent, key, 2)?)
+    }
+
+    pub(super) fn split_edges_count(
+        &self,
+        parent: &topods::Shape,
+        key: HistoryKey,
+        count: usize,
+    ) -> Checked<Vec<topods::Shape>> {
         let modified = self
             .cut
             .modified(parent)
             .map_err(|e| native("periodic split edges", e))?;
-        self.rooted_images(modified, ShapeEnum::Edge, key)
+        self.rooted_images(modified, ShapeEnum::Edge, key, count)
     }
 
     pub(super) fn crossing_vertices<const N: usize>(
@@ -142,19 +158,29 @@ impl Candidate {
         parent: &topods::Shape,
         key: HistoryKey,
     ) -> Checked<[topods::Shape; N]> {
+        fixed(self.crossing_vertices_count(parent, key, N)?)
+    }
+
+    pub(super) fn crossing_vertices_count(
+        &self,
+        parent: &topods::Shape,
+        key: HistoryKey,
+        count: usize,
+    ) -> Checked<Vec<topods::Shape>> {
         let generated = self
             .cut
             .generated(parent)
             .map_err(|e| native("periodic split vertices", e))?;
-        self.rooted_images(generated, ShapeEnum::Vertex, key)
+        self.rooted_images(generated, ShapeEnum::Vertex, key, count)
     }
 
-    fn rooted_images<const N: usize>(
+    fn rooted_images(
         &self,
         images: Vec<topods::Shape>,
         kind: ShapeEnum,
         key: HistoryKey,
-    ) -> Checked<[topods::Shape; N]> {
+        count: usize,
+    ) -> Checked<Vec<topods::Shape>> {
         let members = self.members.get(&kind).ok_or_else(|| {
             incomplete("indexed periodic split kind", format!("{key:?}: {kind:?}"))
         })?;
@@ -164,27 +190,33 @@ impl Candidate {
                 report.add(image);
             }
         }
-        if report.extent() != N {
+        if report.extent() != count {
             return Err(incomplete(
                 "complete periodic split images",
-                format!("{key:?}: {} {kind:?} images, expected {N}", report.extent()),
+                format!(
+                    "{key:?}: {} {kind:?} images, expected {count}",
+                    report.extent()
+                ),
             ));
         }
-        let ordered = (1..=N)
+        (1..=count)
             .map(|i| {
                 report
                     .find_key(i)
                     .cloned()
                     .map_err(|e| native("bound periodic split image", e))
             })
-            .collect::<Checked<Vec<_>>>()?;
-        ordered.try_into().map_err(|items: Vec<_>| {
-            incomplete(
-                "complete periodic split history",
-                format!("{} images", items.len()),
-            )
-        })
+            .collect()
     }
+}
+
+fn fixed<const N: usize>(images: Vec<topods::Shape>) -> Checked<[topods::Shape; N]> {
+    images.try_into().map_err(|items: Vec<_>| {
+        incomplete(
+            "complete periodic split history",
+            format!("{} images, expected {N}", items.len()),
+        )
+    })
 }
 
 fn unique_member(indices: impl Iterator<Item = usize>, key: HistoryKey) -> Checked<usize> {

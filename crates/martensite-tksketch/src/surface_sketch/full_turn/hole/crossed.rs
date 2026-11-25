@@ -4,14 +4,15 @@ use super::*;
 
 mod binding;
 mod names;
-pub(in crate::surface_sketch::full_turn) use binding::seam_endpoints;
+mod plan;
 pub use names::*;
+pub(in crate::surface_sketch::full_turn) use plan::{ApprovedHole, CrossedPlan};
 
 /// Published cylindrical band and its independently named periodic edge fragments.
 #[derive(Clone, Debug)]
 pub struct CrossedBandResult {
     geometry: NormalExtrusionResult<PeriodicImageKey>,
-    crossings: [PeriodicCrossing; 2],
+    crossings: Vec<PeriodicCrossing>,
 }
 
 impl CrossedBandResult {
@@ -21,7 +22,7 @@ impl CrossedBandResult {
         &self.geometry
     }
 
-    /// Lower and upper aperture crossings in authored contour order.
+    /// Lower and upper crossings per aperture, ordered by authored contour IDs.
     /// Example: `result.crossings()[0].normalized_parameter`.
     pub fn crossings(&self) -> &[PeriodicCrossing] {
         &self.crossings
@@ -41,28 +42,50 @@ pub fn normal_extrude_cylinder_band_at_authored_seam(
     depths: [f64; 2],
     options: NormalExtrusionOptions,
 ) -> Result<CrossedBandResult, SurfaceSketchFailure> {
-    let mut prepared =
-        Cutout::admit(band, hole, depths, options, authored_cut).map_err(|cause| {
-            SurfaceSketchFailure {
-                region: band.region,
-                stage: SurfaceStage::Admission,
-                cause,
-            }
-        })?;
-    let crossings = names::crossings(hole)
-        .map_err(|cause| prepared.stock.sweep.failure(SurfaceStage::Admission, cause))?;
-    let (proposal, stock, aperture) = prepared.proposal(band.rims)?;
-    let (body, bindings) = binding::bind(proposal, &stock, &aperture, band, hole, &crossings)
+    normal_extrude_cylinder_band_holes_at_authored_seam(
+        band,
+        std::slice::from_ref(hole),
+        depths,
+        options,
+    )
+}
+
+/// Extrude a cylindrical band with axially separated rectangular through apertures.
+///
+/// Each contour must cross the native cut at the authored zero arc
+/// transversely. Apertures may cover the entire angular period in
+/// projection: separation is proved on the axial coordinate.
+/// Example: `let result = normal_extrude_cylinder_band_holes_at_authored_seam(&band, &holes, [-1.0, 2.0], options)?;`.
+pub fn normal_extrude_cylinder_band_holes_at_authored_seam(
+    band: &FullTurnBand,
+    holes: &[CylinderBandHole],
+    depths: [f64; 2],
+    options: NormalExtrusionOptions,
+) -> Result<CrossedBandResult, SurfaceSketchFailure> {
+    let mut prepared = CrossedPlan::admit(*band, holes, depths, options).map_err(|cause| {
+        SurfaceSketchFailure {
+            region: band.region,
+            stage: SurfaceStage::Admission,
+            cause,
+        }
+    })?;
+    let cut = prepared.subtract()?;
+    let (body, bindings) = binding::bind(&prepared, cut)
         .map_err(|cause| prepared.stock.sweep.failure(SurfaceStage::History, cause))?;
-    prepared.subtract_analytic_measure();
-    let geometry = publish(&prepared, band, hole, &crossings, body, bindings)?;
+    prepared.subtract_analytic_measures();
+    let geometry = publish(&prepared, body, bindings)?;
+    let crossings = prepared
+        .holes
+        .iter()
+        .flat_map(|hole| hole.crossings)
+        .collect();
     Ok(CrossedBandResult {
         geometry,
         crossings,
     })
 }
 
-fn authored_cut(aperture: &cylinder_admission::Admitted) -> Checked<f64> {
+fn require_authored_crossing(aperture: &cylinder_admission::Admitted) -> Checked<()> {
     let rectangle = aperture.rectangle;
     let seam = rectangle.support.chart_origin;
     let rounding = 64. * f64::EPSILON * (seam.abs() + aperture.angle + TAU);
@@ -74,15 +97,11 @@ fn authored_cut(aperture: &cylinder_admission::Admitted) -> Checked<f64> {
         "authored seam crossing clearance",
         clearance,
         "two transverse aperture rim crossings strictly inside their original intervals",
-    )?;
-    Ok(seam)
+    )
 }
 
 fn publish(
-    prepared: &Cutout,
-    band: &FullTurnBand,
-    hole: &CylinderBandHole,
-    crossings: &[PeriodicCrossing; 2],
+    prepared: &CrossedPlan,
     body: topods::Shape,
     bindings: binding::SplitBindings,
 ) -> Result<NormalExtrusionResult<PeriodicImageKey>, SurfaceSketchFailure> {
@@ -92,9 +111,8 @@ fn publish(
         .map_err(|cause| sweep.failure(SurfaceStage::Encoding, cause))?;
     let (decoded, references) = encoding::decode(&frozen, &keys)
         .map_err(|cause| sweep.failure(SurfaceStage::Encoding, cause))?;
-    let checked =
-        verification::validate_crossed(prepared, band, hole, crossings, &decoded, &references)
-            .map_err(|cause| sweep.failure(SurfaceStage::Validation, cause))?;
+    let checked = verification::validate_crossed(prepared, &decoded, &references)
+        .map_err(|cause| sweep.failure(SurfaceStage::Validation, cause))?;
     let (volume, errors) = volume::measure(&decoded, sweep)
         .map_err(|cause| sweep.failure(SurfaceStage::Volume, cause))?;
     Ok(result::assemble(
