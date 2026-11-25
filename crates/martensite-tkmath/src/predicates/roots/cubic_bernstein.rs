@@ -7,8 +7,14 @@ use super::{
     certificate_arithmetic::{ExactRatio, rounding::nearest_binary64},
 };
 use crate::predicates::{NonFiniteCoordinate, binary64_parts};
-use num_bigint::{BigInt, Sign};
-use std::{error::Error, fmt};
+use num_bigint::BigInt;
+use std::{cmp::Ordering, error::Error, fmt};
+
+mod fit;
+pub use fit::{
+    CubicChordDistortion, CubicFitMaterialization, CubicFitNumericError, CubicFitOperator,
+    cubic_chord_distortion,
+};
 
 /// Owned exact coordinates of one unweighted spatial cubic Bernstein polynomial.
 ///
@@ -200,21 +206,29 @@ fn polynomial_rows(poles: &[BigInt; 4], exponent: i32, t: &Parameter) -> ExactRo
 }
 
 impl ExactRows {
-    fn round(&self, order: usize, axis: usize) -> Result<f64, CubicBernsteinFailure> {
+    fn exact(&self, order: usize) -> ExactRatio {
         match self {
-            Self::Constant(value) => Ok(if order == 0 { *value } else { 0. }),
+            Self::Constant(value) => ExactRatio::from_finite(if order == 0 { *value } else { 0. }),
             Self::Polynomial {
                 numerator,
                 exponent,
-            } => {
-                let value = DyadicBound::new(numerator[order].clone(), exponent[order]);
-                nearest_binary64(&ExactRatio::from_dyadic(&value)).ok_or(
-                    CubicBernsteinFailure::Unrepresentable {
-                        order,
-                        axis,
-                        negative: numerator[order].sign() == Sign::Minus,
-                    },
-                )
+            } => ExactRatio::from_dyadic(&DyadicBound::new(
+                numerator[order].clone(),
+                exponent[order],
+            )),
+        }
+    }
+
+    fn round(&self, order: usize, axis: usize) -> Result<f64, CubicBernsteinFailure> {
+        match self {
+            Self::Constant(value) => Ok(if order == 0 { *value } else { 0. }),
+            Self::Polynomial { .. } => {
+                let value = self.exact(order);
+                nearest_binary64(&value).ok_or_else(|| CubicBernsteinFailure::Unrepresentable {
+                    order,
+                    axis,
+                    negative: value.sign() == Ordering::Less,
+                })
             }
         }
     }

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Read-only jet evaluation of the exact captured polynomial.
-use super::ControlSplineGeometry;
+use super::{ControlSplineGeometry, CubicEvidence};
 use martensite_tkmath::{
     gp::{Point3, Vector3},
     predicates::roots::CubicBernsteinFailure,
@@ -68,40 +68,61 @@ impl ControlSplineGeometry {
     /// Evaluate a rounded position on the closed span. Endpoints return their authored values.
     /// Example: `curve.value(0.5)?`.
     pub fn value(&self, parameter: f64) -> Result<Point3, ControlSplineJetFailure> {
-        if let Some(endpoint) = self.endpoint(parameter) {
+        self.evidence
+            .value([self.poles[0], self.poles[3]], parameter)
+    }
+
+    /// Evaluate the rounded first derivative with respect to the normalized parameter.
+    /// Example: `curve.first_derivative(0.5)?`.
+    pub fn first_derivative(&self, parameter: f64) -> Result<Vector3, ControlSplineJetFailure> {
+        self.evidence.first_derivative(parameter)
+    }
+
+    /// Evaluate the rounded value and two derivatives on the closed span.
+    /// Example: `curve.jet(0.)?.first`.
+    pub fn jet(&self, parameter: f64) -> Result<ControlSplineJet, ControlSplineJetFailure> {
+        self.evidence.jet([self.poles[0], self.poles[3]], parameter)
+    }
+}
+
+impl CubicEvidence {
+    pub(crate) fn value(
+        &self,
+        endpoints: [Point3; 2],
+        parameter: f64,
+    ) -> Result<Point3, ControlSplineJetFailure> {
+        if let Some(endpoint) = endpoint(endpoints, parameter) {
             return Ok(endpoint);
         }
         let [x, y, z] = self
-            .evidence
             .polynomial
             .position(parameter)
             .map_err(|failure| evaluation_refusal(parameter, failure))?;
         Ok(Point3::new(x, y, z))
     }
 
-    /// Evaluate the rounded first derivative with respect to the normalized parameter.
-    /// Example: `curve.first_derivative(0.5)?`.
-    pub fn first_derivative(&self, parameter: f64) -> Result<Vector3, ControlSplineJetFailure> {
+    pub(crate) fn first_derivative(
+        &self,
+        parameter: f64,
+    ) -> Result<Vector3, ControlSplineJetFailure> {
         let first = self
-            .evidence
             .polynomial
             .first_derivative(parameter)
             .map_err(|failure| evaluation_refusal(parameter, failure))?;
         velocity(first, parameter)
     }
 
-    /// Evaluate the rounded value and two derivatives on the closed span.
-    /// Example: `curve.jet(0.)?.first`.
-    pub fn jet(&self, parameter: f64) -> Result<ControlSplineJet, ControlSplineJetFailure> {
+    pub(crate) fn jet(
+        &self,
+        endpoints: [Point3; 2],
+        parameter: f64,
+    ) -> Result<ControlSplineJet, ControlSplineJetFailure> {
         let jet = self
-            .evidence
             .polynomial
             .jet(parameter)
             .map_err(|failure| evaluation_refusal(parameter, failure))?;
         let [x, y, z] = jet.position;
-        let position = self
-            .endpoint(parameter)
-            .unwrap_or_else(|| Point3::new(x, y, z));
+        let position = endpoint(endpoints, parameter).unwrap_or_else(|| Point3::new(x, y, z));
         let first = velocity(jet.first, parameter)?;
         let [dx, dy, dz] = jet.second;
         Ok(ControlSplineJet {
@@ -110,13 +131,13 @@ impl ControlSplineGeometry {
             second: Vector3::new(dx, dy, dz),
         })
     }
+}
 
-    fn endpoint(&self, parameter: f64) -> Option<Point3> {
-        match parameter {
-            0. => Some(self.poles[0]),
-            1. => Some(self.poles[3]),
-            _ => None,
-        }
+fn endpoint(endpoints: [Point3; 2], parameter: f64) -> Option<Point3> {
+    match parameter {
+        0. => Some(endpoints[0]),
+        1. => Some(endpoints[1]),
+        _ => None,
     }
 }
 

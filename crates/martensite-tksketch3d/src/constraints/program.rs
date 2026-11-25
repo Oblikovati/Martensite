@@ -40,7 +40,10 @@ impl Program {
             .owned_ids()
             .filter_map(|key| match key {
                 EntityId::Point(point) => Some(point),
-                EntityId::Line(_) | EntityId::Arc(_) | EntityId::ControlSpline(_) => None,
+                EntityId::Line(_)
+                | EntityId::Arc(_)
+                | EntityId::ControlSpline(_)
+                | EntityId::FitSpline(_) => None,
             })
             .collect::<Vec<_>>();
         let point_columns = points
@@ -252,6 +255,9 @@ fn admit(
     }
     if let Some(&spline) = geometry.control_splines.keys().next() {
         return Err(Failure::UnsupportedEntity(EntityId::ControlSpline(spline)));
+    }
+    if let Some(&spline) = geometry.fit_splines.keys().next() {
+        return Err(Failure::UnsupportedEntity(EntityId::FitSpline(spline)));
     }
     let points = geometry
         .owned_ids()

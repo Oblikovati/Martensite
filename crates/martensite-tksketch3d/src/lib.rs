@@ -6,6 +6,7 @@ pub mod constraints;
 mod control_spline;
 mod edit;
 mod failure;
+mod fit_spline;
 mod mirror;
 mod source;
 pub mod split_plane;
@@ -17,6 +18,10 @@ pub use control_spline::{
     ControlSplineJetFailure, ControlSplineProofPolicy, SketchControlSpline,
 };
 pub use failure::{BatchPhase, EditFailure, InvalidMinimumLength};
+pub use fit_spline::{
+    FitSplineBandStage, FitSplineFailure, FitSplineGeometry, FitSplineId, FitSplineOperatorReport,
+    FitSplineParameters, FitSplinePolicy, FitSplineQuantity, SketchFitSpline,
+};
 use martensite_tkmath::gp::{Line3, Point3};
 pub use mirror::{MirrorDerivation, MirrorFailure, MirrorResult};
 pub use source::{FrozenPointSource, FrozenSourceRevision};
@@ -68,6 +73,8 @@ pub enum EntityId {
     Arc(ArcId),
     /// Open cubic control spline identity.
     ControlSpline(ControlSplineId),
+    /// Fixed four-station fit spline identity.
+    FitSpline(FitSplineId),
 }
 
 /// A sketch curve whose modelling participation can change without replacing its identity.
@@ -79,6 +86,8 @@ pub enum CurveId {
     Arc(ArcId),
     /// An open cubic control spline.
     ControlSpline(ControlSplineId),
+    /// An open fixed-station fit spline.
+    FitSpline(FitSplineId),
 }
 
 impl CurveId {
@@ -87,6 +96,7 @@ impl CurveId {
             Self::Line(id) => EntityId::Line(id),
             Self::Arc(id) => EntityId::Arc(id),
             Self::ControlSpline(id) => EntityId::ControlSpline(id),
+            Self::FitSpline(id) => EntityId::FitSpline(id),
         }
     }
 }
@@ -201,6 +211,8 @@ pub enum Edit {
     InsertArc(SketchArc),
     /// Add an open cubic. Its control points must exist by the end of the batch.
     InsertControlSpline(SketchControlSpline),
+    /// Add an open fit cubic. Its station points must exist by the end of the batch.
+    InsertFitSpline(SketchFitSpline),
     /// Change a curve's modelling participation while retaining its authored geometry.
     SetCurveRole {
         /// Existing curve identity.
@@ -218,6 +230,8 @@ pub enum Edit {
     RemoveArc(ArcId),
     /// Remove a control spline. A batch with any deletion retires all unused defining points.
     RemoveControlSpline(ControlSplineId),
+    /// Remove a fit spline. A batch with any deletion retires all unused defining points.
+    RemoveFitSpline(FitSplineId),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -226,6 +240,7 @@ enum Entity {
     Line(SketchLine),
     Arc(SketchArc),
     ControlSpline(SketchControlSpline),
+    FitSpline(SketchFitSpline),
 }
 
 impl Entity {
@@ -235,6 +250,7 @@ impl Entity {
             Self::Line(line) => EntityId::Line(line.id),
             Self::Arc(arc) => EntityId::Arc(arc.id),
             Self::ControlSpline(spline) => EntityId::ControlSpline(spline.id),
+            Self::FitSpline(spline) => EntityId::FitSpline(spline.id),
         }
     }
     fn curve(self) -> Option<CurveId> {
@@ -243,6 +259,7 @@ impl Entity {
             Self::Line(line) => Some(CurveId::Line(line.id)),
             Self::Arc(arc) => Some(CurveId::Arc(arc.id)),
             Self::ControlSpline(spline) => Some(CurveId::ControlSpline(spline.id)),
+            Self::FitSpline(spline) => Some(CurveId::FitSpline(spline.id)),
         }
     }
 }
@@ -254,6 +271,7 @@ impl EntityId {
             Self::Line(line) => line.get(),
             Self::Arc(arc) => arc.get(),
             Self::ControlSpline(spline) => spline.get(),
+            Self::FitSpline(spline) => spline.get(),
         }
     }
 }
@@ -269,6 +287,7 @@ pub struct Snapshot {
     geometry: BTreeMap<LineId, LineGeometry>,
     arcs: BTreeMap<ArcId, ArcGeometry>,
     control_splines: BTreeMap<ControlSplineId, ControlSplineGeometry>,
+    fit_splines: BTreeMap<FitSplineId, FitSplineGeometry>,
     construction: BTreeSet<CurveId>,
     frozen: BTreeMap<PointId, FrozenPointSource>,
 }
@@ -282,6 +301,7 @@ impl Snapshot {
             geometry: BTreeMap::new(),
             arcs: BTreeMap::new(),
             control_splines: BTreeMap::new(),
+            fit_splines: BTreeMap::new(),
             construction: BTreeSet::new(),
             frozen: BTreeMap::new(),
         }
@@ -313,6 +333,11 @@ impl Snapshot {
     /// Borrow validated cubic geometry. Example: `snapshot.control_spline(spline_id)`.
     pub fn control_spline(&self, key: ControlSplineId) -> Option<&ControlSplineGeometry> {
         self.control_splines.get(&key)
+    }
+
+    /// Borrow validated fixed-station geometry. Example: `snapshot.fit_spline(spline_id)`.
+    pub fn fit_spline(&self, key: FitSplineId) -> Option<&FitSplineGeometry> {
+        self.fit_splines.get(&key)
     }
 
     /// Return the authored role of an existing curve. Example: `snapshot.curve_role(curve_id)`.

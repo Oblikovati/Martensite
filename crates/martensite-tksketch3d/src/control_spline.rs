@@ -111,9 +111,14 @@ pub struct ControlSplineGeometry {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-struct CubicEvidence {
-    polynomial: ExactCubicBernstein3,
-    regularity: BezierRegularityReport,
+pub(super) struct CubicEvidence {
+    pub(super) polynomial: ExactCubicBernstein3,
+    pub(super) regularity: BezierRegularityReport,
+}
+
+pub(super) enum CubicEvidenceFailure {
+    Cancelled,
+    Refused(ControlSplineFailure),
 }
 
 impl ControlSplineGeometry {
@@ -212,7 +217,11 @@ pub(super) fn admit(
         return Ok(old.clone());
     }
     check_chord(poles, snapshot.minimum).map_err(|cause| refusal(recipe.id, cause))?;
-    let evidence = capture_evidence(recipe, poles, cancelled)?;
+    let evidence = capture_evidence(recipe.id.get().get(), poles, recipe.proof, cancelled)
+        .map_err(|cause| match cause {
+            CubicEvidenceFailure::Cancelled => EditFailure::Cancelled(BatchPhase::Validation),
+            CubicEvidenceFailure::Refused(source) => refusal(recipe.id, source),
+        })?;
     Ok(ControlSplineGeometry {
         recipe,
         poles,
@@ -220,15 +229,17 @@ pub(super) fn admit(
     })
 }
 
-fn capture_evidence(
-    recipe: SketchControlSpline,
+pub(super) fn capture_evidence(
+    source_id: u64,
     poles: [Point3; 4],
+    proof: ControlSplineProofPolicy,
     cancelled: &mut impl FnMut() -> bool,
-) -> Result<CubicEvidence, EditFailure> {
+) -> Result<CubicEvidence, CubicEvidenceFailure> {
     let coefficients = poles.map(|pole| *pole.coordinates());
-    let polynomial = ExactCubicBernstein3::new(coefficients)
-        .map_err(|cause| refusal(recipe.id, ControlSplineFailure::PolynomialInput(cause)))?;
-    let regularity = certify(recipe, &coefficients, cancelled)?;
+    let polynomial = ExactCubicBernstein3::new(coefficients).map_err(|cause| {
+        CubicEvidenceFailure::Refused(ControlSplineFailure::PolynomialInput(cause))
+    })?;
+    let regularity = certify(source_id, proof, &coefficients, cancelled)?;
     Ok(CubicEvidence {
         polynomial,
         regularity,
@@ -276,14 +287,14 @@ fn check_chord(poles: [Point3; 4], minimum: MinimumLength) -> Result<(), Control
 }
 
 fn certify(
-    recipe: SketchControlSpline,
+    source_id: u64,
+    proof: ControlSplineProofPolicy,
     coefficients: &[[f64; 3]; 4],
     cancelled: &mut impl FnMut() -> bool,
-) -> Result<BezierRegularityReport, EditFailure> {
-    let query =
-        BezierRegularityQuery::new(recipe.id.get().get(), coefficients, recipe.proof.options());
+) -> Result<BezierRegularityReport, CubicEvidenceFailure> {
+    let query = BezierRegularityQuery::new(source_id, coefficients, proof.options());
     let report = certify_bezier_regularity(query, cancelled)
-        .map_err(|failure| proof_refusal(recipe, failure))?;
+        .map_err(|failure| proof_refusal(proof, failure))?;
     let isolated_parameters = match report.decision() {
         BezierRegularityDecision::Regular { .. } => return Ok(report),
         BezierRegularityDecision::Stationary {
@@ -291,8 +302,7 @@ fn certify(
         } => Some(zero_speed_isolation.roots().len()),
         BezierRegularityDecision::EverywhereStationary => None,
     };
-    Err(refusal(
-        recipe.id,
+    Err(CubicEvidenceFailure::Refused(
         ControlSplineFailure::Stationary {
             isolated_parameters,
             bisections: report.bisections(),
@@ -300,10 +310,13 @@ fn certify(
     ))
 }
 
-fn proof_refusal(recipe: SketchControlSpline, failure: BezierRegularityFailure) -> EditFailure {
+fn proof_refusal(
+    proof: ControlSplineProofPolicy,
+    failure: BezierRegularityFailure,
+) -> CubicEvidenceFailure {
     let completion = failure.completion();
     if completion == BezierRegularityCompletion::Cancelled {
-        return EditFailure::Cancelled(BatchPhase::Validation);
+        return CubicEvidenceFailure::Cancelled;
     }
     let bisections = failure.bisections();
     let stage = match failure.cause() {
@@ -311,25 +324,19 @@ fn proof_refusal(recipe: SketchControlSpline, failure: BezierRegularityFailure) 
             cause: RootIsolationError::SubdivisionLimit { .. },
             ..
         } => {
-            return refusal(
-                recipe.id,
-                ControlSplineFailure::WorkLimit {
-                    limit: recipe.proof.max_bisections,
-                    bisections,
-                },
-            );
+            return CubicEvidenceFailure::Refused(ControlSplineFailure::WorkLimit {
+                limit: proof.max_bisections,
+                bisections,
+            });
         }
         BezierRegularityCause::Roots { stage, .. } => Some(*stage),
         _ => None,
     };
-    refusal(
-        recipe.id,
-        ControlSplineFailure::ProofRefused {
-            completion,
-            stage,
-            bisections,
-        },
-    )
+    CubicEvidenceFailure::Refused(ControlSplineFailure::ProofRefused {
+        completion,
+        stage,
+        bisections,
+    })
 }
 
 fn refusal(spline: ControlSplineId, source: ControlSplineFailure) -> EditFailure {

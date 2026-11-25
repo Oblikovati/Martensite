@@ -2,8 +2,8 @@
 //! Stage values first so complete geometry, including shared endpoints, admits together.
 use crate::{
     ArcGeometry, ArcId, BatchPhase, ControlSplineGeometry, ControlSplineId, CurveId, CurveRole,
-    Edit, EditFailure, Entity, EntityId, LineId, PointId, PointRole, SketchLine, SketchPoint,
-    Snapshot, admission, arc, control_spline,
+    Edit, EditFailure, Entity, EntityId, FitSplineGeometry, FitSplineId, LineId, PointId,
+    PointRole, SketchLine, SketchPoint, Snapshot, admission, arc, control_spline, fit_spline,
 };
 use martensite_tkmath::gp::Point3;
 use std::{
@@ -32,6 +32,7 @@ impl Snapshot {
             geometry: Default::default(),
             arcs: Default::default(),
             control_splines: Default::default(),
+            fit_splines: Default::default(),
             construction: self.construction.clone(),
             frozen: self.frozen.clone(),
         };
@@ -57,6 +58,13 @@ impl Snapshot {
             draft.control_splines =
                 draft.check_control_splines(&self.control_splines, &mut cancelled)?;
         }
+        if !self.fit_splines.is_empty()
+            || edits
+                .iter()
+                .any(|edit| matches!(edit, Edit::InsertFitSpline(_)))
+        {
+            draft.fit_splines = draft.check_fit_splines(&self.fit_splines, &mut cancelled)?;
+        }
         poll(&mut cancelled, BatchPhase::Completion)?;
         Ok(draft)
     }
@@ -79,6 +87,7 @@ impl Snapshot {
             Edit::InsertControlSpline(spline) => {
                 self.insert(Entity::ControlSpline(spline), retired)
             }
+            Edit::InsertFitSpline(spline) => self.insert(Entity::FitSpline(spline), retired),
             Edit::SetCurveRole { curve, role } => self.set_curve_role(curve, role),
             Edit::MovePoint { point, position } => self.move_point(point, position),
             Edit::DetachFrozenPoint(point) => self.detach_frozen_point(point),
@@ -88,6 +97,7 @@ impl Snapshot {
             Edit::RemoveControlSpline(spline) => {
                 self.remove(EntityId::ControlSpline(spline), retired)
             }
+            Edit::RemoveFitSpline(spline) => self.remove(EntityId::FitSpline(spline), retired),
         }
     }
 
@@ -186,6 +196,9 @@ impl Snapshot {
                 Entity::ControlSpline(spline) if spline.poles.contains(&point) => {
                     incident.push(EntityId::ControlSpline(spline.id));
                 }
+                Entity::FitSpline(spline) if spline.stations.contains(&point) => {
+                    incident.push(EntityId::FitSpline(spline.id));
+                }
                 _ => {}
             }
         }
@@ -257,6 +270,7 @@ impl Snapshot {
                 Entity::Line(line) => used.extend(line.endpoints),
                 Entity::Arc(arc) => used.extend(arc.points()),
                 Entity::ControlSpline(spline) => used.extend(spline.poles),
+                Entity::FitSpline(spline) => used.extend(spline.stations),
                 Entity::Point(_) => {}
             }
         }
@@ -315,6 +329,26 @@ impl Snapshot {
                 poll(cancelled, BatchPhase::Validation)?;
                 let geometry =
                     control_spline::admit(self, recipe, previous.get(&recipe.id), cancelled)?;
+                Ok((recipe.id, geometry))
+            })
+            .collect()
+    }
+
+    fn check_fit_splines(
+        &self,
+        previous: &BTreeMap<FitSplineId, FitSplineGeometry>,
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<BTreeMap<FitSplineId, FitSplineGeometry>, EditFailure> {
+        self.entities
+            .values()
+            .filter_map(|entity| match entity {
+                Entity::FitSpline(spline) => Some(*spline),
+                _ => None,
+            })
+            .map(|recipe| {
+                poll(cancelled, BatchPhase::Validation)?;
+                let geometry =
+                    fit_spline::admit(self, recipe, previous.get(&recipe.id), cancelled)?;
                 Ok((recipe.id, geometry))
             })
             .collect()

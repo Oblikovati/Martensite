@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Refusals identify the exact edit or line input that failed admission.
 use crate::{
-    ArcFailure, ArcId, ControlSplineFailure, ControlSplineId, EntityId, FrozenPointSource, LineId,
-    MinimumLength, PointId, SketchLine,
+    ArcFailure, ArcId, ControlSplineFailure, ControlSplineId, EntityId, FitSplineFailure,
+    FitSplineId, FrozenPointSource, LineId, MinimumLength, PointId, SketchLine,
 };
 use martensite_tkmath::predicates::NonFiniteCoordinate;
 use std::{error::Error, fmt};
@@ -148,6 +148,13 @@ pub enum EditFailure {
         /// Specific recipe or regularity refusal.
         source: ControlSplineFailure,
     },
+    /// An open fixed-station fit spline could not be admitted.
+    FitSpline {
+        /// Spline being validated.
+        spline: FitSplineId,
+        /// Specific station, numeric or regularity refusal.
+        source: FitSplineFailure,
+    },
     /// The operation observed cancellation at this stage.
     Cancelled(BatchPhase),
 }
@@ -233,6 +240,7 @@ impl fmt::Display for EditFailure {
             Self::ControlSpline { spline, source } => {
                 write!(f, "control spline {spline:?}: {source}")
             }
+            Self::FitSpline { spline, source } => write!(f, "fit spline {spline:?}: {source}"),
             Self::Cancelled(phase) => write!(f, "spatial sketch edit cancelled at {phase:?}"),
         }
     }
@@ -244,6 +252,7 @@ impl Error for EditFailure {
             Self::MetricInput { source, .. } => Some(source),
             Self::Arc { source, .. } => Some(source),
             Self::ControlSpline { source, .. } => Some(source),
+            Self::FitSpline { source, .. } => Some(source),
             _ => None,
         }
     }
