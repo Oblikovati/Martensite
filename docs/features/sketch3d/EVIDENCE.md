@@ -254,3 +254,46 @@ carrier and trim intervals, recover all required parents, and refuse unsupported
 Keep numeric bounds in TKMath, captured support and trim evaluation in TKGeomAlgo, and topology incidence and
 traversal in TKTopAlgo. Section common-block ancestry belongs to TKBO. Compose the TKPrim projection sweep and
 TKBO section above them so the lower toolkits stay acyclic.
+
+## E13. X4 parting silhouette and Contap isolation
+
+At `fb7dd57f`, a 60 × 40 × 10 block returned eight parting edges for each principal axis and six for `(1,1,1)`.
+A radius-5, height-10 cylinder returned two analytic generators for X and both circular rims for Z. Generator
+endpoints matched the closed form within `2e-14`. Twelve concurrent rounds reproduced serial endpoint bits and
+source ancestry. The fixture admitted complete cylinders and orthogonal blocks. It refused partial-turn or tilted
+cylinders and did not implement the owned internal-face and planar-face exclusions.
+
+The reusable Contap change is `9759e0b9` on the Sketch3D branch. It uses operation-local sampling for contour setup,
+interior search and walking. Default calls discard diagnostic text, and the explicit writer still receives the
+historical message. The native library and scratch suites passed 17 and 5 tests respectively. The same targets
+passed under the pinned `nightly-2026-09-25` ThreadSanitizer in a clean Linux container. The companion native checks
+passed 20,258 compatibility tests, five dataset tests, 59 doctests, strict TKHLR Clippy and formatting.
+
+Exact HLR remains separate. On the original and migrated code, the visible 3D outline of the same block was null
+for X, two edges for Y, four for Z and null for the skew direction. The typed bug tracks those visibility results.
+[Martensite #612](https://github.com/Oblikovati/Martensite/issues/612)
+
+## E14. X1 warm solver results
+
+The X1 prototype used the app solver from `76f5e59a6`, with block-local automatic differentiation, a sparse
+component factorization, and scale-aware backtracking. Three release processes ran 100 matched updates per fixture
+on CPU 3, with 3.7% observed load on its SMT sibling and CPU pressure `avg10=0.00`. The Rust `1.98.1` measurements
+include solving and lightweight changed-curve evaluation. Layout construction, target preparation and independent
+post-validation were outside the timer.
+
+| Fixture | Dense p95 (ms) | Sparse p95 (ms) |
+| --- | ---: | ---: |
+| 60-variable chain | 4.280 to 4.726 | 0.229 to 0.233 |
+| 120-variable chain | 28.132 to 28.637 | 0.504 to 0.507 |
+| 240-variable chain | 120.158 to 133.846 | 0.997 to 1.033 |
+| Near-origin arc, spline and UV | 0.295 to 0.309 | 0.074 to 0.102 |
+
+The matched results passed geometry checks and agreed on rank. All 300 far-origin sparse updates passed the
+independent geometry check, versus 12 dense updates. The dense model-length scale grows with absolute coordinate
+magnitude, so the far-origin comparison qualifies acceptance behavior. The timing comparison uses only the matched
+accepted controls. The planar app adapter preserved the existing dense iteration and tested local AD. The static
+assembly proof used synthetic joints. The current application assembly code has no numerical solver caller.
+
+The warm 120-variable latency target passed. Before choosing the production solver and numerical limits, verify
+per-relation rank, application parity and a bounded interactive factorization that can defer dense recovery. Bind
+the equation inputs and tolerance policy to the immutable request and validate final geometry before adoption.
