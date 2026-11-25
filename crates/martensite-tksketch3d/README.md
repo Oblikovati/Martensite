@@ -1,12 +1,12 @@
 # martensite-tksketch3d
 
-A spatial sketch is an immutable snapshot of points and directed line segments.
+A spatial sketch is an immutable snapshot of points and directed curves.
 Points store model-space coordinates. Lines refer to their endpoints by ID, so
 two segments that meet at a shared point can move together.
 
 Reserve IDs in the document before calling the toolkit. Issue fresh IDs across
 removals and undo. The kernel checks uniqueness within the current snapshot and
-batch. Point and line IDs share one namespace, and both snapshot iterators use
+batch. Points and curves share one ID namespace, and both snapshot iterators use
 ascending key order. Sketch markers and center markers have their own rows and
 can also serve as endpoints.
 
@@ -15,7 +15,7 @@ The caller resolves the source and supplies its position in destination model
 units. The snapshot stores the captured source revision and coordinates. The
 point can serve as a line endpoint and keeps its position if the source changes
 or is deleted. Detach it before moving it. Detachment keeps the point ID and
-incident lines.
+incident curves.
 
 Relations have a separate caller-reserved ID namespace. `ConstrainedSketch::apply`
 captures Fix anchors and solves authored relations before adoption. `drag` uses
@@ -32,6 +32,16 @@ a support line with rounded direction. Use the authored endpoints for exact
 checks. The toolkit refuses a segment when its displacement or estimated length
 overflows, or a nonzero component disappears from its unit direction.
 
+`Edit::InsertArc` places an open circle trim through an interior point or
+around a named center and an oriented normal. The witness selects the branch.
+For center placement, the arc sweeps positively about the normal, which also
+chooses the plane at a semicircle. A three-point arc uses the snapshot minimum
+for chord length and witness altitude. Center placement uses it for chord and
+radius lengths. Supply an `ArcFitTolerance` to limit the deviation at authored
+placement points. The output preserves their original coordinates and reports
+the sampled deviation separately from the nominal circle. The point and line
+solver refuses arc-bearing snapshots until it has an arc layout.
+
 Use `Snapshot::wire_recipe` with a directed list of line IDs and a pair-check
 budget. A wire joins consecutive uses through shared point IDs and checks exact
 contact on the authored segments. `WireRecipe::materialize` returns a fresh BRep
@@ -40,9 +50,9 @@ and bounds the deviation of each native line trim from its authored segment.
 Sweep and Loft can take independent exports from the same recipe.
 
 An edit batch adopts a complete snapshot. It can traverse the whole draft and
-reuses proof for lines whose identities and endpoint bits match. A failed or
+reuses curve checks when the recipe and placement point bits match. A failed or
 cancelled batch leaves the source available for the next edit.
 
-Removing a point removes its incident lines. A batch with any deletion also
+Removing a point removes its incident curves. A batch with any deletion also
 retires every unused defining point and keeps unselected markers. For a batch
-that explicitly removes both a point and its line, list the line removal first.
+that explicitly removes both a point and its curve, list the curve removal first.

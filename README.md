@@ -38,7 +38,7 @@ The improvememt roadmap for this project can be found on [Milestones](https://gi
 | `martensite-tktobj` | Document objects, partitions, references, attributes and model iteration. |
 | `martensite-tkbo` | Boolean operations, general fuse, builders, sections with face ancestry, intersection tools, splitting and defeaturing. |
 | `martensite-tksketch` | [Surface-bound sketches](docs/features/martensite-tksketch/README.md) with cylindrical and conical normal extrusion, periodic bands and apertures, and selected-face bosses and pockets. |
-| `martensite-tksketch3d` | [Spatial sketches](crates/martensite-tksketch3d/README.md) with stable identities, point and line constraints, and ordered native wires. |
+| `martensite-tksketch3d` | [Spatial sketches](crates/martensite-tksketch3d/README.md) with stable identities, circular arcs, point and line constraints, and ordered native line wires. |
 | `martensite-tkbool` | Topological operations, sweeps, evolved shapes and projections. |
 | `martensite-tkfillet` | Fillets and chamfers. |
 | `martensite-tkcaf` | Topological naming, the extended document attributes and the standard application. |

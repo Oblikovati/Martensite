@@ -406,3 +406,20 @@ Full consumer validation, curved wires, incompatible sections and application-dr
 All 35 toolkit tests passed on the wire lane. Independent re-review covered the late cancellation checks during
 native point binding publication. Two fresh processes emitted identical 692-byte wire archives with SHA-256
 `1ed6890c71ebe742d8e5b7e993d85dbccb6fbe3d73e311a5d8bbc62ae1fdba18`.
+
+## E19. Authored circular arc placement
+
+`731a1487` adds directed three-point and center-point arcs to the immutable spatial snapshot. The three-point
+case checks the chord and witness altitude with exact predicates, constructs the nominal circle in scaled
+local coordinates, and verifies that the witness is inside its trim. Center-point placement uses a supplied
+normal and exact radial orientation. At a zero orientation, exact projected opposition admits a semicircle,
+including an oblique frame whose rounded angle would otherwise move by one ULP. For each admitted arc, the
+rounded carrier's placement samples fit within the caller's spatial limit. Authored coordinates remain
+available independently, and the measured point deviation is a sampled estimate.
+
+The toolkit fixtures cover both corpus placements, major and minor choices, non-XY and oblique semicircles,
+very small and large coordinate scales, unrepresentable carriers, over-limit point fit, edit and deletion
+closure, cancellation and signed-zero replay. The independent review found the oblique counterexample and
+verified exact projected opposition on the corrected code. The point and line solver gives a typed refusal
+for an arc layout. Arc equations, spline interaction, native curved wires and desktop authoring have separate
+acceptance cases.

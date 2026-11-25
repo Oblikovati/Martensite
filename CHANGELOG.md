@@ -16,6 +16,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added ordered spatial line wires with exact authored contact checks, detached BRep export, and point and edge bindings for Sweep and Loft (#611).
 
+- Added spatial circular arcs placed through an interior point or from a center and oriented plane, with directed trim and point-fit checks (#611).
+
 - Added explicit full-turn cylinder and cone bands with authored rim history and paired native seams (#419).
 
 - Added rectangular and curved apertures across native seams in full-turn cylinder and cone bands, with exact authored split intervals and stable replay (#419).
