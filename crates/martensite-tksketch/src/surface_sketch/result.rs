@@ -1,5 +1,5 @@
 //! Published values never expose native interior-mutable geometry.
-use super::{encoding, failure::*, history::*, request::*};
+use super::{PeriodicImageKey, encoding, failure::*, history::*, request::*};
 use martensite_tkbo::{
     body_check::ValidationReport, measured::Measured, profile_extrusion::AchievedTolerance,
 };
@@ -16,8 +16,14 @@ pub enum SurfaceDiagnostic {
         limit: f64,
     },
 }
+/// Fresh native owners with authored bindings, for a standard normal extrusion.
+pub type DetachedNormalBody = KeyedDetachedNormalBody<HistoryKey>;
+
+/// Fresh native owners with bindings that include the periodic seam images.
+pub type DetachedPeriodicBody = KeyedDetachedNormalBody<PeriodicImageKey>;
+
 /// Fresh native owners with semantic bindings belonging to the same exported solid.
-pub struct DetachedNormalBody<K = HistoryKey> {
+pub struct KeyedDetachedNormalBody<K> {
     /// Mutable native export, independent of every other export and the published result.
     pub solid: Shape,
     /// Explicit native references, keyed by authored parent and operation role.
@@ -31,9 +37,15 @@ pub struct VolumeErrorEstimates {
     /// Forward coordinate/radius rounding estimate times analytic surface-area scale.
     pub construction: f64,
 }
+/// Complete immutable result of a standard normal extrusion.
+pub type NormalExtrusionResult = KeyedNormalExtrusionResult<HistoryKey>;
+
+/// Complete immutable result with authored and periodic seam bindings.
+pub type PeriodicNormalExtrusionResult = KeyedNormalExtrusionResult<PeriodicImageKey>;
+
 /// Complete immutable normal extrusion, with value-only metadata and an owned encoding.
 #[derive(Clone, Debug)]
-pub struct NormalExtrusionResult<K = HistoryKey> {
+pub struct KeyedNormalExtrusionResult<K> {
     pub(super) bytes: Vec<u8>,
     pub(super) keys: Vec<K>,
     pub(super) region: SurfaceRegionId,
@@ -44,7 +56,7 @@ pub struct NormalExtrusionResult<K = HistoryKey> {
     pub(super) diagnostics: Vec<SurfaceDiagnostic>,
     pub(super) options: NormalExtrusionOptions,
 }
-impl<K: Copy> NormalExtrusionResult<K> {
+impl<K: Copy> KeyedNormalExtrusionResult<K> {
     /// Ordered checks of the decoded published body; `result.validation().is_valid()`.
     pub fn validation(&self) -> &ValidationReport {
         &self.validation
@@ -78,14 +90,14 @@ impl<K: Copy> NormalExtrusionResult<K> {
         super::request::effective_limits(self.options)
     }
     /// Decode independent native owners and their semantic references; `result.export_brep()?`.
-    pub fn export_brep(&self) -> Result<DetachedNormalBody<K>, SurfaceSketchFailure> {
+    pub fn export_brep(&self) -> Result<KeyedDetachedNormalBody<K>, SurfaceSketchFailure> {
         let (solid, entities) =
             encoding::decode(&self.bytes, &self.keys).map_err(|cause| SurfaceSketchFailure {
                 region: self.region,
                 stage: SurfaceStage::Encoding,
                 cause,
             })?;
-        Ok(DetachedNormalBody { solid, entities })
+        Ok(KeyedDetachedNormalBody { solid, entities })
     }
 }
 
@@ -96,8 +108,8 @@ pub(super) fn assemble<K>(
     checked: super::validation::CheckedBody,
     volume: Measured,
     volume_errors: VolumeErrorEstimates,
-) -> NormalExtrusionResult<K> {
-    NormalExtrusionResult {
+) -> KeyedNormalExtrusionResult<K> {
+    KeyedNormalExtrusionResult {
         bytes,
         keys,
         region: admitted.region,

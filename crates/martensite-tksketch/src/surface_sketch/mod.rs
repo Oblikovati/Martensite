@@ -44,7 +44,8 @@ pub use full_turn::{
 pub use history::{HistoryKey, HistoryRole, HistorySource};
 pub use request::*;
 pub use result::{
-    DetachedNormalBody, NormalExtrusionResult, SurfaceDiagnostic, VolumeErrorEstimates,
+    DetachedNormalBody, DetachedPeriodicBody, NormalExtrusionResult, PeriodicNormalExtrusionResult,
+    SurfaceDiagnostic, VolumeErrorEstimates,
 };
 pub use wrapped_profile::ConicalStockFailure;
 pub use wrapped_profile::{

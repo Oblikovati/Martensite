@@ -16,14 +16,14 @@ pub(in crate::surface_sketch::full_turn) use tool::Contour;
 /// Published periodic band and its independently named periodic edge fragments.
 #[derive(Clone, Debug)]
 pub struct CrossedBandResult {
-    pub(super) geometry: NormalExtrusionResult<PeriodicImageKey>,
+    pub(super) geometry: PeriodicNormalExtrusionResult,
     pub(super) crossings: Vec<PeriodicCrossing>,
 }
 
 impl CrossedBandResult {
     /// Immutable geometry, volume, validation and named native export.
     /// Example: `result.geometry().export_brep()?`.
-    pub fn geometry(&self) -> &NormalExtrusionResult<PeriodicImageKey> {
+    pub fn geometry(&self) -> &PeriodicNormalExtrusionResult {
         &self.geometry
     }
 
@@ -173,7 +173,7 @@ fn publish(
     prepared: &CrossedPlan,
     body: topods::Shape,
     bindings: binding::SplitBindings,
-) -> Result<NormalExtrusionResult<PeriodicImageKey>, SurfaceSketchFailure> {
+) -> Result<PeriodicNormalExtrusionResult, SurfaceSketchFailure> {
     let sweep = &prepared.stock.sweep;
     let keys = bindings.iter().map(|(key, _)| *key).collect::<Vec<_>>();
     let frozen = encoding::encode(&body, &bindings)

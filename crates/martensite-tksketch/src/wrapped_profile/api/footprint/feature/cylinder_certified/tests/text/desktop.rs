@@ -6,11 +6,11 @@ use std::collections::BTreeMap;
 
 const BREP: &[u8] = include_bytes!(concat!(
     env!("CARGO_MANIFEST_DIR"),
-    "/../../docs/features/surface-normal-sketches/references/desktop-text-cylinder.brep"
+    "/tests/fixtures/wrapped_text/desktop-text-cylinder.brep"
 ));
 const MATERIAL: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
-    "/../../docs/features/surface-normal-sketches/references/desktop-text-material.tsv"
+    "/tests/fixtures/wrapped_text/desktop-text-material.tsv"
 ));
 
 pub(super) fn stock() -> CylinderFaceAttachment {

@@ -58,8 +58,9 @@ signed depths and one angular chart. The cone also requires the profile to
 lie in the positive developed halfplane, clear of the apex. The rational cylinder
 uses `GeometricCompositeV6` for its reference planar proof. The tested cone
 request selects the same version for its UV cap proof. The reference level splits
-each native span into equal dyadic intervals. Open clamped splines may have
-nonuniform knots with multiplicities up to their degree. Knot insertion encloses
+each native span into equal dyadic intervals. Open clamped splines admit
+degrees 1 through 16 and up to 64 nonuniform spans, with interior knot
+multiplicities up to their degree. Knot insertion encloses
 the homogeneous coefficients before rounding and requires a strictly monotone
 projection across the complete curve and its reference. A closed authored
 spline may use the exact dyadic Bernstein partition.

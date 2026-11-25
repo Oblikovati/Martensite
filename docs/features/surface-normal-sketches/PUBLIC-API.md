@@ -129,10 +129,11 @@ the axial coordinate.
 
 The sketch supplies the selected outer and hole cycles, with zero first
 depth, positive last depth and the appropriate normal sense for the boss or
-pocket. The operation can re-cut the native stock seam when the contours
-cross it and a clear alternate cut can be proved. The result carries the
-seam's change in the support history, the authored curve and span history,
-and a detached native export. An application can name each counter island
+pocket. On the admitted indirect cylinder, the operation can re-cut the
+native stock seam when the contours cross it and a clear alternate cut
+can be proved. A direct cylinder in this entry requires clearance from its
+recorded seam. The result carries seam changes in the support history,
+the authored curve and span history, and a detached native export. An application can name each counter island
 from the selected stock face and the island's authored boundary incidences.
 An old attachment revision, uncertain contact or unsupported stock
 returns a typed refusal.
