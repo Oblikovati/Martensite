@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::*;
 use martensite_tksketch3d::{
-    EditFailure, EntityId, FrozenPointSource, FrozenSourceRevision, SketchPoint,
+    ControlSplineProofPolicy, EditFailure, EntityId, FitSplineId, FitSplineParameters,
+    FitSplinePolicy, FrozenPointSource, FrozenSourceRevision, SketchFitSpline, SketchPoint,
     constraints::{ConstrainedSketch, ConstraintFailure, Relation, RelationId},
     line_edit::EndpointProtection,
 };
@@ -57,6 +58,46 @@ fn shared_and_frozen_endpoints_refuse_without_rewiring() {
         Err(LineEditFailure::ProtectedEndpoint { point, protection: EndpointProtection::Frozen(actual) })
         if point == pid(4) && actual == stamp));
     assert_eq!(frozen.frozen_source(pid(4)), Some(stamp));
+}
+
+#[test]
+fn a_fit_station_survives_line_edits_and_protects_its_endpoint() {
+    let spline = SketchFitSpline {
+        id: FitSplineId::new(NonZeroU64::new(70).unwrap()),
+        stations: [1, 71, 72, 73].map(pid),
+        parameters: FitSplineParameters::new([0., 0.25, 0.75, 1.]).unwrap(),
+        policy: FitSplinePolicy {
+            max_distortion: 2.,
+            max_inverse_gain: 32.,
+            max_station_identity_error: 1e-12,
+            max_station_miss: MinimumLength::new(1e-10).unwrap(),
+            regularity: ControlSplineProofPolicy::new(1e-8, 128).unwrap(),
+        },
+    };
+    let source = fixture(&TRIM)
+        .apply(
+            &[
+                seed(71, [-49., 0., 30.], PointRole::Defining),
+                seed(72, [-47., 0., 30.], PointRole::Defining),
+                seed(73, [-46., 0., 30.], PointRole::Defining),
+                Edit::InsertFitSpline(spline),
+            ],
+            || false,
+        )
+        .unwrap();
+    assert!(matches!(
+        source.trim_line(trim(0.25), || false),
+        Err(LineEditFailure::ProtectedEndpoint {
+            point,
+            protection: EndpointProtection::Shared(EntityId::FitSpline(other)),
+        }) if point == pid(1) && other == spline.id
+    ));
+    let accepted = edited(source.trim_line(trim(0.75), || false).unwrap());
+    assert_eq!(accepted.sketch.point(pid(1)), source.point(pid(1)));
+    assert_eq!(
+        accepted.sketch.fit_spline(spline.id),
+        source.fit_spline(spline.id)
+    );
 }
 
 #[test]
