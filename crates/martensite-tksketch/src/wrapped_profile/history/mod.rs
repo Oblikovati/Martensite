@@ -65,11 +65,15 @@ fn certify_records<P: AsRef<DevelopedRegionRequest>>(
     })
 }
 fn bind_sources(originals: &[Request], selection: &selection::QualifiedSelection) -> Checked<()> {
-    let planar = &selection.prepared.planar.members;
-    if planar.len() != originals.len()
-        || !originals
-            .iter()
-            .all(|r| planar.get(&r.region).is_some_and(|e| e.matches_request(r)))
+    let planar = &selection.prepared.planar;
+    if planar.members.len() != originals.len()
+        || planar.integral_mismatch(originals).is_some()
+        || !originals.iter().all(|r| {
+            planar
+                .members
+                .get(&r.region)
+                .is_some_and(|e| e.matches_member(r))
+        })
     {
         return Err(HistoryFailure::SourceBinding);
     }

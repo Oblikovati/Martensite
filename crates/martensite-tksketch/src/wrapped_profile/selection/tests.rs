@@ -1,6 +1,61 @@
 //! Global arrangement nesting determines selected material, not independent regional area.
 use super::super::tests::{contour, request};
 use super::*;
+
+const V6: PlanarProofVersion = PlanarProofVersion::GeometricCompositeV6 {
+    max_components: 64,
+    max_total_subintervals: 8192,
+};
+const WORK: PlanarProofWorkLimit = PlanarProofWorkLimit::PairBisections(8192);
+
+#[test]
+fn explicit_v6_cylindrical_publication_preserves_legacy_history_and_geometry() {
+    let mut source = api::operation_tests::request();
+    source.options.planar_work = WORK;
+    let legacy = operation::normal_extrude_profile(&source).unwrap();
+    let inputs = input::read(&source, &mut || false).unwrap();
+    let requests = inputs.requests.clone();
+    let result = operation::from_inputs_with_proof(&source, inputs, V6, &mut || false).unwrap();
+    let planar = &result.family.family.selection.prepared.planar;
+    let proof = planar
+        .members
+        .values()
+        .next()
+        .unwrap()
+        .integral_program_evidence()
+        .unwrap();
+    assert_eq!(proof.requested_proof_version(), V6);
+    assert_eq!(proof.granted_subintervals(), 8192);
+    assert_eq!(planar.integral_mismatch(&requests), None);
+    assert_eq!(result.budget().planar_work.requested_pair_bisections, 8192);
+    assert_eq!(result.history(), legacy.history());
+    assert_eq!(result.encoded_brep(), legacy.encoded_brep());
+    assert_eq!(
+        result.export_native().unwrap().entities.len(),
+        result.history().len()
+    );
+}
+
+#[test]
+fn integral_issuance_rebinds_every_exact_member_and_rejects_a_same_input_substitution() {
+    let a = rectangle(5, 10, [0., 0.], [1., 1.]);
+    let b = rectangle(100, 1000, [4., 0.], [5., 1.]);
+    let requests = [a.clone(), b];
+    let mut captured = qualify_with_proof(&requests, WORK, V6, &mut || false).unwrap();
+    let mut independent = qualify_with_proof(&requests, WORK, V6, &mut || false).unwrap();
+    assert_eq!(captured.integral_mismatch(&requests), None);
+    let changed = [a, rectangle(100, 1000, [4.25, 0.], [5.25, 1.])];
+    assert_eq!(
+        captured.integral_mismatch(&changed),
+        Some(SurfaceRegionId(5))
+    );
+    let region = SurfaceRegionId(100);
+    captured
+        .members
+        .insert(region, independent.members.remove(&region).unwrap());
+    assert_eq!(captured.integral_mismatch(&requests), Some(region));
+}
+
 pub(super) fn rectangle(region: u64, first: u64, min: [f64; 2], max: [f64; 2]) -> Request {
     let [x, y] = min;
     let [a, b] = max;
