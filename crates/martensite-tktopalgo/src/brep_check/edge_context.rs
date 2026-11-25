@@ -1,5 +1,6 @@
 //! `BRepCheck_Edge::InContext`: the edge in a face (its curves on the face surface
 //! against its reference curve) and in a solid (shared by two faces).
+use super::cylindrical_curve_bounds::CylinderMetricSource;
 use super::edge::{BRepCheckEdge, pcurve_range_fits};
 use super::edge_bezier_boundary::{identical_boundary, identical_located_boundary};
 use super::errors::null_object;
@@ -25,6 +26,7 @@ use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkgeombase::geom_proj_lib;
 use martensite_tkgeombase::proj_lib::ProjectedCurve;
 use martensite_tkmath::gp::Transform3;
+use martensite_tkmath::predicates::roots::metric_bounds::CertifiedCylindricalTrim;
 use martensite_tkmath::toploc::Location;
 
 /// The frame of the face checks: the reference curve, the face, the list and the
@@ -42,6 +44,7 @@ struct FaceCheck<'a> {
     gctrl: bool,
     exact: bool,
     parallel: bool,
+    cylindrical_bound: Option<&'a CertifiedCylindricalTrim>,
 }
 
 impl FaceCheck<'_> {
@@ -131,8 +134,9 @@ impl FaceCheck<'_> {
             Handle::new(GeomAdaptorSurface::with_surface(&sb)?).into_upcast();
         let pcurve = r.pcurve()?;
         let closed = r.is_curve_on_closed_surface();
-        if self.literal_boundary_candidate(unit_parameter, closed)
-            && self.identical_boundary(&sb, &pcurve)
+        if self.exact_unit_curve_check(unit_parameter, closed)
+            && (self.cylindrical_distance_bound(&sb, &pcurve)
+                || self.identical_boundary(&sb, &pcurve))
         {
             return Ok(());
         }
@@ -165,14 +169,36 @@ impl FaceCheck<'_> {
         Ok(())
     }
 
-    fn literal_boundary_candidate(&self, unit_parameter: bool, closed: bool) -> bool {
+    fn exact_unit_curve_check(&self, unit_parameter: bool, closed: bool) -> bool {
         self.exact
             && self.same_parameter
             && unit_parameter
             && !closed
-            && self.reference_location.is_equal(&self.face_location)
             && self.tol.is_finite()
             && self.tol > 0.
+    }
+
+    fn cylindrical_distance_bound(
+        &self,
+        surface: &Handle<dyn GeomSurface>,
+        pcurve: &Handle<dyn Geom2dCurve>,
+    ) -> bool {
+        let Some(proof) = self.cylindrical_bound else {
+            return false;
+        };
+        let Some(reference) = self.cref.get().filter(|r| r.is_curve3d()) else {
+            return false;
+        };
+        CylinderMetricSource {
+            reference,
+            loaded_reference: &self.hcurve,
+            surface: &self.surface,
+            moved_surface: surface,
+            trace: pcurve,
+            reference_transform: self.reference_location.transformation(),
+            surface_transform: self.face_location.transformation(),
+        }
+        .matches(proof, self.tol)
     }
 
     fn identical_boundary(
@@ -180,6 +206,9 @@ impl FaceCheck<'_> {
         surface: &Handle<dyn GeomSurface>,
         pcurve: &Handle<dyn Geom2dCurve>,
     ) -> bool {
+        if !self.reference_location.is_equal(&self.face_location) {
+            return false;
+        }
         if self.reference_location.is_identity() {
             return identical_boundary(&self.hcurve, surface, pcurve);
         }
@@ -273,6 +302,14 @@ impl BRepCheckEdge {
     /// the flags and the curves on the face surface; in a solid, free and
     /// multi-connected edges.
     pub(super) fn check_in_context(&self, context: &Shape) -> Result<(), Failure> {
+        self.check_in_context_with_bound(context, None)
+    }
+
+    pub(super) fn check_in_context_with_bound(
+        &self,
+        context: &Shape,
+        cylindrical_bound: Option<&CertifiedCylindricalTrim>,
+    ) -> Result<(), Failure> {
         let Some(list) = self.result_base().bind_context_list(context) else {
             return Ok(());
         };
@@ -284,7 +321,7 @@ impl BRepCheckEdge {
         }
         match context.shape_type()? {
             ShapeEnum::Face if self.fields.read().cref.is_some() => {
-                if !self.check_in_face(&face(context)?, &list, tol)? {
+                if !self.check_in_face(&face(context)?, &list, tol, cylindrical_bound)? {
                     return Ok(());
                 }
             }
@@ -301,6 +338,7 @@ impl BRepCheckEdge {
         context: &Face,
         list: &SharedStatusList,
         tol: f64,
+        cylindrical_bound: Option<&CertifiedCylindricalTrim>,
     ) -> Result<bool, Failure> {
         let shape = self.edge();
         let tedge = edge_tshape(&shape, "BRepCheck_Edge::InContext")?;
@@ -341,6 +379,7 @@ impl BRepCheckEdge {
             gctrl,
             exact,
             parallel: self.result_base().is_parallel(),
+            cylindrical_bound,
         };
         let mut pcurve_found: bool = false;
         for cr in tedge.curves() {

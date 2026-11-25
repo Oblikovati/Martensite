@@ -6,6 +6,7 @@
 //! checked in, and [`BRepCheckAnalyzer`] runs them over a whole shape.
 mod analyzer;
 mod analyzer_contexts;
+mod cylindrical_curve_bounds;
 mod edge;
 mod edge_bezier_boundary;
 mod edge_context;
@@ -31,6 +32,7 @@ mod wire_self_intersect;
 mod wire_self_pairs;
 
 pub use analyzer::BRepCheckAnalyzer;
+pub use cylindrical_curve_bounds::CylindricalCurveBounds;
 pub use edge::BRepCheckEdge;
 pub use face::BRepCheckFace;
 pub use package::BRepCheck;

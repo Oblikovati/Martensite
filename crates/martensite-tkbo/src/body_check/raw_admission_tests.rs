@@ -122,6 +122,40 @@ fn invalid_raw_values_refuse_before_native_checks_without_mutation() {
         }
     }
 }
+
+#[test]
+fn curve_bounds_preserve_ordered_modes_and_raw_refusal() {
+    let body = cylinder();
+    let resolution = resolution(ToleranceCap::Refuse(1e-4));
+    let bounds = CylindricalCurveBounds::default();
+    let read = |checkpoint| match checkpoint {
+        BodyGeometryValidation::Ready(value) => value.report(),
+        BodyGeometryValidation::Stopped(report) => report,
+    };
+    let normal = || read(begin_body_validation(&body, &resolution).unwrap());
+    let provisioned =
+        || read(begin_body_validation_with_curve_bounds(&body, &resolution, &bounds).unwrap());
+    let report = provisioned();
+    assert_eq!(report, normal());
+    assert_eq!(
+        report.stage(ValidationStage::Topology).mode,
+        CheckMode::Exact
+    );
+    assert_eq!(
+        report.stage(ValidationStage::Geometry).mode,
+        CheckMode::Sampled
+    );
+    assert_eq!(
+        report.stage(ValidationStage::Geometry).verdict,
+        StageVerdict::Passed
+    );
+    let names = TopologyNames::of(&body).unwrap();
+    let edge = names.all(ShapeEnum::Edge).remove(0);
+    set_raw(&edge, -1.);
+    let report = provisioned();
+    assert_eq!(report, normal());
+    assert_admission_report(&report, names.name(&edge), -1.);
+}
 #[test]
 fn admitted_cylinder_retains_all_four_required_checks() {
     let report = validate_body(&cylinder(), &resolution(ToleranceCap::Refuse(1e-5))).unwrap();

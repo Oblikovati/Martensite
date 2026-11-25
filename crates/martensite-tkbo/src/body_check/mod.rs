@@ -39,7 +39,10 @@ mod ledger_tests;
 mod raw_admission_tests;
 
 pub use ledger::ValidationReport;
-pub use ordered::{BodyGeometryValidation, OrderedBodyGeometry, begin_body_validation};
+pub use ordered::{
+    BodyGeometryValidation, OrderedBodyGeometry, begin_body_validation,
+    begin_body_validation_with_curve_bounds,
+};
 pub use report::{
     CheckMode, EulerCensus, Finding, FindingKind, Severity, StageReport, StageVerdict, TopologyRef,
     ValidationStage,
@@ -51,6 +54,7 @@ use ledger::Ledger;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::ShapeEnum;
+use martensite_tktopalgo::brep_check::CylindricalCurveBounds;
 use naming::TopologyNames;
 
 /// A resolution field that is not finite and positive: its name and value.
@@ -142,6 +146,7 @@ impl Stages<'_> {
             self.shape,
             CheckerStage::Topology,
             self.names,
+            None,
         ));
         let passed = self
             .ledger
@@ -149,8 +154,9 @@ impl Stages<'_> {
         (passed, census)
     }
 
-    fn geometry(&mut self) -> bool {
-        let findings = native::checker_findings(self.shape, CheckerStage::Geometry, self.names);
+    fn geometry(&mut self, bounds: Option<&CylindricalCurveBounds>) -> bool {
+        let findings =
+            native::checker_findings(self.shape, CheckerStage::Geometry, self.names, bounds);
         self.ledger
             .record(ValidationStage::Geometry, CheckMode::Sampled, findings)
     }

@@ -29,6 +29,25 @@ pub fn begin_body_validation<'a>(
     shape: &'a Shape,
     resolution: &Resolution,
 ) -> Result<BodyGeometryValidation<'a>, ResolutionRejected> {
+    begin(shape, resolution, None)
+}
+
+/// Run the ordinary ordered checks, reusing only full-domain cylinder curve bounds
+/// whose native geometry, placement and tolerance agree with the loaded representation.
+/// Example: `let state = begin_body_validation_with_curve_bounds(&decoded, &resolution, &bounds)?;`.
+pub fn begin_body_validation_with_curve_bounds<'a>(
+    shape: &'a Shape,
+    resolution: &Resolution,
+    bounds: &CylindricalCurveBounds,
+) -> Result<BodyGeometryValidation<'a>, ResolutionRejected> {
+    begin(shape, resolution, Some(bounds))
+}
+
+fn begin<'a>(
+    shape: &'a Shape,
+    resolution: &Resolution,
+    bounds: Option<&CylindricalCurveBounds>,
+) -> Result<BodyGeometryValidation<'a>, ResolutionRejected> {
     let budget = tolerance_budget(resolution)?;
     let names = match TopologyNames::of(shape) {
         Ok(names) => names,
@@ -42,15 +61,16 @@ pub fn begin_body_validation<'a>(
     if let Some(report) = admission::inspect(&names, root, budget) {
         return Ok(BodyGeometryValidation::Stopped(report));
     }
-    Ok(check_geometry(shape, names, root, budget))
+    Ok(check_geometry(shape, names, root, budget, bounds))
 }
 
-fn check_geometry(
-    shape: &Shape,
+fn check_geometry<'a>(
+    shape: &'a Shape,
     names: TopologyNames,
     root: TopologyRef,
     budget: Option<f64>,
-) -> BodyGeometryValidation<'_> {
+    bounds: Option<&CylindricalCurveBounds>,
+) -> BodyGeometryValidation<'a> {
     let mut stages = Stages {
         shape,
         names: &names,
@@ -58,7 +78,7 @@ fn check_geometry(
         ledger: Ledger::new(),
     };
     let (passed, census) = stages.topology();
-    if !passed || !stages.geometry() {
+    if !passed || !stages.geometry(bounds) {
         return BodyGeometryValidation::Stopped(stages.ledger.finish(census, budget));
     }
     let ledger = stages.ledger;

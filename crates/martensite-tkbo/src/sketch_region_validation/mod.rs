@@ -33,7 +33,7 @@ mod tolerance_types;
 mod traversal_tests;
 
 use martensite_tkbrep::topods::Shape;
-use martensite_tktopalgo::brep_check::BRepCheckAnalyzer;
+use martensite_tktopalgo::brep_check::{BRepCheckAnalyzer, CylindricalCurveBounds};
 pub(crate) use outcome::{
     AnalyticGap, BodyKind, OrderedCoverage, SourceRelation, StageCoverage, ValidationCause,
     ValidationFinding, ValidationStage,
@@ -72,7 +72,23 @@ pub(crate) fn inspect_stage(
     stage: ValidationStage,
     report: &mut OrderedCoverage,
 ) {
-    let outcome = BRepCheckAnalyzer::new(shape, stage == ValidationStage::Geometry, false, true);
+    inspect_stage_with_curve_bounds(shape, kind, sources, stage, report, None);
+}
+
+pub(crate) fn inspect_stage_with_curve_bounds(
+    shape: &Shape,
+    kind: BodyKind,
+    sources: &[SourceRelation],
+    stage: ValidationStage,
+    report: &mut OrderedCoverage,
+    bounds: Option<&CylindricalCurveBounds>,
+) {
+    let outcome = match (stage, bounds) {
+        (ValidationStage::Geometry, Some(bounds)) => {
+            BRepCheckAnalyzer::with_cylindrical_curve_bounds(shape, bounds)
+        }
+        _ => BRepCheckAnalyzer::new(shape, stage == ValidationStage::Geometry, false, true),
+    };
     let findings = match outcome {
         Ok(analyzer) => inspection::inspect_candidate(&analyzer, shape, kind, sources, stage),
         Err(failure) => vec![inspection::native_failure(shape, sources, stage, failure)],

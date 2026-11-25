@@ -2,6 +2,7 @@
 //! context. A failure of a check is caught and recorded as `CheckFail`, as the native
 //! `catch (Standard_Failure)` blocks do; a missing checker leaves the analysis.
 use super::analyzer::CheckerMap;
+use super::cylindrical_curve_bounds::CylindricalCurveBounds;
 use super::edge::BRepCheckEdge;
 use super::explore::sub_shapes;
 use super::face::BRepCheckFace;
@@ -12,6 +13,7 @@ use martensite_tkbrep::toptools::MapOfShape;
 use martensite_tkernel::osd::Parallel;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::ShapeEnum;
+use martensite_tkmath::predicates::roots::metric_bounds::CertifiedCylindricalTrim;
 use std::sync::Mutex;
 
 /// The checker of `shape` in the map (Standard_NoSuchObject when it is missing).
@@ -26,11 +28,13 @@ fn sub_in_context(
     sub: &Shape,
     context: &Shape,
     context_checker: &Handle<dyn BRepCheckResult>,
+    curve_bound: Option<&CertifiedCylindricalTrim>,
 ) -> Result<bool, Failure> {
     let checker = checker_of(map, sub)?;
-    let outcome = match checker.get() {
-        Some(c) => c.in_context(context),
-        None => Err(super::errors::null_object(
+    let outcome = match (checker.get(), curve_bound) {
+        (Some(_), Some(bound)) => edge_with_curve_bound(&checker, context, bound),
+        (Some(c), None) => c.in_context(context),
+        (None, _) => Err(super::errors::null_object(
             "BRepCheck_Analyzer: null checker",
         )),
     };
@@ -42,6 +46,18 @@ fn sub_in_context(
         }
     }
     Ok(outcome.is_ok())
+}
+
+fn edge_with_curve_bound(
+    checker: &Handle<dyn BRepCheckResult>,
+    face: &Shape,
+    bound: &CertifiedCylindricalTrim,
+) -> Result<(), Failure> {
+    let edge = checker.downcast::<BRepCheckEdge>();
+    let edge = edge
+        .get()
+        .ok_or_else(|| super::errors::null_object("BRepCheck_Analyzer: not an edge checker"))?;
+    edge.check_in_context_with_bound(face, Some(bound))
 }
 
 fn mark_failed(checker: &Handle<dyn BRepCheckResult>, shape: &Shape) {
@@ -60,7 +76,7 @@ fn subs_in_context(
     let mut seen = MapOfShape::default();
     for sub in sub_shapes(shape, kind)? {
         if seen.add(sub.clone()) {
-            sub_in_context(map, &sub, shape, checker)?;
+            sub_in_context(map, &sub, shape, checker, None)?;
         }
     }
     Ok(())
@@ -124,6 +140,7 @@ fn check_face(
     map: &CheckerMap,
     shape: &Shape,
     checker: &Handle<dyn BRepCheckResult>,
+    bounds: Option<&CylindricalCurveBounds>,
 ) -> Result<(), Failure> {
     subs_in_context(map, shape, ShapeEnum::Vertex, checker)?;
     let mut perform_wire = true;
@@ -132,7 +149,8 @@ fn check_face(
         if !seen.add(sub.clone()) {
             continue;
         }
-        let checked = sub_in_context(map, &sub, shape, checker)?;
+        let bound = bounds.and_then(|bounds| bounds.find(&sub, shape));
+        let checked = sub_in_context(map, &sub, shape, checker, bound)?;
         if checked && perform_wire && blocks_wires(&statuses_in(map, &sub, shape)?) {
             perform_wire = false;
         }
@@ -140,7 +158,7 @@ fn check_face(
     let mut orient_wires = perform_wire;
     let wires = sub_shapes(shape, ShapeEnum::Wire)?;
     for wire in &wires {
-        let checked = sub_in_context(map, wire, shape, checker)?;
+        let checked = sub_in_context(map, wire, shape, checker, None)?;
         if checked
             && orient_wires
             && statuses_in(map, wire, shape)?
@@ -178,14 +196,18 @@ fn face_orientation(checker: &Handle<dyn BRepCheckResult>, orient: bool) -> Resu
 }
 
 /// The checks of one shape by its type (vertices, wires, shells and compounds have none).
-fn check_shape(map: &CheckerMap, shape: &Shape) -> Result<(), Failure> {
+fn check_shape(
+    map: &CheckerMap,
+    shape: &Shape,
+    bounds: Option<&CylindricalCurveBounds>,
+) -> Result<(), Failure> {
     let checker = checker_of(map, shape)?;
     match shape.shape_type()? {
         ShapeEnum::Edge => check_edge(map, shape, &checker),
-        ShapeEnum::Face => check_face(map, shape, &checker),
+        ShapeEnum::Face => check_face(map, shape, &checker, bounds),
         ShapeEnum::Solid => {
             for sub in sub_shapes(shape, ShapeEnum::Shell)? {
-                sub_in_context(map, &sub, shape, &checker)?;
+                sub_in_context(map, &sub, shape, &checker, None)?;
             }
             Ok(())
         }
@@ -199,11 +221,12 @@ pub(super) fn check_in_contexts(
     arrays: &[Vec<Shape>],
     map: &CheckerMap,
     parallel: bool,
+    bounds: Option<&CylindricalCurveBounds>,
 ) -> Result<(), Failure> {
     let failure: Mutex<Option<Failure>> = Mutex::new(None);
     let task = |index: i32| {
         for shape in &arrays[index as usize] {
-            if let Err(error) = check_shape(map, shape) {
+            if let Err(error) = check_shape(map, shape, bounds) {
                 failure
                     .lock()
                     .unwrap_or_else(|e| e.into_inner())

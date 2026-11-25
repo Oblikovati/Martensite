@@ -96,7 +96,7 @@ pub(super) fn identical_located_boundary(
     matches_raw_boundary(raw_reference, raw_surface, boundary).unwrap_or(false)
 }
 
-fn literal_translation(placement: Transform3) -> bool {
+pub(super) fn literal_translation(placement: Transform3) -> bool {
     placement.scale_factor() == 1.
         && placement.matrix().coefficients() == &[[1., 0., 0.], [0., 1., 0.], [0., 0., 1.]]
         && placement
