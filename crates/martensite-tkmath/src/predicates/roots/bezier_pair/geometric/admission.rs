@@ -4,7 +4,7 @@ pub(super) fn admit(query: &CapturedBezierPair, policy: BezierPairPolicy) -> Che
     policy_admission(policy)?;
     let mut supported = true;
     for (index, curve) in query.captured_curves().into_iter().enumerate() {
-        super::super::super::checked_policy_interval(curve.interval, policy.roots)?;
+        super::super::super::validate_policy_interval(curve.interval, policy.roots)?;
         finite(curve, index)?;
         supported &= supported_curve(curve, policy);
     }
