@@ -328,7 +328,9 @@ fn live_wayland_display_and_window_lifecycle() {
     window.map();
     assert!(window.is_mapped());
     let mut listener = RecordingInputListener::default();
-    window.dispatch_events(&mut listener).expect("dispatch_events");
+    window
+        .dispatch_events(&mut listener)
+        .expect("dispatch_events");
     window.unmap();
     assert!(!window.is_mapped());
 }
