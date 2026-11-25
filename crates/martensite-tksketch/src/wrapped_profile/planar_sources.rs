@@ -10,6 +10,7 @@ struct SourceCurve {
     start: CornerSource,
     end: CornerSource,
     poles: Vec<[u64; 2]>,
+    weighted: Option<std::sync::Arc<profile_input::WeightedBezierSource>>,
 }
 impl SourceSnapshot {
     pub fn capture(request: &DevelopedRegionRequest) -> Self {
@@ -38,6 +39,7 @@ impl SourceCurve {
             start: piece.start,
             end: piece.end,
             poles: piece.poles.iter().map(|p| p.map(f64::to_bits)).collect(),
+            weighted: piece.weighted_source.clone(),
         }
     }
     fn matches(&self, piece: &AuthoredPiece) -> bool {
@@ -49,5 +51,14 @@ impl SourceCurve {
                 .iter()
                 .copied()
                 .eq(piece.poles.iter().map(|p| p.map(f64::to_bits)))
+            && self.matches_weights(piece)
+    }
+
+    fn matches_weights(&self, piece: &AuthoredPiece) -> bool {
+        match (&self.weighted, &piece.weighted_source) {
+            (Some(expected), Some(actual)) => expected.same_bits(actual),
+            (None, None) => true,
+            _ => false,
+        }
     }
 }

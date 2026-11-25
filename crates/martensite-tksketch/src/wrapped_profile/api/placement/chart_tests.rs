@@ -254,3 +254,64 @@ fn assert_chart_material_work(result: &WrappedChartNormalResult, total: usize) {
         result.base.material_relations().collect::<Vec<_>>()
     );
 }
+
+#[test]
+fn attachment_handoff_keeps_the_frozen_chart_and_semantic_keys_under_input_permutation() {
+    let mut request = super::super::super::operation_tests::request();
+    request.support.origin = [1.25, -2.5, 3.75];
+    request.support.chart_origin = -0.3;
+    let reference = normal_extrude_profile_on_chart(&request).unwrap();
+    request.profile.vertices.reverse();
+    request.profile.curves.reverse();
+    request.selections.reverse();
+    let (result, graph) = qualify_attachment_chart(&request);
+    let live_root = graph.root.clone();
+    let operand = result.attachment_operand(graph).unwrap();
+
+    assert_eq!(result.encoded_brep(), reference.encoded_brep());
+    assert_eq!(result.history(), reference.history());
+    assert_eq!(result.placement(), reference.placement());
+    assert!(operand.bodies.is_same(&live_root));
+    assert_attachment_snapshot(&result, &operand);
+}
+
+#[test]
+fn attachment_handoff_restores_the_frozen_graph_if_native_bits_changed() {
+    let request = super::super::super::operation_tests::request();
+    let (result, graph) = qualify_attachment_chart(&request);
+    let live_root = graph.root.clone();
+    let vertex = graph
+        .bindings
+        .iter()
+        .find_map(|(_, shape)| martensite_tkbrep::topods::vertex(shape).ok())
+        .unwrap();
+    martensite_tkbrep::brep::BRepBuilder::default()
+        .update_vertex_point(&vertex, Point3::new(100., 100., 100.), 0.)
+        .unwrap();
+    let operand = result.attachment_operand(graph).unwrap();
+    assert!(!operand.bodies.is_same(&live_root));
+    assert_attachment_snapshot(&result, &operand);
+}
+
+fn qualify_attachment_chart(
+    request: &WrappedNormalRequest,
+) -> (WrappedChartNormalResult, ChartGraph) {
+    let mut never = || false;
+    let inputs = input::read_canonical_chart(request, &mut never).unwrap();
+    qualify_chart(request, inputs, &mut never).unwrap()
+}
+
+fn assert_attachment_snapshot(result: &WrappedChartNormalResult, operand: &DetachedWrappedBodies) {
+    let keys = &result.base.family.family.keys;
+    let bindings = &result.base.history.bindings;
+    let typed: Vec<_> = keys
+        .iter()
+        .zip(bindings)
+        .map(|(key, name)| (*key, operand.entities[name].clone()))
+        .collect();
+    assert_eq!(operand.entities.len(), typed.len());
+    assert_eq!(
+        encoding::encode(&operand.bodies, &typed).unwrap(),
+        result.encoded_brep()
+    );
+}

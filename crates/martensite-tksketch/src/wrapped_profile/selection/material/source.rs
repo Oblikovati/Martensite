@@ -10,7 +10,9 @@ pub(super) fn bind<'a>(
     for (original, fitted) in requests.iter().zip(prepared.prepared) {
         member(original, fitted, prepared)?;
     }
-    bind_integrals(requests, prepared.planar)?;
+    if let Some(region) = prepared.planar.integral_mismatch(requests) {
+        return Err(MaterialFailure::Source(region));
+    }
     planar_clearance::bind_originals(prepared.boundary, requests, prepared.prepared)
         .map_err(|cause| MaterialFailure::Clearance(Box::new(cause)))?;
     let mut result: Vec<_> = requests.iter().collect();
@@ -43,32 +45,6 @@ fn member(original: &Request, fitted: &Request, prepared: &RelationInputs<'_>) -
     }
     Ok(())
 }
-fn bind_integrals(requests: &[Request], planar: &PlanarSelectionEvidence) -> Checked<()> {
-    let (region, first) = planar
-        .members
-        .first_key_value()
-        .ok_or(MaterialFailure::Members {
-            requested: requests.len(),
-            planar: 0,
-            prepared: requests.len(),
-        })?;
-    let issued = first.integral_program_evidence();
-    for (&id, member) in &planar.members {
-        let same = match (issued, member.integral_program_evidence()) {
-            (Some(proof), Some(other)) => proof.shares_issuance(other),
-            (None, None) => true,
-            _ => false,
-        };
-        if !same {
-            return Err(MaterialFailure::Source(id));
-        }
-    }
-    if issued.is_some_and(|proof| !planar::matches_integral_profile(proof, requests)) {
-        return Err(MaterialFailure::Source(*region));
-    }
-    Ok(())
-}
-
 fn context(r: &Request) -> [u64; 5] {
     [
         r.radius.to_bits(),

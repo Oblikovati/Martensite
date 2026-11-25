@@ -23,6 +23,57 @@ pub struct WrappedSourcePoint {
     pub numerator: u64,
 }
 
+/// Exact map from a conic quarter's dyadic stereographic parameter to its native angle.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct WrappedConicParameterMap {
+    /// Start angle in signed multiples of pi/2.
+    pub first_quarter: i8,
+    /// `true` adds `2 atan(t)` to the starting angle; `false` subtracts it.
+    pub increasing: bool,
+}
+
+/// One bound of an exact stereographic portion of the original analytic arc.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum WrappedAnalyticArcEndpoint {
+    /// Native start of the authored arc.
+    Start,
+    /// Native end of the authored arc.
+    End,
+}
+
+/// The exact native-angle map of a stereographic interval on an original analytic arc.
+/// If `u0` and `u1` are its exact unit endpoints in the carrier's affine frame, then
+/// `angle(t) = arg(u0) + 2 atan(t * cross(u0,u1)/(1 + dot(u0,u1)))`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct WrappedAnalyticArcMap {
+    /// Exact first angular endpoint.
+    pub first: WrappedAnalyticArcEndpoint,
+    /// Exact last angular endpoint.
+    pub last: WrappedAnalyticArcEndpoint,
+    /// Increasing native angle on the original curve.
+    pub increasing: bool,
+}
+
+/// Exact binary64 parameter authored as a native B-spline knot.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct WrappedNativeKnot(pub(crate) u64);
+
+impl WrappedNativeKnot {
+    /// Recover the original knot without normalization. Example: `let u = knot.value();`.
+    pub fn value(self) -> f64 {
+        f64::from_bits(self.0)
+    }
+}
+
+/// Exact affine map from a local span parameter to native B-spline knots.
+/// If `[a,b] = map.knots.map(WrappedNativeKnot::value)`, the native parameter is
+/// the real arithmetic expression `a + (b - a) t`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct WrappedSplineParameterMap {
+    /// The two original ordered native knots.
+    pub knots: [WrappedNativeKnot; 2],
+}
+
 /// Authored source of one result entity; coordinates and traversal ranks carry no identity.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[non_exhaustive]
@@ -35,6 +86,74 @@ pub enum WrappedEntitySource {
         curve: SurfaceCurveId,
         /// Exact normalized source interval and traversal direction.
         span: WrappedSourceSpan,
+    },
+    /// A mapped interval of one original analytic conic arc.
+    MappedCurve {
+        /// Original authored curve identity.
+        curve: SurfaceCurveId,
+        /// Dyadic interval in the stereographic parameter used by `map`.
+        span: WrappedSourceSpan,
+        /// Exact conversion to the authored angular parameter.
+        map: WrappedConicParameterMap,
+    },
+    /// A split of an original analytic conic arc.
+    MappedSplitVertex {
+        /// Original authored curve identity.
+        curve: SurfaceCurveId,
+        /// Dyadic point in the stereographic parameter used by `map`.
+        point: WrappedSourcePoint,
+        /// Exact conversion to the authored angular parameter.
+        map: WrappedConicParameterMap,
+    },
+    /// A mapped interval on an exact authored analytic sweep.
+    AnalyticArcCurve {
+        /// Original authored curve identity.
+        curve: SurfaceCurveId,
+        /// Dyadic interval in the mapped stereographic parameter.
+        span: WrappedSourceSpan,
+        /// Exact conversion to the native angle.
+        map: WrappedAnalyticArcMap,
+    },
+    /// A subdivision point of an original exact analytic sweep.
+    AnalyticArcSplitVertex {
+        /// Original authored curve identity.
+        curve: SurfaceCurveId,
+        /// Dyadic point in the mapped stereographic parameter.
+        point: WrappedSourcePoint,
+        /// Exact conversion to the native angle.
+        map: WrappedAnalyticArcMap,
+    },
+    /// A dyadic interval within one mapped native B-spline knot span.
+    NativeSplineCurve {
+        /// Original authored curve identity.
+        curve: SurfaceCurveId,
+        /// Exact interval in the local affine parameter and traversal direction.
+        span: WrappedSourceSpan,
+        /// Exact conversion to the authored B-spline parameter.
+        map: WrappedSplineParameterMap,
+    },
+    /// A subdivision point within an original B-spline knot span.
+    NativeSplineSplitVertex {
+        /// Original authored curve identity.
+        curve: SurfaceCurveId,
+        /// Exact point in the local affine parameter.
+        point: WrappedSourcePoint,
+        /// Exact conversion to the native parameter.
+        map: WrappedSplineParameterMap,
+    },
+    /// An interior original native knot, shared by two span images.
+    NativeSplineKnot {
+        /// Original authored curve identity.
+        curve: SurfaceCurveId,
+        /// Native knot identity before normalization.
+        knot: WrappedNativeKnot,
+    },
+    /// Exact native quarter angle on a closed or multipart analytic conic.
+    ConicAnchor {
+        /// Original authored curve identity.
+        curve: SurfaceCurveId,
+        /// Signed native angle in multiples of pi/2; closed seam is zero.
+        quarter: i8,
     },
     /// A caller-authored endpoint.
     Vertex(SurfaceVertexId),

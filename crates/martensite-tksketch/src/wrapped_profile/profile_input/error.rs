@@ -31,6 +31,15 @@ pub(in super::super) enum ProfileInputFailure {
         index: usize,
         value: f64,
     },
+    NonPolynomial {
+        curve: ProfileCurveId,
+        coordinate: usize,
+        coefficient: usize,
+    },
+    WeightedProof {
+        curve: ProfileCurveId,
+        cause: Box<martensite_tkmath::predicates::roots::metric_bounds::ResidualError>,
+    },
     Knot {
         curve: ProfileCurveId,
         index: usize,
@@ -67,7 +76,10 @@ impl ProfileInputFailure {
             Self::EmptyLoop { .. } => "at least one directed curve use per selected loop",
             Self::Unsupported(_) => "a line or a degree-1 through degree-3 polynomial Bezier span",
             Self::Spline { .. } => BEZIER_SHAPE,
-            Self::Weight { .. } => "unit polynomial weights",
+            Self::Weight { .. } => "positive finite weights",
+            Self::NonPolynomial { .. } | Self::WeightedProof { .. } => {
+                "an exactly identical binary64 polynomial in the original source parameter"
+            }
             Self::Knot { .. } => "degree+1 zero knots followed by degree+1 unit knots",
             Self::Endpoint { .. } => "endpoint control bits equal to the authored vertex bits",
             Self::NonFinite { .. } => "finite developed control coordinates",

@@ -4,7 +4,7 @@ fn spline(profile: &mut SketchProfile) -> &mut ProfileCurve {
     &mut profile.curves[1]
 }
 #[test]
-fn unit_weights_preserve_polynomial_controls_and_nonunit_weights_refuse() {
+fn identical_weights_preserve_controls_and_invalid_weights_refuse() {
     let (request, mut profile, selection) = fixture();
     let ProfileCurve::Spline { weights, poles, .. } = spline(&mut profile) else {
         panic!("spline fixture")
@@ -14,7 +14,12 @@ fn unit_weights_preserve_polynomial_controls_and_nonunit_weights_refuse() {
     let ProfileCurve::Spline { weights, .. } = spline(&mut profile) else {
         panic!("spline fixture")
     };
-    weights.as_mut().unwrap()[1] = 0.5;
+    weights.as_mut().unwrap().fill(4.);
+    assert_geometry(&checked_input(&profile, &selection).unwrap(), &request);
+    let ProfileCurve::Spline { weights, .. } = spline(&mut profile) else {
+        panic!("spline fixture")
+    };
+    weights.as_mut().unwrap()[1] = -0.5;
     assert!(matches!(
         checked_input(&profile, &selection),
         Err(ProfileInputFailure::Weight { .. })

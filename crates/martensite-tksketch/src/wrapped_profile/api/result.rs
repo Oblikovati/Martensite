@@ -72,8 +72,14 @@ pub(super) fn export_bytes(
     result: &WrappedNormalResult,
     bytes: &[u8],
 ) -> Checked<DetachedWrappedBodies> {
-    let (bodies, bindings) = pipeline::decode(bytes, &result.family.family.keys)
+    let graph = pipeline::decode(bytes, &result.family.family.keys)
         .map_err(|cause| export_failure(error::Cause::Export(cause)))?;
+    export_graph(result, graph)
+}
+pub(super) fn export_graph(
+    result: &WrappedNormalResult,
+    (bodies, bindings): super::super::frozen_placement::DecodedGraph,
+) -> Checked<DetachedWrappedBodies> {
     let mut entities = BTreeMap::new();
     export_bindings::append(
         &result.family.family.keys,

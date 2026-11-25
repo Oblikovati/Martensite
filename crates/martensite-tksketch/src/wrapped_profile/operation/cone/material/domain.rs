@@ -242,6 +242,7 @@ fn transformed(
         start: CornerSource::Authored(vertices[&piece.start]),
         end: CornerSource::Authored(vertices[&piece.end]),
         poles: proof.pcurves[0].iter().copied().map(project).collect(),
+        weighted_source: None,
         chart_center: piece.chart_center,
     }
 }

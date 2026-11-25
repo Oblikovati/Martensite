@@ -16,7 +16,7 @@ mod body;
 mod cone;
 pub use cone::*;
 mod direct;
-pub use direct::{CertifiedConeAttachmentReport, CertifiedConeFeatureResult};
+pub use direct::{CertifiedConeAttachmentReport, CertifiedConeFeatureResult, ConicalStockFailure};
 mod failure;
 mod history;
 mod source_members;
@@ -149,12 +149,12 @@ impl CylinderFaceAttachment {
             request.depths,
             request.support.normal,
         )?;
-        let tool = self
-            .build_trimmed_tool(revision, request, &mut band, &mut cancelled)
+        let (tool, graph) = self
+            .prepare_trimmed_tool(revision, request, &mut band, &mut cancelled)
             .map_err(|cause| attempt.footprint(cause))?;
         let native = tool
             .extrusion()
-            .export_native()
+            .attachment_operand(graph)
             .map_err(|cause| attempt.tool(cause))?;
         let archive = apply_material(
             attempt,

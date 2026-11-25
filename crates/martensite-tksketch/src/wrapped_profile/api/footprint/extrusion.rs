@@ -70,19 +70,44 @@ impl CylinderFaceAttachment {
         band: &mut band::Band,
         cancelled: &mut CancelPoll<'_>,
     ) -> FootprintChecked<CylinderTrimmedTool> {
+        self.prepare_trimmed_tool(revision, request, band, cancelled)
+            .map(|(tool, _)| tool)
+    }
+
+    pub(super) fn prepare_trimmed_tool(
+        &self,
+        revision: SupportRevision,
+        request: &WrappedNormalRequest,
+        band: &mut band::Band,
+        cancelled: &mut CancelPoll<'_>,
+    ) -> FootprintChecked<(CylinderTrimmedTool, placement::ChartGraph)> {
+        let proof = martensite_tkbo::profile_extrusion::PlanarProofVersion::CarrierV2;
+        self.prepare_trimmed_tool_with_preparation(revision, request, band, proof.into(), cancelled)
+    }
+
+    pub(super) fn prepare_trimmed_tool_with_preparation(
+        &self,
+        revision: SupportRevision,
+        request: &WrappedNormalRequest,
+        band: &mut band::Band,
+        preparation: selection::Preparation,
+        cancelled: &mut CancelPoll<'_>,
+    ) -> FootprintChecked<(CylinderTrimmedTool, placement::ChartGraph)> {
         let mut exclusions = holes::Exclusions::new(&band.holes)?;
         let inputs = read_inside(request, band, &mut exclusions, cancelled)?;
-        let extrusion = placement::from_canonical_inputs(request, inputs, cancelled)
-            .map_err(extrusion_error)?;
+        let (extrusion, graph) =
+            placement::qualify_chart_with_preparation(request, inputs, preparation, cancelled)
+                .map_err(extrusion_error)?;
         let fitted_spans = fitted::check(&extrusion, band, &mut exclusions, cancelled)?;
         poll(cancelled, WrappedStage::Publication)?;
-        Ok(CylinderTrimmedTool {
+        let tool = CylinderTrimmedTool {
             footprint: self.footprint_report(revision, request, band),
             extrusion,
             fitted_spans,
             inner_trims: band.holes.len(),
             shaped_outer_edges: band.outer.as_ref().map_or(0, outer::OuterTrim::edge_count),
-        })
+        };
+        Ok((tool, graph))
     }
 }
 

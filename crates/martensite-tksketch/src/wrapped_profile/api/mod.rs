@@ -12,6 +12,7 @@ mod history_types;
 pub(super) mod input;
 mod material;
 pub(super) mod placement;
+mod rational;
 pub(super) mod reports;
 mod request;
 mod result;
@@ -25,6 +26,10 @@ pub use placement::{
     WrappedWorldSpatialReport, normal_extrude_cone_profile_on_chart,
     normal_extrude_cone_profile_on_chart_with_cancel, normal_extrude_profile_on_chart,
     normal_extrude_profile_on_chart_with_cancel,
+};
+pub use rational::{
+    RationalWrappedFailure, RationalWrappedResult, normal_extrude_rational_cone,
+    normal_extrude_rational_cone_with_selection, normal_extrude_rational_cylinder,
 };
 pub use reports::*;
 pub use request::*;

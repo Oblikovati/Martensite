@@ -5,6 +5,7 @@ use crate::surface_sketch::wrapped_profile::frozen_placement::{
 };
 pub(super) struct Physical {
     pub bytes: Vec<u8>,
+    pub root: Shape,
     pub bindings: Vec<(BindingKey, Shape)>,
 }
 
@@ -39,6 +40,7 @@ pub(super) fn identity(transform: Transform3) -> bool {
 fn physical(archive: archive::PhysicalArchive) -> Physical {
     Physical {
         bytes: archive.bytes,
+        root: archive.root,
         bindings: archive.bindings,
     }
 }

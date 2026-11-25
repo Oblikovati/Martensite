@@ -27,7 +27,7 @@ fn encode_and_qualify(
     let attempt = input.attempt;
     let sewing = seams::Carrier::capture(attempt, input.cone, input.resolution)?;
     let stock_proof = StockFrustumReceipt::issue(input.stock, input.cone, sewing.stock_chart())
-        .map_err(|cause| stock_refusal(attempt, cause))?;
+        .map_err(|cause| stock_refusal(attempt, CylinderFeatureStage::Admission, cause))?;
     let mut shell = Frustum::admit(attempt, input.cone, input.stock)?;
     let [base, lid] = stock_disks(input.stock, input.cone, attempt)?;
     let installed_stock = InstalledStock {
@@ -62,7 +62,8 @@ fn encode_and_qualify(
         history: &captured.history,
         sewing: &sewing,
     }
-    .qualify(stock, seams, cancelled)?;
+    .qualify(stock, seams, cancelled)
+    .map_err(classify_decoded_refusal)?;
     Ok(Encoded {
         bytes,
         history: captured.history,
@@ -129,15 +130,7 @@ impl Ordered<'_> {
             &incidence,
         )?;
         let summary = self.contacts(&contact, &topology, &stock, &retained, cancelled)?;
-        if stock_uv == 0 {
-            return Err(refused(attempt, "nonempty stock trim proof domains"));
-        }
-        if geometry[0] != summary.sides {
-            return Err(refused(
-                attempt,
-                "every retained side belongs to final contact coverage",
-            ));
-        }
+        check_coverage(attempt, stock_uv, geometry[0], summary.sides)?;
         let maximum_tolerance = contact.limits.finish(&topology, self.input.resolution)?;
         let [faces, edges, vertices, loops] = topology.counts();
         let seam_residual_upper = installed
@@ -202,6 +195,33 @@ impl Ordered<'_> {
     }
 }
 
+fn classify_decoded_refusal(mut failure: CylinderFeatureFailure) -> CylinderFeatureFailure {
+    // Shared assembly checks can be repeated against the frozen body during validation.
+    if failure.stage == ASSEMBLY {
+        failure.stage = CylinderFeatureStage::Validation;
+    }
+    failure
+}
+
+fn check_coverage(
+    attempt: Attempt,
+    stock_trim_domains: usize,
+    retained_sides: usize,
+    qualified_sides: usize,
+) -> FeatureChecked<()> {
+    if stock_trim_domains != 0 && retained_sides == qualified_sides {
+        return Ok(());
+    }
+    Err(attempt.fail(
+        CylinderFeatureStage::Validation,
+        CylinderFeatureCause::ConicalCoverage {
+            stock_trim_domains,
+            retained_sides,
+            qualified_sides,
+        },
+    ))
+}
+
 fn stock_disks(stock: &Shape, cone: &Face, attempt: Attempt) -> FeatureChecked<[Face; 2]> {
     let disks = occurrences(attempt, stock, ShapeEnum::Face)?
         .into_iter()
@@ -211,4 +231,51 @@ fn stock_disks(stock: &Shape, cone: &Face, attempt: Attempt) -> FeatureChecked<[
         .try_into()
         .map_err(|_| refused(attempt, "two stock disks"))?;
     sort_stock_disks(attempt, disks)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const ATTEMPT: Attempt = Attempt {
+        attachment: FaceAttachmentId(3),
+        revision: SupportRevision(5),
+        kind: CylinderFeatureKind::Boss,
+    };
+
+    #[test]
+    fn decoded_stock_coverage_reports_actual_counts_at_validation() {
+        assert!(check_coverage(ATTEMPT, 2, 7, 7).is_ok());
+        for (domains, sides) in [(0, 7), (2, 6)] {
+            let failure = check_coverage(ATTEMPT, domains, 7, sides).unwrap_err();
+            assert_eq!(failure.stage, CylinderFeatureStage::Validation);
+            assert!(matches!(
+                *failure.cause,
+                CylinderFeatureCause::ConicalCoverage {
+                    stock_trim_domains,
+                    retained_sides: 7,
+                    qualified_sides,
+                } if stock_trim_domains == domains && qualified_sides == sides
+            ));
+        }
+    }
+
+    #[test]
+    fn decoded_contact_refusal_reclassifies_an_assembly_check_only() {
+        let expected = "complete stock and retained tool contact partition";
+        let contact = classify_decoded_refusal(refused(ATTEMPT, expected));
+        assert_eq!(contact.stage, CylinderFeatureStage::Validation);
+        assert!(matches!(
+            *contact.cause,
+            CylinderFeatureCause::DirectAttachment { expected: invariant } if invariant == expected
+        ));
+        let mismatch = ATTEMPT.fail(
+            CylinderFeatureStage::Encoding,
+            CylinderFeatureCause::ArchiveMismatch,
+        );
+        assert_eq!(
+            classify_decoded_refusal(mismatch).stage,
+            CylinderFeatureStage::Encoding
+        );
+    }
 }

@@ -8,11 +8,21 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added explicit full-turn cylinder and cone bands with authored rim history and paired native seams (#419).
+
+- Added rectangular and curved apertures across native seams in full-turn cylinder and cone bands, with exact authored split intervals and stable replay (#419).
+
+- Added source-bound radial motion and stock-contact bounds for stored cylindrical ruled sides (#420).
+
+- Added checked cylindrical and conical normal extrusions for mixed line, clamped spline and exact circular and elliptic boundaries, including shorter analytic sweeps, with directed holes, signed normal depths, original parameter history and certified material measurements (#418).
+
+- Added wrapped cylinder and cone profiles for weighted Bernstein spans with a proven same-parameter polynomial identity and source-bound planar evidence (#418).
+
 - Added per-window mailbox presentation for synchronized native views, with FIFO fallback (#420).
 
 - Added exact support-member bindings for applications that preserve their own names through wrapped cylindrical and conical bosses and pockets (#420).
 
-- Added an opt-in certified conical-frustum attachment that published the final solid and its authored history in one operation (#419).
+- Added an opt-in certified conical-frustum attachment that published the final solid and its authored history in one operation, with typed stock and decoded coverage failures (#419).
 
 - Added an opt-in transported cone extrusion selector that certified decoded cap material from its directed outer and hole cycles and reported the work charged to the operation (#425).
 

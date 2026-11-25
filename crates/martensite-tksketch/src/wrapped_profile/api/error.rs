@@ -163,7 +163,14 @@ impl std::error::Error for Cause {
         }
     }
 }
-impl std::error::Error for profile_input::ProfileInputFailure {}
+impl std::error::Error for profile_input::ProfileInputFailure {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::WeightedProof { cause, .. } => Some(cause.as_ref()),
+            _ => None,
+        }
+    }
+}
 impl std::error::Error for family::FamilyFailure {}
 impl std::error::Error for history_projection::HistoryMapFailure {}
 
@@ -227,10 +234,21 @@ pub(in crate::surface_sketch::wrapped_profile) fn input_context(
 ) -> WrappedFailureClass {
     use profile_input::ProfileInputFailure as I;
     input_entities(cause, entities);
-    if matches!(cause, I::Unsupported(_)) {
-        return WrappedFailureClass::Unsupported;
+    use martensite_tkmath::predicates::roots::{RootIsolationError, metric_bounds::ResidualError};
+    match cause {
+        I::WeightedProof { cause, .. }
+            if matches!(
+                cause.as_ref(),
+                ResidualError::Roots(RootIsolationError::Cancelled)
+            ) =>
+        {
+            WrappedFailureClass::Cancelled
+        }
+        I::Unsupported(_) | I::NonPolynomial { .. } | I::WeightedProof { .. } => {
+            WrappedFailureClass::Unsupported
+        }
+        _ => class,
     }
-    class
 }
 
 fn input_entities(cause: &profile_input::ProfileInputFailure, entities: &mut Vec<HistorySource>) {
@@ -259,6 +277,8 @@ fn input_curve(cause: &profile_input::ProfileInputFailure, entities: &mut Vec<Hi
         | I::Unsupported(curve)
         | I::Spline { curve, .. }
         | I::Weight { curve, .. }
+        | I::NonPolynomial { curve, .. }
+        | I::WeightedProof { curve, .. }
         | I::Knot { curve, .. }
         | I::NonFinite { curve, .. } => SurfaceCurveId(curve.0),
         I::UnknownSource(curve) | I::Point { curve, .. } => *curve,
@@ -345,7 +365,15 @@ fn public_source(source: WrappedEntitySource) -> HistorySource {
     match source {
         WrappedEntitySource::Region(region) => HistorySource::Region(region),
         WrappedEntitySource::Curve { curve, .. }
-        | WrappedEntitySource::SplitVertex { curve, .. } => HistorySource::Curve(curve),
+        | WrappedEntitySource::SplitVertex { curve, .. }
+        | WrappedEntitySource::MappedCurve { curve, .. }
+        | WrappedEntitySource::MappedSplitVertex { curve, .. }
+        | WrappedEntitySource::ConicAnchor { curve, .. }
+        | WrappedEntitySource::AnalyticArcCurve { curve, .. }
+        | WrappedEntitySource::AnalyticArcSplitVertex { curve, .. }
+        | WrappedEntitySource::NativeSplineCurve { curve, .. }
+        | WrappedEntitySource::NativeSplineSplitVertex { curve, .. }
+        | WrappedEntitySource::NativeSplineKnot { curve, .. } => HistorySource::Curve(curve),
         WrappedEntitySource::Vertex(vertex) => HistorySource::Vertex(vertex),
     }
 }

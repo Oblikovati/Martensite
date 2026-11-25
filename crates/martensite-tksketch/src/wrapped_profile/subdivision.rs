@@ -28,24 +28,44 @@ pub(super) fn prepare(request: &Request) -> Result<Request, PlanningFailure> {
 }
 pub(super) fn prepare_with_cancel(
     request: &Request,
+    cancelled: impl FnMut() -> bool + Send,
+) -> Result<Request, PlanningFailure> {
+    prepare_with_fit_limit(request, default_fit_limit(request), cancelled)
+}
+
+pub(super) fn prepare_with_fit_limit(
+    request: &Request,
+    maximum_fit_error: f64,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Result<Request, PlanningFailure> {
+    // Fit both rails together while preserving the independent modelling tolerance.
+    let spatial_limit = if maximum_fit_error.is_finite() {
+        maximum_fit_error.min(default_fit_limit(request))
+    } else {
+        maximum_fit_error
+    };
     let mut prepared = request.clone();
     prepared.loops = request
         .loops
         .iter()
-        .map(|contour| prepare_contour(contour, request, &mut cancelled))
+        .map(|contour| prepare_contour(contour, request, spatial_limit, &mut cancelled))
         .collect::<Result<_, _>>()?;
     Ok(prepared)
 }
+
+fn default_fit_limit(request: &Request) -> f64 {
+    (request.tolerance / 4.).next_down().max(0.)
+}
+
 fn prepare_contour(
     contour: &[AuthoredPiece],
     request: &Request,
+    spatial_limit: f64,
     cancelled: &mut CancelPoll<'_>,
 ) -> Result<Vec<AuthoredPiece>, PlanningFailure> {
     contour
         .iter()
-        .map(|piece| prepare_curve(piece, request, &mut *cancelled))
+        .map(|piece| prepare_curve(piece, request, spatial_limit, &mut *cancelled))
         .collect::<Result<Vec<_>, _>>()
         .map(|pieces| pieces.into_iter().flatten().collect())
 }
@@ -53,9 +73,10 @@ fn prepare_contour(
 fn prepare_curve(
     piece: &AuthoredPiece,
     request: &Request,
+    spatial_limit: f64,
     cancelled: &mut CancelPoll<'_>,
 ) -> Result<Vec<AuthoredPiece>, PlanningFailure> {
-    let query = planning_query(piece, request)?;
+    let query = planning_query(piece, request, spatial_limit)?;
     let plan = plan_cylindrical_charts(query, cancelled).map_err(|cause| PlanningFailure {
         curve: piece.span.curve,
         cause,
@@ -90,13 +111,14 @@ pub(super) fn restrict_piece(piece: &AuthoredPiece, index: u64, level: u8) -> Au
 fn planning_query<'a>(
     piece: &'a AuthoredPiece,
     request: &Request,
+    spatial_limit: f64,
 ) -> Result<CylindricalFitQuery<'a>, PlanningFailure> {
     Ok(CylindricalFitQuery {
         authored: &piece.poles,
-        interval: whole_interval(piece.span.curve, request.tolerance)?,
+        interval: whole_interval(piece.span.curve, spatial_limit)?,
         support_radius: request.radius,
         angular_origin: 0.,
-        spatial_limit: (request.tolerance / 4.).next_down().max(0.),
+        spatial_limit,
         max_level: request.max_fit_level,
         max_operations: 100_000,
     })
@@ -104,13 +126,13 @@ fn planning_query<'a>(
 
 fn whole_interval(
     curve: SurfaceCurveId,
-    tolerance: f64,
+    spatial_limit: f64,
 ) -> Result<CylindricalProfileInterval, PlanningFailure> {
     CylindricalProfileInterval::new(0, 0).map_err(|cause| PlanningFailure {
         curve,
         cause: CylindricalProfileError {
             requested_options: Default::default(),
-            requested_spatial_limit: tolerance / 4.,
+            requested_spatial_limit: spatial_limit,
             cause,
         },
     })
@@ -147,6 +169,7 @@ fn split_half(
         start,
         end,
         poles,
+        weighted_source: piece.weighted_source.clone(),
         chart_center: piece.chart_center,
     }
 }

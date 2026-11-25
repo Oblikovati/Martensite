@@ -144,9 +144,15 @@ mod proof;
 mod types;
 use super::{DyadicBound, error::poll};
 pub use cylindrical_storage::{
-    CertifiedCylindricalStorage, CylindricalStorageError, CylindricalStorageFailure,
+    CertifiedCylindricalContactPrefix, CertifiedCylindricalRadialSweep, CertifiedCylindricalSlice,
+    CertifiedCylindricalStorage, CylindricalContactPrefixError, CylindricalContactPrefixFailure,
+    CylindricalContactPrefixQuery, CylindricalRadialSense, CylindricalRadialSweepError,
+    CylindricalRadialSweepFailure, CylindricalRadialSweepQuery, CylindricalSliceQuery,
+    CylindricalSliceRefusal, CylindricalStorageError, CylindricalStorageFailure,
     CylindricalStorageLimits, CylindricalStorageOptions, CylindricalStorageQuery,
-    CylindricalStorageResidual, certify_cylindrical_storage,
+    CylindricalStorageResidual, certify_cylindrical_contact_prefix,
+    certify_cylindrical_radial_sweep, certify_cylindrical_slice_direction,
+    certify_cylindrical_storage,
 };
 use num_bigint::BigInt;
 pub use types::*;
@@ -245,6 +251,7 @@ pub use polynomial_integrals::{
 };
 
 mod rational_integrals;
+mod rational_reference;
 pub use rational_integrals::{
     AnalyticConicalFluxError, AnalyticConicalFluxFailure, AnalyticConicalFluxQuery,
     AnalyticConicalFluxSpan, BoundaryIntegralProgramQuery, CertifiedAnalyticConicalFlux,
@@ -260,6 +267,13 @@ pub use rational_integrals::{
     certify_cylindrical_boundary_flux, certify_face_integral_program,
     certify_rational_boundary_integral, certify_rational_face_area,
     certify_rational_sweep_integral,
+};
+pub use rational_reference::{
+    CertifiedNativeSplineSpan, CertifiedRationalConicSegment, NativeSplineFailure,
+    NativeSplineSource, RationalConicSegment, RationalConicSegmentFailure, RationalReferenceBounds,
+    RationalReferenceFailure, RationalReferenceProof, RationalReferenceRequest,
+    RationalReferenceSpan, fit_rational_bezier_reference, fit_rational_bezier_reference_with_proof,
+    lower_native_bspline, lower_rational_conic_segment, partition_homogeneous_bspline,
 };
 
 mod polynomial_side;

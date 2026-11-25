@@ -17,6 +17,8 @@ use martensite_tksketch::surface_sketch::{
 use std::fmt::Write;
 #[path = "replay/content.rs"]
 mod content;
+#[path = "replay/timing.rs"]
+mod timing;
 
 const FIRST: SupportRevision = SupportRevision(41);
 const EDITED: SupportRevision = SupportRevision(42);
@@ -133,29 +135,44 @@ fn edited_publication(attachment: &CylinderFaceAttachment) -> Publication {
 fn publish(
     attachment: &CylinderFaceAttachment,
     revision: SupportRevision,
-    mut request: WrappedNormalRequest,
+    request: WrappedNormalRequest,
     placement: [f64; 2],
     depth: f64,
     expected: f64,
 ) -> Publication {
+    let request = placed_request(attachment, revision, request, placement, depth);
     let normal = request.support.normal;
-    request.support = attachment.extrusion_support(revision, 0., normal).unwrap();
-    request.depths = [0., depth];
-    place_developed(&mut request, placement);
     let source = attachment.export_native(revision).unwrap();
     let original = request.clone();
-    let kind = match normal {
-        NormalSense::Outward => CylinderFeatureKind::Boss,
-        NormalSense::Inward => CylinderFeatureKind::Pocket,
-    };
     let result = attachment
-        .apply_wrapped_profile(revision, kind, &request)
+        .apply_wrapped_profile(revision, feature_kind(normal), &request)
         .unwrap();
     let native = result.export_native().unwrap();
     check_publication(&result, &request, expected);
     check_attachment_volume_direction(&native.body, &source.body, normal);
     assert_eq!(request, original);
     publication(native.body, &result)
+}
+
+fn placed_request(
+    attachment: &CylinderFaceAttachment,
+    revision: SupportRevision,
+    mut request: WrappedNormalRequest,
+    placement: [f64; 2],
+    depth: f64,
+) -> WrappedNormalRequest {
+    let normal = request.support.normal;
+    request.support = attachment.extrusion_support(revision, 0., normal).unwrap();
+    request.depths = [0., depth];
+    place_developed(&mut request, placement);
+    request
+}
+
+fn feature_kind(normal: NormalSense) -> CylinderFeatureKind {
+    match normal {
+        NormalSense::Outward => CylinderFeatureKind::Boss,
+        NormalSense::Inward => CylinderFeatureKind::Pocket,
+    }
 }
 
 fn place_developed(request: &mut WrappedNormalRequest, shift: [f64; 2]) {

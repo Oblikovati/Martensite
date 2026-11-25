@@ -16,6 +16,7 @@ pub(super) use cylinder::{construct_budgeted_with_work, construct_controlled};
 type Checked<T> = Result<T, WrappedNormalFailure>;
 
 /// Extrude selected polynomial profiles along cylinder normals and retain achieved evidence.
+/// Weighted spans are admitted when a same-parameter polynomial identity is exact.
 /// The physical frame is normalized/projected from the requested axis and radial vectors.
 /// Example: `let result = normal_extrude_profile(&request)?;`.
 pub fn normal_extrude_profile(request: &WrappedNormalRequest) -> Checked<WrappedNormalResult> {
@@ -36,7 +37,30 @@ pub(super) fn from_inputs(
     inputs: input::Inputs,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<WrappedNormalResult> {
-    let family = cylinder::construct_family(&inputs, request, cancelled)?;
+    from_inputs_with_proof(
+        request,
+        inputs,
+        martensite_tkbo::profile_extrusion::PlanarProofVersion::CarrierV2,
+        cancelled,
+    )
+}
+
+pub(super) fn from_inputs_with_proof(
+    request: &WrappedNormalRequest,
+    inputs: input::Inputs,
+    version: martensite_tkbo::profile_extrusion::PlanarProofVersion,
+    cancelled: &mut CancelPoll<'_>,
+) -> Checked<WrappedNormalResult> {
+    from_inputs_with_preparation(request, inputs, version.into(), cancelled)
+}
+
+pub(super) fn from_inputs_with_preparation(
+    request: &WrappedNormalRequest,
+    inputs: input::Inputs,
+    preparation: selection::Preparation,
+    cancelled: &mut CancelPoll<'_>,
+) -> Checked<WrappedNormalResult> {
+    let family = cylinder::construct_family(&inputs, request, preparation, cancelled)?;
     input::poll(cancelled, WrappedStage::History)?;
     let history = publication::project_history(&family, &inputs, request.support.normal)?;
     let mut result = publication::publish(request, family, history)?;

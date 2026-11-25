@@ -814,3 +814,76 @@ driver. The Xvfb run checked drag behavior under injected input.
 [Oblikovati #4188](https://github.com/Oblikovati/Oblikovati/issues/4188),
 [Oblikovati #4189](https://github.com/Oblikovati/Oblikovati/issues/4189),
 [Martensite #600](https://github.com/Oblikovati/Martensite/issues/600).
+
+## Selected-cylinder multiline text
+
+The 239-curve selected-face cylinder still uses the ordinary attachment
+path. In one instrumented release run using kernel `a005bdea`, the cold
+boss took 45.10 s. Tool
+construction and qualification took 32.91 s, the native Fuse took 1.54 s,
+and the ordered check on the decoded result took 10.60 s. There were 18
+native checks during canonical tool publication and 18 more after
+placement. A separate uninstrumented release sample through the public
+timing fixture took 27.38 s with 228,792 KiB peak process RSS. These
+are individual observations from the same workload under different
+conditions. The subsecond measurements above cover conical attachments.
+The opt-in `legacy_cylinder_multiline_*` toolkit tests emit one JSON API
+time per process and check geometry and history outside that timer.
+
+The direct cylindrical assembly trial used the same authored glyphs and
+placed them in one lift of a full cylindrical stock face. With existing
+tool fitting, 77 of 270 zero-depth edge/trim pairs exceeded the requested
+sewing value in the certified upper bound. A stricter fit produced 444
+spans and gave a whole-domain upper bound of `5.7943e-8` at the existing
+`1e-7` sewing value. The direct assembly reproduced the native 3D curve,
+pcurve, and parameter-range sources after decoding, retained all 18
+exposed cap histories, and passed the ordinary body check and independent
+volume. The actual side rails certified a signed squared-radius slope of
+at least `4.9999999999999645` per normalized depth. Separate bounds on
+regular and adjacent side derivatives remained positive for all 1,332
+directions exercised. These checks establish parts of the direct proof.
+Final contact coverage and a repeatable release timing series remain open.
+
+The desktop's 265-curve frozen Liberation Sans source is a separate
+fixture. CarrierV2 exhausted 8,192 planar pair bisections. On the same
+input and allowance, GeometricCompositeV6 certified all 18 selected
+regions in 0.560 s without spending any pair bisections or integration
+cells. Independent rational Green integrals fell within the reported
+area enclosures. The selected face comes from an indirect Circle →
+Extrude cylinder, and six glyph curves cross its native seam.
+
+A development build based on `99a016b9` ran the outward attachment on
+the archived desktop solid and text. The fitted angular hull
+`[5.8716684611, 7.0309479418]` fits the relocated native sheet
+`[π, 3π]`. The assembly rebound the original cylinder carrier and
+stock history, 270 sewn pcurves in the reflected native chart,
+18 far caps and 270 side domains. The independent full native check
+passed. Preparation took 2.17 s in the debug build and the complete
+test took 50.22 s. This run exercises the actual desktop source. The
+final exact contact proof still needs the trimmed stock and side checks
+inside the contact collar.
+
+App revision `c0e96d753` batched identical display segments into one indexed
+draw and retained byte-identical RGBA for the layout and extrusion previews.
+On an isolated
+accelerated Xwayland window at 960×720, layout drag changed from 59.32 to
+10.74 ms p95 at 60 Hz input and from 64.74 to 10.77 ms at 120 Hz input.
+First boss and pocket previews reached 29.45 and 34.91 ms p95. Depth
+updates took 18.70 ms p95 at 60 Hz and 20.48 ms at 120 Hz.
+
+After retaining the display curves and updating only changed vertices, app
+revision `ee4df2c1d` passed the preview budgets in two uninstrumented
+release runs on the default RADV queue. Each run used 400 layout inputs
+per rate, 30 first previews per sense, and 120 depth inputs per rate.
+
+| Interaction | Slower p95 of the two runs |
+| --- | ---: |
+| Layout drag, 60 Hz input | 7.93 ms |
+| Layout drag, 120 Hz input | 5.72 ms |
+| First emboss preview | 17.88 ms |
+| First engrave preview | 17.41 ms |
+| Depth update, 60 Hz input | 8.65 ms |
+| Depth update, 120 Hz input | 8.10 ms |
+
+The private Xwayland output ran at 59.94 Hz. The 120 Hz series times
+injected inputs through completed native frames.

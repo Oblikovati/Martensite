@@ -1,7 +1,7 @@
 # Directed solved-profile input
 
-The private rational pipeline has an input adapter for existing `SketchProfile`
-and `ProfileLoop` values (#418). A selection supplies its own surface-region ID,
+The wrapped-profile operations read the existing `SketchProfile` and
+`ProfileLoop` types (#418). A selection supplies its own surface-region ID,
 one directed outer loop and optional directed hole loops. The adapter resolves
 curve and vertex IDs once and copies the selected control coordinates into owned
 operation input. Material admission, joins, clearance and all geometry proofs
@@ -23,9 +23,14 @@ curve, an out-of-domain index or a level of 64 or above refuses.
 
 ## Current admission
 
-This adapter reads lines and single polynomial Bezier spans of degree one through
-three. A spline must have exactly `degree+1` poles, absent or unit weights, and
-`degree+1` zero knots followed by `degree+1` unit knots. Selected coordinates must
+The polynomial entry points read lines and single Bézier spans of degree one
+through three.
+A spline must have exactly `degree+1` poles, positive weights if supplied, and
+`degree+1` zero knots followed by `degree+1` unit knots. A weighted span needs
+an exact identity with a binary64 polynomial in the same parameter. Both the
+planar proof and the wrapped fit use that polynomial. The owned source binding
+retains the original poles and weights and checks their bits when evidence is
+reused. Selected coordinates must
 be finite, and endpoint pole bits must equal their authored vertex bits. The
 adapter does not snap endpoints or reinterpret an internal knot as a single span.
 Extreme degree values are checked before count arithmetic can overflow.
@@ -37,11 +42,62 @@ repeated selected curve uses also refuse. An unused curve's representation is
 not converted. Errors retain offending source IDs or values and the expected
 shape.
 
-General conics, rational and multi-span splines, higher degrees and the remaining
-surface-operation scope are still open. The adapter is now used by the uncommitted [P4 API checkpoint](PUBLIC-API.md).
-Publication qualification, sanitizer, glyph-scale, conical-profile and
-oblique-frame work remain open. Existing public primitive operations, package versions and release tags
-are unchanged.
+The rational entry points handle the additional profile representations below.
+Longer analytic sweeps still require a certified map from the fitted spans
+to the original angular interval.
+
+## Positive rational reference
+
+The rational normal entries accept lines, polynomial or positive-weight splines
+with certified monotone spans, and exact circular or axis-aligned elliptic
+quarters, plus closed circles and axis-aligned ellipses with exact coefficients.
+Shorter analytic sweeps can use exact affine-carrier endpoints even when their
+stereographic weights require rounding.
+The outer and hole loops may mix those curves. The entries require increasing
+signed depths and one angular chart. The cone also requires the profile to
+lie in the positive developed halfplane, clear of the apex. The rational cylinder
+uses `GeometricCompositeV6` for its reference planar proof. The tested cone
+request selects the same version for its UV cap proof. The reference level splits
+each native span into equal dyadic intervals. Open clamped splines may have
+nonuniform knots with multiplicities up to their degree. Knot insertion encloses
+the homogeneous coefficients before rounding and requires a strictly monotone
+projection across the complete curve and its reference. A closed authored
+spline may use the exact dyadic Bernstein partition.
+
+The operation verifies the original planar region and integrates its signed
+boundary for area. For multipart splines, the planar proof uses the exact
+or bounded Bernstein partition. Each bounded span keeps the original knot
+bits and its outward position, derivative and area transfer errors. Neighboring
+spans share one computed knot and enclose the same original point there.
+The retained proof uses the remaining pair-work budget
+and bounds position and derivative error for each cubic reference span. Both curves stay strictly
+inside the straight boundary halfplanes except at shared authored endpoints.
+At a shared authored vertex, the proof separates curved uses with an exact
+halfplane test. It separates nonincident curves using outward bounds on their
+reference error tubes. The normal map bounds the error in world coordinates.
+History records the original curve and its dyadic parameter intervals. For an analytic quarter it
+also records how the stereographic parameter maps to the native angle. Closed
+conics record a native-angle key at each quarter, including the seam at zero.
+For a shorter sweep, the key records the original angular endpoints. A
+nonuniform spline records the two original knots alongside each local dyadic
+interval. A vertex at a native knot has one key shared by its two neighbors.
+The position, derivative and Green-area bounds include coefficient rounding.
+The result includes the authored area and sweep-volume enclosures, the retained boundary flux, the
+spatial bound, and the ordered native validation report. The volume proof uses
+the original area and the signed depth Jacobian. For asymmetric cone depths,
+it also bounds the change in the inverse-slant integral as the rational boundary
+moves to the polynomial reference. The resulting volume width must fit the
+requested cone policy.
+
+`normal_extrude_rational_cone_with_selection` takes an explicit cone proof policy.
+`DirectedTransportedAuthoredPlanarV8` with `PositiveXFamilyChartV3` checks the
+stored solid's self-intersection independently. The legacy rounded entry retains
+its native-search coverage label. The full ellipse with semi-axes `1/16` and
+`1/32` at `[4, 0]`, signed depths `[-0.1, 0.1]`, and a `1e-4` spatial limit
+passes the directed proof with 16 reference cubics. Subdividing the residual
+bound, without changing those cubics, leaves space for the retained geometry
+within the same tolerance. Its 32-cubic execution under the same one-million
+arithmetic limit returns a typed `WorkLimit` for an actual side pair.
 
 ## Verification
 

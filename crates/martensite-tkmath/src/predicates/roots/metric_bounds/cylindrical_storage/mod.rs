@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Storage bounds in the support's local cylinder chart; no topology or angular claim (#418).
 mod admission;
+mod contact_prefix;
 mod error;
 mod proof;
+mod radial_slice;
+mod radial_sweep;
 #[cfg(test)]
 mod tests;
 mod types;
@@ -11,9 +14,23 @@ use super::MetricBezier;
 use crate::predicates::roots::certificate_arithmetic::{
     bernstein_bounds as polynomial,
     bounded_dyadic::{Arithmetic, ArithmeticPolicy, Interval},
+    bounded_failure::BoundedArithmeticFailure,
+};
+pub use contact_prefix::{
+    CertifiedCylindricalContactPrefix, CylindricalContactPrefixError,
+    CylindricalContactPrefixFailure, CylindricalContactPrefixQuery,
+    certify_cylindrical_contact_prefix,
 };
 use error::Checked;
 pub use error::{CylindricalStorageError, CylindricalStorageFailure};
+pub use radial_slice::{
+    CertifiedCylindricalSlice, CylindricalSliceQuery, CylindricalSliceRefusal,
+    certify_cylindrical_slice_direction,
+};
+pub use radial_sweep::{
+    CertifiedCylindricalRadialSweep, CylindricalRadialSense, CylindricalRadialSweepError,
+    CylindricalRadialSweepFailure, CylindricalRadialSweepQuery, certify_cylindrical_radial_sweep,
+};
 pub use types::*;
 
 /// Bound radial distance, scaled radial rulings and height drift for two stored curves.
@@ -53,7 +70,7 @@ fn execute(
 fn capture(
     source: MetricBezier<'_, 3>,
     arithmetic: &mut Arithmetic<'_>,
-) -> Checked<[Vec<Interval>; 4]> {
+) -> Result<[Vec<Interval>; 4], BoundedArithmeticFailure> {
     let mut result: [Vec<Interval>; 4] =
         std::array::from_fn(|_| Vec::with_capacity(source.poles.len()));
     for (i, pole) in source.poles.iter().enumerate() {
