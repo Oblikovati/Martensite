@@ -90,7 +90,11 @@ impl StockMetric {
         if radius.lo > 0. || (radius.hi <= 0. && strictly_below(radius.abs(), self.limit)) {
             return Ok(());
         }
-        Err(StockRefusal::Contact)
+        Err(StockRefusal::ContactBound {
+            cap,
+            gap: [radius.lo, radius.hi],
+            limit: self.limit,
+        })
     }
 
     fn line_contact(&self, cap: usize) -> Checked<()> {
@@ -110,10 +114,15 @@ impl StockMetric {
             y.add(delta.mul(I::p(dir[1]))),
             diff(self.z[cap], target[2]),
         ];
-        if strictly_below(l1(residue), self.limit) {
+        let upper = l1(residue);
+        if strictly_below(upper, self.limit) {
             Ok(())
         } else {
-            Err(StockRefusal::Contact)
+            Err(StockRefusal::ContactBound {
+                cap,
+                gap: [0., upper],
+                limit: self.limit,
+            })
         }
     }
 
@@ -166,7 +175,11 @@ impl StockMetric {
         if strictly_below(upper, self.limit) && upper <= COLLAR_GUARD {
             Ok(upper)
         } else {
-            Err(StockRefusal::Limit)
+            Err(StockRefusal::SpatialLimit {
+                upper,
+                limit: self.limit,
+                collar_guard: COLLAR_GUARD,
+            })
         }
     }
 }
@@ -227,13 +240,13 @@ fn raw_limit(source: &StockWords, sew: Word) -> Checked<f64> {
     if limit.is_finite() && limit > 0. {
         Ok(limit)
     } else {
-        Err(StockRefusal::Limit)
+        Err(StockRefusal::InvalidLimit(limit))
     }
 }
 
 fn trig_tails(angle: f64) -> Checked<[I; 2]> {
     if !(angle > 0. && angle < 1.) {
-        return Err(StockRefusal::Carrier);
+        return Err(StockRefusal::SemiAngle(angle));
     }
     let a = I::p(angle);
     let step = a.sq().negate();
@@ -261,4 +274,17 @@ fn series_term(term: I, step: I, power: u32) -> Checked<I> {
 
 pub(super) fn prove(source: &StockWords, sew: Word) -> Checked<f64> {
     StockMetric::admit(source, sew)?.bound()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn stock_trigonometric_refusal_retains_the_actual_semi_angle() {
+        assert!(matches!(
+            trig_tails(1.25),
+            Err(StockRefusal::SemiAngle(1.25))
+        ));
+    }
 }

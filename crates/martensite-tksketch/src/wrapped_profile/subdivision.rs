@@ -169,6 +169,7 @@ fn split_half(
         start,
         end,
         poles,
+        weighted_source: piece.weighted_source.clone(),
         chart_center: piece.chart_center,
     }
 }

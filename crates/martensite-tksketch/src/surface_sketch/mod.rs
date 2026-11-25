@@ -12,6 +12,7 @@ mod cylinder_sweep;
 mod encoding;
 mod failure;
 mod frame;
+mod full_turn;
 mod history;
 mod pipeline;
 mod request;
@@ -28,11 +29,13 @@ mod wrapped_profile;
 
 pub use cone_request::{ConeSector, ConeSupport};
 pub use failure::{SurfaceFailureCause, SurfaceSketchFailure, SurfaceStage};
+pub use full_turn::{FullTurnBand, FullTurnSupport, normal_extrude_full_turn_band};
 pub use history::{HistoryKey, HistoryRole, HistorySource};
 pub use request::*;
 pub use result::{
     DetachedNormalBody, NormalExtrusionResult, SurfaceDiagnostic, VolumeErrorEstimates,
 };
+pub use wrapped_profile::ConicalStockFailure;
 pub use wrapped_profile::{
     CertifiedConeAttachmentReport, CertifiedConeFeatureResult, ConeFeatureResult,
     ConeFootprintFailure, ConeFootprintReport, ConeRegionFootprint, ConeTrimmedTool,

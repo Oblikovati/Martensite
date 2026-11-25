@@ -1,5 +1,8 @@
 //! Build one oriented analytic section and retain its native sweep images.
-use super::{failure::*, sweep::Sweep};
+use super::{
+    failure::*,
+    sweep::{Sweep, SweepNames},
+};
 use martensite_tkbrep::topods::{Builder, Edge, Face, Shape, Vertex, Wire};
 use martensite_tkmath::gp::{Axis1, Direction3, Point3};
 use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeRevol;
@@ -21,8 +24,13 @@ pub(super) fn construct(admitted: &Sweep) -> Checked<(Section, BRepPrimAPIMakeRe
     let direction = Direction3::new(x, y, z).map_err(|error| native("axis", error))?;
     let [x, y, z] = admitted.origin;
     let axis = Axis1::new(Point3::new(x, y, z), direction);
-    let mut maker = BRepPrimAPIMakeRevol::new(&section.face, axis, admitted.angle, false)
-        .map_err(|error| native("revolution", error))?;
+    let mut maker = match admitted.names {
+        SweepNames::Sector { .. } => {
+            BRepPrimAPIMakeRevol::new(&section.face, axis, admitted.angle, false)
+        }
+        SweepNames::FullTurn { .. } => BRepPrimAPIMakeRevol::full(&section.face, axis, false),
+    }
+    .map_err(|error| native("revolution", error))?;
     let solid = maker
         .shape()
         .map_err(|error| native("revolution result", error))?

@@ -62,6 +62,7 @@ fn control_command(root: &Path, control: Control) -> CommandSpec {
         Control::FontTextCapture => font_text_capture_controls(root),
         Control::WrappedFamily => wrapped_family_controls(root),
         Control::WrappedCone => wrapped_cone_controls(root),
+        Control::CertifiedConeAttachment => certified_cone_attachment_controls(root),
         Control::SharedContext => shared_context_controls(root),
     }
 }
@@ -289,6 +290,23 @@ fn wrapped_cone_controls(root: &Path) -> CommandSpec {
         WRAPPED_CONE_TEST,
         "--",
         "--exact",
+        "--test-threads=1",
+        "--show-output",
+    ])
+}
+
+const CERTIFIED_CONE_ATTACHMENT_TEST: &str = "wrapped_text_regions::wrapped::conical_text::attachment::certified::certified_attachment_replays_exactly_on_independent_threads";
+fn certified_cone_attachment_controls(root: &Path) -> CommandSpec {
+    sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tkv3d",
+        "--test",
+        "toolkit",
+        "--",
+        CERTIFIED_CONE_ATTACHMENT_TEST,
+        "--exact",
+        "--ignored",
         "--test-threads=1",
         "--show-output",
     ])

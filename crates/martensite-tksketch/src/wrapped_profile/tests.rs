@@ -16,6 +16,7 @@ pub(super) fn contour(first: u64, poles: &[&[[f64; 2]]]) -> Vec<AuthoredPiece> {
             start: CornerSource::Authored(SurfaceVertexId(first + i as u64)),
             end: CornerSource::Authored(SurfaceVertexId(first + (i as u64 + 1) % count)),
             poles: poles.to_vec(),
+            weighted_source: None,
             chart_center: 0.,
         })
         .collect()

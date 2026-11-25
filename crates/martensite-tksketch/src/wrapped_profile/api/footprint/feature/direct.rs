@@ -25,6 +25,7 @@ mod topology;
 
 use assembly::{Frustum, Member, direct_children, occurrences, sort_stock_disks};
 pub use result::{CertifiedConeAttachmentReport, CertifiedConeFeatureResult};
+pub use stock::ConicalStockFailure;
 use stock::StockFrustumReceipt;
 use stock_binding::{InstalledStock, stock_refusal};
 

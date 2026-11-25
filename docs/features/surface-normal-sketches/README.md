@@ -6,13 +6,10 @@ normal at each point. Existing planar sketches and vector extrusions retain
 their interfaces and behaviour.
 
 The primitive entries accept developed cylindrical rectangles and conical
-annular sectors, including their admitted seam crossings. Solved-profile
-cylindrical extrusion has a separate owned-result API. The unreleased Phase A
-implementation also completes the curved-profile cone workload with a hole
-under the restricted contract below. [PR #549](https://github.com/Oblikovati/Martensite/pull/549)
-merged into `release/next` after the required hosted checks, including the new
-cone TSan control, passed. Wider wrapping and attachment capability remain
-outside that acceptance.
+annular sectors, including seam crossings within their supported domains.
+Solved profiles use separate owned-result APIs. Martensite v0.14.0 shipped
+single-chart cone profiles with holes. [PR #549](https://github.com/Oblikovati/Martensite/pull/549)
+passed hosted checks, including a cone ThreadSanitizer control.
 
 ## Existing kernel support
 
@@ -145,19 +142,27 @@ validation. This primitive entry retains its exact sector contract; the
 candidate solved-profile entry below handles admitted polynomial curves. See the
 [conical sector contract](CONE.md) for the coordinate map and supported domain.
 
+## Full-turn bands
+
+`normal_extrude_full_turn_band` takes an explicit `FullTurnBand` on a cylinder
+or cone with two authored closed rims. It sweeps one full revolution and binds
+the depth faces and rim sides to the decoded native occurrences. Each seam
+has two opposite uses on its periodic face. Moving the construction seam
+preserves the authored region and rim keys. The tests check both material
+sides against the analytic volume and verify replay and input isolation.
+
 ## General wrapped profiles
 
-An application can pass its named support members to `CylinderFaceAttachment::bind_feature_sources` and use the returned references to read the boss or pocket history. The binding checks the frozen body and selected-face references before resolving any member.
+An application can pass its named support members to
+`CylinderFaceAttachment::bind_feature_sources` and use the returned references
+to read the boss or pocket history. The binding checks the frozen body and
+selected-face references before resolving any member.
 
-The [API contract](PUBLIC-API.md) describes `normal_extrude_profile` for cylinders
-and the unreleased `normal_extrude_cone_profile` candidate. Both use the shared
-executor and keyed incidence builder. Existing cylinder and primitive
-interfaces retain their signatures and behavior. Phase A was integrated by
-PR #549 at merge `8f2b423103d13b22d9724747946b43ee1ca15ded` into `release/next`.
-Hosted evidence identifies tested PR head
-`7a2aa0814a3f8c5b049aaec74b5d98bd26b296fe`; the merge is recorded separately
-because those receipts were captured before it. The implementation remains
-unreleased, and B/C qualification remains outstanding.
+The [API contract](PUBLIC-API.md) describes `normal_extrude_profile` for
+cylinders and `normal_extrude_cone_profile` for cones. Both use the shared
+executor and keyed incidence builder. The hosted Phase A receipts identify
+PR #549 head `7a2aa0814a3f8c5b049aaec74b5d98bd26b296fe`, which landed at
+`8f2b423103d13b22d9724747946b43ee1ca15ded` and reached `main` in #597.
 
 For cones, Phase A admits solved world-XY developed polynomial profiles within
 one strict family angular chart/wedge, away from the apex and axis throughout
@@ -171,10 +176,9 @@ remain separate in the result. The
 [analytic-carrier decision](../../architecture/decisions/analytic-wrapped-profile-carriers.md)
 extends the [approved rational contract](../../architecture/decisions/rational-wrapped-profile-representation.md).
 
-The new cone-only proof default selects `FilteredBernsteinV4` for retained UV
-material admission. `BernsteinV3` remains explicitly selectable for replay;
-existing cylinder and toolkit defaults are unchanged. Requested limits,
-effective leaf policies and actual work/error receipts are retained separately.
+The cone proof defaults to `FilteredBernsteinV4` for retained UV material
+admission and allows `BernsteinV3` for replay. Results record requested limits,
+effective leaf policies, and measured work and error.
 
 ### Candidate evidence and performance
 

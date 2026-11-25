@@ -3,7 +3,6 @@ use martensite_tkbrep::{
     brep::{BRepTEdge, BRepTFace, BRepTVertex, BRepTool},
     topods::{self, Edge, Face, Shape, ShapeIterator, Vertex},
 };
-use martensite_tkernel::standard::Failure;
 use martensite_tkg2d::geom2d::{Geom2dCircle, Geom2dLine};
 use martensite_tkg3d::{
     geom::{GeomCircle, GeomConicalSurface, GeomLine, GeomPlane},
@@ -13,40 +12,12 @@ use martensite_tkmath::predicates::roots::metric_bounds::ConicalTrimCarrier;
 use std::f64::consts::TAU;
 mod metric;
 mod native;
+mod refusal;
 
+use ConicalStockFailure as StockRefusal;
 use Orientation::{Forward, Reversed};
+pub use refusal::ConicalStockFailure;
 type Checked<T> = Result<T, StockRefusal>;
-
-#[derive(Debug)]
-pub(crate) enum StockRefusal {
-    Native(Failure),
-    NonFinite,
-    Body,
-    Carrier,
-    Disk,
-    Band,
-    Curve,
-    Pcurve,
-    Incidence,
-    Limit,
-    Contact,
-    SourceChanged,
-}
-
-impl From<Failure> for StockRefusal {
-    fn from(value: Failure) -> Self {
-        Self::Native(value)
-    }
-}
-
-impl std::fmt::Display for StockRefusal {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Native(cause) => write!(f, "native stock query failed: {cause}"),
-            _ => write!(f, "stock certificate refused {self:?}"),
-        }
-    }
-}
 
 /// An immutable proof of the owned stock subgraph and a bound against a closed frustum.
 pub(crate) struct StockFrustumReceipt {
@@ -89,7 +60,7 @@ struct Word(u64);
 impl Word {
     fn from(x: f64) -> Checked<Self> {
         if !x.is_finite() {
-            return Err(StockRefusal::NonFinite);
+            return Err(StockRefusal::NonFinite(x));
         }
         Ok(Self(x.to_bits()))
     }

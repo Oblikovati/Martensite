@@ -49,6 +49,7 @@ struct AuthoredPiece {
     start: CornerSource,
     end: CornerSource,
     poles: Vec<[f64; 2]>,
+    weighted_source: Option<std::sync::Arc<profile_input::WeightedBezierSource>>,
     chart_center: f64,
 }
 
