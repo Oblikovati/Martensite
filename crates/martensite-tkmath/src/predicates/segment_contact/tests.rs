@@ -65,7 +65,7 @@ fn point_segments_coincide_only_on_the_exact_support_interval() {
 
 #[test]
 fn exact_input_survives_underflow_and_overflow_of_float_determinants() {
-    for scale in [f64::from_bits(1), 2_f64.powi(900)] {
+    for scale in [f64::from_bits(1), martensite_cmath::powi(2., 900)] {
         let first = [[0.; 3], [2. * scale; 3]];
         let second = [[0., 2. * scale, 0.], [2. * scale, 0., 2. * scale]];
         check(first, second, SegmentContact3d::Point);
