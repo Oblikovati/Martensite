@@ -167,10 +167,7 @@ impl ConstantHelix {
     }
 
     fn world(self, [x, y, z]: [f64; 3], point: bool) -> [f64; 3] {
-        let trace = self.trace_law();
-        let [i, j, k] = trace.basis;
-        let origin = if point { trace.origin } else { [0.; 3] };
-        std::array::from_fn(|axis| origin[axis] + x * i[axis] + y * j[axis] + z * k[axis])
+        place(self.request.placement, [x, y, z], point)
     }
 
     pub(super) fn trace_law(self) -> HelixTraceLaw {
@@ -187,7 +184,7 @@ impl ConstantHelix {
     }
 }
 
-fn checked_frame(frame: Axis2) -> Result<Axis2, HelixFailure> {
+pub(super) fn checked_frame(frame: Axis2) -> Result<Axis2, HelixFailure> {
     Axis2::from_stored_coefficients(
         frame.location(),
         *frame.direction().coordinates(),
@@ -285,4 +282,15 @@ fn derived_positive(value: f64, quantity: Q) -> Result<f64, HelixFailure> {
         return Ok(value);
     }
     Err(HelixFailure::DerivedScalar { quantity, value })
+}
+
+pub(super) fn place(frame: Axis2, [x, y, z]: [f64; 3], point: bool) -> [f64; 3] {
+    let [i, j, k] = [frame.x_direction(), frame.y_direction(), frame.direction()]
+        .map(|direction| *direction.coordinates());
+    let origin = if point {
+        *frame.location().coordinates()
+    } else {
+        [0.; 3]
+    };
+    std::array::from_fn(|axis| origin[axis] + x * i[axis] + y * j[axis] + z * k[axis])
 }

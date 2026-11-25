@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::super::{NonFiniteCoordinate, binary64_parts};
-use super::certificate_arithmetic::{ExactRatio, rounding::outward_binary64};
+use super::certificate_arithmetic::{
+    ExactRatio,
+    rounding::{nearest_binary64, outward_binary64},
+};
 use num_bigint::BigInt;
 use std::{cmp::Ordering, fmt};
 
@@ -43,6 +46,34 @@ impl DyadicBound {
     pub fn binary64_bounds(&self) -> Option<[f64; 2]> {
         outward_binary64(&ExactRatio::from_dyadic(self))
     }
+    /// Round this exact dyadic to nearest binary64 with ties to even.
+    /// Use `bound.nearest_binary64()` when a construction needs one nominal coordinate.
+    pub fn nearest_binary64(&self) -> Option<f64> {
+        nearest_binary64(&ExactRatio::from_dyadic(self))
+    }
+
+    /// Add dyadics without intermediate binary64 rounding.
+    /// Use `left.sum(&right)` to establish ordered authored stations.
+    pub fn sum(&self, other: &Self) -> Self {
+        let (left, right, exponent) = self.aligned(other);
+        Self::new(left + right, exponent)
+    }
+
+    /// Multiply two finite literals and optionally scale by a negative power of two.
+    /// Use `DyadicBound::product_of_f64(pitch, width, 1)?` to compute exact half rise.
+    pub fn product_of_f64(
+        left: f64,
+        right: f64,
+        halvings: u8,
+    ) -> Result<Self, NonFiniteCoordinate> {
+        let left = Self::from_f64(left)?;
+        let right = Self::from_f64(right)?;
+        Ok(Self::new(
+            left.significand * right.significand,
+            left.exponent + right.exponent - i32::from(halvings),
+        ))
+    }
+
     pub(super) fn new(significand: BigInt, exponent: i32) -> Self {
         // Binary64 bounds plus at most u16::MAX subdivisions fit i32 exponents
         // and 32-bit shift counts, including a difference across opposite signs.
@@ -64,7 +95,9 @@ impl DyadicBound {
         let (left, right, exponent) = self.aligned(other);
         Self::new(left + right, exponent - 1)
     }
-    pub(super) fn difference(&self, other: &Self) -> Self {
+    /// Subtract dyadics without intermediate binary64 rounding.
+    /// Use `total.difference(&reserved)` to check the exact remaining width.
+    pub fn difference(&self, other: &Self) -> Self {
         let (left, right, exponent) = self.aligned(other);
         Self::new(left - right, exponent)
     }

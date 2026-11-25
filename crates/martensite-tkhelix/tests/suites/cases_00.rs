@@ -1,6 +1,8 @@
 // Helix test suite registrations; preserve case files.
 #[path = "../authored_helix.rs"]
 mod authored_helix;
+#[path = "../helix_sequence.rs"]
+mod helix_sequence;
 #[path = "../assertion_contracts.rs"]
 pub mod assertion_contracts;
 #[path = "../builder_destruction.rs"]
