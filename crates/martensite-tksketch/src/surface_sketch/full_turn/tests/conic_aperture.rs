@@ -92,12 +92,15 @@ fn native_arc_with_nonbinary_stereographic_weights_refuses() {
     ));
 }
 
-fn short_arc(profile: &mut SketchProfile, place: impl Fn([f64; 2]) -> [f64; 2]) {
+pub(in crate::surface_sketch::full_turn) fn short_arc(
+    profile: &mut SketchProfile,
+    place: impl Fn([f64; 2]) -> [f64; 2],
+) {
     let boundary = [[-2., 2.], [2., 4.], [1.5, 5.], [-2., 5.]];
     arc_profile(profile, boundary.map(&place), place([-2., 7.]));
 }
 
-fn native_short_area() -> f64 {
+pub(in crate::surface_sketch::full_turn) fn native_short_area() -> f64 {
     25. * martensite_cmath::atan(0.5) - 9. / 4.
 }
 
@@ -172,7 +175,11 @@ fn cone_profile(profile: &mut SketchProfile) {
     arc_profile(profile, boundary.map(place), place([4.5, 0.5]));
 }
 
-fn arc_profile(profile: &mut SketchProfile, points: [[f64; 2]; 4], center: [f64; 2]) {
+pub(in crate::surface_sketch::full_turn) fn arc_profile(
+    profile: &mut SketchProfile,
+    points: [[f64; 2]; 4],
+    center: [f64; 2],
+) {
     for (vertex, point) in profile.vertices.iter_mut().zip(points) {
         vertex.point = point;
     }
