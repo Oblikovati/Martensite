@@ -93,8 +93,8 @@ pub enum PeriodicImageKey {
     },
 }
 
-pub(super) fn crossings(hole: &CylinderBandHole) -> Checked<[PeriodicCrossing; 2]> {
-    let [a, b] = hole.arc_length;
+pub(super) fn crossings(hole: &tool::Contour) -> Checked<[PeriodicCrossing; 2]> {
+    let [a, b] = hole.lift;
     let width = b - a;
     let lower = crossing(hole.boundaries[0], SheetTransition::Increasing, -a, width);
     let upper = crossing(hole.boundaries[2], SheetTransition::Decreasing, b, width);

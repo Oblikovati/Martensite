@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Rebind and qualify the native split body after immutable decoding.
 use super::*;
+use crate::surface_sketch::full_turn::FullTurnBand;
 use crate::surface_sketch::full_turn::hole::{ApprovedHole, CrossedPlan, *};
-use crate::surface_sketch::full_turn::{FullTurnBand, FullTurnSupport};
 use crate::surface_sketch::{history as primitive, validation};
 use martensite_tkbo::body_check::ValidationReport;
 use martensite_tkbrep::toptools::IndexedMapOfShape;
@@ -18,19 +18,20 @@ pub(in crate::surface_sketch::full_turn) fn validate_crossed(
     bindings: &[Image],
 ) -> Checked<validation::CheckedBody> {
     let count = prepared.holes.len();
-    unique_rooted_images(body, bindings, count)?;
+    let cylinder = prepared.stock.cylinder;
+    unique_rooted_images(body, bindings, count, cylinder)?;
     let proof = Verification::new(prepared, bindings);
     proof.check()?;
     let sweep = &prepared.stock.sweep;
     let report = validation::ordered_report(body, sweep)?;
-    check_census(&report, count)?;
+    check_census(&report, count, cylinder)?;
     validation::finish(report, bindings, sweep)
 }
 
-fn check_census(report: &ValidationReport, count: usize) -> Checked<()> {
+fn check_census(report: &ValidationReport, count: usize, cylinder: bool) -> Checked<()> {
     let genus = i64::try_from(count + 1)
         .map_err(|e| incomplete("representable periodic aperture genus", e.to_string()))?;
-    let loops = 6 + 4 * count;
+    let loops = 4 + 2 * usize::from(cylinder) + 4 * count;
     if matches!(report.census.as_slice(), [census] if census.shells == 1 && census.loops == loops && census.genus == Some(genus))
     {
         return Ok(());
@@ -127,22 +128,23 @@ impl<'a> Verification<'a> {
         })
     }
 
-    fn seam_point(&self, depth: PeriodicDepth, axial: f64) -> Checked<[f64; 3]> {
-        let FullTurnSupport::Cylinder { support, .. } = self.band.support else {
-            return Err(incomplete("cylindrical periodic stock", "unexpected cone"));
-        };
-        let stock = &self.prepared.stock;
-        let index = usize::from(depth.index() != stock.sweep.first_depth);
-        Ok(frame::point(
-            &support,
-            support.chart_origin,
-            stock.meridian[index][0],
-            axial,
-        ))
+    fn seam_point(&self, depth: PeriodicDepth, meridian: f64) -> [f64; 3] {
+        let sweep = &self.prepared.stock.sweep;
+        let index = usize::from(depth.index() != sweep.first_depth);
+        let [min, max] = self.prepared.bounds;
+        let t = (meridian - min) / (max - min);
+        let [start, finish] = [sweep.points[index], sweep.points[3 - index]];
+        // Both supports are affine along a fixed angle and normal depth.
+        std::array::from_fn(|i| start[i] + t * (finish[i] - start[i]))
     }
 }
 
-fn unique_rooted_images(body: &topods::Shape, bindings: &[Image], count: usize) -> Checked<()> {
+fn unique_rooted_images(
+    body: &topods::Shape,
+    bindings: &[Image],
+    count: usize,
+    cylinder: bool,
+) -> Checked<()> {
     if bindings.windows(2).any(|pair| pair[0].0 >= pair[1].0) {
         return Err(incomplete(
             "unique periodic semantic keys in total order",
@@ -152,7 +154,7 @@ fn unique_rooted_images(body: &topods::Shape, bindings: &[Image], count: usize) 
     for (kind, count) in [
         (ShapeEnum::Solid, 1),
         (ShapeEnum::Face, 4 + 4 * count),
-        (ShapeEnum::Edge, 6 + 18 * count),
+        (ShapeEnum::Edge, 6 + 2 * usize::from(!cylinder) + 18 * count),
         (ShapeEnum::Vertex, 4 + 12 * count),
     ] {
         unique_kind(body, bindings, kind, count)?;

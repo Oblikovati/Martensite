@@ -10,7 +10,7 @@ use std::f64::consts::{FRAC_PI_2, PI};
 mod aperture;
 mod partition;
 
-pub(super) use aperture::{increasing, verify_aperture_walls};
+pub(super) use aperture::{increasing, verify_aperture_wall, verify_aperture_walls};
 
 pub(super) fn verify(
     section: &BandSection,

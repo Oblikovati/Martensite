@@ -24,7 +24,11 @@ pub(super) fn check(
         bindings,
     )
 }
-fn check_carrier(admitted: &AdmittedCone, key: HistoryKey, shape: &topods::Shape) -> Checked<()> {
+pub(super) fn check_carrier(
+    admitted: &AdmittedCone,
+    key: HistoryKey,
+    shape: &topods::Shape,
+) -> Checked<()> {
     let face = topods::face(shape).map_err(|e| native("cone semantic face", e))?;
     let surface = BRepAdaptorSurface::with_face(&face, true)
         .map_err(|e| native("cone semantic surface", e))?;

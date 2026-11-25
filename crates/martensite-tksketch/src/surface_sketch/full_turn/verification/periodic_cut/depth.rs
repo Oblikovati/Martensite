@@ -18,8 +18,9 @@ pub(super) fn check(proof: &Verification<'_>, depth: PeriodicDepth) -> Checked<(
     } else {
         1
     };
-    require_surface(&surface, SurfaceType::Cylinder)?;
-    verify_cylinder(stock, &surface, index)?;
+    let carrier = carrier_type(stock.cylinder, index);
+    require_surface(&surface, carrier)?;
+    verify_carrier(stock, &surface, carrier, index)?;
     let uses = directed_edges(&face, proof.prepared.holes.len())?;
     let row = DepthFace {
         proof,
@@ -95,13 +96,13 @@ impl DepthFace<'_, '_> {
             };
             let shape = self.proof.resolve(key)?;
             let [a, b] = self.coedges(shape)?;
-            let [first, last] = rail.axial.map(|z| self.proof.seam_point(self.depth, z));
+            let endpoints = rail.meridian.map(|m| self.proof.seam_point(self.depth, m));
             trim::verify_seam_fragment(
                 self.stock(),
                 &self.face,
                 &self.surface,
                 [&a, &b],
-                [first?, last?],
+                endpoints,
             )?;
         }
         Ok(())
@@ -109,7 +110,7 @@ impl DepthFace<'_, '_> {
 
     fn aperture_pieces(&self, hole: &ApprovedHole, rim: usize, direction: bool) -> Checked<()> {
         let id = hole.crossings[rim].id;
-        let axial = hole.source.axial[rim];
+        let meridian = hole.source.meridian[rim];
         let crossing = PeriodicImageKey::CrossingVertex {
             depth: self.depth,
             crossing: id,
@@ -118,7 +119,7 @@ impl DepthFace<'_, '_> {
             .map_err(|e| native("named crossing", e))?;
         let point = BRepTool::pnt(&root).map_err(|e| native("crossing point", e))?;
         close(
-            distance(point, self.proof.seam_point(self.depth, axial)?),
+            distance(point, self.proof.seam_point(self.depth, meridian)),
             0.,
             tolerance(self.stock()),
             "crossing meridian point",
@@ -126,7 +127,7 @@ impl DepthFace<'_, '_> {
         let pieces = self.proof.piece_keys(id, self.depth);
         let increasing = id.transition == SheetTransition::Increasing;
         for (key, negative) in pieces.into_iter().zip([increasing, !increasing]) {
-            self.aperture_piece(hole, key, axial, negative, direction)?;
+            self.aperture_piece(hole, key, rim, negative, direction)?;
         }
         Ok(())
     }
@@ -135,12 +136,12 @@ impl DepthFace<'_, '_> {
         &self,
         hole: &ApprovedHole,
         key: PeriodicImageKey,
-        axial: f64,
+        rim: usize,
         negative: bool,
         direction: bool,
     ) -> Checked<()> {
         let [edge] = self.coedges(self.proof.resolve(key)?)?;
-        self.aperture_circle(hole, &edge, axial, negative)?;
+        self.aperture_circle(hole, &edge, rim, negative)?;
         let trim = self.pcurve(&edge)?;
         if trim::increasing(&edge, &trim, 0)? != direction {
             return Err(incomplete(
@@ -156,7 +157,7 @@ impl DepthFace<'_, '_> {
         &self,
         hole: &ApprovedHole,
         edge: &topods::Edge,
-        axial: f64,
+        rim: usize,
         negative: bool,
     ) -> Checked<()> {
         let curve =
@@ -166,10 +167,8 @@ impl DepthFace<'_, '_> {
             .circle()
             .map_err(|e| native("split aperture circle", e))?;
         axis_direction(self.stock(), circle.axis())?;
-        let aperture = &hole.admitted;
-        let radius = aperture.radii[self.depth.index()];
-        let azimuth =
-            hole.source.arc_length[usize::from(!negative)] / aperture.rectangle.support.radius;
+        let [radius, axial] = hole.admitted.meridian(self.depth, rim);
+        let azimuth = hole.source.lift[usize::from(!negative)] / hole.admitted.lift_scale();
         close(
             circle.radius(),
             radius,

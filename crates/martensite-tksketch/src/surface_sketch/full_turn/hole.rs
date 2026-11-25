@@ -26,6 +26,19 @@ pub struct CylinderBandHole {
     pub boundaries: [SurfaceCurveId; 4],
 }
 
+/// One authored rectangular aperture in a developed conical band.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ConeBandHole {
+    /// Increasing developed angles in radians, relative to the band's authored seam.
+    pub developed_angle: [f64; 2],
+    /// Increasing positive slant distances strictly inside the band.
+    pub slant: [f64; 2],
+    /// Authored corners in order `(angle0, l0), (angle1, l0), (angle1, l1), (angle0, l1)`.
+    pub corners: [SurfaceVertexId; 4],
+    /// Authored edges between successive corners, including closure.
+    pub boundaries: [SurfaceCurveId; 4],
+}
+
 /// Extrude a complete cylindrical band with one through hole along the normal.
 ///
 /// Keeps the aperture's authored contours in their original lift. The physical
@@ -169,7 +182,10 @@ fn export_aperture(
 }
 
 fn account_aperture(sweep: &mut sweep::Sweep, aperture: &cylinder_admission::Admitted) {
-    let cutter = cylinder_sweep::prepare(aperture);
+    account_operand(sweep, &cylinder_sweep::prepare(aperture));
+}
+
+fn account_operand(sweep: &mut sweep::Sweep, cutter: &sweep::Sweep) {
     sweep.expected_volume -= cutter.expected_volume;
     sweep.surface_area += cutter.surface_area;
     sweep.coordinate_error = sweep.coordinate_error.max(cutter.coordinate_error);
