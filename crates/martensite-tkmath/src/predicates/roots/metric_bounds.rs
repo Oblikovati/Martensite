@@ -135,8 +135,9 @@ pub use cylindrical_profile::{
     CylindricalProfileBehavior, CylindricalProfileError, CylindricalProfileFailure,
     CylindricalProfileInterval, CylindricalProfileOptions, CylindricalProfileQuery,
     CylindricalTrimError, CylindricalTrimQuery, certify_conical_trim, certify_conical_trim_pair,
-    certify_cylindrical_lift, certify_cylindrical_profile, certify_cylindrical_trim,
-    certify_cylindrical_trim_ranges, plan_cylindrical_charts, plan_cylindrical_fit,
+    certify_conical_trim_ranges, certify_cylindrical_lift, certify_cylindrical_profile,
+    certify_cylindrical_trim, certify_cylindrical_trim_ranges, plan_cylindrical_charts,
+    plan_cylindrical_fit,
 };
 mod inequality;
 mod proof;

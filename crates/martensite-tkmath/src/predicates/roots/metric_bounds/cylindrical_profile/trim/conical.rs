@@ -25,6 +25,48 @@ pub fn certify_conical_trim(
     })
 }
 
+/// Certify the same physical trim on distinct normalized space and UV parent ranges.
+/// The actual clamped projected chart may be degree five.
+/// Example: `let proof = certify_conical_trim_ranges(query, [[0.25, 1.0], [0.0, 1.0]], || false)?;`.
+pub fn certify_conical_trim_ranges(
+    query: ConicalTrimQuery<'_>,
+    ranges: [[f64; 2]; 2],
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> Result<CertifiedConicalTrim, ConicalTrimError> {
+    execute_ranges(query, ranges, &mut cancelled).map_err(|cause| ConicalTrimError {
+        carrier: query.carrier,
+        requested_spatial_limit: query.spatial_limit,
+        requested_options: query.options,
+        cause,
+    })
+}
+
+fn execute_ranges(
+    query: ConicalTrimQuery<'_>,
+    ranges: [[f64; 2]; 2],
+    cancelled: &mut (dyn FnMut() -> bool + Send),
+) -> Checked<CertifiedConicalTrim> {
+    admit_poles(query, 6)?;
+    for (index, range) in ranges.into_iter().enumerate() {
+        if !valid_range(range) {
+            return Err(CylindricalProfileFailure::Value {
+                role: "active cone trim range",
+                index,
+                value: range[1] - range[0],
+            });
+        }
+    }
+    let policy = ArithmeticPolicy {
+        fractional_bits: query.options.fractional_bits,
+        max_operations: query.options.max_operations,
+    };
+    let mut arithmetic = Arithmetic::new(policy, cancelled);
+    let bounds = capture::ranged_residual(query, ranges, &mut arithmetic)?;
+    let mut receipt = accepted_trace(query, bounds, arithmetic.operations())?;
+    receipt.ranges = ranges;
+    Ok(receipt)
+}
+
 fn execute(
     query: ConicalTrimQuery<'_>,
     cancelled: &mut (dyn FnMut() -> bool + Send),
@@ -40,6 +82,7 @@ fn execute(
     Ok(CertifiedConicalTrim {
         bounds,
         bits: types::source_bits(query),
+        ranges: [[0., 1.]; 2],
         limit: query.spatial_limit,
         options: query.options,
         operations: arithmetic.operations(),
@@ -49,8 +92,16 @@ fn execute(
 pub(in crate::predicates::roots::metric_bounds) fn admit(
     query: ConicalTrimQuery<'_>,
 ) -> Checked<()> {
+    admit_poles(query, 4)
+}
+
+fn admit_poles(query: ConicalTrimQuery<'_>, maximum_uv_poles: usize) -> Checked<()> {
     admission::policy(query.options)?;
-    admission::count("retained cone UV poles", query.pcurve.len(), 4)?;
+    admission::count(
+        "retained cone UV poles",
+        query.pcurve.len(),
+        maximum_uv_poles,
+    )?;
     admission::count("retained cone space poles", query.curve.poles.len(), 10)?;
     admission::coordinates(query.pcurve, query.curve.poles)?;
     admission::weights(query.curve)?;
@@ -121,6 +172,7 @@ pub(in crate::predicates::roots::metric_bounds) fn accepted_trace(
     Ok(CertifiedConicalTrim {
         bounds,
         bits: types::source_bits(query),
+        ranges: [[0., 1.]; 2],
         limit: query.spatial_limit,
         options: query.options,
         operations,

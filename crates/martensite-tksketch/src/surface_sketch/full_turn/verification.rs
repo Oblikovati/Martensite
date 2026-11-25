@@ -141,7 +141,11 @@ pub(super) fn verify_cylinder(
     )
 }
 
-fn verify_cone(section: &BandSection, surface: &BRepAdaptorSurface, index: usize) -> Checked<()> {
+pub(super) fn verify_cone(
+    section: &BandSection,
+    surface: &BRepAdaptorSurface,
+    index: usize,
+) -> Checked<()> {
     let cone = surface.cone().map_err(|e| native("full-turn cone", e))?;
     coaxial(section, cone.axis())?;
     let [r0, z0] = section.meridian[index];

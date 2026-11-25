@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Prove the first curved cut from the exact authored polynomial chart controls.
 use super::*;
-use martensite_tkbo::profile_extrusion::{ProfileCurve, ProfilePlane, ProfileVertexId};
+use martensite_tkbo::profile_extrusion::{
+    ProfileCurve, ProfilePlane, ProfileVertexId, SketchProfile,
+};
 use martensite_tkmath::predicates::roots::{
     RootIsolationOptions, isolate_bernstein_roots,
     metric_bounds::{DevelopedScale, certify_developed_period},
 };
 use martensite_tkmath::predicates::{OrientationSign, orient2d};
+
+mod cone;
 
 pub(super) struct AperturePlan {
     pub stock: band_admission::BandSection,
@@ -52,6 +56,15 @@ impl AperturePlan {
             crossings: aperture,
         })
     }
+    pub(super) fn minimum_radius(&self) -> f64 {
+        let min = self
+            .stock
+            .meridian
+            .iter()
+            .map(|point| point[0])
+            .fold(f64::INFINITY, f64::min);
+        (min - self.stock.sweep.coordinate_error).next_down()
+    }
 }
 
 fn check_support(support: CylinderSupport, request: &WrappedNormalRequest) -> Checked<()> {
@@ -78,7 +91,7 @@ fn contour(
     options: NormalExtrusionOptions,
 ) -> Checked<[Crossing; 2]> {
     let mut bounds = [[f64::INFINITY, f64::NEG_INFINITY]; 2];
-    let curves = contour_curves(request, selection)?;
+    let curves = contour_curves(&request.profile, selection)?;
     for curve in &curves {
         extend_bounds(&mut bounds, &curve.points);
     }
@@ -93,7 +106,7 @@ fn contour(
 }
 
 fn contour_curves(
-    request: &WrappedNormalRequest,
+    profile: &SketchProfile,
     selection: &WrappedRegionSelection,
 ) -> Checked<Vec<DirectedCurve>> {
     selection
@@ -101,15 +114,14 @@ fn contour_curves(
         .uses
         .iter()
         .map(|edge| {
-            let curve = request
-                .profile
+            let curve = profile
                 .curves
                 .iter()
                 .find(|curve| curve.id() == edge.curve)
                 .ok_or_else(|| {
                     incomplete("authored aperture curve", format!("{:?}", edge.curve))
                 })?;
-            DirectedCurve::new(request, curve, edge.reversed)
+            DirectedCurve::new(profile, curve, edge.reversed)
         })
         .collect()
 }
@@ -185,7 +197,7 @@ struct DirectedCurve {
 }
 
 impl DirectedCurve {
-    fn new(request: &WrappedNormalRequest, curve: &ProfileCurve, reversed: bool) -> Checked<Self> {
+    fn new(profile: &SketchProfile, curve: &ProfileCurve, reversed: bool) -> Checked<Self> {
         if reversed {
             return Err(incomplete(
                 "forward-authored aperture edges",
@@ -198,7 +210,7 @@ impl DirectedCurve {
                 format!("{:?}", curve.id()),
             )
         })?;
-        let [first, last] = [vertex(request, start)?, vertex(request, end)?];
+        let [first, last] = [vertex(profile, start)?, vertex(profile, end)?];
         let points = match curve {
             ProfileCurve::Line { .. } => vec![first, last],
             ProfileCurve::Spline {
@@ -327,9 +339,8 @@ fn isolate(values: &[f64]) -> Checked<[f64; 2]> {
         .ok_or_else(|| incomplete("interior simple source root bounds", format!("{root:?}")))
 }
 
-fn vertex(request: &WrappedNormalRequest, id: ProfileVertexId) -> Checked<[f64; 2]> {
-    request
-        .profile
+fn vertex(profile: &SketchProfile, id: ProfileVertexId) -> Checked<[f64; 2]> {
+    profile
         .vertices
         .iter()
         .find(|vertex| vertex.id == id)
