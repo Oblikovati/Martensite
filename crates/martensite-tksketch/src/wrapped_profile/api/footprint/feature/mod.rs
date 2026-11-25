@@ -13,6 +13,8 @@ use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
 use std::collections::BTreeMap;
 
 mod body;
+mod cylinder_certified;
+pub use cylinder_certified::{CertifiedCylinderAttachmentReport, CertifiedCylinderFeatureResult};
 mod cone;
 pub use cone::*;
 mod direct;
@@ -27,7 +29,6 @@ pub use history::{
     CylinderFeatureSource,
 };
 
-#[cfg(test)]
 mod cylinder_recut;
 #[cfg(test)]
 mod tests;

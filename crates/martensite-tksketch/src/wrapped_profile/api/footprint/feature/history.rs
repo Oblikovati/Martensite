@@ -1,9 +1,7 @@
 //! Bind the native Boolean to authored inputs and exact support snapshot members.
 use super::*;
 use body::Index;
-#[cfg(test)]
 mod recut;
-#[cfg(test)]
 pub(super) use recut::{RecutResult, capture_recut_direct};
 
 /// One entity in an exact source or result snapshot. The ordinal is local to its kind and root.
@@ -101,7 +99,6 @@ pub(super) fn capture(
 enum ImageSource<'a> {
     Boolean(&'a History),
     Direct(&'a [Shape]),
-    #[cfg(test)]
     Recut {
         replacement: &'a [Shape],
         support: &'a [cylinder_recut::StockImage],
@@ -247,7 +244,6 @@ impl<'a> Audit<'a> {
         let images = match self.source {
             ImageSource::Boolean(native) => self.read_native(native, source, shape)?,
             ImageSource::Direct(replacement) => self.read_direct(replacement, source, shape)?,
-            #[cfg(test)]
             ImageSource::Recut {
                 replacement,
                 support,

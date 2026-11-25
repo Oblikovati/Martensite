@@ -37,14 +37,15 @@ pub use result::{
 };
 pub use wrapped_profile::ConicalStockFailure;
 pub use wrapped_profile::{
-    CertifiedConeAttachmentReport, CertifiedConeFeatureResult, ConeFeatureResult,
-    ConeFootprintFailure, ConeFootprintReport, ConeRegionFootprint, ConeTrimmedTool,
-    CylinderBodyRef, CylinderFeatureCause, CylinderFeatureFailure, CylinderFeatureHistory,
-    CylinderFeatureKind, CylinderFeatureParent, CylinderFeatureRelation, CylinderFeatureResult,
-    CylinderFeatureSource, CylinderFeatureStage, CylinderFootprintFailure, CylinderFootprintReport,
-    CylinderTrimmedTool, DetachedCylinderFeature, DetachedWrappedBodies, DetachedWrappedFeature,
-    OuterTrimRefusal, WrappedBudgetReport, WrappedCertifiedBound, WrappedCertifiedRange,
-    WrappedChartNormalResult, WrappedChartPlacementReport, WrappedConeArithmeticGrantPolicy,
+    CertifiedConeAttachmentReport, CertifiedConeFeatureResult, CertifiedCylinderAttachmentReport,
+    CertifiedCylinderFeatureResult, ConeFeatureResult, ConeFootprintFailure, ConeFootprintReport,
+    ConeRegionFootprint, ConeTrimmedTool, CylinderBodyRef, CylinderFeatureCause,
+    CylinderFeatureFailure, CylinderFeatureHistory, CylinderFeatureKind, CylinderFeatureParent,
+    CylinderFeatureRelation, CylinderFeatureResult, CylinderFeatureSource, CylinderFeatureStage,
+    CylinderFootprintFailure, CylinderFootprintReport, CylinderTrimmedTool,
+    DetachedCylinderFeature, DetachedWrappedBodies, DetachedWrappedFeature, OuterTrimRefusal,
+    WrappedBudgetReport, WrappedCertifiedBound, WrappedCertifiedRange, WrappedChartNormalResult,
+    WrappedChartPlacementReport, WrappedConeArithmeticGrantPolicy,
     WrappedConeArithmeticGrantReceipt, WrappedConeAuthoredVolumeOptions, WrappedConeBudgetReport,
     WrappedConeDomainPolicy, WrappedConeExecutionSelection, WrappedConeMaterialReport,
     WrappedConeMemberReport, WrappedConeNormalRequest, WrappedConeNormalResult,

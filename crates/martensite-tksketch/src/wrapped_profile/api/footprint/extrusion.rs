@@ -111,7 +111,7 @@ impl CylinderFaceAttachment {
     }
 }
 
-fn read_inside(
+pub(super) fn read_inside(
     request: &WrappedNormalRequest,
     band: &mut band::Band,
     exclusions: &mut holes::Exclusions,
