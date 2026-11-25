@@ -322,11 +322,15 @@ fn a_selection_cancelled_in_fit_work_keeps_the_authored_owner_and_typed_cause() 
 
 fn successful_planar_polls(originals: &[Request]) -> usize {
     let mut planar_polls = 0;
-    let work = martensite_tkbo::profile_extrusion::PlanarProofWorkLimit::CurrentDefault;
-    qualify_with_work(originals, work, &mut || {
-        planar_polls += 1;
-        false
-    })
+    qualify_with_proof(
+        originals,
+        PlanarProofWorkLimit::CurrentDefault,
+        PlanarProofVersion::CarrierV2,
+        &mut || {
+            planar_polls += 1;
+            false
+        },
+    )
     .unwrap();
     planar_polls
 }
