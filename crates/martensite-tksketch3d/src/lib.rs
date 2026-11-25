@@ -1,18 +1,20 @@
 // SPDX-License-Identifier: GPL-2.0-only
-//! Owned spatial sketch points and lines with atomic edit validation.
+//! Owned spatial sketch points, lines and arcs with atomic edit validation.
 mod admission;
 pub mod constraints;
+mod arc;
 mod edit;
 mod failure;
 mod source;
 pub mod wire;
 
+pub use arc::{ArcDefinition, ArcFailure, ArcFitTolerance, ArcGeometry, ArcId, SketchArc};
 pub use failure::{BatchPhase, EditFailure, InvalidMinimumLength};
 use martensite_tkmath::gp::{Line3, Point3};
 pub use source::FrozenPointSource;
 use std::{collections::BTreeMap, num::NonZeroU64};
 
-/// Caller-reserved identity for one point. Points and lines share a numeric namespace.
+/// Caller-reserved identity for one point. All entities share a numeric namespace.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PointId(NonZeroU64);
 
@@ -28,7 +30,7 @@ impl PointId {
     }
 }
 
-/// Caller-reserved identity for one line. Points and lines share a numeric namespace.
+/// Caller-reserved identity for one line. All entities share a numeric namespace.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LineId(NonZeroU64);
 
@@ -51,6 +53,8 @@ pub enum EntityId {
     Point(PointId),
     /// Line identity.
     Line(LineId),
+    /// Circular arc identity.
+    Arc(ArcId),
 }
 
 /// Authored role, independent of the number of lines using the point.
@@ -150,18 +154,23 @@ pub enum Edit {
     },
     /// Add an ordered line. Its endpoint points must exist by the end of the batch.
     InsertLine(SketchLine),
-    /// Make a frozen point editable while keeping its identity, coordinates and incident lines.
+    /// Add a circular arc. Its placement points must exist by the end of the batch.
+    InsertArc(SketchArc),
+    /// Make a frozen point editable while keeping its identity, coordinates and incident curves.
     DetachFrozenPoint(PointId),
-    /// Remove a point and its incident lines. Cascaded lines cannot be removed again.
+    /// Remove a point and its incident curves. Cascaded curves cannot be removed again.
     RemovePoint(PointId),
     /// Remove a line. A batch with any deletion retires all unused defining points.
     RemoveLine(LineId),
+    /// Remove an arc. A batch with any deletion retires all unused defining points.
+    RemoveArc(ArcId),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Entity {
     Point(SketchPoint),
     Line(SketchLine),
+    Arc(SketchArc),
 }
 
 impl Entity {
@@ -169,6 +178,7 @@ impl Entity {
         match self {
             Self::Point(point) => EntityId::Point(point.id),
             Self::Line(line) => EntityId::Line(line.id),
+            Self::Arc(arc) => EntityId::Arc(arc.id),
         }
     }
 }
@@ -178,6 +188,7 @@ impl EntityId {
         match self {
             Self::Point(point) => point.get(),
             Self::Line(line) => line.get(),
+            Self::Arc(arc) => arc.get(),
         }
     }
 }
@@ -191,6 +202,7 @@ pub struct Snapshot {
     minimum: MinimumLength,
     entities: BTreeMap<NonZeroU64, Entity>,
     geometry: BTreeMap<LineId, LineGeometry>,
+    arcs: BTreeMap<ArcId, ArcGeometry>,
     frozen: BTreeMap<PointId, FrozenPointSource>,
 }
 
@@ -201,6 +213,7 @@ impl Snapshot {
             minimum,
             entities: BTreeMap::new(),
             geometry: BTreeMap::new(),
+            arcs: BTreeMap::new(),
             frozen: BTreeMap::new(),
         }
     }
@@ -221,6 +234,11 @@ impl Snapshot {
     /// Return validated directed geometry. Example: `snapshot.line(line_id)`.
     pub fn line(&self, key: LineId) -> Option<LineGeometry> {
         self.geometry.get(&key).copied()
+    }
+
+    /// Return a validated circular arc value. Example: `snapshot.arc(arc_id)`.
+    pub fn arc(&self, key: ArcId) -> Option<ArcGeometry> {
+        self.arcs.get(&key).copied()
     }
 
     /// Enumerate all owned IDs in ascending raw-key order. Example: `snapshot.owned_ids().count()`.

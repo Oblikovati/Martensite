@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Refusals identify the exact edit or line input that failed admission.
-use crate::{EntityId, FrozenPointSource, LineId, MinimumLength, PointId, SketchLine};
+use crate::{
+    ArcFailure, ArcId, EntityId, FrozenPointSource, LineId, MinimumLength, PointId, SketchLine,
+};
 use martensite_tkmath::predicates::NonFiniteCoordinate;
 use std::{error::Error, fmt};
 
@@ -30,7 +32,7 @@ pub enum BatchPhase {
     BeforeStaging,
     /// During staging, including deletion and orphan scans.
     Staging,
-    /// Before checking a line of the complete draft.
+    /// Before checking a curve of the complete draft.
     Validation,
     /// After validating the complete draft.
     Completion,
@@ -131,6 +133,13 @@ pub enum EditFailure {
         /// Finite displacement components.
         displacement: [f64; 3],
     },
+    /// A circular arc could not be admitted.
+    Arc {
+        /// Arc being validated.
+        arc: ArcId,
+        /// Specific placement or carrier refusal.
+        source: ArcFailure,
+    },
     /// The operation observed cancellation at this stage.
     Cancelled(BatchPhase),
 }
@@ -212,6 +221,7 @@ impl fmt::Display for EditFailure {
                 f,
                 "line {line:?} displacement {displacement:?} must construct a unit direction"
             ),
+            Self::Arc { arc, source } => write!(f, "arc {arc:?}: {source}"),
             Self::Cancelled(phase) => write!(f, "spatial sketch edit cancelled at {phase:?}"),
         }
     }
@@ -221,6 +231,7 @@ impl Error for EditFailure {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::MetricInput { source, .. } => Some(source),
+            Self::Arc { source, .. } => Some(source),
             _ => None,
         }
     }

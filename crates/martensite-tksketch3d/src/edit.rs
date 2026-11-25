@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Stage values first so complete geometry, including shared endpoints, admits together.
 use crate::{
-    BatchPhase, Edit, EditFailure, Entity, EntityId, LineId, PointId, PointRole, SketchLine,
-    SketchPoint, Snapshot, admission,
+    ArcGeometry, ArcId, BatchPhase, Edit, EditFailure, Entity, EntityId, LineId, PointId,
+    PointRole, SketchLine, SketchPoint, Snapshot, admission, arc,
 };
 use martensite_tkmath::gp::Point3;
 use std::{
@@ -16,7 +16,7 @@ impl Snapshot {
     /// Adopt one atomic batch on owned values. Example: `snapshot.apply(&edits, || false)?`.
     ///
     /// This operation builds and validates a whole snapshot for adoption. It may traverse
-    /// all entities, and the caller can cancel during staging and line validation.
+    /// all entities, and the caller can cancel during staging and curve validation.
     /// IDs can be checked against the current snapshot and the current batch. Callers
     /// reserve fresh IDs across earlier removals, snapshots, and undo.
     pub fn apply(
@@ -29,6 +29,7 @@ impl Snapshot {
             minimum: self.minimum,
             entities: self.entities.clone(),
             geometry: Default::default(),
+            arcs: Default::default(),
             frozen: self.frozen.clone(),
         };
         let mut retired = RetiredIds::new();
@@ -41,6 +42,10 @@ impl Snapshot {
         }
         // This draft has the same minimum as its source, so matching inputs retain their proof.
         draft.geometry = draft.check_lines(&self.geometry, &mut cancelled)?;
+        // Line-only edits keep the single geometry scan used by the drag path.
+        if !self.arcs.is_empty() || edits.iter().any(|edit| matches!(edit, Edit::InsertArc(_))) {
+            draft.arcs = draft.check_arcs(&self.arcs, &mut cancelled)?;
+        }
         poll(&mut cancelled, BatchPhase::Completion)?;
         Ok(draft)
     }
@@ -59,10 +64,12 @@ impl Snapshot {
                 Ok(())
             }
             Edit::InsertLine(line) => self.insert(Entity::Line(line), retired),
+            Edit::InsertArc(arc) => self.insert(Entity::Arc(arc), retired),
             Edit::MovePoint { point, position } => self.move_point(point, position),
             Edit::DetachFrozenPoint(point) => self.detach_frozen_point(point),
             Edit::RemovePoint(point) => self.remove_point(point, retired, cancelled),
             Edit::RemoveLine(line) => self.remove(EntityId::Line(line), retired),
+            Edit::RemoveArc(arc) => self.remove(EntityId::Arc(arc), retired),
         }
     }
 
@@ -125,25 +132,29 @@ impl Snapshot {
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<(), EditFailure> {
         self.remove(EntityId::Point(point), retired)?;
-        for line in self.incident_lines(point, cancelled)? {
+        for curve in self.incident_curves(point, cancelled)? {
             poll(cancelled, BatchPhase::Staging)?;
-            self.remove(EntityId::Line(line), retired)?;
+            self.remove(curve, retired)?;
         }
         Ok(())
     }
 
-    fn incident_lines(
+    fn incident_curves(
         &self,
         point: PointId,
         cancelled: &mut impl FnMut() -> bool,
-    ) -> Result<Vec<LineId>, EditFailure> {
+    ) -> Result<Vec<EntityId>, EditFailure> {
         let mut incident = Vec::new();
         for entity in self.entities.values() {
             poll(cancelled, BatchPhase::Staging)?;
-            if let Entity::Line(line) = entity
-                && line.endpoints.contains(&point)
-            {
-                incident.push(line.id);
+            match entity {
+                Entity::Line(line) if line.endpoints.contains(&point) => {
+                    incident.push(EntityId::Line(line.id));
+                }
+                Entity::Arc(arc) if arc.points().contains(&point) => {
+                    incident.push(EntityId::Arc(arc.id));
+                }
+                _ => {}
             }
         }
         Ok(incident)
@@ -166,7 +177,7 @@ impl Snapshot {
     fn lines(&self) -> impl Iterator<Item = SketchLine> + '_ {
         self.entities.values().filter_map(|entity| match entity {
             Entity::Line(line) => Some(*line),
-            Entity::Point(_) => None,
+            _ => None,
         })
     }
 
@@ -208,8 +219,10 @@ impl Snapshot {
         let mut used = BTreeSet::new();
         for entity in self.entities.values() {
             poll(cancelled, BatchPhase::Staging)?;
-            if let Entity::Line(line) = entity {
-                used.extend(line.endpoints);
+            match entity {
+                Entity::Line(line) => used.extend(line.endpoints),
+                Entity::Arc(arc) => used.extend(arc.points()),
+                Entity::Point(_) => {}
             }
         }
         Ok(used)
@@ -226,6 +239,27 @@ impl Snapshot {
                 Ok((
                     line.id,
                     admission::line(self, line, previous.get(&line.id))?,
+                ))
+            })
+            .collect()
+    }
+
+    fn check_arcs(
+        &self,
+        previous: &BTreeMap<ArcId, ArcGeometry>,
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<BTreeMap<ArcId, ArcGeometry>, EditFailure> {
+        self.entities
+            .values()
+            .filter_map(|entity| match entity {
+                Entity::Arc(recipe) => Some(*recipe),
+                _ => None,
+            })
+            .map(|recipe| {
+                poll(cancelled, BatchPhase::Validation)?;
+                Ok((
+                    recipe.id,
+                    arc::admit(self, recipe, previous.get(&recipe.id))?,
                 ))
             })
             .collect()

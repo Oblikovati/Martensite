@@ -94,11 +94,15 @@ fn displacement(line: LineId, [first, second]: [Point3; 2]) -> Result<[f64; 3], 
 
 fn length_estimate(line: LineId, displacement: [f64; 3]) -> Result<f64, EditFailure> {
     let [x, y, z] = displacement;
-    let estimate = norm(&Vector::from_xyz(Xyz::new(x, y, z)));
+    let estimate = estimated_norm(Xyz::new(x, y, z));
     if !estimate.is_finite() {
         return Err(EditFailure::UnrepresentableLength { line, displacement });
     }
     Ok(estimate)
+}
+
+pub(super) fn estimated_norm(vector: Xyz) -> f64 {
+    norm(&Vector::from_xyz(vector))
 }
 
 fn minimum_comparison(
