@@ -321,3 +321,6 @@ fn feature_boolean_bytes(
     let operation = boolean(attempt, &solid, &native.bodies, parallel, &mut never).unwrap();
     encoding::encode::<()>(operation.shape(), &[]).unwrap()
 }
+
+#[path = "tests/indirect_shaped.rs"]
+mod indirect_shaped;
