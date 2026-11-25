@@ -77,6 +77,13 @@ pub enum CylinderFeatureCause {
         /// Original failure.
         cause: Box<Failure>,
     },
+    /// A source-bound proof failed or could not finish within its arithmetic budget.
+    NumericalProof {
+        /// Name of the required proof.
+        query: &'static str,
+        /// Diagnostics from the underlying proof.
+        detail: String,
+    },
     /// Native execution did not yield a completed successful Boolean.
     Boolean {
         /// Execution status returned by the native operation.

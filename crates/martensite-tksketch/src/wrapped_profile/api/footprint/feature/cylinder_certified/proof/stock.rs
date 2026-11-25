@@ -25,6 +25,9 @@ pub(super) fn close(
     let (lower, sweep) = radii(tool);
     let angular_phase =
         ((2. * lower * angle_gap).next_down() / std::f64::consts::PI.next_up()).next_down();
+    let angular_phase = candidate
+        .recut_clearance
+        .map_or(angular_phase, |cut| angular_phase.min(cut));
     let active = (((contact + candidate.native_stock_error).next_up() + volume.near_error)
         .next_up()
         + (2. * sweep).next_up())

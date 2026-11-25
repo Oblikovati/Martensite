@@ -66,6 +66,7 @@ impl Trims {
         let member = assembly::named(attempt, &tool.native, region, HistoryRole::Solid)?;
         let faces = assembly::faces(attempt, member)?;
         let mut cap_paths = BTreeSet::new();
+        let capture = SourceCap { input, tool, index };
         for (depth, role) in [HistoryRole::FirstDepthFace, HistoryRole::LastDepthFace]
             .into_iter()
             .enumerate()
@@ -85,7 +86,7 @@ impl Trims {
                     })?;
                 for shape in assembly::children(attempt, &wire)? {
                     attempt.poll(cancelled, VALIDATION)?;
-                    self.source_trace(attempt, input, tool, &face, &shape, &index, depth)?;
+                    self.source_trace(attempt, &capture, &face, &shape, depth)?;
                 }
                 if depth == 0 {
                     require(
@@ -115,14 +116,13 @@ impl Trims {
     fn source_trace(
         &mut self,
         attempt: Attempt,
-        input: &Admitted,
-        tool: &Tool,
+        capture: &SourceCap<'_>,
         face: &Face,
         shape: &Shape,
-        index: &SourceIndex,
         depth: usize,
     ) -> Checked<()> {
-        let key = index
+        let key = capture
+            .index
             .key(shape)?
             .ok_or_else(|| missing(attempt, VALIDATION, "source-bound cap edge"))?;
         require(
@@ -131,7 +131,8 @@ impl Trims {
             key.role == depth_edge(depth),
             "caller-relative source cap edge",
         )?;
-        let span = tool
+        let span = capture
+            .tool
             .spans
             .get(&WrappedHistoryKey {
                 source: key.source,
@@ -140,9 +141,9 @@ impl Trims {
             .ok_or_else(|| {
                 attempt.history(CylinderFeatureSource::Tool(key), "matching source side")
             })?;
-        let received = usize::from(input.support.normal == NormalSense::Inward) ^ depth;
+        let received = usize::from(capture.input.support.normal == NormalSense::Inward) ^ depth;
         let proof = &span.storage.trims.cap_residuals[received];
-        let trace = Trace::read(attempt, input, face, shape, proof, depth)?;
+        let trace = Trace::read(attempt, capture.input, face, shape, proof, depth)?;
         if depth == 0 {
             for &[u, _] in &trace.uv {
                 self.angular[0] = self.angular[0].min(u);
@@ -390,6 +391,12 @@ impl ValidatedFace<'_> {
 
 fn depth_edge(depth: usize) -> HistoryRole {
     [HistoryRole::FirstDepthEdge, HistoryRole::LastDepthEdge][depth]
+}
+
+struct SourceCap<'a> {
+    input: &'a Admitted,
+    tool: &'a Tool,
+    index: &'a SourceIndex,
 }
 
 struct SourceIndex {

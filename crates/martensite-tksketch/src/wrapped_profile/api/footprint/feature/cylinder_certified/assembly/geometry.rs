@@ -1,7 +1,8 @@
 //! Exact native cylinder datum and literal continuous unit-domain pcurve readers.
 use super::*;
 use martensite_tkbrep::brep::BRepTool;
-use martensite_tkg2d::geom2d::Geom2dBezierCurve;
+use martensite_tkernel::standard::Handle;
+use martensite_tkg2d::geom2d::{Geom2dBezierCurve, Geom2dCurve};
 use martensite_tkg3d::geom::GeomCylindricalSurface;
 use martensite_tkmath::gp::Transform3;
 
@@ -86,14 +87,13 @@ pub(in super::super) fn exact_translation(
     Ok(result)
 }
 
+type PolynomialTrace = (Handle<dyn Geom2dCurve>, Vec<[f64; 2]>);
+
 pub(in super::super) fn polynomial_trace(
     attempt: Attempt,
     face: &Face,
     edge: &topods::Edge,
-) -> Checked<(
-    martensite_tkernel::standard::Handle<dyn martensite_tkg2d::geom2d::Geom2dCurve>,
-    Vec<[f64; 2]>,
-)> {
+) -> Checked<PolynomialTrace> {
     let trace = attempt.native(
         ASSEMBLY,
         "stored cap pcurve",

@@ -39,11 +39,7 @@ pub(super) fn prepare_with_fit_limit(
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Result<Request, PlanningFailure> {
     // Fit both rails together while preserving the independent modelling tolerance.
-    let spatial_limit = if maximum_fit_error.is_finite() {
-        maximum_fit_error.min(default_fit_limit(request))
-    } else {
-        maximum_fit_error
-    };
+    let spatial_limit = effective_fit_limit(request, maximum_fit_error);
     let mut prepared = request.clone();
     prepared.loops = request
         .loops
@@ -51,6 +47,14 @@ pub(super) fn prepare_with_fit_limit(
         .map(|contour| prepare_contour(contour, request, spatial_limit, &mut cancelled))
         .collect::<Result<_, _>>()?;
     Ok(prepared)
+}
+
+pub(super) fn effective_fit_limit(request: &Request, maximum_fit_error: f64) -> f64 {
+    if maximum_fit_error.is_finite() {
+        maximum_fit_error.min(default_fit_limit(request))
+    } else {
+        maximum_fit_error
+    }
 }
 
 fn default_fit_limit(request: &Request) -> f64 {

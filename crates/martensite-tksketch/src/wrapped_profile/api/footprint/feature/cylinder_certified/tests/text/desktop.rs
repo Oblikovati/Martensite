@@ -1,4 +1,7 @@
 use super::*;
+use martensite_tkmath::predicates::roots::metric_bounds::{
+    MetricBezier, MetricCurve, OrientedMetricCurve, certify_polynomial_boundary_integral,
+};
 use std::collections::BTreeMap;
 
 const BREP: &[u8] = include_bytes!(concat!(
@@ -74,7 +77,9 @@ fn curve(id: u64, words: &[&str]) -> ProfileCurve {
     if words.len() == 2 {
         return ProfileCurve::Line { id, start, end };
     }
-    let poles: Vec<_> = words[2..].chunks_exact(2).map(point).collect();
+    let (pairs, remainder) = words[2..].as_chunks::<2>();
+    assert!(remainder.is_empty());
+    let poles: Vec<_> = pairs.iter().map(|pair| point(pair)).collect();
     let count = poles.len();
     let knots = std::iter::repeat_n(0., count)
         .chain(std::iter::repeat_n(1., count))
@@ -105,69 +110,59 @@ fn ring(uses: &str) -> ProfileLoop {
     }
 }
 
-pub(super) fn developed_area(sketch: &WrappedNormalRequest) -> f64 {
-    let vertices: BTreeMap<_, _> = sketch
-        .profile
-        .vertices
-        .iter()
-        .map(|vertex| (vertex.id, vertex.point))
-        .collect();
-    let integrals: BTreeMap<_, _> = sketch
-        .profile
+pub(super) fn developed_area(sketch: &WrappedNormalRequest) -> [f64; 2] {
+    let controls = authored_controls(&sketch.profile);
+    let sum = sketch.selections.iter().fold([0., 0.], |sum, region| {
+        let outer = enclosed_area(&region.outer, &controls);
+        let material = region.holes.iter().fold(outer, |area, hole| {
+            let [lower, upper] = enclosed_area(hole, &controls);
+            [(area[0] - upper).next_down(), (area[1] - lower).next_up()]
+        });
+        [
+            (sum[0] + material[0]).next_down(),
+            (sum[1] + material[1]).next_up(),
+        ]
+    });
+    assert!(sum[0] > 0. && sum[1].is_finite());
+    sum
+}
+
+fn authored_controls(profile: &SketchProfile) -> BTreeMap<ProfileCurveId, Vec<[f64; 2]>> {
+    let vertices: BTreeMap<_, _> = profile.vertices.iter().map(|v| (v.id, v.point)).collect();
+    profile
         .curves
         .iter()
         .map(|curve| match curve {
-            ProfileCurve::Line { id, start, end } => (*id, cross(vertices[start], vertices[end])),
-            ProfileCurve::Spline { id, poles, .. } => (*id, spline_integral(poles)),
+            ProfileCurve::Line { id, start, end } => (*id, vec![vertices[start], vertices[end]]),
+            ProfileCurve::Spline {
+                id,
+                poles,
+                weights: None,
+                ..
+            } => (*id, poles.clone()),
             unexpected => panic!("unexpected desktop fixture curve {unexpected:?}"),
         })
-        .collect();
-    let area = |ring: &ProfileLoop| {
-        0.5 * ring
-            .uses
-            .iter()
-            .map(|edge| {
-                if edge.reversed {
-                    -integrals[&edge.curve]
-                } else {
-                    integrals[&edge.curve]
-                }
-            })
-            .sum::<f64>()
-            .abs()
-    };
-    sketch
-        .selections
+        .collect()
+}
+
+fn enclosed_area(
+    ring: &ProfileLoop,
+    controls: &BTreeMap<ProfileCurveId, Vec<[f64; 2]>>,
+) -> [f64; 2] {
+    let curves: Vec<_> = ring
+        .uses
         .iter()
-        .map(|face| area(&face.outer) - face.holes.iter().map(area).sum::<f64>())
-        .sum()
-}
-
-fn cross([x, y]: [f64; 2], [u, v]: [f64; 2]) -> f64 {
-    x * v - y * u
-}
-
-fn spline_integral(poles: &[[f64; 2]]) -> f64 {
-    // Three-point Gauss-Legendre integrates x dy − y dx for each polynomial
-    // of degree at most three in this frozen source fixture.
-    assert!((2..=4).contains(&poles.len()));
-    let derivative: Vec<_> = poles
-        .windows(2)
-        .map(|pair| std::array::from_fn(|i| (poles.len() - 1) as f64 * (pair[1][i] - pair[0][i])))
+        .map(|edge| OrientedMetricCurve {
+            curve: MetricCurve::Bezier(MetricBezier {
+                poles: &controls[&edge.curve],
+                weights: None,
+            }),
+            reversed: edge.reversed,
+        })
         .collect();
-    let r = (3_f64 / 5.).sqrt() / 2.;
-    [(0.5 - r, 5. / 18.), (0.5, 4. / 9.), (0.5 + r, 5. / 18.)]
-        .iter()
-        .map(|&(t, w)| w * cross(evaluate(poles, t), evaluate(&derivative, t)))
-        .sum()
-}
-
-fn evaluate(controls: &[[f64; 2]], t: f64) -> [f64; 2] {
-    let mut points = controls.to_vec();
-    for len in (1..points.len()).rev() {
-        for i in 0..len {
-            points[i] = std::array::from_fn(|j| (1. - t) * points[i][j] + t * points[i + 1][j]);
-        }
-    }
-    points[0]
+    let [low, high] = certify_polynomial_boundary_integral(&curves, Default::default(), || false)
+        .unwrap()
+        .enclosure();
+    assert!(low > 0. || high < 0.);
+    if low > 0. { [low, high] } else { [-high, -low] }
 }

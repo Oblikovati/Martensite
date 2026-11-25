@@ -2,7 +2,7 @@
 use super::*;
 use crate::surface_sketch::attachment::DetachedCylinderSupport;
 use crate::surface_sketch::wrapped_profile::{
-    BindingKey, CurveSpan, Source,
+    BindingKey, Constructed, CurveSpan, Source,
     api::{export_bindings, history_projection},
     history as source_history, native, planar_clearance, planar_cones, storage,
 };
@@ -23,6 +23,16 @@ pub(super) struct Admitted {
     pub axial: [f64; 2],
     pub support: crate::surface_sketch::CylinderSupport,
     inputs: input::Inputs,
+}
+
+impl Admitted {
+    pub(super) fn fit_ceiling(&self) -> f64 {
+        self.inputs
+            .requests
+            .iter()
+            .map(|request| subdivision::effective_fit_limit(request, self.resolution.sew))
+            .fold(0_f64, f64::max)
+    }
 }
 
 pub(super) fn admit(
@@ -90,6 +100,22 @@ pub(super) struct Tool {
     pub clearance: planar_clearance::OriginalClearance,
 }
 
+impl Tool {
+    pub(super) fn authored_fit_upper(&self) -> f64 {
+        self.spans
+            .values()
+            .map(|span| span.storage.profile.developed_position_bound())
+            .fold(0_f64, f64::max)
+    }
+
+    pub(super) fn normal_storage_upper(&self) -> f64 {
+        self.spans
+            .values()
+            .map(|span| span.storage.depths.normal_sweep_error_bound())
+            .fold(0_f64, f64::max)
+    }
+}
+
 pub(super) struct Span {
     pub storage: storage::StoredProof,
     pub directions: Vec<[f64; 2]>,
@@ -101,20 +127,28 @@ pub(super) fn prepare(
     input: &Admitted,
     planar: PlanarProofVersion,
     cancelled: &mut CancelPoll<'_>,
+    complete: &mut impl FnMut(Phase),
 ) -> Checked<Tool> {
     let originals = &input.inputs.requests;
-    let selected = selection::prepare_attachment(
-        originals,
-        request.options.planar_work,
-        selection::Preparation {
-            proof: planar,
-            maximum_fit_error: Some(input.resolution.sew),
-        },
-        cancelled,
-    )
-    .map_err(|cause| selection_refusal(attempt, cause))?;
+    let (selected, observed) = observe_cancellation(cancelled, |poll| {
+        selection::prepare_attachment(
+            originals,
+            request.options.planar_work,
+            selection::Preparation {
+                proof: planar,
+                maximum_fit_error: Some(input.resolution.sew),
+            },
+            poll,
+        )
+    });
+    if observed {
+        return Err(attempt.fail(TOOL, CylinderFeatureCause::Cancelled));
+    }
+    let selected = selected.map_err(|cause| selection_refusal(attempt, cause))?;
+    complete(Phase::AuthoredPlan);
     let prepared = &selected.prepared;
     let work = build_members(attempt, originals, prepared, cancelled)?;
+    complete(Phase::ToolStorage);
     let keys: Vec<_> = work.bindings.iter().map(|(key, _)| *key).collect();
     let lineages = certify(
         attempt,
@@ -145,14 +179,16 @@ pub(super) fn prepare(
         "source-bound family clearance",
         planar_clearance::bind_many(&clearance, originals, prepared, &references),
     )?;
-    finish(
+    let tool = finish(
         attempt,
         work,
         history,
         keys,
         input.support.origin,
         clearance,
-    )
+    )?;
+    complete(Phase::ToolFamily);
+    Ok(tool)
 }
 
 fn selection_refusal(
@@ -163,9 +199,9 @@ fn selection_refusal(
     let cause = match cause {
         Source::Cancelled => CylinderFeatureCause::Cancelled,
         Source::Directed(cause) => CylinderFeatureCause::DirectedPlanarMaterial(cause),
-        other => CylinderFeatureCause::Native {
+        other => CylinderFeatureCause::NumericalProof {
             query: "source-bound selected material",
-            cause: Box::new(Failure::new(&format!("{other:?}"))),
+            detail: format!("{other:?}"),
         },
     };
     attempt.fail(TOOL, cause)
@@ -196,22 +232,35 @@ fn build_members(
     };
     let mut ordered: Vec<_> = originals.iter().zip(prepared).collect();
     ordered.sort_by_key(|(source, _)| source.region);
-    for (original, request) in ordered {
-        working.add(attempt, original, request, cancelled)?;
+    let members = work::ordered(
+        attempt,
+        TOOL,
+        &ordered,
+        cancelled,
+        |&(original, request), poll| QualifiedMember::build(attempt, original, request, poll),
+    )?;
+    // Only the coordinator mutates the compound and commits proof/history order.
+    for member in members {
+        working.add(attempt, member)?;
     }
     working.bindings.sort_by_key(|(key, _)| *key);
     Ok(working)
 }
 
-impl Working {
-    fn add(
-        &mut self,
+struct QualifiedMember {
+    region: SurfaceRegionId,
+    native: Constructed,
+    stored: Vec<storage::StoredProof>,
+    cones: planar_cones::ConeEvidence,
+}
+
+impl QualifiedMember {
+    fn build(
         attempt: Attempt,
         original: &Request,
         request: &Request,
         cancelled: &mut CancelPoll<'_>,
-    ) -> Checked<()> {
-        attempt.poll(cancelled, TOOL)?;
+    ) -> Checked<Self> {
         require(
             attempt,
             TOOL,
@@ -219,22 +268,16 @@ impl Working {
             "matching canonical region order",
         )?;
         let member = attempt.native(TOOL, "source cylinder member", native::construct(request))?;
-        attempt.native(
-            TOOL,
-            "place source member in operation-local compound",
-            Builder.add(&mut self.root, &member.solid),
-        )?;
-        let receipts = certify(
-            attempt,
-            TOOL,
-            "source member storage",
-            storage::certify_with_cancel(original, request, &member.bindings, &mut *cancelled),
-        )?;
-        let cones = certify(
+        let receipts =
+            certify_cancellable(attempt, TOOL, "source member storage", cancelled, |poll| {
+                storage::certify_with_cancel(original, request, &member.bindings, poll)
+            })?;
+        let cones = certify_cancellable(
             attempt,
             TOOL,
             "source span and join projections",
-            planar_cones::certify_with_cancel(original, request, &receipts, &mut *cancelled),
+            cancelled,
+            |poll| planar_cones::certify_with_cancel(original, request, &receipts, poll),
         )?;
         certify(
             attempt,
@@ -242,14 +285,30 @@ impl Working {
             "bind authored and cap projections",
             planar_cones::bind(original, request, &receipts, &cones),
         )?;
-        self.add_cones(attempt, cones)?;
+        Ok(Self {
+            region: request.region,
+            native: member,
+            stored: receipts,
+            cones,
+        })
+    }
+}
+
+impl Working {
+    fn add(&mut self, attempt: Attempt, member: QualifiedMember) -> Checked<()> {
+        attempt.native(
+            TOOL,
+            "place source member in operation-local compound",
+            Builder.add(&mut self.root, &member.native.solid),
+        )?;
+        self.add_cones(attempt, member.cones)?;
         require(
             attempt,
             TOOL,
-            self.stored.insert(request.region, receipts).is_none(),
+            self.stored.insert(member.region, member.stored).is_none(),
             "one member for each selected region",
         )?;
-        self.bindings.extend(member.bindings);
+        self.bindings.extend(member.native.bindings);
         Ok(())
     }
 

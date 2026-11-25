@@ -38,6 +38,7 @@ pub(super) fn validate(
     tool: &Tool,
     candidate: &Candidate,
     cancelled: &mut CancelPoll<'_>,
+    complete: &mut impl FnMut(Phase),
 ) -> Checked<(ValidationReport, [f64; 2])> {
     attempt.poll(cancelled, VALIDATION)?;
     let ready = begin_body_validation(&candidate.native.body, &input.resolution)
@@ -46,11 +47,14 @@ pub(super) fn validate(
         BodyGeometryValidation::Ready(ordered) => ordered,
         BodyGeometryValidation::Stopped(report) => return Err(rejected(attempt, report)),
     };
+    complete(Phase::OrderedGeometry);
     let checked = Cover::verify(attempt, input, tool, candidate, cancelled)?;
+    complete(Phase::ExactContact);
     attempt.poll(cancelled, VALIDATION)?;
     let mut report = ordered.report();
     report.stages[ValidationStage::SelfIntersection as usize] = checked.report();
     report.stages[ValidationStage::Tolerance as usize] = ordered.check_late_tolerance();
+    complete(Phase::LateTolerance);
     if report.is_valid() {
         Ok((report, checked.residuals))
     } else {

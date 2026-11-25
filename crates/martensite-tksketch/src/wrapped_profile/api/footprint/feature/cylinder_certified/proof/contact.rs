@@ -52,9 +52,18 @@ pub(super) fn certify(
     let mut boundaries = first
         .caps
         .map(|cap| Boundary::new(cap.query.radius, contact_upper));
-    for tube in tubes.values() {
-        attempt.poll(cancelled, VALIDATION)?;
-        verify_tube(attempt, tube, support.normal, &mut boundaries, cancelled)?;
+    let sources: Vec<_> = tubes.values().collect();
+    let bounds = work::ordered(attempt, VALIDATION, &sources, cancelled, |&tube, poll| {
+        verify_tube(attempt, tube, support.normal, contact_upper, poll)
+    })?;
+    for (tube, ends) in tubes.values().zip(bounds) {
+        for ((boundary, (trace, floor)), bound) in boundaries
+            .iter_mut()
+            .zip(tube.caps.into_iter().zip(tube.floor))
+            .zip(ends)
+        {
+            boundary.include(attempt, trace, floor, bound)?;
+        }
     }
     for (cap, boundary) in boundaries.into_iter().enumerate() {
         boundary.certify(attempt, support.radius, cap, tubes, joins, cancelled)?;
@@ -84,9 +93,9 @@ fn verify_tube(
     attempt: Attempt,
     tube: &Tube<'_>,
     normal: NormalSense,
-    boundaries: &mut [Boundary; 2],
+    contact: f64,
     cancelled: &mut CancelPoll<'_>,
-) -> Checked<()> {
+) -> Checked<[EndBounds; 2]> {
     let rails = tube.caps.map(|trace| trace.query.curve);
     let inward = normal == NormalSense::Inward;
     let ordered = if inward { [rails[1], rails[0]] } else { rails };
@@ -100,15 +109,17 @@ fn verify_tube(
         "actual common-height side rails bound to storage proof",
     )?;
     let motion = ruling_motion(rails);
-    for (cap, boundary) in boundaries.iter_mut().enumerate() {
-        let sense = if inward ^ (cap == 1) {
+    let sense = |cap| {
+        if inward ^ (cap == 1) {
             CylindricalRadialSense::Inward
         } else {
             CylindricalRadialSense::Outward
-        };
-        verify_end(attempt, tube, cap, sense, motion, boundary, cancelled)?;
-    }
-    Ok(())
+        }
+    };
+    Ok([
+        verify_end(attempt, tube, 0, sense(0), motion, contact, cancelled)?,
+        verify_end(attempt, tube, 1, sense(1), motion, contact, cancelled)?,
+    ])
 }
 
 fn verify_end(
@@ -117,9 +128,9 @@ fn verify_end(
     cap: usize,
     sense: CylindricalRadialSense,
     motion: f64,
-    boundary: &mut Boundary,
+    contact: f64,
     cancelled: &mut CancelPoll<'_>,
-) -> Checked<()> {
+) -> Checked<EndBounds> {
     let trace = tube.caps[cap];
     let far = tube.caps[1 - cap].query.curve;
     let error = trace.proof.spatial_residual_bound();
@@ -127,19 +138,18 @@ fn verify_end(
     require(
         attempt,
         VALIDATION,
-        positive(floor) && floor <= boundary.contact && error < floor,
+        positive(floor) && floor <= contact && error < floor,
         "actual seam gap below the retained contact continuation floor",
     )?;
-    let prefix = radial_prefix(attempt, trace, far, sense, boundary.contact, cancelled)?;
+    let prefix = radial_prefix(attempt, trace, far, sense, contact, cancelled)?;
     let bounds = EndBounds::new(tube, trace, sense, motion, error, &prefix);
     require(
         attempt,
         VALIDATION,
-        own::qualify(bounds, trace.query, tube.directions, boundary.contact).is_some(),
+        own::qualify(bounds, trace.query, tube.directions, contact).is_some(),
         "positive contact Hessian on the full chart and the closed own trim",
     )?;
-    boundary.include(attempt, trace, floor, bounds)?;
-    Ok(())
+    Ok(bounds)
 }
 
 fn radial_prefix(
@@ -183,15 +193,7 @@ fn certify_math<T, E: std::fmt::Debug>(
     cancelled: &mut CancelPoll<'_>,
     run: impl FnOnce(&mut CancelPoll<'_>) -> Result<T, E>,
 ) -> Checked<T> {
-    let mut observed = false;
-    let result = run(&mut || {
-        observed = observed || cancelled();
-        observed
-    });
-    if observed {
-        return Err(attempt.fail(VALIDATION, CylinderFeatureCause::Cancelled));
-    }
-    super::certify(attempt, VALIDATION, query, result)
+    certify_cancellable(attempt, VALIDATION, query, cancelled, run)
 }
 
 #[derive(Clone, Copy)]

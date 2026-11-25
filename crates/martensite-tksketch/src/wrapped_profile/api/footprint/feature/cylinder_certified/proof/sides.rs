@@ -28,12 +28,22 @@ pub(super) fn validate(
         CylinderFeatureKind::Boss => CylindricalRadialSense::Outward,
         CylinderFeatureKind::Pocket => CylindricalRadialSense::Inward,
     };
+    let parts: Vec<_> = tool.spans.iter().collect();
+    let checked = work::ordered(
+        attempt,
+        VALIDATION,
+        &parts,
+        cancelled,
+        |&(&key, stored), poll| {
+            let part = Part::read(attempt, &images, caps, key)?;
+            let tube = part.bind(attempt, input.support, sense, stored, common, poll)?;
+            Ok((key, part, tube))
+        },
+    )?;
     let mut boundary = boundary::Boundary::new(index, candidate);
     let mut tubes = BTreeMap::new();
-    for (&key, stored) in &tool.spans {
+    for (key, part, tube) in checked {
         attempt.poll(cancelled, VALIDATION)?;
-        let part = Part::read(attempt, &images, caps, key)?;
-        let tube = part.bind(attempt, input.support, sense, stored, common, cancelled)?;
         boundary.add(attempt, key, &part.face, part.edges, sense)?;
         tubes.insert(key, tube);
     }
