@@ -47,8 +47,11 @@ pub struct PeriodicCrossingId {
 pub struct PeriodicCrossing {
     /// Persistent authored address.
     pub id: PeriodicCrossingId,
-    /// Outward enclosure in the original directed curve's normalized `[0,1]` interval.
+    /// Outward enclosure in the original source parameter, normalized to `[0,1]`.
+    /// For a conic quarter, this is its exact stereographic parameter.
     pub normalized_parameter: [f64; 2],
+    /// Exact map from the reported stereographic interval to an authored analytic angle.
+    pub conic_map: Option<WrappedConicParameterMap>,
 }
 
 /// One endpoint of a retained interval on the original directed contour.
@@ -58,6 +61,13 @@ pub enum PeriodicSourceEnd {
     Start,
     /// A fitter's exact interior dyadic endpoint in the original curve.
     Dyadic(WrappedSourcePoint),
+    /// Exact interior stereographic parameter on a selected analytic conic quarter.
+    ConicDyadic {
+        /// Reduced dyadic coordinate on the authored quarter.
+        point: WrappedSourcePoint,
+        /// Exact conversion to the original native angle.
+        map: WrappedConicParameterMap,
+    },
     /// Certified cut parameter.
     Cut(PeriodicCrossingId),
     /// Original ending vertex.
@@ -138,6 +148,7 @@ fn crossing(
             transition,
         },
         normalized_parameter: [low, high],
+        conic_map: None,
     })
 }
 

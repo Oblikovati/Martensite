@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Prove crossing signs on literal polynomial or positive-rational Bernstein controls.
 use super::*;
-use martensite_tkbo::profile_extrusion::{ProfileCurve, ProfileVertexId};
+use martensite_tkbo::profile_extrusion::{
+    ProfileCurve, ProfileVertexId, Resolution, exact_conic_quarter,
+};
 use martensite_tkmath::predicates::roots::{RootIsolationOptions, isolate_bernstein_roots};
 use martensite_tkmath::predicates::{OrientationSign, orient2d};
 
@@ -32,6 +34,7 @@ pub(super) struct DirectedCurve {
     ends: [SurfaceVertexId; 2],
     pub(super) points: Vec<[f64; 2]>,
     weights: Option<[f64; 3]>,
+    conic_map: Option<WrappedConicParameterMap>,
     reversed: bool,
 }
 
@@ -49,39 +52,16 @@ impl DirectedCurve {
             )
         })?;
         let [first, last] = [vertex(profile, start)?, vertex(profile, end)?];
-        let (points, weights) = match curve {
-            ProfileCurve::Line { .. } => (vec![first, last], None),
-            ProfileCurve::Spline {
-                degree: 2,
-                poles,
-                weights,
-                knots,
-                ..
-            } if poles.len() == 3
-                && knots == &[0., 0., 0., 1., 1., 1.]
-                && poles[0] == first
-                && poles[2] == last =>
-            {
-                (
-                    poles.clone(),
-                    source_weights(curve.id(), weights.as_deref(), model)?,
-                )
-            }
-            _ => {
-                return Err(incomplete(
-                    "line or one clamped quadratic span",
-                    format!("{curve:?}"),
-                ));
-            }
-        };
-        points
+        let net = source_net(profile, curve, [first, last], model)?;
+        net.points
             .iter()
             .try_for_each(|p| cylinder_admission::finite("curved aperture control", p))?;
         Ok(Self {
             id: SurfaceCurveId(curve.id().0),
             ends: [start, end].map(|v| SurfaceVertexId(v.0)),
-            points,
-            weights,
+            points: net.points,
+            weights: net.weights,
+            conic_map: net.conic_map,
             reversed,
         })
     }
@@ -194,6 +174,7 @@ impl DirectedCurve {
             report: PeriodicCrossing {
                 id,
                 normalized_parameter,
+                conic_map: self.conic_map,
             },
             ends: self.ends,
             speed,
@@ -251,6 +232,83 @@ impl DirectedCurve {
     }
 }
 
+struct SourceNet {
+    points: Vec<[f64; 2]>,
+    weights: Option<[f64; 3]>,
+    conic_map: Option<WrappedConicParameterMap>,
+}
+
+fn source_net(
+    profile: &SketchProfile,
+    curve: &ProfileCurve,
+    [first, last]: [[f64; 2]; 2],
+    model: SourceModel,
+) -> Checked<SourceNet> {
+    match (curve, model) {
+        (ProfileCurve::Line { .. }, _) => Ok(SourceNet {
+            points: vec![first, last],
+            weights: None,
+            conic_map: None,
+        }),
+        (
+            ProfileCurve::Arc { .. } | ProfileCurve::EllipticArc { .. },
+            SourceModel::Rational(resolution),
+        ) => conic_net(profile, curve, resolution),
+        _ => spline_net(curve, [first, last], model),
+    }
+}
+
+fn spline_net(curve: &ProfileCurve, ends: [[f64; 2]; 2], model: SourceModel) -> Checked<SourceNet> {
+    let ProfileCurve::Spline {
+        degree: 2,
+        poles,
+        weights,
+        knots,
+        ..
+    } = curve
+    else {
+        return Err(incomplete(
+            "line, conic quarter or clamped quadratic span",
+            format!("{curve:?}"),
+        ));
+    };
+    if poles.len() != 3 || [poles[0], poles[2]] != ends || knots != &[0., 0., 0., 1., 1., 1.] {
+        return Err(incomplete(
+            "literal clamped quadratic span and its authored endpoints",
+            format!("{curve:?}"),
+        ));
+    }
+    Ok(SourceNet {
+        points: poles.clone(),
+        weights: source_weights(curve.id(), weights.as_deref(), model)?,
+        conic_map: None,
+    })
+}
+
+fn conic_net(
+    profile: &SketchProfile,
+    curve: &ProfileCurve,
+    resolution: Resolution,
+) -> Checked<SourceNet> {
+    let id = curve.id();
+    let quarter = exact_conic_quarter(profile, id, resolution).map_err(|cause| {
+        incomplete(
+            "admitted exact analytic conic",
+            format!("{id:?}: {cause:?}"),
+        )
+    })?;
+    let quarter =
+        quarter.ok_or_else(|| incomplete("exact analytic conic quarter", format!("{id:?}")))?;
+    Ok(SourceNet {
+        points: quarter.poles.into(),
+        weights: Some([1., 1., 2.]),
+        conic_map: Some(WrappedConicParameterMap {
+            first_quarter: quarter.first_quarter,
+            increasing: quarter.increasing,
+        }),
+    })
+}
+
 fn source_weights(
     id: martensite_tkbo::profile_extrusion::ProfileCurveId,
     weights: Option<&[f64]>,
@@ -258,7 +316,7 @@ fn source_weights(
 ) -> Checked<Option<[f64; 3]>> {
     match (weights, model) {
         (None, _) => Ok(None),
-        (Some([a, b, c]), SourceModel::Rational)
+        (Some([a, b, c]), SourceModel::Rational(_))
             if [*a, *b, *c].into_iter().all(|w| w.is_finite() && w > 0.) =>
         {
             Ok(Some([*a, *b, *c]))
