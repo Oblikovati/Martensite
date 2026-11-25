@@ -33,6 +33,15 @@ perpendicularity, equal length and driving angle. A plane-parallel relation
 leaves offset free. Perpendicular lines may be skew. Angle authoring requires
 a nonsingular starting angle, and the accepted branch remains in the recipe.
 
+Point On Line constrains a distinct point to the infinite support. It leaves
+axial motion free and checks distance against the exact authored endpoints.
+Colinear stores the direction branch and uses endpoint IDs to count the
+required equations. A relation between two lines with both endpoint IDs in
+common keeps its own ID and has no solver rows. Before a drag approaches a
+frame boundary, the toolkit can prepare a new reference on an accepted step.
+The replacement reuses the existing solver layout and counts against the
+current tick. A refused step keeps the last accepted sketch.
+
 Use `ConstrainedSketch::transform_points` for a rigid translation or rotation of
 owned points. The operation checks the resulting geometry and existing hard
 relations together before adopting. The length tolerance also caps each stored

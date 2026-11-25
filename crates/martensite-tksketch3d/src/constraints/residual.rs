@@ -6,12 +6,15 @@ use martensite_tksolve::{
     residual::{ResidualError, ResidualSource, ResidualTolerance},
 };
 
+mod frame;
+pub(super) use frame::FrameReference;
+
 type Vector = DualVector<3>;
-// Each evaluator has at most 12 input scalars and three result rows.
+// Each evaluator has at most 12 input scalars and four result rows.
 // The parallel path uses fewer than 100 elementary dual operations and copies, including
-// both vector normalizations, the two basis vectors and the branch dot product. Charging
-// 256 per existing per-lane structural unit also covers fixed-dimensional seeding and row
-// collection, and the fixed-size outward trial guard for Angle. All bounds are on abstract
+// both vector normalizations, the two basis vectors and the branch dot product. Colinear adds
+// two length projections. Charging 256 per structural unit covers these operations, fixed-size
+// seeding and row collection, and Angle's outward trial guard. The charge counts abstract
 // scalar work, independent of allocator or libm time.
 const SCALAR_WORK_PER_UNIT: usize = 256;
 
@@ -31,9 +34,19 @@ pub(super) enum Equation {
         scale: f64,
         target: f64,
     },
+    PointOnLine {
+        scale: f64,
+        reference: FrameReference,
+    },
+    Colinear {
+        direction: ParallelDirection,
+        reference: FrameReference,
+        scale: f64,
+        independent_offset: bool,
+    },
     Parallel {
         direction: ParallelDirection,
-        reference: usize,
+        reference: FrameReference,
     },
     Axis(CoordinateAxis, AxisDirection),
     Plane([f64; 3]),
@@ -48,6 +61,29 @@ pub(super) enum Equation {
 }
 
 impl Equation {
+    pub(super) fn refreshed_incidence(self, line: crate::LineGeometry) -> Option<Self> {
+        match self {
+            Self::PointOnLine { reference, scale } if reference.needs_refresh(line) => {
+                Some(Self::PointOnLine {
+                    scale,
+                    reference: FrameReference::axis(line),
+                })
+            }
+            Self::Colinear {
+                reference,
+                direction,
+                scale,
+                independent_offset,
+            } if reference.needs_refresh(line) => Some(Self::Colinear {
+                direction,
+                scale,
+                independent_offset,
+                reference: FrameReference::axis(line),
+            }),
+            _ => None,
+        }
+    }
+
     pub(super) fn rows(self) -> usize {
         match self {
             Self::Coincident { .. } => 3,
@@ -56,16 +92,25 @@ impl Equation {
             | Self::Perpendicular
             | Self::EqualLength { .. }
             | Self::Angle { .. } => 1,
-            Self::Parallel { .. } | Self::Axis(..) => 2,
+            Self::Colinear {
+                independent_offset: true,
+                ..
+            } => 4,
+            Self::Colinear { .. }
+            | Self::PointOnLine { .. }
+            | Self::Parallel { .. }
+            | Self::Axis(..) => 2,
         }
     }
 
     fn width(self) -> usize {
         match self {
             Self::Parallel { .. }
+            | Self::Colinear { .. }
             | Self::Perpendicular
             | Self::EqualLength { .. }
             | Self::Angle { .. } => 12,
+            Self::PointOnLine { .. } => 9,
             _ => 6,
         }
     }
@@ -90,12 +135,25 @@ impl ResidualSource for Equation {
             Self::Length { scale, target } => Ok(vec![
                 checked_length(&first)?.shifted(-target)?.scaled(scale)?,
             ]),
+            Self::PointOnLine { scale, reference } => {
+                let basis = reference.basis(&unit(&first)?, "point-on-line")?;
+                let offset = vector(v, 6)?.minus(&vector(v, 0)?)?;
+                Ok(length_rows(&basis, &offset, scale)?.into())
+            }
+            Self::Colinear {
+                direction,
+                reference,
+                scale,
+                independent_offset,
+            } => colinear_rows(v, &first, direction, reference, scale, independent_offset),
             Self::Parallel {
                 direction,
                 reference,
             } => {
-                let second = displacement(v, 6)?;
-                parallel(unit(&first)?, unit(&second)?, direction, reference)
+                let a = unit(&first)?;
+                let b = unit(&displacement(v, 6)?)?;
+                directed(&a, &b, direction)?;
+                Ok(components(&reference.basis(&a, "parallel")?, &b)?.into())
             }
             Self::Axis(axis, direction) => axis_rows(unit(&first)?, axis, direction),
             Self::Plane(normal) => Ok(vec![unit(&first)?.dot(&unit(&constant_vector(normal)?)?)?]),
@@ -111,6 +169,26 @@ impl ResidualSource for Equation {
             } => angle_row(v, &first, target, minimum_sine),
         }
     }
+}
+
+fn colinear_rows(
+    v: &[DualNumber],
+    first: &Vector,
+    direction: ParallelDirection,
+    reference: FrameReference,
+    scale: f64,
+    independent_offset: bool,
+) -> Result<Vec<DualNumber>, ResidualError> {
+    let a = unit(first)?;
+    let b = unit(&displacement(v, 6)?)?;
+    directed(&a, &b, direction)?;
+    let basis = reference.basis(&a, "colinear")?;
+    let mut rows = components(&basis, &b)?.to_vec();
+    if independent_offset {
+        let offset = vector(v, 6)?.minus(&vector(v, 0)?)?;
+        rows.extend(length_rows(&basis, &offset, scale)?);
+    }
+    Ok(rows)
 }
 
 fn angle_row(
@@ -191,33 +269,30 @@ fn unit(v: &Vector) -> Result<Vector, ResidualError> {
     Ok(v.product(&DualNumber::constant(1.)?.quotient(&checked_length(v)?)?)?)
 }
 
-fn parallel(
-    a: Vector,
-    b: Vector,
-    direction: ParallelDirection,
-    reference: usize,
-) -> Result<Vec<DualNumber>, ResidualError> {
-    let dot = a.dot(&b)?.value();
+fn directed(a: &Vector, b: &Vector, direction: ParallelDirection) -> Result<(), ResidualError> {
+    let dot = a.dot(b)?.value();
     if !branch(direction, dot) {
         return Err(ResidualError::Domain(format!(
             "directed dot {dot}: expected the {direction:?} branch"
         )));
     }
-    let projection = &a.components()[reference];
-    if projection.value().abs() > 0.9 {
-        return Err(ResidualError::Domain(format!(
-            "parallel frame component {}: expected magnitude at most 0.9",
-            projection.value()
-        )));
-    }
-    let axis = Vector::new([
-        DualNumber::constant(f64::from(reference == 0))?,
-        DualNumber::constant(f64::from(reference == 1))?,
-        DualNumber::constant(f64::from(reference == 2))?,
-    ])?;
-    let e1 = unit(&axis.minus(&a.product(projection)?)?)?;
-    let e2 = a.cross(&e1)?;
-    Ok(vec![e1.dot(&b)?, e2.dot(&b)?])
+    Ok(())
+}
+
+fn components(
+    [first, second]: &[Vector; 2],
+    value: &Vector,
+) -> Result<[DualNumber; 2], ResidualError> {
+    Ok([first.dot(value)?, second.dot(value)?])
+}
+
+fn length_rows(
+    basis: &[Vector; 2],
+    offset: &Vector,
+    scale: f64,
+) -> Result<[DualNumber; 2], ResidualError> {
+    let [first, second] = components(basis, offset)?;
+    Ok([first.scaled(scale)?, second.scaled(scale)?])
 }
 
 pub(super) fn branch(direction: ParallelDirection, dot: f64) -> bool {

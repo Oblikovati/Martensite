@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Independent physical admission from the accepted endpoint coordinates.
 pub(super) mod angle;
+mod incidence;
+pub(super) use incidence::line_branch;
+
 use super::{AxisDirection, ConstraintPolicy, ParallelDirection, Relation};
 use crate::{LineGeometry, LineId, Snapshot};
 use martensite_tkmath::{
@@ -25,6 +28,12 @@ pub(super) fn feasible(snapshot: &Snapshot, relation: Relation, policy: Constrai
                 compare(a.position, b.position, policy.length_tolerance.value()),
                 Some(Ordering::Less | Ordering::Equal)
             )
+        }
+        Relation::PointOnLine(point, line) => {
+            incidence::point_on_line(snapshot, point, line, policy)
+        }
+        Relation::Colinear(lines, direction) => {
+            pair(snapshot, lines).is_some_and(|lines| incidence::colinear(lines, direction, policy))
         }
         Relation::Length(line, target) => snapshot.line(line).is_some_and(|line| {
             length_band(line.points, target.value(), policy.length_tolerance.value())
@@ -123,17 +132,24 @@ fn parallel(
     direction: ParallelDirection,
     tolerance: f64,
 ) -> Option<bool> {
-    let sign = dot(a, b)?;
-    let correct_branch = match direction {
-        ParallelDirection::Same => sign.lo > 0.,
-        ParallelDirection::Opposite => sign.hi < 0.,
-    };
-    if !correct_branch {
+    if !certified_branch(a, b, direction)? {
         return Some(false);
     }
     let cross = cross(a, b)?;
     let lhs = dot(cross, cross)?;
     within_angular_limit(a, b, lhs, tolerance)
+}
+
+fn certified_branch(
+    a: [Interval; 3],
+    b: [Interval; 3],
+    direction: ParallelDirection,
+) -> Option<bool> {
+    let sign = dot(a, b)?;
+    Some(match direction {
+        ParallelDirection::Same => sign.lo > 0.,
+        ParallelDirection::Opposite => sign.hi < 0.,
+    })
 }
 
 fn perpendicular(a: [Interval; 3], b: [Interval; 3], tolerance: f64) -> Option<bool> {

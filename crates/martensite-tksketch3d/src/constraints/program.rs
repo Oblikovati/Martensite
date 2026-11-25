@@ -6,20 +6,24 @@ use super::{
     binding::{Binding, EquationBlock},
     poll, residual,
 };
-use crate::{Edit, EntityId, PointId, Snapshot};
+use crate::{Edit, EntityId, LineId, PointId, Snapshot};
 use martensite_tkmath::gp::Point3;
 use martensite_tksolve::{
     nonlinear::{SolveError, SolveOptions, SolveTermination, solve_constraints_with_constants},
     preview::{Block, Domain, Incomplete, Prepared, PreviewError, Update},
     residual::{EvaluationError, ResidualBlock},
 };
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, sync::Arc};
 
+mod chart;
+
+#[derive(Clone)]
 pub(super) struct Program {
-    points: Vec<PointId>,
-    point_columns: BTreeMap<PointId, usize>,
-    fixed: Vec<(usize, f64)>,
-    blocks: Vec<EquationBlock>,
+    points: Arc<[PointId]>,
+    point_columns: Arc<BTreeMap<PointId, usize>>,
+    fixed: Arc<[(usize, f64)]>,
+    blocks: Arc<[EquationBlock]>,
+    incidence_charts: Arc<[(usize, LineId)]>,
     authored_rows: usize,
     frozen_coordinates: usize,
     prepared: Prepared,
@@ -59,7 +63,7 @@ impl Program {
             .iter()
             .map(|block| Block {
                 source: block.source.clone(),
-                variables: block.variables.clone(),
+                variables: block.variables.to_vec(),
                 equations: block.source.rows(),
             })
             .collect();
@@ -72,11 +76,13 @@ impl Program {
             limits,
         )
         .map_err(|error| preview_failure(&blocks, error))?;
+        let incidence_charts = chart::indexed(&blocks, relations);
         Ok(Self {
-            points,
-            point_columns,
-            fixed,
-            blocks,
+            points: points.into(),
+            point_columns: Arc::new(point_columns),
+            fixed: fixed.into(),
+            blocks: blocks.into(),
+            incidence_charts,
             authored_rows,
             frozen_coordinates,
             prepared,
@@ -179,7 +185,7 @@ impl Program {
 
     fn values(&self, geometry: &Snapshot) -> Result<Vec<f64>, Failure> {
         let mut values = Vec::with_capacity(3 * self.points.len());
-        for &id in &self.points {
+        for &id in self.points.iter() {
             values.extend(
                 geometry
                     .point(id)

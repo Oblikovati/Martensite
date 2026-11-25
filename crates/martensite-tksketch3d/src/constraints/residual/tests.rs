@@ -139,3 +139,58 @@ fn dot(a: Vector, b: Vector) -> f64 {
 fn cross([a, b, c]: Vector, [d, e, f]: Vector) -> Vector {
     [b * f - c * e, c * d - a * f, a * e - b * d]
 }
+
+#[test]
+fn incidence_rows_differentiate_the_active_transverse_frame_and_mixed_units() {
+    use super::{FrameReference, ParallelDirection};
+
+    let reference = [0., 1., 0.];
+    let points = coordinates([1., 2., 3.], Some([-3., -2., -4.]));
+    verify(
+        Equation::PointOnLine {
+            scale: 0.125,
+            reference: FrameReference::Axis(1),
+        },
+        &points[..9],
+        |points| incidence_expected(points, reference, true, false),
+    );
+    for independent_offset in [true, false] {
+        let root_half = std::f64::consts::FRAC_1_SQRT_2;
+        let normal = [root_half, -root_half, 0.];
+        verify(
+            Equation::Colinear {
+                direction: ParallelDirection::Opposite,
+                reference: FrameReference::Normal(normal),
+                scale: 0.125,
+                independent_offset,
+            },
+            &points,
+            |points| incidence_expected(points, normal, independent_offset, true),
+        );
+    }
+}
+
+fn incidence_expected(
+    points: &[f64],
+    reference: Vector,
+    offset: bool,
+    direction: bool,
+) -> Vec<f64> {
+    let delta = displacement(points, 0);
+    let u = delta.map(|d| d / length(delta));
+    // Two independently constructed transverse unit axes. A frozen basis would fail
+    // the centered differences when varying the first line's coordinates.
+    let second = cross(u, reference);
+    let second = second.map(|d| d / length(second));
+    let first = cross(second, u);
+    let mut rows = Vec::new();
+    if direction {
+        let other = displacement(points, 6);
+        rows.extend([first, second].map(|r| dot(r, other) / length(other)));
+    }
+    if offset {
+        let v = std::array::from_fn(|i| points[i + 6] - points[i]);
+        rows.extend([first, second].map(|r| dot(r, v) / 8.));
+    }
+    rows
+}

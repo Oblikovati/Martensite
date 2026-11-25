@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-use super::{AxisDirection, CoordinateAxis, LineAngle, Relation, RelationId};
+use super::{AxisDirection, CoordinateAxis, LineAngle, ParallelDirection, Relation, RelationId};
 use crate::{EditFailure, EntityId, FrozenPointSource, LineId, PointId};
 use martensite_tksolve::{
     nonlinear::{SolveError, SolveTermination},
@@ -44,6 +44,10 @@ pub enum ConstraintFailure {
     MissingOperand(RelationId, EntityId),
     /// A relation uses the same identity for both operands.
     RepeatedOperand(RelationId, EntityId),
+    /// The point in a Point On Line request already defines the support as an endpoint.
+    PointIsLineEndpoint(RelationId, PointId, LineId),
+    /// The specified Colinear direction branch could not be established at the seed.
+    ColinearSeedBranch(RelationId, [LineId; 2], ParallelDirection),
     /// Exact Fix anchors disagree on an owned point.
     ConflictingFix(RelationId, PointId),
     /// A point drag references an identity outside the prepared sketch.

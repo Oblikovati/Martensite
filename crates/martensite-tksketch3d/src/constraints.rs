@@ -4,6 +4,7 @@ mod adopt;
 mod angle;
 mod binding;
 mod error;
+mod incidence;
 mod initialization;
 mod metric;
 mod motion;
@@ -88,6 +89,10 @@ pub enum RelationSpec {
     FixLine(LineId),
     /// Constrain distinct points to coincide without merging their IDs.
     Coincident([PointId; 2]),
+    /// Constrain a distinct point to an infinite line support, leaving its axial coordinate free.
+    PointOnLine(PointId, LineId),
+    /// Constrain two ordered lines to the same support on the specified direction branch.
+    Colinear([LineId; 2], ParallelDirection),
     /// Constrain two ordered lines to parallel directions on the specified branch.
     Parallel([LineId; 2], ParallelDirection),
     /// Drive the length of one line in model-space units.
@@ -113,6 +118,11 @@ pub enum Relation {
     FixLine(LineId, [Point3; 2]),
     /// Two point identities whose positions must coincide within the length tolerance.
     Coincident([PointId; 2]),
+    /// Point identity and its infinite line support.
+    PointOnLine(PointId, LineId),
+    /// Two ordered line identities and their stored direction branch.
+    /// Shared endpoint identities supply incidence and reduce the equation count.
+    Colinear([LineId; 2], ParallelDirection),
     /// Two line identities and their stored direction branch.
     Parallel([LineId; 2], ParallelDirection),
     /// A line identity and its target model-space length.
@@ -227,7 +237,7 @@ impl ConstrainedSketch {
     ) -> Result<Self, ConstraintFailure> {
         poll(&mut cancelled)?;
         let relations = self.stage(edits, &mut cancelled)?;
-        let program = Program::new(&self.geometry, &relations, self.policy)?;
+        let program = Arc::new(Program::new(&self.geometry, &relations, self.policy)?);
         let coordinates = program.establish(&self.geometry, self.policy.solve, &mut cancelled)?;
         let geometry = program.adopt(
             &self.geometry,
@@ -236,10 +246,13 @@ impl ConstrainedSketch {
             self.policy,
             &mut cancelled,
         )?;
+        let program = program
+            .reframe(&geometry, self.policy, None, &mut cancelled)?
+            .program;
         Ok(Self {
             geometry: Arc::new(geometry),
             relations: Arc::new(relations),
-            program: Arc::new(program),
+            program,
             policy: self.policy,
         })
     }
@@ -264,15 +277,19 @@ impl ConstrainedSketch {
             &mut cancelled,
         )?;
         let rank = self.program.rank_report(output.rank, output.dof);
+        let next =
+            self.program
+                .reframe(&geometry, self.policy, Some(output.work), &mut cancelled)?;
         let sketch = Self {
             geometry: Arc::new(geometry),
+            program: next.program,
             ..self.clone()
         };
         Ok(DragUpdate {
             sketch,
             rank,
-            solver_hard_error: output.hard_error,
-            residual_work_bound: residual::work_bound(output.work.work),
+            solver_hard_error: output.hard_error.max(next.hard_error),
+            residual_work_bound: residual::work_bound(next.work.work),
         })
     }
 

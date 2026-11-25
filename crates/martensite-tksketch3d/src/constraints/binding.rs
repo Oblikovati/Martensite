@@ -2,17 +2,19 @@
 //! Bind authored relations to solver columns and exact fixed coordinates.
 use super::{
     ConstraintFailure as Failure, ConstraintPolicy, LineAngle, Relation, RelationId, RelationSpec,
+    incidence::{SharedEnds, shared_ends},
     metric,
-    residual::{Equation, axis_branch},
+    residual::{Equation, FrameReference, axis_branch},
 };
 use crate::{EntityId, LineGeometry, LineId, PointId, Snapshot};
 use martensite_tkmath::gp::Point3;
 use std::{collections::BTreeMap, sync::Arc};
 
+#[derive(Clone)]
 pub(super) struct EquationBlock {
     pub(super) id: RelationId,
     pub(super) source: Arc<Equation>,
-    pub(super) variables: Vec<usize>,
+    pub(super) variables: Arc<[usize]>,
 }
 
 pub(super) struct Binding {
@@ -81,6 +83,36 @@ impl Layout<'_> {
             Relation::Coincident(points) => {
                 self.equation(id, &points, Equation::Coincident { scale: self.scale })
             }
+            Relation::PointOnLine(point, line) => {
+                let line = line_of(self.geometry, id, line)?;
+                let [start, end] = line.line.endpoints;
+                self.equation(
+                    id,
+                    &[start, end, point],
+                    Equation::PointOnLine {
+                        scale: self.scale,
+                        reference: FrameReference::axis(line),
+                    },
+                )
+            }
+            Relation::Colinear(lines, direction) => {
+                let pair = pair_of(self.geometry, id, lines)?;
+                let independent_offset = match shared_ends(pair) {
+                    SharedEnds::None => true,
+                    SharedEnds::One => false,
+                    SharedEnds::Both(_) => return Ok(()),
+                };
+                self.pair_equation(
+                    id,
+                    pair,
+                    Equation::Colinear {
+                        direction,
+                        reference: FrameReference::pair(pair),
+                        scale: self.scale,
+                        independent_offset,
+                    },
+                )
+            }
             Relation::Length(line, target) => {
                 let points = line_of(self.geometry, id, line)?.line.endpoints;
                 self.equation(
@@ -99,7 +131,7 @@ impl Layout<'_> {
                     [a, b],
                     Equation::Parallel {
                         direction,
-                        reference: reference_axis(a),
+                        reference: FrameReference::axis(a),
                     },
                 )
             }
@@ -187,7 +219,7 @@ impl Layout<'_> {
         self.blocks.push(EquationBlock {
             id,
             source: Arc::new(source),
-            variables,
+            variables: variables.into(),
         });
         Ok(())
     }
@@ -197,18 +229,6 @@ impl Layout<'_> {
             .get(&point)
             .copied()
             .ok_or(Failure::MissingOperand(id, EntityId::Point(point)))
-    }
-}
-
-fn reference_axis(line: LineGeometry) -> usize {
-    let direction = line.carrier.direction();
-    let [x, y, z] = direction.coordinates().map(f64::abs);
-    if x <= y && x <= z {
-        0
-    } else if y <= z {
-        1
-    } else {
-        2
     }
 }
 
@@ -232,6 +252,20 @@ pub(super) fn capture(
             point(a)?;
             point(b)?;
             Ok(Relation::Coincident([a, b]))
+        }
+        RelationSpec::PointOnLine(key, support) => {
+            point(key)?;
+            if line(support)?.line.endpoints.contains(&key) {
+                return Err(Failure::PointIsLineEndpoint(id, key, support));
+            }
+            Ok(Relation::PointOnLine(key, support))
+        }
+        RelationSpec::Colinear(lines, direction) => {
+            let pair = pair_of(geometry, id, lines)?;
+            if !metric::line_branch(pair, direction) {
+                return Err(Failure::ColinearSeedBranch(id, lines, direction));
+            }
+            Ok(Relation::Colinear(lines, direction))
         }
         RelationSpec::Parallel(lines, direction) => {
             pair_of(geometry, id, lines)?;
