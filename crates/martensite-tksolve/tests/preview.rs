@@ -4,6 +4,8 @@
 
 #![cfg(feature = "sketch3d-preview")]
 
+#[path = "preview/preference.rs"]
+mod preference;
 #[path = "preview/rebind.rs"]
 mod rebind;
 

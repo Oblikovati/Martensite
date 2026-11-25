@@ -7,6 +7,12 @@ compiled layout. Replacement checks row count, units and warm feasibility at
 the supplied coordinates. Within a preview tick it keeps the existing work
 charge and checks sparse rank in the affected components.
 
+Use `Prepared::update_preferred` for a cursor that may lie outside the feasible
+coordinates. The preview accepts a reached target or a feasible pose whose
+projected gradient is within the caller's tolerance. The report includes that
+gradient and the remaining scaled cursor error. The same work limit covers
+retraction, hard checks, and the final stationarity check.
+
 ## Provenance
 
 The initial Rust source and tests came from Oblikovati `crates/solve` at `76f5e59a6fdff73500d1f977f0f5cbd46f7f51e6`. The latest source change at that revision was `8976d39fc802f692ed5a5a5fe8e32aabbc43db43`. The existing app can retain its solver import paths by re-exporting the same public modules.

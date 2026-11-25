@@ -144,32 +144,24 @@ impl Cholesky {
         if rows.len() == columns {
             return Ok(vec![0.; columns]);
         }
-        let rhs = targets.iter().map(|&(_, value)| value).collect::<Vec<_>>();
-        let basis = targets
+        fit_targets(
+            &self.project_axes(rows, targets, columns),
+            targets,
+            columns,
+            tolerance,
+        )
+    }
+
+    pub(super) fn project_axes(
+        &self,
+        rows: &[Entries],
+        targets: &[(usize, f64)],
+        columns: usize,
+    ) -> Vec<Vec<f64>> {
+        targets
             .iter()
             .map(|&(axis, _)| self.project_axis(rows, axis, columns))
-            .collect::<Vec<_>>();
-        let observed = targets
-            .iter()
-            .map(|&(axis, _)| basis.iter().map(|column| column[axis]).collect())
-            .collect();
-        let matrix = DenseMatrix::new(targets.len(), observed)?;
-        let factor = ColumnPivotedQr::factor(&matrix, tolerance)?;
-        let coeffs = if factor.rank() == targets.len() {
-            factor.least_squares(&rhs)?
-        } else {
-            // The hard equations can leave fewer free directions than observed coordinates.
-            // This rank reduction is confined to the admitted soft-target matrix.
-            ColumnPivotedQr::factor(&matrix.transpose(), tolerance)?
-                .best_fit_transpose(&rhs, tolerance)?
-        };
-        let mut step = vec![0.; columns];
-        for (column, coefficient) in basis.into_iter().zip(coeffs) {
-            for (value, direction) in step.iter_mut().zip(column) {
-                *value += coefficient * direction;
-            }
-        }
-        Ok(step)
+            .collect()
     }
 
     fn project_axis(&self, rows: &[Entries], axis: usize, columns: usize) -> Vec<f64> {
@@ -185,6 +177,44 @@ impl Cholesky {
         column[axis] += 1.;
         column
     }
+}
+
+pub(super) fn fit_targets(
+    basis: &[Vec<f64>],
+    targets: &[(usize, f64)],
+    columns: usize,
+    tolerance: f64,
+) -> Result<Vec<f64>, PreviewError> {
+    let rhs = targets.iter().map(|&(_, value)| value).collect::<Vec<_>>();
+    let observed = targets
+        .iter()
+        .map(|&(axis, _)| basis.iter().map(|column| column[axis]).collect())
+        .collect();
+    let matrix = DenseMatrix::new(targets.len(), observed)?;
+    let factor = ColumnPivotedQr::factor(&matrix, tolerance)?;
+    let coeffs = if factor.rank() == targets.len() {
+        factor.least_squares(&rhs)?
+    } else {
+        // The hard equations can leave fewer free directions than observed coordinates.
+        // This rank reduction is confined to the admitted soft-target matrix.
+        ColumnPivotedQr::factor(&matrix.transpose(), tolerance)?
+            .best_fit_transpose(&rhs, tolerance)?
+    };
+    Ok(weighted_axes(basis, coeffs, columns))
+}
+
+pub(super) fn weighted_axes(
+    basis: &[Vec<f64>],
+    coefficients: impl IntoIterator<Item = f64>,
+    columns: usize,
+) -> Vec<f64> {
+    let mut step = vec![0.; columns];
+    for (column, coefficient) in basis.iter().zip(coefficients) {
+        for (value, direction) in step.iter_mut().zip(column) {
+            *value += coefficient * direction;
+        }
+    }
+    step
 }
 
 fn gram_triangle(

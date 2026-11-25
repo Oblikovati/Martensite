@@ -3,6 +3,9 @@
 use super::{factor::Cholesky, policy::Meter, *};
 use martensite_cmath::{hypot, powi};
 
+mod preference;
+pub(super) use preference::{run_preferred, verify_preferred};
+
 pub(super) fn run(
     program: &Prepared,
     mut accepted: Vec<f64>,
@@ -17,12 +20,7 @@ pub(super) fn run(
     run.check_warm_state(&accepted)?;
     for component in program.components.iter() {
         run.meter.charge(component.free.len())?;
-        let targets = component
-            .free
-            .iter()
-            .enumerate()
-            .filter_map(|(i, global)| targets.get(global).map(|&v| (i, v)))
-            .collect::<Vec<_>>();
+        let targets = local_targets(component, targets);
         if !targets.is_empty() {
             run.follow(component, &mut accepted, &targets)?;
         }
@@ -31,6 +29,15 @@ pub(super) fn run(
         return Err(PreviewError::Incomplete(incomplete));
     }
     run.report(accepted)
+}
+
+fn local_targets(component: &Component, targets: &BTreeMap<usize, f64>) -> Vec<(usize, f64)> {
+    component
+        .free
+        .iter()
+        .enumerate()
+        .filter_map(|(i, global)| targets.get(global).map(|&v| (i, v)))
+        .collect()
 }
 
 fn fixed_target_refusal(program: &Prepared, targets: &BTreeMap<usize, f64>) -> Option<Incomplete> {
@@ -178,12 +185,7 @@ impl Run<'_> {
         previous: f64,
     ) -> Result<Option<Vec<f64>>, PreviewError> {
         for backtrack in 0..self.program.options.max_trial_steps {
-            self.meter.poll()?;
-            self.meter.charge(values.len())?;
-            if let Some(trial) = self.trial(component, values, step, backtrack)
-                && let Some(rows) = self.trial_rows(component, &trial)?
-                && let Some(next) = self.restore_rows(component, trial, rows)?
-            {
+            if let Some(next) = self.retracted_trial(component, values, step, backtrack)? {
                 let error = self.preference(component, &next, targets).0;
                 let threshold = self.program.options.relative_tolerance.min(previous * 1e-6);
                 if previous - error > threshold {
@@ -193,6 +195,24 @@ impl Run<'_> {
             self.rejected += 1;
         }
         Ok(None)
+    }
+
+    fn retracted_trial(
+        &mut self,
+        component: &Component,
+        values: &[f64],
+        step: &[f64],
+        backtrack: usize,
+    ) -> Result<Option<Vec<f64>>, PreviewError> {
+        self.meter.poll()?;
+        self.meter.charge(values.len())?;
+        let Some(trial) = self.trial(component, values, step, backtrack) else {
+            return Ok(None);
+        };
+        let Some(rows) = self.trial_rows(component, &trial)? else {
+            return Ok(None);
+        };
+        self.restore_rows(component, trial, rows)
     }
 
     fn preference(
@@ -253,6 +273,20 @@ impl Run<'_> {
     }
 
     fn report(&mut self, values: Vec<f64>) -> Result<Update, PreviewError> {
+        self.report_with(values, |_, _, _, _, _| Ok(()))
+    }
+
+    fn report_with(
+        &mut self,
+        values: Vec<f64>,
+        mut inspect: impl FnMut(
+            &mut Self,
+            &Component,
+            &Rows,
+            &Cholesky,
+            &[f64],
+        ) -> Result<(), PreviewError>,
+    ) -> Result<Update, PreviewError> {
         let mut rank = self.program.fixed.iter().flatten().count();
         let mut hard_error = 0.0_f64;
         let tolerance = self.program.options.relative_tolerance;
@@ -265,7 +299,9 @@ impl Run<'_> {
                     tolerance,
                 }));
             }
-            rank += self.factor(component, &rows)?.rank();
+            let factor = self.factor(component, &rows)?;
+            rank += factor.rank();
+            inspect(self, component, &rows, &factor, &values)?;
         }
         self.meter.poll()?;
         Ok(Update {

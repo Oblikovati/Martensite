@@ -11,6 +11,7 @@ mod iterate;
 mod layout;
 mod local;
 mod policy;
+mod preference;
 mod rebind;
 
 use crate::linalg::{ColumnPivotedQr, DenseMatrix, LinearAlgebraError};
@@ -23,6 +24,7 @@ use martensite_cmath::hypot;
 use std::{collections::BTreeMap, error::Error, fmt, sync::Arc};
 
 pub use policy::{Incomplete, Limit, Limits, Work};
+pub use preference::{PreferenceReport, PreferenceSettlement};
 pub use rebind::SourceReplacement;
 
 /// Frozen step scales expressed in each coordinate's own units.
