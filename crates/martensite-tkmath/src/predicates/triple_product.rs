@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Exact transversality of supplied vectors; no source, surface chart or body certificate.
-use super::{NonFiniteCoordinate, exact_determinant, exact_vector3};
+use super::{NonFiniteCoordinate, exact_vector3};
 use num_bigint::BigInt;
 use std::cmp::Ordering;
 
@@ -28,15 +28,16 @@ pub(super) fn exact_triple_product(
     second: &[BigInt; 3],
     third: &[BigInt; 3],
 ) -> BigInt {
-    let cross: [BigInt; 3] = std::array::from_fn(|axis| {
+    let cross = exact_cross(second, third);
+    &first[0] * &cross[0] + &first[1] * &cross[1] + &first[2] * &cross[2]
+}
+
+pub(super) fn exact_cross(left: &[BigInt; 3], right: &[BigInt; 3]) -> [BigInt; 3] {
+    std::array::from_fn(|axis| {
         let next = (axis + 1) % 3;
         let last = (axis + 2) % 3;
-        exact_determinant(
-            &[second[next].clone(), second[last].clone()],
-            &[third[next].clone(), third[last].clone()],
-        )
-    });
-    &first[0] * &cross[0] + &first[1] * &cross[1] + &first[2] * &cross[2]
+        &left[next] * &right[last] - &left[last] * &right[next]
+    })
 }
 
 #[cfg(test)]
