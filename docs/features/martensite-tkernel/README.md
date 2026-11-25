@@ -100,11 +100,10 @@ not shipped as stubs.
 
 ### Release matrix
 
-The release matrix targets Linux x86_64, macOS x86_64 and arm64, and Windows
-x64. ARM64 release support is limited to macOS (#198). Run the manual `release`
-dispatch on the exact candidate commit and require all four native targets to
-pass before tagging. Target configuration is not evidence of a successful run;
-retain the commands, diagnostics and results from that candidate.
+The release matrix covers Linux x86_64, Apple Silicon and Windows x64. Run the
+manual `release` dispatch on the exact candidate commit and require all three
+native targets to pass before tagging. Retain their commands, diagnostics and
+results.
 
 ### Windows staged document writes
 

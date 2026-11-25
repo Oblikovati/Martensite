@@ -62,7 +62,7 @@ fn leaf_release_shard_skips_unchanged_base_package_on_every_platform() {
     };
     let outputs = matrix_outputs(&context, &plan).unwrap();
     let matrix: serde_json::Value = serde_json::from_str(&outputs[1].1).unwrap();
-    assert_eq!(matrix["include"].as_array().unwrap().len(), 4);
+    assert_eq!(matrix["include"].as_array().unwrap().len(), 3);
     assert_leaf_tests_on_each_platform(&context, &plan, &fixture.runner);
     assert!(
         fixture

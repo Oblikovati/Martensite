@@ -72,6 +72,7 @@ fn required_jobs_come_from_current_plan_including_conditional_arm_gate() {
     ] {
         assert!(names.contains(expected), "{expected}");
     }
+    assert!(!names.contains("checks (x86_64-apple-darwin)"));
     outputs[1].1 = "false".into();
     assert!(!job_names(&outputs).unwrap().contains("renderer-arm64"));
     outputs[2].1 = "false".into();
@@ -92,6 +93,13 @@ fn distribution_rejects_duplicates_expiry_and_missing_primary() {
     let (_, _, mut artifacts) = fixture();
     assert!(distribution(&artifacts).is_ok());
     artifacts.push(artifacts[0].clone());
+    assert!(distribution(&artifacts).is_err());
+    artifacts.pop();
+    artifacts.push(Artifact {
+        id: 10,
+        name: "dist-x86_64-apple-darwin".into(),
+        ..artifacts[0].clone()
+    });
     assert!(distribution(&artifacts).is_err());
     artifacts.pop();
     artifacts[0].name = "dist-other".into();

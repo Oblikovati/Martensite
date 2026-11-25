@@ -408,14 +408,11 @@ milestone and issue states its own scope, dependencies, and acceptance criteria.
 - **CI pacing: fast per merge, full matrix before release.** CI is one
   workflow, `.github/workflows/martensite.yml`, and every check in it is a
   `cargo xtask` command that runs the same way locally. A pull request runs
-  PR validation on Linux x86_64 only. The full matrix (Linux x86_64,
-  macOS x86_64 and arm64, Windows x64) runs on a `v*` tag push and on a manual
-  dispatch in `release` mode. The workflow does not run on branch pushes:
-  after pushing a branch directly, dispatch it on that SHA. Running the full
-  matrix is **mandatory right before a release**: dispatch the workflow with
-  `mode=release` and the version on the exact release-candidate SHA, and wait
-  for green before tagging. Never tag a release whose SHA lacks a green full
-  matrix.
+  PR validation on Linux x86_64 only. The release targets in
+  `scripts/build/src/targets.rs` run on a `v*` tag push and on a manual dispatch
+  in `release` mode. After pushing a branch directly, dispatch on that SHA.
+  Before tagging, dispatch `mode=release` with the version on the exact
+  release-candidate SHA and wait for the full matrix to pass.
 - **Reclaim build storage after every release — run `cargo clean`.** 
   Once a release is tagged and its artifacts are published, run
   `cargo clean` (and `cargo clean` in each release worktree / extra target dir

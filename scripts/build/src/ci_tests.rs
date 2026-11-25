@@ -340,7 +340,7 @@ mod tests {
         assert_eq!(outputs[0].1, "true");
         let matrix: serde_json::Value = serde_json::from_str(&outputs[1].1).unwrap();
         let rows = matrix["include"].as_array().unwrap();
-        assert_eq!(rows.len(), 8);
+        assert_eq!(rows.len(), 6);
         for target in crate::targets::RELEASE_TARGETS {
             for shard in 0..2 {
                 assert!(rows.contains(&serde_json::json!({
@@ -362,7 +362,7 @@ mod tests {
         }
         let commands = runner.commands();
         let tests = commands.iter().filter(|c| c.starts_with("cargo test "));
-        assert_eq!(tests.count(), 8);
+        assert_eq!(tests.count(), 6);
     }
 
     #[test]
@@ -374,6 +374,7 @@ mod tests {
         for target in [
             BuildTarget::Host,
             BuildTarget::Triple("unlisted-target".into()),
+            BuildTarget::Triple("x86_64-apple-darwin".into()),
         ] {
             assert!(test_shard(&context, &plan, 0, &target).is_err());
         }

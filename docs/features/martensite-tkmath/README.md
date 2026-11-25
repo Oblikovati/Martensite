@@ -67,10 +67,10 @@ NaN sign or payload; domain-error NaNs are compared by classification.
 
 ### Release matrix
 
-The release gate runs the full native suite and source-package checks on Linux
-x86_64, macOS x86_64 and arm64, and Windows x64. Run the manual `release`
-workflow on the exact candidate commit and require all four targets to pass
-before tagging. Workflow runs retain the commands, diagnostics and results.
+The release gate checks Linux x86_64, Apple Silicon and Windows x64. Run the
+manual `release` workflow on the exact candidate commit and require all three
+targets to pass before tagging. Workflow runs retain the commands, diagnostics
+and results.
 
 The source has no `c_char` widening or other char-signedness dependent code.
 Exact-bit expectations for results computed through the transcendental
