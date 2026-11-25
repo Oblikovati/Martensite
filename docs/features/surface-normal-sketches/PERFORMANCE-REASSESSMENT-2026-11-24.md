@@ -779,5 +779,11 @@ edit reached a completed frame in 1,207.41 ms p95. The scoped edit took
 the revised volume against the analytic result and verified undo, redo,
 and rejection of a profile outside the support trim.
 
+The follow-up at app revision `eeec40e31` dragged the reopened sketch
+with the existing boss visible. It reached 4.73 ms p95 at 60 Hz input
+and 4.28 ms at 120 Hz input. All 800 samples met their frame budget.
+The same fixture verified cancellation and reconstructed the edited
+part from a saved recipe against the analytic volume.
+
 [Oblikovati #4187](https://github.com/Oblikovati/Oblikovati/issues/4187),
 [Martensite #600](https://github.com/Oblikovati/Martensite/issues/600).
