@@ -430,3 +430,88 @@ identity triggered typed refusals. The native ordered check still took
 12.9–13.2 s. Replacing its self-intersection stage requires complete
 retained-tool, stock, seam and tolerant contact coverage on the same
 frozen body.
+
+### Live seam fitting in the native builder
+
+A private TKSketch builder reconstructed both 239-curve fixtures using
+the original public selection and `1e-7` sewing limit. It found
+339 shared edges and retained all 554 fitted cubic spans per sense.
+The directed binary64 enclosure bounded every retained span over its
+full parameter interval. It encloses each arithmetic operation, the
+Taylor remainders and the rational curve weight division. For each
+sense, all 769 subdivision decisions matched the dyadic proof. High-precision evaluations at 17 parameters per
+retained span gave 9,418 additional checks per sense.
+
+| Live direct stage | Boss | Pocket |
+| --- | ---: | ---: |
+| Fit and certify all seams with dyadic arithmetic | 1.42 s | 1.56 s |
+| Fit and certify all seams with directed binary64 | 25.37 ms | 30.46 ms |
+| Largest directed sewing upper bound | `9.77030e-8` | `9.77030e-8` |
+| Ordinary ordered validation with directed seams | 11.53 s | 11.74 s |
+
+These were separate full runs pinned to physical CPU cores. Both direct
+archives and every normalized history record matched the dyadic builder
+byte for byte. The directed proof reports its own outward bounds. The
+public path still uses the existing Boolean and ordered validator.
+
+The standalone live fitter reproduced all 769 prepared query bit
+sequences per sense against the pinned dyadic fitter. Across 20 fresh
+processes on one core, its p95 was 69.68 ms for the boss and 68.00 ms
+for the pocket, including the original cap proofs. Peak RSS stayed below
+6.1 MiB. The fitter refused a changed control, an unrepresentable seam
+endpoint and a cap trace whose bound exceeded its retained tolerance.
+
+A separate exact authored-cycle proof took 8.64 ms at p95 over 20 trials.
+It recovered all 18 directed region selections and the 20 boundary
+orientations from the retained 239 source curves. It checked every logical
+pair domain through hull separation or exact residual predicates and
+rejected a swapped counter. The comparison against dense selection took
+347.6 ms in one run. The timing for the cycle proof excludes native
+construction and independent area comparisons.
+
+The retained contact proof must cover stock face interiors as well as
+seams. In each sense, an actual interior point was inside the current
+face-pair proximity envelope. The stock-carrier pcurve images were outside
+the envelope at the same depth. Over the relevant collar, the squared-distance
+function for a fixed side parameter is strictly convex in side depth and
+stock UV. Jointly reducing depth and moving toward the declared seam
+therefore stays within the envelope. If this path first hits a trim
+boundary, the bound excludes other loops and the stock rims and limits
+the contact to the same edge or a declared adjacent endpoint. A second
+enclosure follows that contact to the shared seam. Publication still requires a complete contract for
+declared contacts and a comparison with adaptive native classification.
+
+### Single construction and ordered validation
+
+A live V8 construction trial built the 18-member native graph before
+intermediate publication. It took 570 ms for the boss and 568 ms for
+the pocket in the first paired run. The normal tool calls took 3.51 s
+and 3.52 s on the same core. Both live graphs reproduced the
+independently qualified canonical and placed archives byte for byte,
+with the same 2,088 source keys, typed history and spatial allocation.
+The trial covers capture, authored selection, fit, graph construction,
+typed history, placement and the attachment handoff. The existing
+selection and fit accounted for about 484 ms. The directed cycle proof
+has yet to replace that selection step in the live path.
+
+The ordinary validator on the final decoded direct solid spent about
+254 ms on topology, 533–543 ms on geometry, 11.27–11.31 s on native
+self-intersection and 2.5 ms on tolerance. A faster self-intersection
+check alone would still leave approximately 790 ms of ordinary
+validation. The final path also needs to reuse the exact incidence and
+representation checks across construction and ordered validation.
+
+### Public operation repeat after the arithmetic changes
+
+The release build at `ba5d4076` repeated each public text fixture in
+20 fresh processes. The three fixtures ran concurrently on physical
+cores 12, 13 and 14. Other activity on the same host varied during the
+run, so the values are a separate latency observation from the earlier
+20-run sample. Every fixture passed its existing material, history and
+validation assertions.
+
+| Public V8 fixture | Median | p95 |
+| --- | ---: | ---: |
+| Cold text boss | 22.622 s | 23.058 s |
+| Cold text pocket | 22.533 s | 23.266 s |
+| Warm text depth edit | 21.044 s | 22.971 s |

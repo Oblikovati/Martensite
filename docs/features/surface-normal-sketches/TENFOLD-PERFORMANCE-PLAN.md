@@ -185,14 +185,50 @@ native self-intersection search.
    stages before publishing. Keep the full native checker as an independent
    oracle for the admitted fixtures.
 
-The prototype establishes the first two geometric obligations on the frozen
-239-curve tool and assembles one curved-counter member in each sense. The
-production proof must bind native incidence identity through freezing. A
-request that fails a direct admission condition goes through the existing
-Boolean path. Compare both senses, including the counter island, with the
-existing material witnesses and typed history controls. Add red controls for
-changed side coefficients, a same-endpoint UV loop, an exhausted arithmetic
-bound, and contacts with a rim or periodic seam.
+The scratch builder now assembles the full 239-curve fixture in both senses.
+It reproduces native topology, inherited geometry and the two counter
+islands under the ordinary validator. Its seam proof bounds every fitted
+span under the original sewing limit. Certificate coverage for publication
+still needs to bind actual face, wire and edge occurrences through freezing.
+Surface identity alone is insufficient because two faces on the same
+carrier can resolve the same stored pcurve.
+
+Use the retained stock rim, authored boundaries and all decoded side and
+cap incidences to enumerate the contact domains. First certify that off-
+incidence pairs are separated. For proximity near a declared seam or
+endpoint, bind the enclosure to the relevant entity-pair tolerance and
+verify the contact stays in the corresponding retained trim neighborhood.
+The native checker can grow its working tolerance adaptively. A direct
+certificate needs its own versioned contract and a comparison with native
+findings. Keep the original Boolean policy selectable. Add controls for
+changed side coefficients, a same-endpoint UV loop, exhausted arithmetic
+work, a moved or reversed coedge, a contact assigned to the wrong
+endpoint, and a rim or periodic-seam contact.
+
+### Build the final geometry once
+
+The current result includes an independently exportable canonical and
+placed tool, each with per-member validation and measures. That contract
+forces the intermediate publication before the final stock operation.
+Prototype a direct result that holds the final solid, achieved limits,
+ordered validation and composed authored history. Preserve the existing
+result for callers that consume the detached tool.
+
+Use the issued directed cycles as the starting point for boundary fit
+and endpoint finalization. Build the shared rails, ruled sides and exposed
+caps from those controls in one private owner. Apply the stored placement
+once and attach the stock remainder and counters. Bind the retained
+patches, the actual fitted stock trim, and the measure inputs during the
+same final decode. Reuse certified boundary integrals where the oriented
+domains and stored inputs match. Keep the final boundary measure, native
+quadrature estimate and authored-reference comparison distinct.
+
+Budget up to 235 ms for frame admission, mapping, fit and endpoint
+finalization, 90 ms for native construction and assembly, and 80 ms
+each for strict sewing and the decoded UV and carrier proofs. The
+remaining 515 ms covers the 20 ms authored cycle and area budget, archive
+and ordered validation, measures and headroom. Run both cold senses and
+the warm depth edit before claiming the 1-second p95 goal.
 
 ## Qualification
 
