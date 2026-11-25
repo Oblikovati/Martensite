@@ -31,13 +31,19 @@ impl FittedCut {
                 format!("{id:?}"),
             )
         })?;
-        if containing.next().is_some() || span.reversed {
+        if containing.next().is_some() {
             return Err(incomplete(
-                "unique forward certified fitter span",
+                "unique certified fitter span",
                 format!("{id:?}: {span:?}"),
             ));
         }
         Ok(Self { crossing, span })
+    }
+
+    pub(super) fn source_parameter(self, parameter: f64) -> f64 {
+        let [a, b] = span_bounds(self.span);
+        let pos = parameter * (b - a);
+        if self.span.reversed { b - pos } else { a + pos }
     }
 
     pub(super) fn edge(self, depth: PeriodicDepth) -> WrappedHistoryKey {

@@ -20,6 +20,15 @@ pub enum SheetTransition {
     Decreasing,
 }
 
+impl SheetTransition {
+    pub(in crate::surface_sketch::full_turn::hole) fn oriented(self, reversed: bool) -> Self {
+        match (self, reversed) {
+            (Self::Increasing, false) | (Self::Decreasing, true) => Self::Increasing,
+            (Self::Decreasing, false) | (Self::Increasing, true) => Self::Decreasing,
+        }
+    }
+}
+
 /// Identity of a unique, transverse authored crossing, independent of B-rep ordering.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]
 pub struct PeriodicCrossingId {
@@ -27,7 +36,7 @@ pub struct PeriodicCrossingId {
     pub curve: SurfaceCurveId,
     /// Cut lift relative to the authored zero-arc meridian.
     pub turn: i64,
-    /// Traversal direction across the lift.
+    /// Forward authored-curve direction across the lift.
     pub transition: SheetTransition,
 }
 
