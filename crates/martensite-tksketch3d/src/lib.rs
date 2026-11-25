@@ -5,6 +5,7 @@ pub mod constraints;
 mod edit;
 mod failure;
 mod source;
+pub mod wire;
 
 pub use failure::{BatchPhase, EditFailure, InvalidMinimumLength};
 use martensite_tkmath::gp::{Line3, Point3};

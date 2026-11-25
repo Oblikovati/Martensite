@@ -5,3 +5,4 @@ mod constraints;
 mod fixture;
 mod frozen_point;
 mod values;
+mod wire;
