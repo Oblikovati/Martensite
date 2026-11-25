@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.14.2] - 2026-11-25
+
 ### Added
 
 - Added first-class native Wayland support in parallel with X11 on Linux, preferring native Wayland over XWayland whenever `WAYLAND_DISPLAY` is set. `martensite-tkservice` adds `AspectDisplayBackend`, explicit Wayland and X11 constructors on `AspectDisplayConnection`, dynamic loading of `libwayland-client.so.0` and `libxkbcommon.so.0`, and `wl::WlWindow` (`xdg-shell`, optional server-side decorations, keyboard and pointer input). `martensite-vulkan` adds `RenderSurfacePlatform::Wayland`, enables `VK_KHR_wayland_surface` and `VK_KHR_xlib_surface` in parallel on Linux instances, and dispatches surface creation per window display backend (#605).
