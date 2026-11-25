@@ -139,11 +139,13 @@ mod proof;
 mod types;
 use super::{DyadicBound, error::poll};
 pub use cylindrical_storage::{
-    CertifiedCylindricalRadialSweep, CertifiedCylindricalStorage, CylindricalRadialSense,
-    CylindricalRadialSweepError, CylindricalRadialSweepFailure, CylindricalRadialSweepQuery,
+    CertifiedCylindricalRadialSweep, CertifiedCylindricalSlice, CertifiedCylindricalStorage,
+    CylindricalRadialSense, CylindricalRadialSweepError, CylindricalRadialSweepFailure,
+    CylindricalRadialSweepQuery, CylindricalSliceQuery, CylindricalSliceRefusal,
     CylindricalStorageError, CylindricalStorageFailure, CylindricalStorageLimits,
     CylindricalStorageOptions, CylindricalStorageQuery, CylindricalStorageResidual,
-    certify_cylindrical_radial_sweep, certify_cylindrical_storage,
+    certify_cylindrical_radial_sweep, certify_cylindrical_slice_direction,
+    certify_cylindrical_storage,
 };
 use num_bigint::BigInt;
 pub use types::*;
