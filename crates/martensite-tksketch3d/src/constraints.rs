@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Immutable spatial point and line constraints with separate apply and drag paths.
 mod adopt;
+mod binding;
 mod error;
 mod metric;
 mod motion;
@@ -242,7 +243,7 @@ impl ConstrainedSketch {
                     return Err(ConstraintFailure::DuplicateId(id));
                 }
                 RelationEdit::Insert(id, spec) => {
-                    relations.insert(id, program::capture(&self.geometry, id, spec)?);
+                    relations.insert(id, binding::capture(&self.geometry, id, spec)?);
                 }
                 RelationEdit::Remove(id) => {
                     relations

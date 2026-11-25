@@ -2,10 +2,7 @@
 //! Bind serialized hard relations to the already accepted geometry.
 use super::{
     ConstrainedSketch, ConstraintFailure, ConstraintPolicy, PolicyQuantity, Relation, RelationId,
-    RelationSpec,
-    adopt::verify_relations,
-    poll,
-    program::{Program, capture},
+    RelationSpec, adopt::verify_relations, binding::capture, poll, program::Program,
 };
 use crate::Snapshot;
 use std::{
