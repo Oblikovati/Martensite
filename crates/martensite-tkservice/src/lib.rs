@@ -6,6 +6,7 @@
 //! - [`font`]: font manager, FreeType fonts and text layout.
 //! - [`graphic3d`]: the 3D presentation data model and the graphic driver interfaces.
 //! - [`media`]: the media player context (built without FFmpeg).
+//! - `wl`: the native Wayland window (Linux).
 //! - `xw`: the Xlib window (Linux).
 //! - [`wnt`]: native Windows windows with owned message dispatch or borrowed HWNDs.
 //! - [`cocoa`]: the macOS window interface, whose native backend is unfinished;
@@ -36,6 +37,12 @@ pub mod media;
 pub mod null_driver;
 pub mod platform;
 pub mod wasm;
+#[cfg(target_os = "linux")]
+pub mod wl;
+/// Wl without the Wayland backend: the window interface whose constructors raise.
+#[cfg(not(target_os = "linux"))]
+#[path = "wl_unsupported.rs"]
+pub mod wl;
 pub mod wnt;
 #[cfg(target_os = "linux")]
 pub mod xw;
@@ -47,5 +54,7 @@ pub mod xw;
 mod cast;
 mod dynlib;
 pub mod json_dump;
+#[cfg(target_os = "linux")]
+mod wayland_client;
 #[cfg(target_os = "linux")]
 mod xlib;

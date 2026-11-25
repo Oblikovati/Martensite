@@ -6,6 +6,7 @@ use ash::{Instance, vk};
 use std::ffi::c_char;
 /// Window names only when the platform's whole WSI set is advertised; empty means offscreen-only.
 /// Example: `instance_extensions(&advertised, host_factory())`.
+#[cfg(test)]
 pub(super) fn instance_extensions(
     available: &[vk::ExtensionProperties],
     surfaces: &dyn PlatformSurfaceFactory,
@@ -21,6 +22,38 @@ pub(super) fn instance_extensions(
     } else {
         vec![]
     }
+}
+/// Enables every advertised host surface extension in parallel (e.g. Wayland + Xlib on Linux).
+pub(super) fn instance_extensions_multi(
+    available: &[vk::ExtensionProperties],
+    factories: &[&dyn PlatformSurfaceFactory],
+) -> (Vec<*const c_char>, Vec<crate::RenderSurfacePlatform>) {
+    let base = [
+        ash::khr::surface::NAME,
+        ash::khr::get_surface_capabilities2::NAME,
+        ash::ext::surface_maintenance1::NAME,
+    ];
+    if !base.iter().all(|n| has_extension(available, n)) {
+        return (vec![], vec![]);
+    }
+    let mut enabled_platforms = Vec::new();
+    let mut surface_exts = Vec::new();
+    for factory in factories {
+        let ext = factory.surface_extension();
+        if has_extension(available, ext) {
+            enabled_platforms.push(factory.platform());
+            surface_exts.push(ext.as_ptr());
+        }
+    }
+    if enabled_platforms.is_empty() {
+        return (vec![], vec![]);
+    }
+    let mut names = Vec::with_capacity(base.len() + surface_exts.len());
+    names.push(ash::khr::surface::NAME.as_ptr());
+    names.extend(surface_exts);
+    names.push(ash::khr::get_surface_capabilities2::NAME.as_ptr());
+    names.push(ash::ext::surface_maintenance1::NAME.as_ptr());
+    (names, enabled_platforms)
 }
 pub(super) fn device_supported(
     instance: &Instance,

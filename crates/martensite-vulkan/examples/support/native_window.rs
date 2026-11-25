@@ -23,7 +23,7 @@ impl NativeWindow {
         unsafe {
             (api.XInitThreads)();
         }
-        let display = Handle::new(AspectDisplayConnection::new().unwrap());
+        let display = Handle::new(AspectDisplayConnection::new_x11().unwrap());
         let window = Self::create_client(&display, width, height);
         if unmanaged {
             Self::override_redirect(&api, &display, &window);

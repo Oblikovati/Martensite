@@ -1,5 +1,5 @@
-//! Linux presentation surfaces through `VK_KHR_xlib_surface`; the only implemented platform.
-use super::PlatformSurfaceFactory;
+//! Linux presentation surfaces through `VK_KHR_xlib_surface`.
+use super::{PlatformSurfaceFactory, retain_runtime_display};
 use crate::{
     RenderError, RenderSurfacePlatform,
     backend::runtime::{VulkanRuntime, vk_error},
@@ -7,7 +7,7 @@ use crate::{
 };
 use ash::vk;
 use martensite_tkernel::standard::Handle;
-use martensite_tkservice::aspect::{AspectDisplayConnection, AspectWindow};
+use martensite_tkservice::aspect::{AspectDisplayBackend, AspectWindow};
 use std::ffi::CStr;
 
 /// Xlib factory; its surface needs a live display connection and window XID.
@@ -40,29 +40,16 @@ impl PlatformSurfaceFactory for XlibSurfaceFactory {
     }
 }
 
-// Mesa WSI retention ends after instance teardown; a mutable Handle alone cannot pin it.
-fn retain_runtime_display(
-    runtime: &VulkanRuntime,
-    display: &Handle<AspectDisplayConnection>,
-) -> Result<usize, RenderError> {
-    use martensite_tkservice::aspect::AspectDisplayLeasePurpose;
-    let lease =
-        AspectDisplayConnection::acquire_lease(display, AspectDisplayLeasePurpose::VulkanInstance)?;
-    let address = lease.display_address();
-    let mut retained = runtime.displays.write();
-    if !retained.iter().any(|saved| saved.same_connection(&lease)) {
-        retained.push(lease);
-    }
-    Ok(address)
-}
-
 fn checked_native_display(
     runtime: &VulkanRuntime,
     window: &Handle<dyn AspectWindow>,
 ) -> Result<usize, RenderError> {
     let display = window.native_display_connection();
-    if !runtime.window_support
-        || display.is_null()
+    let is_x11 = display
+        .get()
+        .is_some_and(|conn| conn.backend() == AspectDisplayBackend::X11);
+    if !runtime.supports_platform(RenderSurfacePlatform::Xlib)
+        || !is_x11
         || display.get_display_aspect() == 0
         || window.native_handle() == 0
     {

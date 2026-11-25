@@ -13,6 +13,7 @@ clip planes, textures and shader programs) and the graphic driver interfaces.
 | `graphic3d` | Presentation structures and groups, primitive arrays, aspects, materials, cameras, lights, clip planes, textures, shader programs and generators, frame statistics and the driver interfaces. |
 | `media` | The video player classes, built without a codec backend. |
 | `null_driver` | A graphic driver that keeps the scene data and draws nothing, for tests and headless use. |
+| `wl` | The native Wayland (`xdg-shell`) window (Linux); on other platforms an interface whose constructors raise. |
 | `xw` | The Xlib window (Linux); on other platforms an interface whose constructors raise. |
 | `wnt`, `cocoa`, `wasm` | The Windows, macOS and canvas windows (see "Platforms"). |
 | `platform` | The typed error of an interface without a backend on the current platform. |
@@ -72,7 +73,9 @@ their development packages:
 
 | Library | Loaded as | Used for |
 | --- | --- | --- |
-| Xlib | `libX11.so.6` through `x11-dl` (Linux) | Displays, windows, events and raster capture. |
+| Wayland client | `libwayland-client.so.0` (Linux) | Native Wayland displays, `xdg-shell` windows, decorations and input events (preferred over XWayland). |
+| XKB common | `libxkbcommon.so.0` (Linux) | Wayland keymap parsing and keysym decoding. |
+| Xlib | `libX11.so.6` through `x11-dl` (Linux) | X11 displays, windows, events and raster capture. |
 | FreeType | `libfreetype.so.6` (Linux), `libfreetype.6.dylib` (macOS), `freetype.dll` and variants (Windows) | Font faces, glyph metrics, outlines and rasterization. |
 | fontconfig | `libfontconfig.so.1` | The system font directory list. |
 
@@ -103,7 +106,8 @@ These names are part of the current behavior and are kept:
   textures; the check looks for `2d_MatraDatavision.rgb`.
 - The named texture files `2d_*.rgb` and the standard program ids `occt_<name>...`
   (for example `occt_font0000`, `occt_blit`), which the shader-manager corpus digests.
-- `DISPLAY`: the default X display.
+- `WAYLAND_DISPLAY`: the default Wayland compositor socket on Linux (preferred over `DISPLAY` / XWayland).
+- `DISPLAY`: the default X11 display when `WAYLAND_DISPLAY` is unset or when X11 is selected explicitly.
 
 ## Numerical behavior
 

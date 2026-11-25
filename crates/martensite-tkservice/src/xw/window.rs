@@ -144,6 +144,12 @@ impl XwWindow {
                 "Xw_Window, X Display connection is undefined",
             ));
         };
+        if connection.backend() != crate::aspect::AspectDisplayBackend::X11 {
+            return Err(definition_error(&format!(
+                "Xw_Window, received {:?} display connection; expected AspectDisplayBackend::X11",
+                connection.backend()
+            )));
+        }
         window.retain_connection(display)?;
         let disp = connection.get_display_aspect();
         let created = xlib().map_or(0, |api| {
@@ -191,6 +197,12 @@ impl XwWindow {
                 "Xw_Window, X Display connection is undefined",
             ));
         };
+        if connection.backend() != crate::aspect::AspectDisplayBackend::X11 {
+            return Err(definition_error(&format!(
+                "Xw_Window, received {:?} display connection; expected AspectDisplayBackend::X11",
+                connection.backend()
+            )));
+        }
         window.retain_connection(display)?;
         let disp = connection.get_display_aspect();
         let Some(api) = xlib() else {

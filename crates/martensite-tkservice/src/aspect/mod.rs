@@ -27,9 +27,9 @@ mod xr_session;
 pub use background::{AspectBackground, AspectGradientBackground};
 pub use circular_grid::{AspectCircularGrid, AspectCircularGridBase, AspectCircularGridMembers};
 pub use display_connection::{
-    AspectDisplayConnection, AspectDisplayConnectionLease, AspectDisplayFailureClass,
-    AspectDisplayLeaseCounts, AspectDisplayLeasePurpose, AspectDisplayLifecycleCause,
-    AspectDisplayLifecycleFailure, AspectDisplayOperation,
+    AspectDisplayBackend, AspectDisplayConnection, AspectDisplayConnectionLease,
+    AspectDisplayFailureClass, AspectDisplayLeaseCounts, AspectDisplayLeasePurpose,
+    AspectDisplayLifecycleCause, AspectDisplayLifecycleFailure, AspectDisplayOperation,
 };
 pub use gen_id::AspectGenId;
 pub use grid::{AspectGrid, AspectGridBase, AspectGridFields, AspectGridMembers};

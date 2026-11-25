@@ -19,7 +19,7 @@ pub fn window_and_wrapper_retention() {
 }
 /// Invalid constructor inputs acquire no lasting consumer; `failed_window_creation_leaves_reset_available()`.
 pub fn failed_window_creation_leaves_reset_available() {
-    let display = Handle::new(AspectDisplayConnection::new().unwrap());
+    let display = Handle::new(AspectDisplayConnection::new_x11().unwrap());
     assert!(XwWindow::create(&display, "invalid extent", 0, 0, 0, 64).is_err());
     assert!(XwWindow::wrap(&display, 0, 0).is_err());
     display.init_checked(0).unwrap();
@@ -59,7 +59,7 @@ fn substituted_metadata_keeps_native_binding(
     baseline: &FrameCapture,
 ) {
     let original = target.native.window.native_display_connection();
-    let metadata = Handle::new(AspectDisplayConnection::new().unwrap());
+    let metadata = Handle::new(AspectDisplayConnection::new_x11().unwrap());
     target.native.window.window_base().fields_mut().display = metadata.clone();
     let pinned = target.native.window.native_display_connection();
     assert_eq!(pinned.object_address(), original.object_address());

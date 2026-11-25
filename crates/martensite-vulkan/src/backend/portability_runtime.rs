@@ -15,25 +15,28 @@ pub(super) struct InstanceExtensionPlan {
     pub names: Vec<*const c_char>,
     pub flags: vk::InstanceCreateFlags,
     pub window_support: bool,
+    pub surface_platforms: Vec<crate::RenderSurfacePlatform>,
 }
 
-/// Compose independent offscreen admission; `instance_extensions(entry, validation, host_factory())?`.
-pub(super) fn instance_extensions(
+/// Compose independent offscreen admission enabling all advertised host surface platforms in parallel.
+pub(super) fn instance_extensions_for_host(
     entry: &Entry,
     validation: bool,
-    surfaces: &dyn PlatformSurfaceFactory,
+    factories: &[&dyn PlatformSurfaceFactory],
 ) -> Result<InstanceExtensionPlan, RenderError> {
     let advertised = entry
         .extensions(None)
         .map_err(|error| vk_error("enumerate instance extensions", error))?;
     admit_validation(entry, &advertised, validation)?;
-    let windows = super::window_support::instance_extensions(&advertised, surfaces);
+    let (windows, surface_platforms) =
+        super::window_support::instance_extensions_multi(&advertised, factories);
     let window_support = !windows.is_empty();
     let (names, flags) = compose_instance_extensions(windows, &advertised, validation);
     Ok(InstanceExtensionPlan {
         names,
         flags,
         window_support,
+        surface_platforms,
     })
 }
 

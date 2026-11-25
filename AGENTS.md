@@ -187,9 +187,9 @@ replace the workspace lint table:
 - `martensite-tkernel`: the allocators and raw-storage collections, and the
   operating-system, standard-library and locale calls.
 - `martensite-cmath`: the declarations of the platform libm functions.
-- `martensite-tkservice`: the run-time loading of and calls into Xlib, FreeType,
-  fontconfig and the Windows font registry, the X event union, the raw pixel
-  storage views and the clip-plane allocator replays. Approved on the same terms
+- `martensite-tkservice`: the run-time loading of and calls into Wayland (`libwayland-client`,
+  `libxkbcommon`), Xlib, FreeType, fontconfig and the Windows font registry, the X event union,
+  the raw pixel storage views and the clip-plane allocator replays. Approved on the same terms
   as `martensite-tkernel` by the 2026-10-20 coordinator decision under the user's
   delegation.
 - `martensite-vulkan`: the Vulkan API calls through `ash`, the mapped-memory views
