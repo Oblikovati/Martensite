@@ -8,6 +8,7 @@ mod curved_cone_aperture;
 mod multiple;
 mod placed;
 mod rational_aperture;
+mod repeated_crossing;
 
 use std::f64::consts::{FRAC_PI_6, PI, TAU};
 

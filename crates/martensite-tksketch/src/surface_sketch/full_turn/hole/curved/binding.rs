@@ -10,6 +10,7 @@ pub(super) type Bindings = Vec<(PeriodicImageKey, topods::Shape)>;
 pub(super) struct FittedCut {
     pub crossing: admission::Crossing,
     pub span: WrappedSourceSpan,
+    pub angular_speed: f64,
 }
 
 impl FittedCut {
@@ -37,7 +38,12 @@ impl FittedCut {
                 format!("{id:?}: {span:?}"),
             ));
         }
-        Ok(Self { crossing, span })
+        let angular_speed = crossing.angular_speed(span_bounds(span))?;
+        Ok(Self {
+            crossing,
+            span,
+            angular_speed,
+        })
     }
 
     pub(super) fn source_parameter(self, parameter: f64) -> f64 {
@@ -182,7 +188,7 @@ fn prove_fragment_clearance(
     let [lo, hi] = cut.crossing.report.normalized_parameter;
     let [first, last] = span_bounds(cut.span);
     let min_parameter = (lo - first).min(last - hi).next_down();
-    let source_angle = (min_parameter * cut.crossing.angular_speed).next_down();
+    let source_angle = (min_parameter * cut.angular_speed).next_down();
     let floor = effective_limits(plan.stock.sweep.options).linear_separation;
     require_periodic_chord(
         (source_angle - angular_error).next_down(),

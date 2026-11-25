@@ -285,6 +285,7 @@ fn assert_middle(
         PeriodicSeamEnd::Crossing(PeriodicCrossingId {
             curve: SurfaceCurveId(curve),
             turn: 0,
+            ordinal: 0,
             transition,
         })
     });

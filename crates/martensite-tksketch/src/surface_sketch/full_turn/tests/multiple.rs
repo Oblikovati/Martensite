@@ -177,6 +177,7 @@ fn assert_middle_segment(result: &CrossedBandResult, region: SurfaceRegionId) {
         PeriodicSeamEnd::Crossing(PeriodicCrossingId {
             curve: SurfaceCurveId(curve),
             turn: 0,
+            ordinal: 0,
             transition,
         })
     });

@@ -5,6 +5,28 @@ use martensite_tkbo::profile_extrusion::{ProfileCurve, ProfileVertexId};
 use martensite_tkmath::predicates::roots::{RootIsolationOptions, isolate_bernstein_roots};
 use martensite_tkmath::predicates::{OrientationSign, orient2d};
 
+mod repeated;
+
+#[derive(Clone, Copy)]
+pub(super) enum AngularSpeed {
+    Whole(f64),
+    Restricted {
+        derivative: [[f64; 2]; 2],
+        scale: f64,
+    },
+}
+
+impl AngularSpeed {
+    pub(super) fn certify(self, span: [f64; 2], transition: SheetTransition) -> Checked<f64> {
+        match self {
+            Self::Whole(value) => Ok(value),
+            Self::Restricted { derivative, scale } => {
+                repeated::speed(derivative, span, transition, scale)
+            }
+        }
+    }
+}
+
 pub(super) struct DirectedCurve {
     pub(super) id: SurfaceCurveId,
     ends: [SurfaceVertexId; 2],
@@ -74,7 +96,7 @@ impl DirectedCurve {
         )
     }
 
-    pub(super) fn crossing(&self, scale: f64, angular: f64) -> Checked<Option<Crossing>> {
+    pub(super) fn crossing(&self, scale: f64, angular: f64) -> Checked<Vec<Crossing>> {
         self.crossing_at(
             crossed::ScalarCut {
                 turn: 0,
@@ -90,32 +112,94 @@ impl DirectedCurve {
         cut: crossed::ScalarCut,
         scale: f64,
         angular: f64,
-    ) -> Checked<Option<Crossing>> {
+    ) -> Checked<Vec<Crossing>> {
         let signed = self.points.iter().map(|p| cut.signed(p[0]));
         let (bounds, denominator) = self.homogeneous(signed);
         let scale = (scale * denominator).next_up();
         let margin = (scale * angular).next_up();
-        let Some(direction) = crossing_direction(self.id, &bounds, margin)? else {
-            return Ok(None);
+        let Some(sides) = crossing_sides(self.id, &bounds, margin)? else {
+            return Ok(Vec::new());
         };
+        if sides[0] == sides[1] {
+            return self.repeated_crossings(cut.turn, &bounds, sides, scale);
+        }
+        let direction = direction(sides[0]);
         let speed = monotone(&bounds, direction, margin, scale)?;
-        let normalized_parameter = isolate_between(&bounds)?;
+        let parameter = isolate_between(&bounds)?;
+        let crossing = self.crossing_record(
+            PeriodicCrossingId {
+                curve: self.id,
+                turn: cut.turn,
+                ordinal: 0,
+                transition: direction,
+            },
+            parameter,
+            AngularSpeed::Whole(speed),
+            self.height_hull(),
+        );
+        Ok(vec![crossing])
+    }
+
+    fn repeated_crossings(
+        &self,
+        turn: i64,
+        bounds: &[[f64; 2]],
+        sides: [i8; 2],
+        scale: f64,
+    ) -> Checked<Vec<Crossing>> {
+        let controls = bounds.try_into().map_err(|_| {
+            incomplete(
+                "three signed controls for two transverse quadratic roots",
+                format!("{:?}", self.id),
+            )
+        })?;
+        let events = repeated::isolate_two(controls, sides)?;
+        let [a, b] = events;
+        Ok(vec![
+            self.repeated_record(turn, 0, a, scale)?,
+            self.repeated_record(turn, 1, b, scale)?,
+        ])
+    }
+
+    fn repeated_record(
+        &self,
+        turn: i64,
+        ordinal: u8,
+        event: repeated::Event,
+        scale: f64,
+    ) -> Checked<Crossing> {
         let id = PeriodicCrossingId {
             curve: self.id,
-            turn: cut.turn,
-            transition: direction,
+            turn,
+            ordinal,
+            transition: event.transition,
         };
-        let height_hull = self.height_hull();
-        Ok(Some(Crossing {
+        let meridian = self.height_bound_at(event.parameter)?;
+        cylinder_admission::finite("repeated source root meridian enclosure", &meridian)?;
+        let speed = AngularSpeed::Restricted {
+            derivative: event.derivative,
+            scale,
+        };
+        Ok(self.crossing_record(id, event.parameter, speed, meridian))
+    }
+
+    fn crossing_record(
+        &self,
+        id: PeriodicCrossingId,
+        normalized_parameter: [f64; 2],
+        speed: AngularSpeed,
+        height_hull: [f64; 2],
+    ) -> Crossing {
+        Crossing {
             report: PeriodicCrossing {
                 id,
                 normalized_parameter,
             },
             ends: self.ends,
-            angular_speed: speed,
+            speed,
             height_hull,
-            contour_transition: direction.oriented(self.reversed),
-        }))
+            contour_transition: id.transition.oriented(self.reversed),
+        }
     }
 
     fn homogeneous(&self, values: impl Iterator<Item = [f64; 2]>) -> (Vec<[f64; 2]>, f64) {
@@ -127,6 +211,34 @@ impl DirectedCurve {
             .zip(weights)
             .map(|(pair, weight)| scale_bounds(pair, weight));
         (bounds.collect(), max)
+    }
+
+    fn height_bound_at(&self, t: [f64; 2]) -> Checked<[f64; 2]> {
+        let [a, b, c] = self.points.as_slice() else {
+            return Err(incomplete(
+                "quadratic meridian controls",
+                format!("{:?}", self.id),
+            ));
+        };
+        let heights = [a[1], b[1], c[1]];
+        let Some(weights) = self.weights else {
+            return Ok(repeated::bezier_value(heights.map(|h| [h; 2]), t));
+        };
+        let controls: [[f64; 2]; 3] =
+            std::array::from_fn(|i| scale_bounds([heights[i]; 2], weights[i]));
+        let numerator = repeated::bezier_value(controls, t);
+        let denominator = repeated::bezier_value(weights.map(|w| [w; 2]), t);
+        cylinder_admission::require(
+            denominator[0] > 0.,
+            "meridian root denominator",
+            denominator[0],
+            "strictly positive enclosure on the original root interval",
+        )?;
+        let reciprocal = [
+            (1. / denominator[1]).next_down(),
+            (1. / denominator[0]).next_up(),
+        ];
+        Ok(repeated::multiply(numerator, reciprocal))
     }
 
     fn height_hull(&self) -> [f64; 2] {
@@ -165,32 +277,40 @@ fn scale_bounds([a, b]: [f64; 2], weight: f64) -> [f64; 2] {
     [(a * weight).next_down(), (b * weight).next_up()]
 }
 
-fn crossing_direction(
+fn crossing_sides(
     curve: SurfaceCurveId,
     bounds: &[[f64; 2]],
     margin: f64,
-) -> Checked<Option<SheetTransition>> {
-    let side = |[a, b]: [f64; 2]| {
-        if a > margin {
-            1
-        } else if b < -margin {
-            -1
-        } else {
-            0
-        }
-    };
-    let first = side(bounds[0]);
-    let last = side(bounds[bounds.len() - 1]);
-    if first != 0 && bounds.iter().all(|&bound| side(bound) == first) {
-        return Ok(None);
-    }
-    match [first, last] {
-        [-1, 1] => Ok(Some(SheetTransition::Increasing)),
-        [1, -1] => Ok(Some(SheetTransition::Decreasing)),
-        _ => Err(incomplete(
+) -> Checked<Option<[i8; 2]>> {
+    let first = sign(bounds[0], margin);
+    let last = sign(bounds[bounds.len() - 1], margin);
+    if first == 0 || last == 0 {
+        return Err(incomplete(
             "transverse crossing clear of authored corners",
             format!("{curve:?}: {bounds:?}"),
-        )),
+        ));
+    }
+    if bounds.iter().all(|&bound| sign(bound, margin) == first) {
+        return Ok(None);
+    }
+    Ok(Some([first, last]))
+}
+
+fn direction(side: i8) -> SheetTransition {
+    if side < 0 {
+        SheetTransition::Increasing
+    } else {
+        SheetTransition::Decreasing
+    }
+}
+
+fn sign([a, b]: [f64; 2], margin: f64) -> i8 {
+    if a > margin {
+        1
+    } else if b < -margin {
+        -1
+    } else {
+        0
     }
 }
 
@@ -225,35 +345,43 @@ fn isolate_between(controls: &[[f64; 2]]) -> Checked<[f64; 2]> {
         .iter()
         .map(|interval| interval[1])
         .collect::<Vec<_>>();
-    let first = isolate(&lower)?;
+    let first = isolate(&lower, 1)?[0];
     if lower == upper {
         return Ok(first);
     }
-    let second = isolate(&upper)?;
+    let second = isolate(&upper, 1)?[0];
     Ok([first[0].min(second[0]), first[1].max(second[1])])
 }
 
-fn isolate(values: &[f64]) -> Checked<[f64; 2]> {
-    let roots = isolate_bernstein_roots(
+fn isolate(values: &[f64], expected: usize) -> Checked<Vec<[f64; 2]>> {
+    let partition = isolate_bernstein_roots(
         values,
         [0., 1.],
         RootIsolationOptions::new(1. / (1u64 << 48) as f64),
         || false,
     )
     .map_err(|cause| incomplete("exact curved cut root isolation", format!("{cause:?}")))?;
-    let [root] = roots.roots() else {
+    let roots = partition.roots();
+    if roots.len() != expected {
         return Err(incomplete(
-            "one distinct transverse source root",
-            format!("{:?}", roots.roots()),
+            "expected distinct transverse source roots",
+            format!("{roots:?}"),
         ));
-    };
-    let (lo, hi) = root.bounds();
-    let pair = lo
-        .binary64_bounds()
-        .zip(hi.binary64_bounds())
-        .map(|(a, b)| [a[0], b[1]]);
-    pair.filter(|[a, b]| root.multiplicity() == 1 && 0. < *a && *b < 1.)
-        .ok_or_else(|| incomplete("interior simple source root bounds", format!("{root:?}")))
+    }
+    roots
+        .iter()
+        .map(|root| {
+            let (lo, hi) = root.bounds();
+            let pair = lo
+                .binary64_bounds()
+                .zip(hi.binary64_bounds())
+                .map(|(a, b)| [a[0], b[1]]);
+            pair.filter(|[a, b]| root.multiplicity() == 1 && 0. < *a && *b < 1.)
+                .ok_or_else(|| {
+                    incomplete("interior simple source root bounds", format!("{root:?}"))
+                })
+        })
+        .collect()
 }
 
 fn vertex(profile: &SketchProfile, id: ProfileVertexId) -> Checked<[f64; 2]> {

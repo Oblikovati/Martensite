@@ -36,6 +36,8 @@ pub struct PeriodicCrossingId {
     pub curve: SurfaceCurveId,
     /// Cut lift relative to the authored zero-arc meridian.
     pub turn: i64,
+    /// Zero-based ordinal among distinct roots on this authored curve and signed cut.
+    pub ordinal: u8,
     /// Forward authored-curve direction across the lift.
     pub transition: SheetTransition,
 }
@@ -132,6 +134,7 @@ fn crossing(
         id: PeriodicCrossingId {
             curve,
             turn,
+            ordinal: 0,
             transition,
         },
         normalized_parameter: [low, high],

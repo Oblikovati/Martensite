@@ -5,7 +5,7 @@ use martensite_tkbo::profile_extrusion::{ProfilePlane, SketchProfile};
 
 mod cone;
 mod curve;
-use curve::DirectedCurve;
+use curve::{AngularSpeed, DirectedCurve};
 
 pub(super) struct AperturePlan {
     pub stock: band_admission::BandSection,
@@ -38,9 +38,15 @@ pub(super) enum SourceModel {
 pub(super) struct Crossing {
     pub report: PeriodicCrossing,
     pub ends: [SurfaceVertexId; 2],
-    pub angular_speed: f64,
+    speed: AngularSpeed,
     pub height_hull: [f64; 2],
     contour_transition: SheetTransition,
+}
+
+impl Crossing {
+    pub(super) fn angular_speed(self, span: [f64; 2]) -> Checked<f64> {
+        self.speed.certify(span, self.report.id.transition)
+    }
 }
 
 impl AperturePlan {
