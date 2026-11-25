@@ -46,13 +46,14 @@ pub use result::{
 };
 pub use wrapped_profile::ConicalStockFailure;
 pub use wrapped_profile::{
-    CertifiedConeAttachmentReport, CertifiedConeFeatureResult, ConeFeatureResult,
-    ConeFootprintFailure, ConeFootprintReport, ConeRegionFootprint, ConeTrimmedTool,
-    CylinderBodyRef, CylinderFeatureCause, CylinderFeatureFailure, CylinderFeatureHistory,
-    CylinderFeatureKind, CylinderFeatureParent, CylinderFeatureRelation, CylinderFeatureResult,
-    CylinderFeatureSource, CylinderFeatureStage, CylinderFootprintFailure, CylinderFootprintReport,
-    CylinderTrimmedTool, DetachedCylinderFeature, DetachedWrappedBodies, DetachedWrappedFeature,
-    OuterTrimRefusal, RationalWrappedFailure, RationalWrappedResult, WrappedAdmittedArcMap,
+    CertifiedConeAttachmentReport, CertifiedConeFeatureResult, CertifiedCylinderAttachmentReport,
+    CertifiedCylinderFeatureResult, ConeFeatureResult, ConeFootprintFailure, ConeFootprintReport,
+    ConeRegionFootprint, ConeTrimmedTool, CylinderBodyRef, CylinderFeatureCause,
+    CylinderFeatureFailure, CylinderFeatureHistory, CylinderFeatureKind, CylinderFeatureParent,
+    CylinderFeatureRelation, CylinderFeatureResult, CylinderFeatureSource, CylinderFeatureStage,
+    CylinderFootprintFailure, CylinderFootprintReport, CylinderTrimmedTool,
+    DetachedCylinderFeature, DetachedWrappedBodies, DetachedWrappedFeature, OuterTrimRefusal,
+    RationalWrappedFailure, RationalWrappedResult, WrappedAdmittedArcMap,
     WrappedAnalyticArcEndpoint, WrappedAnalyticArcMap, WrappedBudgetReport, WrappedCertifiedBound,
     WrappedCertifiedRange, WrappedChartNormalResult, WrappedChartPlacementReport,
     WrappedConeArithmeticGrantPolicy, WrappedConeArithmeticGrantReceipt,
