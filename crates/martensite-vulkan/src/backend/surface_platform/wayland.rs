@@ -26,6 +26,8 @@ impl PlatformSurfaceFactory for WaylandSurfaceFactory {
         window: &Handle<dyn AspectWindow>,
     ) -> Result<vk::SurfaceKHR, RenderError> {
         let display_address = checked_native_display(runtime, window)?;
+        // AspectDrawable is usize on Windows and c_ulong on Unix.
+        #[allow(clippy::useless_conversion)]
         let surface_address = usize::try_from(window.native_handle())
             .map_err(|_| rejected(window.native_handle(), "a wl_surface pointer fitting usize"))?;
         let wayland = ash::khr::wayland_surface::Instance::new(&runtime.entry, &runtime.instance);
