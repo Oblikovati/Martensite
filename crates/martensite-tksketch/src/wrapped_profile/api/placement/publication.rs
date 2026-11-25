@@ -18,6 +18,7 @@ pub(in crate::surface_sketch::wrapped_profile) fn publish(
 }
 pub(super) struct PhysicalPublication<B> {
     pub bytes: Vec<u8>,
+    pub graph: super::super::super::frozen_placement::DecodedGraph,
     pub budget: B,
     pub members: BTreeMap<SurfaceRegionId, WrappedWorldSpatialReport>,
 }
@@ -41,6 +42,7 @@ pub(super) fn finish<B: PlacementBudget>(
     result.budget.spatial_error = result.options.spatial_error;
     Ok(PhysicalPublication {
         bytes: physical.bytes,
+        graph: (physical.root, physical.bindings),
         budget: plan.budget,
         members,
     })

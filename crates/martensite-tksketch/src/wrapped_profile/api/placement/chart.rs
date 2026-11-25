@@ -1,5 +1,6 @@
 //! Versioned chart placement retains independent rotation evidence without changing legacy results.
 use super::*;
+use crate::surface_sketch::encoding;
 mod material;
 use martensite_tkmath::predicates::roots::metric_bounds::CertifiedRotatedFrameSpatialBudget;
 /// Physical graph and rotation-aware bounds for chart behavior version one.
@@ -16,6 +17,11 @@ pub struct WrappedChartPlacementReport {
     /// Achieved physical bounds for every authored region.
     pub members: BTreeMap<SurfaceRegionId, WrappedWorldSpatialReport>,
 }
+pub(in crate::surface_sketch::wrapped_profile::api) struct ChartGraph {
+    root: Shape,
+    bindings: Vec<(BindingKey, Shape)>,
+}
+
 impl WrappedChartNormalResult {
     /// Selected replay behavior; `assert_eq!(result.behavior_version(), 1)`.
     pub fn behavior_version(&self) -> u32 {
@@ -63,6 +69,19 @@ impl WrappedChartNormalResult {
         result::export_bytes(&self.base, &self.bytes)
     }
 
+    pub(in crate::surface_sketch::wrapped_profile::api) fn attachment_operand(
+        &self,
+        graph: ChartGraph,
+    ) -> Checked<DetachedWrappedBodies> {
+        let archived = encoding::encode(&graph.root, &graph.bindings);
+        if !archived.is_ok_and(|actual| actual == self.bytes) {
+            // Ordered native checks may update the working graph after its archive was issued.
+            drop(graph);
+            return self.export_native();
+        }
+        result::export_graph(&self.base, (graph.root, graph.bindings))
+    }
+
     pub(in crate::surface_sketch::wrapped_profile::api) fn fitted_sources(&self) -> &[Request] {
         &self.base.family.family.selection.prepared.prepared
     }
@@ -82,13 +101,13 @@ pub fn normal_extrude_profile_on_chart_with_cancel(
 ) -> Checked<WrappedChartNormalResult> {
     input::poll(&mut cancelled, WrappedStage::Admission)?;
     let inputs = input::read_canonical_chart(request, &mut cancelled)?;
-    from_canonical_inputs(request, inputs, &mut cancelled)
+    qualify_chart(request, inputs, &mut cancelled).map(|(result, _)| result)
 }
-pub(in crate::surface_sketch::wrapped_profile::api) fn from_canonical_inputs(
+pub(in crate::surface_sketch::wrapped_profile::api) fn qualify_chart(
     request: &WrappedNormalRequest,
     mut inputs: input::Inputs,
     cancelled: &mut CancelPoll<'_>,
-) -> Checked<WrappedChartNormalResult> {
+) -> Checked<(WrappedChartNormalResult, ChartGraph)> {
     let plan = chart_admission::prepare(request, &inputs.requests)?;
     for source in &mut inputs.requests {
         source.tolerance = plan.budget.canonical_allowance();
@@ -96,20 +115,16 @@ pub(in crate::surface_sketch::wrapped_profile::api) fn from_canonical_inputs(
     let mut base = operation::from_inputs(request, inputs, cancelled)?;
     let physical = publish_chart(&mut base, plan, cancelled)?;
     input::poll(cancelled, WrappedStage::Publication)?;
-    Ok(assemble(base, physical))
-}
-fn assemble(
-    base: WrappedNormalResult,
-    physical: publication::PhysicalPublication<CertifiedRotatedFrameSpatialBudget>,
-) -> WrappedChartNormalResult {
-    WrappedChartNormalResult {
+    let result = WrappedChartNormalResult {
         base,
         bytes: physical.bytes,
         placement: WrappedChartPlacementReport {
             spatial_budget: physical.budget,
             members: physical.members,
         },
-    }
+    };
+    let (root, bindings) = physical.graph;
+    Ok((result, ChartGraph { root, bindings }))
 }
 
 fn publish_chart(

@@ -14,7 +14,6 @@ mod admission;
 mod chart;
 mod chart_admission;
 mod cone;
-pub(super) use chart::from_canonical_inputs;
 pub use chart::*;
 pub use cone::*;
 pub(super) use cone::{attachment_tool, cone_on_chart};

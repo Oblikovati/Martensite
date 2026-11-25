@@ -16,6 +16,46 @@ fn cylinder_band_pocket_publishes_a_single_solid_with_composed_history() {
 }
 
 #[test]
+fn cylindrical_attachment_handoff_preserves_the_legacy_fresh_operand_result() {
+    let attachment = attachment(None);
+    for (kind, normal) in [
+        (CylinderFeatureKind::Boss, NormalSense::Outward),
+        (CylinderFeatureKind::Pocket, NormalSense::Inward),
+    ] {
+        let mut request = request(&attachment, [-0.25, 0.25], [1., 2.]);
+        request.support.normal = normal;
+        let actual = attachment
+            .apply_wrapped_profile(REVISION, kind, &request)
+            .unwrap();
+        let legacy = from_fresh_operand(&attachment, &actual);
+        assert_eq!(actual.encoded_brep(), legacy.bytes);
+        assert_eq!(actual.history(), &legacy.history);
+        assert_eq!(actual.validation(), &legacy.validation);
+    }
+}
+
+fn from_fresh_operand(
+    attachment: &CylinderFaceAttachment,
+    feature: &CylinderFeatureResult,
+) -> FeatureArchive {
+    let attempt = Attempt {
+        attachment: attachment.record().id,
+        revision: REVISION,
+        kind: feature.kind(),
+    };
+    let source = attachment.export_native(REVISION).unwrap();
+    apply_material(
+        attempt,
+        &source.face,
+        &source.body,
+        feature.tool().extrusion().export_native().unwrap(),
+        &attachment.record().resolution,
+        &mut || false,
+    )
+    .unwrap()
+}
+
+#[test]
 fn indirect_cylinder_from_planar_circle_admits_wrapped_boss_and_pocket() {
     let attachment = indirect_extruded_circle();
     let frame = attachment
