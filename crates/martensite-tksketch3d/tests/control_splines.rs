@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
+mod replay;
+
 use crate::fixture::{lid, line, pid, point, seed};
 use martensite_tkmath::predicates::roots::metric_bounds::BezierRegularityDecision;
 use martensite_tksketch3d::{
@@ -149,9 +151,11 @@ fn g2_owned_line_spline_and_spline_spline_endpoint_jets() {
     let paired = left_spline(&moved);
     let left = paired.control_spline(sid(11)).unwrap();
     assert_eq!(left.recipe().endpoints()[1], right.recipe().endpoints()[0]);
-    assert_eq!(rows(left.jet(1.).unwrap()), expected);
+    let left_jet = left.jet(1.).unwrap();
+    assert_eq!(rows(left_jet), expected);
     // Here the second derivative is already perpendicular to the velocity.
-    assert_eq!(expected[2][1] / expected[1][0].powi(2), 2. / 3.);
+    let speed = left_jet.first.x();
+    assert_eq!(left_jet.second.y() / (speed * speed), 2. / 3.);
     assert_eq!(rows(original.jet(0.).unwrap())[2], [0.; 3]);
 }
 
