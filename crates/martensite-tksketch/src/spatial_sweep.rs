@@ -74,7 +74,8 @@ pub fn sweep_rounded_shell(
         &admission,
         &mut cancelled,
     )?;
-    let (images, evidence) = pending.complete(&admission, options, &mut cancelled)?;
+    let (images, mut evidence) = pending.complete(&admission, options, &mut cancelled)?;
+    include_wire_trace(&mut evidence, &wires);
     poll(&mut cancelled, SweepStage::Publication)?;
     Ok(SweepResult::new(
         shell,
@@ -119,6 +120,14 @@ fn prepare(
         shell,
         terminals: [first, last],
     })
+}
+
+fn include_wire_trace(evidence: &mut SweepSupportEvidence, wires: &[DetachedWire; 2]) {
+    for wire in wires {
+        evidence.achieved_trace_bound = evidence
+            .achieved_trace_bound
+            .max(wire.validation.curve_error_bound);
+    }
 }
 
 fn materialize(

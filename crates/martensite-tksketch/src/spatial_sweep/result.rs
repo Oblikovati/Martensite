@@ -84,8 +84,12 @@ pub struct SweepSupportEvidence {
     pub revolved_corners: usize,
     /// Number of terminal vertices matched by exact authored lineage and placement.
     pub terminal_vertices: usize,
-    /// Explicit model-space bound accepted by the carrier and terminal checks.
+    /// Requested maximum spatial trace error in model units.
     pub trace_limit: f64,
+    /// Largest achieved spatial L1 upper bound across the certified input wire
+    /// images, source-bound face spans, retained trim and vertex joins, and
+    /// transported terminals. The solid also includes the two cap boundaries.
+    pub achieved_trace_bound: f64,
 }
 
 /// Completed checked open sheet, with native input/output proof and private topology.
@@ -165,7 +169,12 @@ impl SweepResult {
             .iter()
             .map(|source| {
                 poll(&mut cancelled, SweepStage::Export)?;
-                let shape = copy.bind(&source.shape).map_err(copy_failure)?;
+                let shape = if matches!(&source.history, SweepHistory::Face(_)) {
+                    copy.bind_face_occurrence(&source.shape)
+                } else {
+                    copy.bind(&source.shape)
+                }
+                .map_err(copy_failure)?;
                 Ok(SweepImage {
                     history: source.history.clone(),
                     shape,

@@ -2,15 +2,26 @@
 //! Real native trim mutations preserve the carrier and previously bound occurrence key.
 use super::{Face, PendingShell, snapshot};
 use crate::spatial_sweep::{
-    Prepared, SweepFailure, SweepOptions,
+    Prepared, SolidSweepHistory, SolidSweepOptions, SweepFailure, SweepHistory, SweepOptions,
+    SweepPathPart,
     admission::Admission,
-    prepare,
-    trim_proof::{Trig, verify_lateral},
+    geometry::trim_basis,
+    prepare, sweep_rounded_solid,
+    trim_proof::{Trig, certify, verify_lateral},
 };
 use martensite_tkbo::profile_extrusion::{DisplayTolerance, Resolution, ToleranceCap};
-use martensite_tkbrep::brep::BRepTool;
-use martensite_tkg3d::geom::{GeomRectangularTrimmedSurface, GeomSurface};
-use martensite_tkmath::gp::Point3;
+use martensite_tkbrep::{
+    brep::{BRepBuilder, BRepTool, EdgePCurve},
+    topexp::Explorer,
+    topods::{self, Edge},
+};
+use martensite_tkernel::standard::Handle;
+use martensite_tkg2d::geom2d::{Geom2dCircle, Geom2dGeometry};
+use martensite_tkg3d::{
+    geom::{GeomPlane, GeomRectangularTrimmedSurface, GeomSurface},
+    top_abs::ShapeEnum,
+};
+use martensite_tkmath::gp::{Point3, Vector2};
 use martensite_tksketch3d::{
     Edit, LineId, MinimumLength, PointId, PointRole, SketchLine, SketchPoint, Snapshot,
     wire::{DirectedLineUse, LineDirection, WireClosure, WireRecipe},
@@ -71,7 +82,7 @@ fn actual_revolved_corner_with_the_same_carrier_and_key_refuses_a_clipped_wire()
             if expected == "the actual four directed, exact UV iso sides of the revolution rectangle"));
 }
 
-fn verify(admission: &Admission, face: &Face, revolved: bool) -> Result<(), SweepFailure> {
+fn verify(admission: &Admission, face: &Face, revolved: bool) -> Result<f64, SweepFailure> {
     verify_lateral(
         admission,
         face,
@@ -91,7 +102,7 @@ fn select(shell: PendingShell, side: usize, station: usize, corner: bool) -> Fac
         .unwrap()
 }
 
-fn fixture() -> (Admission, PendingShell) {
+fn recipes() -> (WireRecipe, WireRecipe) {
     let route = wire(
         [[0., 0., 0.], [4., 0., 0.], [4., 4., 0.], [4., 4., 4.]],
         WireClosure::Open,
@@ -105,7 +116,11 @@ fn fixture() -> (Admission, PendingShell) {
         ],
         WireClosure::Closed,
     );
-    let options = SweepOptions {
+    (route, profile)
+}
+
+fn options() -> SweepOptions {
+    SweepOptions {
         resolution: Resolution::new(
             1e-6,
             1e-6,
@@ -119,7 +134,12 @@ fn fixture() -> (Admission, PendingShell) {
         boundary_tolerance: 1e-6,
         source_trace_limit: LIMIT,
         approximation_limit: 1e-6,
-    };
+    }
+}
+
+fn fixture() -> (Admission, PendingShell) {
+    let (route, profile) = recipes();
+    let options = options();
     let Prepared {
         admission,
         wires,
@@ -132,6 +152,91 @@ fn fixture() -> (Admission, PendingShell) {
     })
     .unwrap();
     (admission, pending)
+}
+
+#[test]
+fn a_rounded_pcurve_offset_charges_the_actual_common_edge_closure() {
+    let (spine, profile) = recipes();
+    let options = SolidSweepOptions {
+        sweep: options(),
+        volume_error_limit: 1e-6,
+    };
+    let result = sweep_rounded_solid(&spine, &profile, options, || false).unwrap();
+    let native = result.export_brep(|| false).unwrap();
+    let baseline = certify(&native.images, [0.; 3], options, &mut || false).unwrap();
+    let (face, edge, active) = rounded_seam(&native);
+    shift_planar_circle(&face, &edge, active, 2e-10);
+    let perturbed = certify(&native.images, [0.; 3], options, &mut || false).unwrap();
+    assert!(baseline.closure > 0. && baseline.closure < 1e-11);
+    assert!(perturbed.closure > 1e-10 && perturbed.closure <= perturbed.measured.error_bound);
+    assert!(perturbed.trace > 1e-10 && perturbed.trace < LIMIT);
+    assert!(
+        perturbed
+            .measured
+            .encloses(11.5 + std::f64::consts::PI / 8.)
+    );
+    let strict = SolidSweepOptions {
+        volume_error_limit: perturbed.closure * 0.5,
+        ..options
+    };
+    assert!(
+        certify(
+            &result.export_brep(|| false).unwrap().images,
+            [0.; 3],
+            strict,
+            &mut || false
+        )
+        .is_ok()
+    );
+    assert!(
+        matches!(certify(&native.images, [0.; 3], strict, &mut || false),
+        Err(SweepFailure::VolumeErrorBound { bound, limit }) if bound >= perturbed.closure && limit < perturbed.closure)
+    );
+}
+
+fn rounded_seam(
+    native: &crate::spatial_sweep::DetachedSolidSweep,
+) -> (topods::Face, Edge, EdgePCurve) {
+    native
+        .images
+        .iter()
+        .find_map(|image| {
+            if !matches!(&image.history, SolidSweepHistory::Lateral(SweepHistory::Face(source))
+            if matches!(source.path, SweepPathPart::Corner { .. }))
+            {
+                return None;
+            }
+            let face = topods::face(&image.shape).unwrap();
+            let surface = BRepTool::surface(&face).unwrap();
+            surface.downcast_ref::<GeomPlane>()?;
+            let mut arcs = Explorer::new(&face, ShapeEnum::Edge, ShapeEnum::Shape).unwrap();
+            Iterator::find_map(&mut arcs, |edge| {
+                let edge = topods::edge(&edge).unwrap();
+                let active = trim_basis(BRepTool::curve_on_face(&edge, &face).unwrap())?;
+                active.pcurve.downcast_ref::<Geom2dCircle>()?;
+                Some((face.clone(), edge, active))
+            })
+        })
+        .unwrap()
+}
+
+fn shift_planar_circle(face: &topods::Face, edge: &Edge, active: EdgePCurve, shift: f64) {
+    let circle = active
+        .pcurve
+        .downcast_ref::<Geom2dCircle>()
+        .unwrap()
+        .circ2d()
+        .unwrap();
+    let adjusted = Geom2dCircle::from_circ2d(circle);
+    adjusted.translate(Vector2::new(shift, 0.)).unwrap();
+    let handle = Handle::new(adjusted).into_upcast();
+    let builder = BRepBuilder::default();
+    builder
+        .update_edge_pcurve_on_face(edge, &handle, face, 1e-7)
+        .unwrap();
+    builder
+        .range_on_face(edge, face, active.first, active.last)
+        .unwrap();
 }
 
 fn wire(values: [[f64; 3]; 4], closure: WireClosure) -> WireRecipe {

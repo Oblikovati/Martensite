@@ -32,7 +32,7 @@ pub(super) fn bind(
     admission: &Admission,
     options: SweepOptions,
     cancelled: &mut impl FnMut() -> bool,
-) -> Result<Vec<SolidSweepImage>, Failure> {
+) -> Result<(Vec<SolidSweepImage>, f64), Failure> {
     let final_members = [
         members(solid, ShapeEnum::Face)?,
         members(solid, ShapeEnum::Edge)?,
@@ -52,10 +52,9 @@ pub(super) fn bind(
         admission,
         limit: options.source_trace_limit,
     };
-    let mut images = vec![
-        context.binding(&opening, &final_members[0], 0)?,
-        context.binding(&closing, &final_members[0], 3)?,
-    ];
+    let (low, low_bound) = context.binding(&opening, &final_members[0], 0)?;
+    let (high, high_bound) = context.binding(&closing, &final_members[0], 3)?;
+    let mut images = vec![low, high];
     for image in lateral {
         poll(cancelled, Stage::Binding)?;
         images.push(bind_lateral(image, &final_members)?);
@@ -64,7 +63,7 @@ pub(super) fn bind(
     if images.len() != images_count || images[0].shape.is_same(&images[1].shape) {
         return Err(Failure::Binding("a complete final solid member census"));
     }
-    Ok(images)
+    Ok((images, low_bound.max(high_bound)))
 }
 
 struct CapContext<'a> {
@@ -80,26 +79,28 @@ impl CapContext<'_> {
         source: &Shape,
         final_faces: &IndexedMapOfShape,
         station: usize,
-    ) -> Result<SolidSweepImage, Failure> {
+    ) -> Result<(SolidSweepImage, f64), Failure> {
         let image = retained(source, final_faces)?;
         let native = native(topods::face(&image), Stage::Binding)?;
-        self.verify(&native, station)?;
-        Ok(SolidSweepImage {
+        let bound = self.verify(&native, station)?;
+        let cap = SolidSweepImage {
             shape: image,
             history: SolidSweepHistory::Cap {
                 station: self.admission.stations[station].point,
                 profile: self.profile,
             },
-        })
+        };
+        Ok((cap, bound))
     }
 
-    fn verify(&self, face: &Face, station: usize) -> Result<(), Failure> {
+    fn verify(&self, face: &Face, station: usize) -> Result<f64, Failure> {
         let boundary = members(face, ShapeEnum::Edge)?;
         if boundary.extent() != 4 || members(face, ShapeEnum::Wire)?.extent() != 1 {
             return Err(Failure::SolidClosure);
         }
         let plane = plane(face)?;
         let mut seen = [false; 4];
+        let mut maximum = 0.0_f64;
         for i in 1..=boundary.extent() {
             let shape = native(boundary.find_key(i), Stage::Binding)?;
             let source = self.side_source(shape, station)?;
@@ -110,9 +111,9 @@ impl CapContext<'_> {
             }
             let edge = native(topods::edge(shape), Stage::Binding)?;
             let expected = self.endpoints(source, station);
-            check_edge(&edge, face, plane, expected, self.limit)?;
+            maximum = maximum.max(check_edge(&edge, face, plane, expected, self.limit)?);
         }
-        Ok(())
+        Ok(maximum)
     }
 
     fn side_source(&self, shape: &Shape, station: usize) -> Result<usize, Failure> {
@@ -163,7 +164,7 @@ fn check_edge(
     plane: Axis3,
     expected: [Point; 2],
     limit: f64,
-) -> Result<(), Failure> {
+) -> Result<f64, Failure> {
     let representation = "literal affine native cap boundary mapped to the authored rectangle";
     let spatial = native(BRepTool::curve_with_location(edge), Stage::Binding)?;
     let spatial = affine_curve::spatial(&spatial, false, true, [0.; 3])

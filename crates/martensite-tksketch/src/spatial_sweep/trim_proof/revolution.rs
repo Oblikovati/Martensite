@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Integrate the actual linear meridian and precisely owned rectangular UV domain.
-use super::trim::Trim;
+use super::{
+    Contribution, TraceEvidence,
+    trim::{CurveBounds, Trim},
+};
 use super::{
     FaceProof, Failure, Point, Span, Stage, Trig, coefficients, dot, inverse, offset,
     plane::{coefficient_error, endpoint_error},
@@ -21,9 +24,9 @@ pub(super) fn flux(
     proof: FaceProof,
     trig: &mut Trig,
     cancelled: &mut impl FnMut() -> bool,
-) -> Result<Span, Failure> {
+) -> Result<Contribution, Failure> {
     let patch = Patch::decode(trimmed, proof)?;
-    let sign = boundary(trimmed.bounds(), &patch, trims, trig, proof, cancelled)?;
+    let (sign, trace) = boundary(trimmed.bounds(), &patch, trims, trig, proof, cancelled)?;
     let [c0, s0] = coefficients(trig, patch.angle[0])?;
     let [c1, s1] = coefficients(trig, patch.angle[1])?;
     let moments = [
@@ -31,7 +34,10 @@ pub(super) fn flux(
         c0 - c1,
         Span::at(patch.angle[1]) - Span::at(patch.angle[0]),
     ];
-    Ok(sign * patch.integral(moments))
+    Ok(Contribution {
+        value: sign * patch.integral(moments),
+        trace,
+    })
 }
 
 pub(super) fn verify_model(
@@ -40,10 +46,10 @@ pub(super) fn verify_model(
     proof: FaceProof,
     trig: &mut Trig,
     cancelled: &mut impl FnMut() -> bool,
-) -> Result<(), Failure> {
+) -> Result<f64, Failure> {
     let patch = Patch::decode(trimmed, proof)?;
-    boundary(trimmed.bounds(), &patch, trims, trig, proof, cancelled)?;
-    Ok(())
+    let (_, trace) = boundary(trimmed.bounds(), &patch, trims, trig, proof, cancelled)?;
+    Ok(trace.bound)
 }
 
 struct Patch {
@@ -156,7 +162,7 @@ fn boundary(
     trig: &mut Trig,
     proof: FaceProof,
     cancelled: &mut impl FnMut() -> bool,
-) -> Result<Span, Failure> {
+) -> Result<(Span, TraceEvidence), Failure> {
     let expected =
         || proof.refuse("the actual four directed, exact UV iso sides of the revolution rectangle");
     let corners = [[u0, v0], [u1, v0], [u1, v1], [u0, v1]].map(|p| p.map(Span::at));
@@ -188,11 +194,13 @@ fn boundary(
     {
         return Err(expected());
     }
+    let mut trace = TraceEvidence::ZERO;
     for (trim, edge) in trims.iter().zip(edges) {
         poll(cancelled, Stage::Integration)?;
-        compare_active_curve(patch, trim, edge, proof, trig)?;
+        trace = trace.merge(compare_active_curve(patch, trim, edge, proof, trig)?);
     }
-    Ok(if positive { Span::ONE } else { -Span::ONE })
+    let sign = if positive { Span::ONE } else { -Span::ONE };
+    Ok((sign, trace))
 }
 
 fn compare_active_curve(
@@ -201,7 +209,7 @@ fn compare_active_curve(
     corners: [usize; 2],
     proof: FaceProof,
     trig: &mut Trig,
-) -> Result<(), Failure> {
+) -> Result<TraceEvidence, Failure> {
     let ports = corners.map(|i| (usize::from(matches!(i, 1 | 2)), usize::from(i >= 2)));
     let a = coefficients(trig, patch.angle[ports[0].0])?;
     let b = coefficients(trig, patch.angle[ports[1].0])?;
@@ -209,27 +217,51 @@ fn compare_active_curve(
         rotate(patch.section(ports[0].1), a),
         rotate(patch.section(ports[1].1), b),
     ];
-    trim::vertex_trace(trim, points, proof)?;
     if ports[0].0 == ports[1].0 {
         let line = trim
             .linear_xyz(proof.reference)
             .ok_or_else(|| proof.refuse("an affine native 3D meridian for an active U iso edge"))?;
-        return trim::require(
+        return trim::seam_trace(
+            trim,
+            points,
             endpoint_error(points, line),
+            [CurveBounds::line(points), CurveBounds::line(line)],
             proof,
-            "coincident native meridian and revolution U iso edge",
         );
     }
+    circular_iso(patch, trim, points, ports[0].1, proof)
+}
+
+fn circular_iso(
+    patch: &Patch,
+    trim: &Trim,
+    points: [Point; 2],
+    station: usize,
+    proof: FaceProof,
+) -> Result<TraceEvidence, Failure> {
+    let expected = || {
+        proof.refuse(
+            "the literal same-angle spatial and chart ranges of the retained circular iso edge",
+        )
+    };
     let circle = trim::spatial_circle(trim, proof)?;
-    if trim.pcurve.first != patch.angle[0] || trim.pcurve.last != patch.angle[1] {
-        return Err(
-            proof.refuse("the literal native angular parameter of the retained circular iso edge")
-        );
+    let unoriented = affine_curve::planar(&trim.pcurve, false, true).ok_or_else(expected)?;
+    if [trim.pcurve.first, trim.pcurve.last] != patch.angle
+        || unoriented.map(|point| point[0]) != patch.angle.map(Span::at)
+    {
+        return Err(expected());
     }
-    trim::require(
-        coefficient_error(patch.section(ports[0].1), circle),
+    let chart = patch.section(station);
+    let width = Span::at(patch.angle[1]) - Span::at(patch.angle[0]);
+    trim::seam_trace(
+        trim,
+        points,
+        coefficient_error(chart, circle),
+        [
+            CurveBounds::circle(chart, width),
+            CurveBounds::circle(circle, width),
+        ],
         proof,
-        "same-range circular spatial trim and revolution V iso edge",
     )
 }
 

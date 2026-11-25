@@ -4,8 +4,8 @@ mod cap;
 
 use super::{
     Prepared, SweepFailure as Failure, SweepHistory, SweepOptions, SweepStage as Stage,
-    SweepSupportEvidence, Validation, lineage, native, poll, prepare, result::copy_failure,
-    trim_proof, validate,
+    SweepSupportEvidence, Validation, include_wire_trace, lineage, native, poll, prepare,
+    result::copy_failure, trim_proof, validate,
 };
 use crate::native_shape_copy::ShapeCopy;
 use martensite_tkbo::{
@@ -75,6 +75,7 @@ pub struct SolidSweepResult {
     validation: Validation,
     supports: SweepSupportEvidence,
     volume: Measured,
+    closure: f64,
     estimate: f64,
 }
 
@@ -116,12 +117,13 @@ pub fn sweep_rounded_solid(
     )?;
     let validation = validate(&body, options.sweep, &mut cancelled)?;
     pending.retain_faces(&body, &mut cancelled)?;
-    let (lateral, supports) = pending.complete(&admission, options.sweep, &mut cancelled)?;
+    let (lateral, mut supports) = pending.complete(&admission, options.sweep, &mut cancelled)?;
+    include_wire_trace(&mut supports, &wires);
     let cap_sources = [
         native(pipe.first_shape(), Stage::Binding)?,
         native(pipe.last_shape(), Stage::Binding)?,
     ];
-    let images = cap::bind(
+    let (images, cap_bound) = cap::bind(
         &body,
         cap_sources,
         lateral,
@@ -130,13 +132,16 @@ pub fn sweep_rounded_solid(
         options.sweep,
         &mut cancelled,
     )?;
+    supports.achieved_trace_bound = supports.achieved_trace_bound.max(cap_bound);
     let volume = trim_proof::certify(&images, admission.stations[0].xyz, options, &mut cancelled)?;
+    supports.achieved_trace_bound = supports.achieved_trace_bound.max(volume.trace);
     poll(&mut cancelled, Stage::Publication)?;
     Ok(SolidSweepResult {
         solid: body,
         images,
         validation,
-        volume,
+        volume: volume.measured,
+        closure: volume.closure,
         options,
         supports,
         estimate: pipe.error_on_surface(),
@@ -190,6 +195,13 @@ impl SolidSweepResult {
         self.volume
     }
 
+    /// Certified contribution of the common-edge closure strips and vertex fans
+    /// to the outward volume uncertainty, in cubic model units.
+    /// Example: `result.closure_volume_error_bound()`.
+    pub fn closure_volume_error_bound(&self) -> f64 {
+        self.closure
+    }
+
     /// Stable authored and retained native history. Example: `result.history().len()`.
     pub fn history(&self) -> impl ExactSizeIterator<Item = &SolidSweepHistory> {
         self.images.iter().map(|image| &image.history)
@@ -207,7 +219,14 @@ impl SolidSweepResult {
             .iter()
             .map(|original| {
                 poll(&mut cancelled, Stage::Export)?;
-                let shape = copy.bind(&original.shape).map_err(copy_failure)?;
+                let shape = match &original.history {
+                    SolidSweepHistory::Cap { .. }
+                    | SolidSweepHistory::Lateral(SweepHistory::Face(_)) => {
+                        copy.bind_face_occurrence(&original.shape)
+                    }
+                    _ => copy.bind(&original.shape),
+                }
+                .map_err(copy_failure)?;
                 Ok(SolidSweepImage {
                     shape,
                     history: original.history.clone(),

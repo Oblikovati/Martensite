@@ -50,6 +50,17 @@ impl ShapeCopy {
         Ok(copied)
     }
 
+    pub(crate) fn bind_face_occurrence(&mut self, original: &Shape) -> Result<Shape, CopyFailure> {
+        let copied = self.bind(original)?;
+        let index = self.members.find_index(&copied);
+        // The modifier's image can carry a local orientation independent of its
+        // installed occurrence under the copied shell or solid.
+        self.members
+            .find_key(index)
+            .cloned()
+            .map_err(CopyFailure::Native)
+    }
+
     pub(crate) fn into_root(self) -> Shape {
         self.root
     }

@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Green's theorem on the final plane's actual affine and circular trim spans.
 use super::{
+    Contribution, TraceEvidence,
+    model::PlanarModel,
+    trim::{CurveBounds, Trim},
+};
+use super::{
     FaceProof, Failure, Point, Span, Stage, Trig, coefficients, native, point_add, poll, scaled,
     trim,
 };
-use super::{model::PlanarModel, trim::Trim};
 use crate::spatial_prism::volume::interval::{determinant, l1_difference};
 use martensite_tkg2d::geom2d::Geom2dCircle;
 use martensite_tkmath::gp::Axis3;
@@ -18,11 +22,14 @@ pub(super) fn flux(
     proof: FaceProof,
     trig: &mut Trig,
     cancelled: &mut impl FnMut() -> bool,
-) -> Result<Span, Failure> {
+) -> Result<Contribution, Failure> {
     let map = Placement::new(frame, proof.reference);
     let edges = decode(trims, map, proof, trig, cancelled)?;
-    let integral = twice_area(&edges, map, proof)?;
-    Ok(Span::at(0.5) * integral * determinant(map.origin, map.u, map.v))
+    let (integral, trace) = twice_area(&edges, map, proof)?;
+    Ok(Contribution {
+        value: Span::at(0.5) * integral * determinant(map.origin, map.u, map.v),
+        trace,
+    })
 }
 
 pub(super) fn verify_model(
@@ -32,18 +39,19 @@ pub(super) fn verify_model(
     proof: FaceProof,
     trig: &mut Trig,
     cancelled: &mut impl FnMut() -> bool,
-) -> Result<(), Failure> {
+) -> Result<f64, Failure> {
     let map = Placement::new(frame, proof.reference);
     let edges = decode(trims, map, proof, trig, cancelled)?;
-    twice_area(&edges, map, proof)?;
-    match model {
+    let (_, trace) = twice_area(&edges, map, proof)?;
+    let model_bound = match model {
         PlanarModel::Band(points) => verify_band(&edges, map, &points, proof),
         PlanarModel::Corner {
             center,
             before,
             after,
         } => verify_corner(&edges, map, center, before, after, proof),
-    }
+    }?;
+    Ok(trace.bound.max(model_bound))
 }
 
 fn decode(
@@ -66,6 +74,7 @@ struct Boundary {
     ends: [Uv; 2],
     integral: Span,
     arc: Option<ArcTrace>,
+    trace: TraceEvidence,
 }
 
 struct ArcTrace {
@@ -84,16 +93,18 @@ fn boundary(
         let spatial = trim.linear_xyz(proof.reference).ok_or_else(|| {
             proof.refuse("a literal affine spatial trim paired with its planar affine pcurve")
         })?;
-        trim::require(
+        let trace = trim::seam_trace(
+            trim,
+            points,
             endpoint_error(points, spatial),
+            [CurveBounds::line(points), CurveBounds::line(spatial)],
             proof,
-            "coincident affine planar and spatial active trims",
         )?;
-        trim::vertex_trace(trim, points, proof)?;
         return Ok(Boundary {
             ends: uv,
             integral: cross(uv[0], uv[1]),
             arc: None,
+            trace,
         });
     }
     circular_boundary(trim, map, proof, trig)
@@ -121,13 +132,18 @@ fn circular_boundary(
         .map(|[cosine, sine]| std::array::from_fn(|i| c[i] + a[i] * cosine + b[i] * sine));
     let actual = trim::spatial_circle(trim, proof)?;
     let model = [map.position(c), map.vector(a), map.vector(b)];
-    trim::require(
-        coefficient_error(model, actual),
-        proof,
-        "same-range analytic circular pcurve and actual spatial trim",
-    )?;
-    trim::vertex_trace(trim, endpoints.map(|p| map.position(p)), proof)?;
     let delta = Span::at(last) - Span::at(first);
+    let width = if last > first { delta } else { -delta };
+    let trace = trim::seam_trace(
+        trim,
+        endpoints.map(|p| map.position(p)),
+        coefficient_error(model, actual),
+        [
+            CurveBounds::circle(model, width),
+            CurveBounds::circle(actual, width),
+        ],
+        proof,
+    )?;
     let integral = cross(c, subtract(endpoints[1], endpoints[0])) + cross(a, b) * delta;
     let [cosine, sine] = directions[0];
     let [center, a, b] = model;
@@ -146,11 +162,17 @@ fn circular_boundary(
         ends: endpoints,
         integral,
         arc: Some(arc),
+        trace,
     })
 }
 
-fn twice_area(edges: &[Boundary], map: Placement, proof: FaceProof) -> Result<Span, Failure> {
+fn twice_area(
+    edges: &[Boundary],
+    map: Placement,
+    proof: FaceProof,
+) -> Result<(Span, TraceEvidence), Failure> {
     let mut sum = Span::ZERO;
+    let mut trace = TraceEvidence::ZERO;
     for (edge, next) in edges.iter().zip(edges.iter().cycle().skip(1)) {
         let jump = subtract(next.ends[0], edge.ends[1]);
         let jump_error = l1_difference(map.vector(jump), [Span::ZERO; 3]);
@@ -162,11 +184,13 @@ fn twice_area(edges: &[Boundary], map: Placement, proof: FaceProof) -> Result<Sp
         // Enclose the numerical tolerance gap by including or omitting its closing chord.
         let bridge = cross(edge.ends[1], next.ends[0]).hull(Span::ZERO);
         sum = sum + edge.integral + bridge;
+        trace = trace.merge(edge.trace);
+        trace.bound = trace.bound.max(jump_error);
     }
     if !sum.finite() || sum.lo <= 0. {
         return Err(proof.refuse("one positively oriented nonempty outer planar trim"));
     }
-    Ok(sum)
+    Ok((sum, trace))
 }
 
 fn verify_band(
@@ -174,7 +198,7 @@ fn verify_band(
     map: Placement,
     expected: &[Point],
     proof: FaceProof,
-) -> Result<(), Failure> {
+) -> Result<f64, Failure> {
     if edges.len() != expected.len() || edges.iter().any(|edge| edge.arc.is_some()) {
         return Err(proof.refuse("the full source-clipped affine band boundary"));
     }
@@ -200,7 +224,7 @@ fn verify_band(
     if matches != 1 {
         return Err(proof.refuse("one unambiguous geometric cycle for the already named band"));
     }
-    Ok(())
+    Ok(best)
 }
 
 fn verify_corner(
@@ -210,7 +234,7 @@ fn verify_corner(
     before: Point,
     after: Point,
     proof: FaceProof,
-) -> Result<(), Failure> {
+) -> Result<f64, Failure> {
     let arc_index = edges.iter().position(|edge| edge.arc.is_some());
     let Some(arc_index) = arc_index.filter(|_| edges.len() == 3) else {
         return Err(
@@ -239,7 +263,7 @@ fn verify_corner(
     if first.max(second) <= proof.limit {
         return Err(proof.refuse("one unambiguous decoded direction of the planar corner arc"));
     }
-    Ok(())
+    Ok(first.min(second))
 }
 
 fn sector_error(
@@ -257,12 +281,13 @@ fn sector_error(
         [center, point_add(center, start)],
     );
     let coefficients = coefficient_error(arc.coefficients, [center, start, end]);
-    let radius = l1_difference(start, [Span::ZERO; 3]).max(l1_difference(end, [Span::ZERO; 3]));
+    let rate = Span::at(l1_difference(start, [Span::ZERO; 3]))
+        + Span::at(l1_difference(end, [Span::ZERO; 3]));
     let quarter = Span {
         lo: FRAC_PI_2.next_down(),
         hi: FRAC_PI_2.next_up(),
     };
-    let swept = Span::at((arc.angle - quarter).magnitude()) * Span::at(radius);
+    let swept = Span::at((arc.angle - quarter).magnitude()) * rate;
     let circular = (Span::at(coefficients) + swept).hi;
     first.max(last).max(circular)
 }

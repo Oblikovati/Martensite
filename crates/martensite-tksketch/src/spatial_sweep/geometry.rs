@@ -32,17 +32,20 @@ pub(super) fn verify(
         revolved_corners: 0,
         terminal_vertices: 0,
         trace_limit: limit,
+        achieved_trace_bound: 0.,
     };
     let mut corner_counts = [[0, 0]; 2];
     let mut trig = trim_proof::Trig::new();
     for (index, face) in faces.iter().enumerate() {
         poll(cancelled, Stage::Binding)?;
         let revolved = is_revolved(admission, face)?;
-        trim_proof::verify_lateral(
+        let trace = trim_proof::verify_lateral(
             admission, face, revolved, index, limit, &mut trig, cancelled,
         )?;
+        receipt.achieved_trace_bound = receipt.achieved_trace_bound.max(trace);
         if revolved {
-            revolved_source(admission, face, limit)?;
+            let source = revolved_source(admission, face, limit)?;
+            receipt.achieved_trace_bound = receipt.achieved_trace_bound.max(source);
             receipt.revolved_corners += 1;
             corner_counts[face.station - 1][1] += 1;
         } else if face.corner {
@@ -59,7 +62,8 @@ pub(super) fn verify(
     }
     for terminal in terminals {
         poll(cancelled, Stage::Binding)?;
-        terminal_point(admission, terminal, limit)?;
+        let terminal = terminal_point(admission, terminal, limit)?;
+        receipt.achieved_trace_bound = receipt.achieved_trace_bound.max(terminal);
         receipt.terminal_vertices += 1;
     }
     Ok(receipt)
@@ -75,7 +79,7 @@ fn is_revolved(admission: &Admission, face: &Face) -> Result<bool, Failure> {
     Ok(admission.frames[face.station - 1][line.index].index == turn.index)
 }
 
-fn revolved_source(admission: &Admission, face: &Face, limit: f64) -> Result<(), Failure> {
+fn revolved_source(admission: &Admission, face: &Face, limit: f64) -> Result<f64, Failure> {
     let (surface, location) = native(BRepTool::surface_with_location(&face.shape), Stage::Binding)?;
     if !location.is_identity() {
         return Err(Failure::Geometry("an unlocated literal revolved support"));
@@ -151,7 +155,7 @@ fn verify_revolution(
     station: usize,
     turn: Axis,
     limit: f64,
-) -> Result<(), Failure> {
+) -> Result<f64, Failure> {
     let expected_kind = "a literal cardinal quarter revolution with an affine meridian";
     let trimmed = trimmed.ok_or(Failure::Geometry(expected_kind))?;
     let (u0, u1, v0, v1) = trimmed.bounds();
@@ -176,7 +180,9 @@ fn verify_revolution(
     let desired = source.map(|p| transported(admission, p, frame));
     let matching = meridian_error(actual, desired);
     let angle_error = short_quarter_error(desired, turn.index, u1);
-    let total = Span::at(matching) + Span::at(2.) * Span::at(axis_error) + angle_error;
+    // Cardinal-axis rotation increases the spatial L1 norm by less than two.
+    let total =
+        Span::at(2.) * Span::at(matching) + Span::at(3.) * Span::at(axis_error) + angle_error;
     require_bound(total.hi, limit, expected_kind)
 }
 
@@ -229,14 +235,14 @@ fn short_quarter_error(meridian: [Point; 2], axis: usize, actual: f64) -> Span {
         hi: FRAC_PI_2.next_up(),
     };
     let angle_gap = (Span::at(actual) - quarter).magnitude();
-    Span::at(angle_gap) * Span::at(radial(meridian[0]).max(radial(meridian[1])))
+    Span::at(2.) * Span::at(angle_gap) * Span::at(radial(meridian[0]).max(radial(meridian[1])))
 }
 
 fn terminal_point(
     admission: &Admission,
     terminal: &TerminalVertex,
     limit: f64,
-) -> Result<(), Failure> {
+) -> Result<f64, Failure> {
     let (_, source) = admission
         .profile
         .points
@@ -260,7 +266,7 @@ pub(super) fn require_bound(
     bound: f64,
     limit: f64,
     description: &'static str,
-) -> Result<(), Failure> {
+) -> Result<f64, Failure> {
     if !bound.is_finite() || bound > limit {
         return Err(Failure::Trace {
             description,
@@ -268,5 +274,5 @@ pub(super) fn require_bound(
             limit,
         });
     }
-    Ok(())
+    Ok(bound)
 }

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Actual directed, source-bound trim capture for the physical flux proof.
-use super::{FaceProof, Failure, Point, Span, Stage, native, poll};
+use super::{FaceProof, Failure, Point, Span, Stage, TraceEvidence, native, poll};
 use crate::{
     spatial_prism::volume::{affine_curve, interval::l1_difference},
     spatial_sweep::geometry::trim_basis,
@@ -17,6 +17,7 @@ use martensite_tkg3d::{
 };
 
 pub(super) struct Trim {
+    pub edge: Edge,
     pub pcurve: EdgePCurve,
     pub spatial: EdgeCurve3D,
     pub ends: [Vertex; 2],
@@ -76,6 +77,7 @@ fn decode(edge: Edge, face: &Face, proof: FaceProof) -> Result<Trim, Failure> {
         return Err(proof.refuse("two distinct incident native vertices"));
     }
     Ok(Trim {
+        edge,
         reverse,
         pcurve,
         spatial,
@@ -132,26 +134,98 @@ impl Trim {
     }
 }
 
-pub(super) fn vertex_trace(
+pub(super) fn seam_trace(
     trim: &Trim,
     expected: [Point; 2],
+    error: f64,
+    [chart, native_curve]: [CurveBounds; 2],
     proof: FaceProof,
-) -> Result<(), Failure> {
-    for (vertex, expected) in trim.ends.iter().zip(expected) {
-        if !vertex.location().is_identity() {
-            return Err(proof.refuse("unlocated native corner vertices on every measured trim"));
-        }
-        let actual = native(BRepTool::pnt(vertex), Stage::Integration)?;
-        let local = std::array::from_fn(|i| {
-            Span::at(actual.coordinates()[i]) - Span::at(proof.reference[i])
-        });
-        require(
-            l1_difference(local, expected),
-            proof,
-            "decoded trim endpoint agrees with its vertex",
-        )?;
+) -> Result<TraceEvidence, Failure> {
+    require(
+        error,
+        proof,
+        "same-parameter chart trim and common native spatial curve",
+    )?;
+    let [a, b] = vertex_repairs(trim, expected, error, proof)?;
+    // A ruled strip's area is at most e times the mean lengths of the two curves.
+    let radius = chart.radius.max(native_curve.radius);
+    let strip =
+        Span::at(radius) * Span::at(error) * Span::at(0.5) * (chart.length + native_curve.length);
+    let closure = strip + a.1 + b.1;
+    if !closure.finite() {
+        return Err(proof.refuse("a finite closure-strip and endpoint fan flux bound"));
     }
-    Ok(())
+    Ok(TraceEvidence {
+        bound: error.max(a.0).max(b.0),
+        closure,
+    })
+}
+
+fn vertex_repairs(
+    trim: &Trim,
+    expected: [Point; 2],
+    curve_error: f64,
+    proof: FaceProof,
+) -> Result<[(f64, Span); 2], Failure> {
+    let [a, b] = &trim.ends;
+    Ok([
+        vertex_repair(a, expected[0], curve_error, proof)?,
+        vertex_repair(b, expected[1], curve_error, proof)?,
+    ])
+}
+
+fn vertex_repair(
+    vertex: &Vertex,
+    expected: Point,
+    error: f64,
+    proof: FaceProof,
+) -> Result<(f64, Span), Failure> {
+    if !vertex.location().is_identity() {
+        return Err(proof.refuse("unlocated native corner vertices on every measured trim"));
+    }
+    let actual = native(BRepTool::pnt(vertex), Stage::Integration)?;
+    let local =
+        std::array::from_fn(|i| Span::at(actual.coordinates()[i]) - Span::at(proof.reference[i]));
+    let chart_gap = l1_difference(local, expected);
+    let gap = (Span::at(chart_gap) + Span::at(error)).hi;
+    require(
+        gap,
+        proof,
+        "native edge endpoint and chart trim agree with the common vertex",
+    )?;
+    // Charge each endpoint for its triangle and a conservative share of the fan
+    // across its adjacent trim. Three triangles meet at a native vertex. Each
+    // has area at most half the square of the larger endpoint gap. The larger
+    // of the two charges therefore covers the full fan.
+    let gap_span = Span::at(gap);
+    let radius = Span::at(norm(local)) + gap_span;
+    Ok((gap, Span::at(2.) * radius * gap_span * gap_span))
+}
+
+pub(super) struct CurveBounds {
+    radius: f64,
+    length: Span,
+}
+
+impl CurveBounds {
+    pub(super) fn line([a, b]: [Point; 2]) -> Self {
+        Self {
+            radius: norm(a).max(norm(b)),
+            length: Span::at(l1_difference(a, b)),
+        }
+    }
+
+    pub(super) fn circle([origin, x, y]: [Point; 3], width: Span) -> Self {
+        let rate = Span::at(norm(x)) + Span::at(norm(y));
+        Self {
+            radius: (Span::at(norm(origin)) + rate).hi,
+            length: rate * width,
+        }
+    }
+}
+
+fn norm(a: Point) -> f64 {
+    l1_difference(a, [Span::ZERO; 3])
 }
 
 pub(super) fn require(

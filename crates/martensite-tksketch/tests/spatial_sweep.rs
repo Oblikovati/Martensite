@@ -149,14 +149,17 @@ fn e10_sweep_binds_all_native_sheet_members_and_both_directed_sources() {
         );
         assert_eq!(result.validation().stage(stage).mode, mode);
     }
+    let evidence = result.support_evidence();
+    assert!(evidence.achieved_trace_bound > 0. && evidence.achieved_trace_bound < 1e-12);
     assert_eq!(
-        result.support_evidence(),
+        evidence,
         SweepSupportEvidence {
             bands: 12,
             planar_corners: 4,
             revolved_corners: 2,
             terminal_vertices: 8,
             trace_limit: 1e-8,
+            achieved_trace_bound: evidence.achieved_trace_bound,
         }
     );
     let detached = result.export_brep(|| false).unwrap();

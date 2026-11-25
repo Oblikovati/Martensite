@@ -49,6 +49,12 @@ fn assert_volume(result: &SolidSweepResult, expected: f64) {
     assert!((actual - expected).abs() < 1e-10);
     let enclosure = result.volume();
     assert_eq!(enclosure.evidence(), Evidence::Proven);
+    let support = result.support_evidence();
+    assert!(
+        support.achieved_trace_bound > 0. && support.achieved_trace_bound < support.trace_limit
+    );
+    let closure = result.closure_volume_error_bound();
+    assert!(closure > 0. && closure <= enclosure.error_bound && closure < 1e-9);
     assert!(
         enclosure.encloses(expected) && enclosure.encloses(actual),
         "{expected}, {actual}, {enclosure:?}"
@@ -129,14 +135,19 @@ fn independent_parallel_operations_match_a_serial_native_archive_and_history() {
     });
 }
 
-fn solid_state(result: &SolidSweepResult) -> (Vec<u8>, Vec<SolidSweepHistory>, [f64; 2]) {
+fn solid_state(result: &SolidSweepResult) -> (Vec<u8>, Vec<SolidSweepHistory>, [f64; 4]) {
     let detached = result.export_brep(|| false).unwrap();
     let history = result.history().cloned().collect();
     let volume = result.volume();
     (
         archive(&detached.solid),
         history,
-        [volume.value, volume.error_bound],
+        [
+            volume.value,
+            volume.error_bound,
+            result.closure_volume_error_bound(),
+            result.support_evidence().achieved_trace_bound,
+        ],
     )
 }
 

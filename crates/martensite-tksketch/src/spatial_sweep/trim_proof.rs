@@ -16,6 +16,7 @@ use martensite_tkbo::profile_extrusion::{IntegrationMethod, Measured};
 use martensite_tkbrep::{
     brep::BRepTool,
     topods::{self, Face},
+    toptools::IndexedMapOfShape,
 };
 use martensite_tkg3d::{
     geom::{GeomPlane, GeomRectangularTrimmedSurface},
@@ -31,9 +32,11 @@ pub(super) fn certify(
     reference: [f64; 3],
     options: SolidSweepOptions,
     cancelled: &mut impl FnMut() -> bool,
-) -> Result<Measured, Failure> {
+) -> Result<VolumeReceipt, Failure> {
     let mut sum = Span::ZERO;
+    let mut trace = TraceEvidence::ZERO;
     let mut trig = BTreeMap::new();
+    let mut seams = SeamBook::default();
     for (index, image) in images.iter().enumerate() {
         poll(cancelled, Stage::Integration)?;
         if native(image.shape.shape_type(), Stage::Integration)? != ShapeEnum::Face {
@@ -45,9 +48,81 @@ pub(super) fn certify(
             reference,
             limit: options.sweep.source_trace_limit,
         };
-        sum = sum + flux(&face, context, &mut trig, cancelled)?;
+        let contribution = flux(&face, context, &mut trig, &mut seams, cancelled)?;
+        sum = sum + contribution.value;
+        trace = trace.merge(contribution.trace);
     }
-    report(sum * inverse(3.), options.volume_error_limit)
+    seams.finish()?;
+    report(sum, trace, options.volume_error_limit)
+}
+
+pub(super) struct VolumeReceipt {
+    pub measured: Measured,
+    pub closure: f64,
+    pub trace: f64,
+}
+
+#[derive(Default)]
+struct SeamBook {
+    edges: IndexedMapOfShape,
+    uses: Vec<[bool; 2]>,
+}
+
+impl SeamBook {
+    fn record(
+        &mut self,
+        trims: &[trim::Trim],
+        reversed_face: bool,
+        proof: FaceProof,
+    ) -> Result<(), Failure> {
+        for trim in trims {
+            let id = self.edges.add(trim.edge.to_shape()) - 1;
+            if id == self.uses.len() {
+                self.uses.push([false; 2]);
+            }
+            let side = usize::from(trim.reverse != reversed_face);
+            if std::mem::replace(&mut self.uses[id][side], true) {
+                return Err(
+                    proof.refuse("oppositely directed uses of each exact common native edge")
+                );
+            }
+        }
+        Ok(())
+    }
+
+    fn finish(self) -> Result<(), Failure> {
+        if self.uses.is_empty() || self.uses.iter().any(|&pair| pair != [true; 2]) {
+            return Err(Failure::Volume(
+                "every common native spatial edge and vertex joined by two opposite face uses",
+            ));
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone, Copy)]
+struct TraceEvidence {
+    bound: f64,
+    closure: Span,
+}
+
+impl TraceEvidence {
+    const ZERO: Self = Self {
+        bound: 0.,
+        closure: Span::ZERO,
+    };
+
+    fn merge(self, item: Self) -> Self {
+        Self {
+            bound: self.bound.max(item.bound),
+            closure: self.closure + item.closure,
+        }
+    }
+}
+
+struct Contribution {
+    value: Span,
+    trace: TraceEvidence,
 }
 
 pub(super) fn verify_lateral(
@@ -58,7 +133,7 @@ pub(super) fn verify_lateral(
     limit: f64,
     trig: &mut Trig,
     cancelled: &mut impl FnMut() -> bool,
-) -> Result<(), Failure> {
+) -> Result<f64, Failure> {
     let proof = FaceProof {
         index,
         reference: admission.stations[0].xyz,
@@ -116,8 +191,9 @@ fn flux(
     face: &Face,
     proof: FaceProof,
     trig: &mut Trig,
+    seams: &mut SeamBook,
     cancelled: &mut impl FnMut() -> bool,
-) -> Result<Span, Failure> {
+) -> Result<Contribution, Failure> {
     let sign = match face.orientation() {
         Orientation::Forward => Span::ONE,
         Orientation::Reversed => Span::at(-1.),
@@ -135,6 +211,7 @@ fn flux(
         return Err(proof.refuse("native face placement in the bounded world frame"));
     }
     let trims = trim::ordered(&forward, proof, cancelled)?;
+    seams.record(&trims, face.orientation() == Orientation::Reversed, proof)?;
     let integral = if let Some(plane) = surface.downcast_ref::<GeomPlane>() {
         plane::flux(plane.pln().position(), &trims, proof, trig, cancelled)?
     } else if let Some(surface) = surface.downcast_ref::<GeomRectangularTrimmedSurface>() {
@@ -142,10 +219,19 @@ fn flux(
     } else {
         return Err(proof.refuse("literal planar or bounded rectangular quarter-revolution face"));
     };
-    Ok(sign * integral)
+    Ok(Contribution {
+        value: sign * integral.value,
+        trace: integral.trace,
+    })
 }
 
-fn report(bounded: Span, limit: f64) -> Result<Measured, Failure> {
+fn report(raw: Span, trace: TraceEvidence, limit: f64) -> Result<VolumeReceipt, Failure> {
+    let seminorm = trace.closure * inverse(3.);
+    let bounded = raw * inverse(3.)
+        + Span {
+            lo: -seminorm.hi,
+            hi: seminorm.hi,
+        };
     if !bounded.finite() || bounded.lo <= 0. {
         return Err(Failure::Volume(
             "a finite, strictly positive oriented physical volume",
@@ -156,10 +242,14 @@ fn report(bounded: Span, limit: f64) -> Result<Measured, Failure> {
     if !bound.is_finite() || bound > limit {
         return Err(Failure::VolumeErrorBound { bound, limit });
     }
-    Ok(Measured {
-        value,
-        error_bound: bound,
-        method: IntegrationMethod::CertifiedEnclosure,
+    Ok(VolumeReceipt {
+        measured: Measured {
+            value,
+            error_bound: bound,
+            method: IntegrationMethod::CertifiedEnclosure,
+        },
+        closure: seminorm.hi,
+        trace: trace.bound,
     })
 }
 
