@@ -10,6 +10,8 @@ mod power;
 mod pre_compose;
 mod setters;
 mod stored_rigid;
+mod unit_placement;
+pub use unit_placement::UnitPlacementError;
 /// TransformForm, retained independently of numeric identity; `TransformForm::Rotation`.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[repr(i32)]
