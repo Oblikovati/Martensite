@@ -282,3 +282,49 @@ fn a_rigid_rotation_rebinds_the_prepared_parallel_reference_for_later_drag() {
         [-1., 2.1, 0.],
     );
 }
+
+#[test]
+fn a_large_pivot_keeps_local_offsets_and_exact_axis_points() {
+    let height = f64::from_bits(1077_u64 << 52);
+    let pivot = [1., height, 0.];
+    let axis_point = [1., height, 3.];
+    let shape = Snapshot::empty(MinimumLength::new(0.001).unwrap())
+        .apply(
+            &[
+                seed(1, pivot, PointRole::SketchMarker),
+                seed(2, axis_point, PointRole::SketchMarker),
+                seed(3, [5., height, 0.], PointRole::SketchMarker),
+            ],
+            || false,
+        )
+        .unwrap();
+    let sketch = ConstrainedSketch::new(shape, crate::constraints::policy()).unwrap();
+    let fixed = sketch
+        .apply(
+            &[RelationEdit::Insert(
+                RelationId::new(id(1)),
+                RelationSpec::FixPoint(pid(2)),
+            )],
+            || false,
+        )
+        .unwrap();
+    let motion = RigidMotion::Rotate {
+        axis: Axis1::new(point(pivot), Direction3::Z),
+        radians: FRAC_PI_2,
+    };
+    let moved = fixed
+        .transform_points(&[pid(1), pid(2), pid(3)], motion, || false)
+        .unwrap();
+    assert_eq!(
+        moved.geometry().point(pid(1)).unwrap().position,
+        point(pivot)
+    );
+    assert_eq!(
+        moved.geometry().point(pid(2)).unwrap().position,
+        point(axis_point)
+    );
+    assert_eq!(
+        moved.geometry().point(pid(3)).unwrap().position,
+        point([1., height + 4., 0.])
+    );
+}

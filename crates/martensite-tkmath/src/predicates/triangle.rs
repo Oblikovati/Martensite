@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::triple_product::{exact_cross, exact_triple_product};
 use super::{NonFiniteCoordinate, exact_coordinate, exact_vector3};
-use num_bigint::BigInt;
+use num_bigint::{BigInt, Sign};
 use std::cmp::Ordering;
 
 /// Compare a triangle's oriented normal with the supplied direction, exactly.
@@ -52,6 +52,28 @@ pub fn compare_triangle_projected_dot_3d(
     let normal = exact_vector3(normal, 3)?;
     let scaled_dot = square_norm(&normal) * dot3(&first, &second);
     Ok(scaled_dot.cmp(&(dot3(&normal, &first) * dot3(&normal, &second))))
+}
+
+/// Return whether a point is exactly on the line of a finite origin and direction.
+///
+/// A zero direction admits no point. Operands are indexed origin 0, point 1,
+/// direction 2. Example: `point_on_anchored_direction_3d([0.; 3], [3., 0., 0.], [1., 0., 0.])`.
+pub fn point_on_anchored_direction_3d(
+    origin: [f64; 3],
+    point: [f64; 3],
+    direction: [f64; 3],
+) -> Result<bool, NonFiniteCoordinate> {
+    let origin = exact_vector3(origin, 0)?;
+    let point = exact_vector3(point, 1)?;
+    let direction = exact_vector3(direction, 2)?;
+    let offset = std::array::from_fn(|axis| &point[axis] - &origin[axis]);
+    Ok(!zero_vector(&direction) && zero_vector(&exact_cross(&offset, &direction)))
+}
+
+fn zero_vector(vector: &[BigInt; 3]) -> bool {
+    vector
+        .iter()
+        .all(|coordinate| coordinate.sign() == Sign::NoSign)
 }
 
 struct Triangle {
@@ -123,5 +145,20 @@ mod tests {
         assert_eq!(projected_dot(origin, first, [9., 3., -1.], z), Ok(Greater));
         assert_eq!(projected_dot(origin, first, [8., 3., 14.], z), Ok(Equal));
         assert_eq!(projected_dot(origin, first, [8., 4., 14.], z), Ok(Equal));
+    }
+    #[test]
+    fn anchored_direction_admission_does_not_round_large_endpoint_differences() {
+        use super::point_on_anchored_direction_3d as on_line;
+        let limit = f64::MAX;
+        let origin = [limit, 0., -limit];
+        let end = [-limit, 0., limit];
+        let axis = [1., 0., -1.];
+        assert_eq!(on_line(origin, end, axis), Ok(true));
+        assert_eq!(
+            on_line(origin, [-limit, f64::from_bits(1), limit], axis),
+            Ok(false)
+        );
+        assert_eq!(on_line(origin, origin, [0.; 3]), Ok(false));
+        assert_eq!(on_line(origin, origin, axis), Ok(true));
     }
 }

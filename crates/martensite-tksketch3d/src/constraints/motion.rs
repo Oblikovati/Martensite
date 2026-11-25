@@ -3,7 +3,10 @@
 use super::{ConstrainedSketch, ConstraintFailure, adopt::apply_checked, poll, program::Program};
 use crate::{Edit, PointId, Snapshot};
 use martensite_tkernel::standard::Failure;
-use martensite_tkmath::gp::{Axis1, Direction3, Transform3, Vector3};
+use martensite_tkmath::{
+    gp::{Axis1, Direction3, Point3, Transform3, Vector3},
+    predicates::{NonFiniteCoordinate, point_on_anchored_direction_3d},
+};
 use std::{collections::BTreeSet, error::Error, fmt, sync::Arc};
 
 /// Motion acting on the selected owned points in model coordinates.
@@ -32,6 +35,8 @@ pub enum RigidMotionFailure {
     InvalidMotion(RigidMotion),
     /// The native rotation constructor refused the supplied axis or angle.
     NativeRotation(Failure),
+    /// A coordinate is outside the exact on-axis test domain.
+    AxisInput(NonFiniteCoordinate),
     /// A point, geometry check, relation check or cancellation declined adoption.
     Constraint(ConstraintFailure),
 }
@@ -52,6 +57,7 @@ impl fmt::Display for RigidMotionFailure {
             Self::NativeRotation(error) => {
                 write!(output, "rigid rotation construction failed: {error}")
             }
+            Self::AxisInput(error) => write!(output, "rigid rotation axis test failed: {error}"),
             Self::Constraint(error) => error.fmt(output),
         }
     }
@@ -61,6 +67,7 @@ impl Error for RigidMotionFailure {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::NativeRotation(error) => Some(error),
+            Self::AxisInput(error) => Some(error),
             Self::Constraint(error) => Some(error),
             _ => None,
         }
@@ -105,24 +112,62 @@ impl ConstrainedSketch {
     }
 }
 
+#[derive(Clone, Copy)]
+enum PreparedMotion {
+    Translation(Transform3),
+    Rotation { axis: Axis1, local: Transform3 },
+}
+
 impl RigidMotion {
-    fn native_transform(self) -> Result<Transform3, RigidMotionFailure> {
+    fn native_transform(self) -> Result<PreparedMotion, RigidMotionFailure> {
         match self {
-            Self::Translate(offset) if finite(offset.xyz().coordinates()) => {
-                Ok(Transform3::translation_vector(offset))
-            }
+            Self::Translate(offset) if finite(offset.xyz().coordinates()) => Ok(
+                PreparedMotion::Translation(Transform3::translation_vector(offset)),
+            ),
             Self::Rotate { axis, radians } if radians.is_finite() && valid_axis(axis) => {
-                Transform3::rotation(axis, radians).map_err(RigidMotionFailure::NativeRotation)
+                let local_axis = Axis1::new(Point3::default(), axis.direction());
+                let local = Transform3::rotation(local_axis, radians)
+                    .map_err(RigidMotionFailure::NativeRotation)?;
+                Ok(PreparedMotion::Rotation { axis, local })
             }
             _ => Err(RigidMotionFailure::InvalidMotion(self)),
         }
     }
 }
 
+impl PreparedMotion {
+    fn apply(self, point: Point3) -> Result<Point3, RigidMotionFailure> {
+        match self {
+            Self::Translation(translation) => Ok(point.transformed(translation)),
+            Self::Rotation { axis, local } => rotate_about_axis(point, axis, local),
+        }
+    }
+}
+
+fn rotate_about_axis(
+    point: Point3,
+    axis: Axis1,
+    local: Transform3,
+) -> Result<Point3, RigidMotionFailure> {
+    let pivot = axis.location();
+    let on_axis = point_on_anchored_direction_3d(
+        *pivot.coordinates(),
+        *point.coordinates(),
+        *axis.direction().coordinates(),
+    )
+    .map_err(RigidMotionFailure::AxisInput)?;
+    if on_axis {
+        return Ok(point);
+    }
+    // Work relative to the pivot so a large world-space offset does not erase local motion.
+    let offset = Point3::from(point.xyz() - pivot.xyz());
+    Ok(Point3::from(offset.transformed(local).xyz() + pivot.xyz()))
+}
+
 fn staged_moves(
     geometry: &Snapshot,
     points: &[PointId],
-    transform: Transform3,
+    transform: PreparedMotion,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<Vec<Edit>, RigidMotionFailure> {
     if points.is_empty() {
@@ -138,7 +183,7 @@ fn staged_moves(
         let current = geometry
             .point(point)
             .ok_or(ConstraintFailure::MissingPoint(point))?;
-        let position = current.position.transformed(transform);
+        let position = transform.apply(current.position)?;
         if position != current.position {
             edits.push(Edit::MovePoint { point, position });
         }

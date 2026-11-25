@@ -16,7 +16,7 @@ pub use compare::{
 pub use segment_contact::{SegmentContact3d, exact_segment_contact_3d};
 pub use triangle::{
     compare_triangle_altitude_3d, compare_triangle_orientation_3d,
-    compare_triangle_projected_dot_3d,
+    compare_triangle_projected_dot_3d, point_on_anchored_direction_3d,
 };
 pub use triple_product::compare_scalar_triple_product_3d;
 
