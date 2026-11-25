@@ -5,8 +5,10 @@ use crate::predicates::roots::certificate_arithmetic::bernstein_curve::{
     capture_planar, restrict_range,
 };
 pub(in crate::predicates::roots::metric_bounds) mod conical;
+mod trace;
 mod types;
 pub use conical::*;
+pub use trace::CylindricalTrimWorkspace;
 pub use types::{CertifiedCylindricalTrim, CylindricalTrimError, CylindricalTrimQuery};
 #[cfg(test)]
 mod tests;
@@ -17,9 +19,9 @@ mod tests;
 /// Example: `let proof = certify_cylindrical_trim(query, || false)?;`.
 pub fn certify_cylindrical_trim(
     query: CylindricalTrimQuery<'_>,
-    cancelled: impl FnMut() -> bool + Send,
+    mut cancelled: impl FnMut() -> bool + Send,
 ) -> Result<CertifiedCylindricalTrim, CylindricalTrimError> {
-    with_ranges(query, [[0., 1.]; 2], 4, cancelled)
+    issue(query, &mut cancelled, None)
 }
 
 /// Certify the active ranges of same-parameter Bezier traces on a cylinder.
@@ -30,22 +32,33 @@ pub fn certify_cylindrical_trim(
 pub fn certify_cylindrical_trim_ranges(
     query: CylindricalTrimQuery<'_>,
     ranges: [[f64; 2]; 2],
-    cancelled: impl FnMut() -> bool + Send,
+    mut cancelled: impl FnMut() -> bool + Send,
 ) -> Result<CertifiedCylindricalTrim, CylindricalTrimError> {
-    with_ranges(query, ranges, 6, cancelled)
+    with_ranges(query, ranges, 6, &mut cancelled, None)
+}
+
+fn issue(
+    query: CylindricalTrimQuery<'_>,
+    cancelled: &mut (dyn FnMut() -> bool + Send),
+    workspace: Option<&mut CylindricalTrimWorkspace>,
+) -> Result<CertifiedCylindricalTrim, CylindricalTrimError> {
+    with_ranges(query, [[0., 1.]; 2], 4, cancelled, workspace)
 }
 
 fn with_ranges(
     query: CylindricalTrimQuery<'_>,
     ranges: [[f64; 2]; 2],
     maximum_uv_poles: usize,
-    mut cancelled: impl FnMut() -> bool + Send,
+    cancelled: &mut (dyn FnMut() -> bool + Send),
+    workspace: Option<&mut CylindricalTrimWorkspace>,
 ) -> Result<CertifiedCylindricalTrim, CylindricalTrimError> {
-    execute(query, ranges, maximum_uv_poles, &mut cancelled).map_err(|cause| CylindricalTrimError {
-        radius: query.radius,
-        requested_spatial_limit: query.spatial_limit,
-        requested_options: query.options,
-        cause,
+    execute(query, ranges, maximum_uv_poles, cancelled, workspace).map_err(|cause| {
+        CylindricalTrimError {
+            radius: query.radius,
+            requested_spatial_limit: query.spatial_limit,
+            requested_options: query.options,
+            cause,
+        }
     })
 }
 
@@ -68,6 +81,7 @@ fn execute(
     ranges: [[f64; 2]; 2],
     maximum_uv_poles: usize,
     cancelled: &mut (dyn FnMut() -> bool + Send),
+    workspace: Option<&mut CylindricalTrimWorkspace>,
 ) -> Checked<CertifiedCylindricalTrim> {
     admit(query, maximum_uv_poles)?;
     for (index, range) in ranges.into_iter().enumerate() {
@@ -84,8 +98,12 @@ fn execute(
         max_operations: query.options.max_operations,
     };
     let mut arithmetic = Arithmetic::new(policy, cancelled);
-    let bounds = residual(query, ranges, &mut arithmetic)?;
+    let previous = workspace.as_ref().and_then(|slot| slot.matching(query));
+    let (bounds, captured) = trace::residual(query, ranges, previous, &mut arithmetic)?;
     accept_position(bounds[2], query.spatial_limit)?;
+    if let (Some(slot), Some(captured)) = (workspace, captured) {
+        slot.remember(query, captured);
+    }
     Ok(CertifiedCylindricalTrim {
         bounds,
         bits: types::source_bits(query),
@@ -94,26 +112,6 @@ fn execute(
         options: query.options,
         operations: arithmetic.operations(),
     })
-}
-
-fn residual(
-    query: CylindricalTrimQuery<'_>,
-    [space, chart]: [[f64; 2]; 2],
-    arithmetic: &mut Arithmetic<'_>,
-) -> Checked<[f64; 3]> {
-    let uv = narrowed(capture_planar(query.pcurve, arithmetic)?, chart, arithmetic)?;
-    let stored = narrowed(source::stored(query.curve, arithmetic)?, space, arithmetic)?;
-    let weight = proof::minimum_weight(&stored);
-    let trig = trigonometric::enclose(&uv[0], arithmetic)?;
-    let radius = arithmetic.scalar(query.radius)?;
-    let xy = proof::xy_residual(&radius, &stored, &trig, &weight, arithmetic)?;
-    let height = proof::height_residual(&uv[1], &stored, &weight, arithmetic)?;
-    let total = arithmetic.add(&xy, &height)?;
-    Ok([
-        arithmetic.upper_f64(xy.upper)?,
-        arithmetic.upper_f64(height.upper)?,
-        arithmetic.upper_f64(total.upper)?,
-    ])
 }
 
 fn narrowed<const N: usize>(

@@ -16,15 +16,19 @@ pub(super) fn certify(
     let caps = cap_bindings(request, piece);
     let radii = request.depths.map(|depth| request.radius + depth);
     let maximum = request.tolerance / 2.;
-    let a = certify_cap(
-        &caps[0],
-        curves[0],
-        radii[0],
-        maximum,
-        bindings,
-        &mut *cancelled,
-    )?;
-    let b = certify_cap(&caps[1], curves[1], radii[1], maximum, bindings, cancelled)?;
+    let mut workspace = CylindricalTrimWorkspace::default();
+    let mut certify_at = |side: usize| {
+        certify_cap(
+            &caps[side],
+            curves[side],
+            radii[side],
+            maximum,
+            bindings,
+            &mut workspace,
+            &mut *cancelled,
+        )
+    };
+    let [a, b] = [certify_at(0)?, certify_at(1)?];
     Ok(CapEvidence {
         maximum_tolerance: a.1.max(b.1),
         proofs: [a.0, b.0],
@@ -37,6 +41,7 @@ fn certify_cap(
     radius: f64,
     maximum: f64,
     bindings: &Bindings<'_>,
+    workspace: &mut CylindricalTrimWorkspace,
     cancelled: &mut CancelPoll<'_>,
 ) -> Result<(CertifiedCylindricalTrim, f64), StorageFailure> {
     let (edge, face, poles) = binding;
@@ -44,7 +49,8 @@ fn certify_cap(
     let limit = cap_limit(*edge, *face, bindings)?;
     // The preceding bit comparison establishes these controls equal the decoded pcurve.
     let query = trace_query(curve, poles, radius, limit);
-    let proof = certify_cylindrical_trim(query, cancelled)
+    let proof = workspace
+        .certify(query, cancelled)
         .map_err(|cause| trim_failure(*edge, *face, residual_failure(*edge, cause)))?;
     Ok((proof, tolerance))
 }

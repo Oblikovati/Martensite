@@ -31,8 +31,9 @@ pub use planning_types::{CylindricalFitPlan, CylindricalFitQuery};
 pub use trim::{
     CertifiedConicalTrim, CertifiedConicalTrimPair, CertifiedCylindricalTrim, ConicalTrimCarrier,
     ConicalTrimError, ConicalTrimPairError, ConicalTrimPairQuery, ConicalTrimQuery,
-    CylindricalTrimError, CylindricalTrimQuery, certify_conical_trim, certify_conical_trim_pair,
-    certify_conical_trim_ranges, certify_cylindrical_trim, certify_cylindrical_trim_ranges,
+    CylindricalTrimError, CylindricalTrimQuery, CylindricalTrimWorkspace, certify_conical_trim,
+    certify_conical_trim_pair, certify_conical_trim_ranges, certify_cylindrical_trim,
+    certify_cylindrical_trim_ranges,
 };
 pub use types::*;
 
