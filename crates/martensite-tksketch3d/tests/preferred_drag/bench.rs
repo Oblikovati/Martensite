@@ -8,11 +8,21 @@ enum Profile {
     Circle,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy)]
 enum Pointer {
-    ExactOnModel,
-    PreferredOnModel,
-    PreferredOffModel,
+    Exact,
+    Preferred,
+    OffModel,
+}
+
+impl Pointer {
+    fn label(self) -> &'static str {
+        match self {
+            Self::Exact => "ExactOnModel",
+            Self::Preferred => "PreferredOnModel",
+            Self::OffModel => "PreferredOffModel",
+        }
+    }
 }
 
 #[test]
@@ -21,11 +31,7 @@ fn measured_preferred_rail_and_circle_cursor_routes() {
     for coordinates in [15, 120, 240] {
         for profile in [Profile::Rail, Profile::Circle] {
             let (sketch, active) = corpus(profile, coordinates);
-            for pointer in [
-                Pointer::ExactOnModel,
-                Pointer::PreferredOnModel,
-                Pointer::PreferredOffModel,
-            ] {
+            for pointer in [Pointer::Exact, Pointer::Preferred, Pointer::OffModel] {
                 measure(profile, pointer, coordinates, &sketch, active);
             }
         }
@@ -45,7 +51,7 @@ fn measure(
         let (cursor, expected) = target(profile, mode, step);
         let start = Instant::now();
         let update = match mode {
-            Pointer::ExactOnModel => state.drag(pid(active), point(cursor), || false).unwrap(),
+            Pointer::Exact => state.drag(pid(active), point(cursor), || false).unwrap(),
             _ => {
                 state
                     .drag_preferred(pid(active), point(cursor), TANGENT, || false)
@@ -65,13 +71,14 @@ fn measure(
     let max = samples.last().unwrap().0;
     let work = samples.iter().map(|sample| sample.1).max().unwrap();
     println!(
-        "{{\"profile\":\"{profile:?}\",\"mode\":\"{mode:?}\",\"coordinates\":{coordinates},\"samples\":{},\"p95_ns\":{p95},\"max_ns\":{max},\"work\":{work}}}",
+        "{{\"profile\":\"{profile:?}\",\"mode\":\"{}\",\"coordinates\":{coordinates},\"samples\":{},\"p95_ns\":{p95},\"max_ns\":{max},\"work\":{work}}}",
+        mode.label(),
         samples.len()
     );
 }
 
 fn target(profile: Profile, mode: Pointer, step: i32) -> ([f64; 3], [f64; 3]) {
-    let off = matches!(mode, Pointer::PreferredOffModel);
+    let off = matches!(mode, Pointer::OffModel);
     match profile {
         Profile::Rail => {
             let x = f64::from(step) * 0.1;
