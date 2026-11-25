@@ -5,6 +5,7 @@ mod bernstein;
 pub mod bezier_line;
 /// Source-bound exact Bézier pair and canonical self-contact certificates.
 pub mod bezier_pair;
+pub mod cartesian_equation;
 mod certificate_arithmetic;
 mod chain;
 mod coefficient_enclosure;

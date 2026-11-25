@@ -20,7 +20,11 @@ pub mod rep_utils;
 // GeomEval curves.
 mod aht_bezier_curve;
 mod curve_support;
+mod equation_curve;
 pub use aht_bezier_curve::GeomEvalAHTBezierCurve;
+pub use equation_curve::{
+    CartesianEquationExport, CartesianEquationExportError, export_cartesian_equation,
+};
 mod circular_helix_curve;
 pub use circular_helix_curve::GeomEvalCircularHelixCurve;
 mod planar_spiral_curve;
