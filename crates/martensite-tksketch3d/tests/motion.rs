@@ -224,3 +224,61 @@ fn invalid_selection_invalid_motion_and_staged_cancellation_are_distinct() {
         [[1., 0., 0.], [2., 0., 0.]].map(point)
     );
 }
+
+#[test]
+fn a_finite_nonunit_stored_rotation_axis_refuses_before_staging() {
+    let sketch = source();
+    let mut direction = Direction3::Z;
+    let mut position = 1;
+    let stored = r#""gp_Dir": [0, 0, 1.7976931348623157e308]"#;
+    assert!(direction.init_from_json(stored, &mut position).unwrap());
+    let motion = RigidMotion::Rotate {
+        axis: Axis1::new(point([0.; 3]), direction),
+        radians: FRAC_PI_2,
+    };
+    assert!(matches!(
+        sketch.transform_points(&[pid(1), pid(2)], motion, || false),
+        Err(RigidMotionFailure::InvalidMotion(_))
+    ));
+}
+
+#[test]
+fn a_rigid_rotation_rebinds_the_prepared_parallel_reference_for_later_drag() {
+    use martensite_tksketch3d::constraints::ParallelDirection;
+
+    let base = Snapshot::empty(MinimumLength::new(0.001).unwrap())
+        .apply(
+            &[
+                seed(1, [0., 0., 0.], PointRole::Defining),
+                seed(2, [2., 0., 0.], PointRole::Defining),
+                seed(3, [0., 1., 0.], PointRole::Defining),
+                seed(4, [2., 1., 0.], PointRole::Defining),
+                line(5, 1, 2),
+                line(6, 3, 4),
+            ],
+            || false,
+        )
+        .unwrap();
+    let sketch = ConstrainedSketch::new(base, crate::constraints::policy()).unwrap();
+    let relation = RelationEdit::Insert(
+        RelationId::new(id(1)),
+        RelationSpec::Parallel([lid(5), lid(6)], ParallelDirection::Same),
+    );
+    let sketch = sketch.apply(&[relation], || false).unwrap();
+    let motion = RigidMotion::Rotate {
+        axis: Axis1::new(point([0.; 3]), Direction3::Z),
+        radians: FRAC_PI_2,
+    };
+    let rotated = sketch
+        .transform_points(&[pid(1), pid(2), pid(3), pid(4)], motion, || false)
+        .unwrap();
+    assert_eq!(rotated.inspect_rank().unwrap().rank, 2);
+    let dragged = rotated
+        .drag(pid(4), point([-1., 2.1, 0.]), || false)
+        .unwrap();
+    assert_eq!(dragged.rank.rank, 2);
+    near(
+        dragged.sketch.geometry().point(pid(4)).unwrap().position,
+        [-1., 2.1, 0.],
+    );
+}

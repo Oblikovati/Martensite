@@ -3,7 +3,7 @@
 use super::{ConstrainedSketch, ConstraintFailure, adopt::apply_checked, poll, program::Program};
 use crate::{Edit, PointId, Snapshot};
 use martensite_tkernel::standard::Failure;
-use martensite_tkmath::gp::{Axis1, Transform3, Vector3};
+use martensite_tkmath::gp::{Axis1, Direction3, Transform3, Vector3};
 use std::{collections::BTreeSet, error::Error, fmt, sync::Arc};
 
 /// Motion acting on the selected owned points in model coordinates.
@@ -47,7 +47,7 @@ impl fmt::Display for RigidMotionFailure {
             }
             Self::InvalidMotion(motion) => write!(
                 output,
-                "rigid motion {motion:?} requires finite coordinates, a finite angle and a nonzero rotation axis"
+                "rigid motion {motion:?} requires finite coordinates, a finite angle and a unit rotation axis"
             ),
             Self::NativeRotation(error) => {
                 write!(output, "rigid rotation construction failed: {error}")
@@ -147,10 +147,8 @@ fn staged_moves(
 }
 
 fn valid_axis(axis: Axis1) -> bool {
-    let direction = axis.direction();
     finite(axis.location().coordinates())
-        && finite(direction.coordinates())
-        && direction.coordinates().iter().any(|&value| value != 0.)
+        && Direction3::from_stored_coefficients(*axis.direction().coordinates()).is_ok()
 }
 
 fn finite(coordinates: &[f64; 3]) -> bool {
