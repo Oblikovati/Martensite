@@ -112,3 +112,47 @@ fn a_trace_bound_does_not_require_an_invertible_angular_direction() {
     let proof = certify_cylindrical_trim(input, || false).unwrap();
     assert_eq!(proof.spatial_residual_bound(), 1.);
 }
+
+#[test]
+fn restricted_certificate_excludes_a_large_inactive_trace_error() {
+    let points = [[2., 0., 0.], [2., 0., 1.]];
+    let pcurve = [[0., 0.], [0., 2.]];
+    let query = CylindricalTrimQuery {
+        curve: MetricBezier {
+            poles: &points,
+            weights: None,
+        },
+        pcurve: &pcurve,
+        radius: 2.,
+        spatial_limit: 0.2,
+        options: Default::default(),
+    };
+    assert!(certify_cylindrical_trim(query, || false).is_err());
+    let proof = certify_cylindrical_trim_ranges(query, [[0.05, 0.125]; 2], || false).unwrap();
+    assert!(0.125 <= proof.spatial_residual_bound() && proof.spatial_residual_bound() < 0.126);
+    assert!(proof.matches_ranges(query, [[0.05, 0.125]; 2]));
+    assert!(!proof.matches_source(query));
+    assert!(certify_cylindrical_trim_ranges(query, [[0.05, 0.25]; 2], || false).is_err());
+}
+
+#[test]
+fn a_degree_five_chart_can_have_its_own_normalized_active_range() {
+    let points = [[2., 0., 0.], [2., 0., 1.]];
+    let pcurve = [0.25, 0.35, 0.45, 0.55, 0.65, 0.75].map(|height| [0., height]);
+    let query = CylindricalTrimQuery {
+        curve: MetricBezier {
+            poles: &points,
+            weights: None,
+        },
+        pcurve: &pcurve,
+        radius: 2.,
+        spatial_limit: 1e-12,
+        options: Default::default(),
+    };
+    let ranges = [[0.25, 0.75], [0., 1.]];
+    let proof = certify_cylindrical_trim_ranges(query, ranges, || false).unwrap();
+    assert!(proof.spatial_residual_bound() < 1e-12);
+    assert!(proof.matches_ranges(query, ranges));
+    assert!(!proof.matches_ranges(query, [ranges[1]; 2]));
+    assert!(certify_cylindrical_trim(query, || false).is_err());
+}

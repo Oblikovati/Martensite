@@ -94,7 +94,7 @@ fn hole_bindings(
     Ok(Some([a?, b?, c?, d?]))
 }
 
-pub(super) fn verify_rim_trim(
+pub(in crate::surface_sketch::full_turn) fn verify_rim_trim(
     section: &BandSection,
     face: &topods::Face,
     surface: &BRepAdaptorSurface,
@@ -146,7 +146,7 @@ fn verify_seam(
     )
 }
 
-pub(super) fn verify_seam_fragment(
+pub(in crate::surface_sketch::full_turn) fn verify_seam_fragment(
     section: &BandSection,
     face: &topods::Face,
     surface: &BRepAdaptorSurface,
@@ -226,7 +226,7 @@ fn verify_period_pair(
     Ok(())
 }
 
-pub(super) fn verify_representation(
+pub(in crate::surface_sketch::full_turn) fn verify_representation(
     section: &BandSection,
     surface: &BRepAdaptorSurface,
     edge: &topods::Edge,

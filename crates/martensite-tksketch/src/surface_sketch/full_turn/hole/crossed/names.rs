@@ -45,6 +45,8 @@ pub struct PeriodicCrossing {
 pub enum PeriodicSourceEnd {
     /// Original starting vertex.
     Start,
+    /// A fitter's exact interior dyadic endpoint in the original curve.
+    Dyadic(WrappedSourcePoint),
     /// Certified cut parameter.
     Cut(PeriodicCrossingId),
     /// Original ending vertex.
@@ -66,6 +68,8 @@ pub enum PeriodicSeamEnd {
 pub enum PeriodicImageKey {
     /// A one-to-one retained semantic image.
     Retained(HistoryKey),
+    /// An unchanged fitted source span or source vertex.
+    WrappedRetained(WrappedHistoryKey),
     /// A fragment of an authored aperture curve, in source traversal order.
     AperturePiece {
         /// Authored boundary being subdivided.

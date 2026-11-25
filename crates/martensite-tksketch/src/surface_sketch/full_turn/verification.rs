@@ -22,7 +22,9 @@ use std::f64::consts::TAU;
 mod periodic_cut;
 mod trim;
 
+pub(super) use periodic_cut::unique_kind;
 pub(super) use periodic_cut::validate_crossed;
+pub(super) use trim::{verify_rim_trim, verify_seam_fragment};
 
 pub(super) fn validate(
     section: &BandSection,
@@ -67,7 +69,7 @@ fn verify_band(
     Ok(())
 }
 
-fn verify_face(
+pub(super) fn verify_face(
     section: &BandSection,
     rims: [SurfaceCurveId; 2],
     bindings: &Bindings,
@@ -122,7 +124,7 @@ fn verify_plane(section: &BandSection, surface: &BRepAdaptorSurface, index: usiz
     )
 }
 
-fn verify_cylinder(
+pub(super) fn verify_cylinder(
     section: &BandSection,
     surface: &BRepAdaptorSurface,
     index: usize,
@@ -161,7 +163,7 @@ fn verify_cone(section: &BandSection, surface: &BRepAdaptorSurface, index: usize
     )
 }
 
-fn verify_rim(
+pub(super) fn verify_rim(
     section: &BandSection,
     bindings: &Bindings,
     key: HistoryKey,
@@ -248,10 +250,10 @@ fn delta(point: Point3, origin: [f64; 3]) -> [f64; 3] {
     ]
 }
 
-fn tolerance(section: &BandSection) -> f64 {
+pub(super) fn tolerance(section: &BandSection) -> f64 {
     section.sweep.options.resolution.weld + section.sweep.coordinate_error
 }
 
-fn angular(section: &BandSection) -> f64 {
+pub(super) fn angular(section: &BandSection) -> f64 {
     section.sweep.options.resolution.angular
 }

@@ -10,8 +10,10 @@ use martensite_tkbrep::topods;
 use std::f64::consts::{PI, TAU};
 
 mod crossed;
+mod curved;
 mod images;
 pub use crossed::*;
+pub use curved::{CurvedBandResult, normal_extrude_cylinder_band_with_curved_hole};
 
 /// One authored rectangular through hole on a cylinder, expressed in the band's chart.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -213,6 +215,19 @@ fn cylinder(support: FullTurnSupport) -> Checked<(CylinderSupport, [f64; 2])> {
             expected: "cylindrical support for one rectangular aperture",
         }),
     }
+}
+
+fn require_periodic_chord(angle: f64, radius: f64, floor: f64) -> Checked<()> {
+    // For the nearest cut the physical angle is at most pi. Concavity
+    // gives 2r sin(angle/2) >= (2/pi) r angle on this interval.
+    let chord_factor = (2. / PI.next_up()).next_down();
+    let chord = ((angle.min(PI) * chord_factor).next_down() * radius).next_down();
+    cylinder_admission::require(
+        chord > floor,
+        "aperture seam fragment clearance",
+        chord,
+        "certified physical chord greater than effective spatial separation",
+    )
 }
 
 fn require_rim_clearance(

@@ -192,7 +192,7 @@ fn unique_rooted_images(
     Ok(())
 }
 
-fn unique_kind(
+pub(in crate::surface_sketch::full_turn) fn unique_kind(
     body: &topods::Shape,
     bindings: &[Image],
     kind: ShapeEnum,
@@ -225,9 +225,10 @@ fn unique_kind(
     Ok(())
 }
 
-fn image_kind(key: PeriodicImageKey) -> ShapeEnum {
+pub(in crate::surface_sketch::full_turn) fn image_kind(key: PeriodicImageKey) -> ShapeEnum {
     match key {
         PeriodicImageKey::Retained(key) => primitive::role_kind(key.role),
+        PeriodicImageKey::WrappedRetained(key) => primitive::role_kind(key.role),
         PeriodicImageKey::AperturePiece { .. } | PeriodicImageKey::SeamSegment { .. } => {
             ShapeEnum::Edge
         }
