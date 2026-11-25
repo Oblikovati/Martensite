@@ -10,6 +10,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added explicit full-turn cylinder and cone bands with authored rim history and paired native seams (#419).
 
+- Added rectangular apertures across native seams in full-turn cylinder and cone bands, with exact source intervals for split rims and stable replay (#419).
+
+- Added source-bound radial motion and stock-contact bounds for stored cylindrical ruled sides (#420).
+
 - Added checked cylindrical and conical normal extrusions for a positive rational Bézier with a straight outer boundary, with original parameter history and certified material measurements (#418).
 
 - Added wrapped cylinder and cone profiles for weighted Bernstein spans with a proven same-parameter polynomial identity and source-bound planar evidence (#418).

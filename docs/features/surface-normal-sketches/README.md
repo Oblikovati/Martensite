@@ -151,6 +151,12 @@ has two opposite uses on its periodic face. Moving the construction seam
 preserves the authored region and rim keys. The tests check both material
 sides against the analytic volume and verify replay and input isolation.
 
+The periodic aperture entries retain exact source intervals and signed sheet
+transitions when a rectangular hole crosses the native cut. They also support
+axially or meridionally separated apertures whose combined angular coverage
+leaves no clear cut. Moving the native seam changes its split occurrences
+while preserving the authored curves and material volume.
+
 ## General wrapped profiles
 
 An application can pass its named support members to
