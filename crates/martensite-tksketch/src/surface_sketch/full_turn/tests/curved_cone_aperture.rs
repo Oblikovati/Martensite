@@ -109,6 +109,7 @@ fn curved_cone_aperture_refuses_uncertain_rotational_contact() {
     }
     let failure =
         normal_extrude_cone_band_with_curved_hole(&band, &request, options()).unwrap_err();
+    let failure = surface_failure(failure);
     assert_eq!(failure.stage, SurfaceStage::Admission);
     assert!(matches!(
         failure.cause,

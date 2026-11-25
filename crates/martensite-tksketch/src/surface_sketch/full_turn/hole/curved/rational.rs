@@ -14,7 +14,7 @@ pub fn normal_extrude_cylinder_band_with_rational_hole(
     request: &WrappedNormalRequest,
     options: NormalExtrusionOptions,
     reference_level: u8,
-) -> Result<Completed, SurfaceSketchFailure> {
+) -> Result<Completed, CurvedBandFailure> {
     let plan = AperturePlan::admit(
         band,
         request,
@@ -24,7 +24,7 @@ pub fn normal_extrude_cylinder_band_with_rational_hole(
     )
     .map_err(|cause| admission_failure(band, cause))?;
     let tool = normal_extrude_rational_cylinder(request, reference_level, || false)
-        .map_err(|cause| rational_failure(&plan, cause))?;
+        .map_err(|cause| CurvedBandFailure::rational(&plan, cause))?;
     finish_rational(plan, tool)
 }
 
@@ -39,7 +39,7 @@ pub fn normal_extrude_cone_band_with_rational_hole(
     request: &WrappedConeNormalRequest,
     options: NormalExtrusionOptions,
     reference_level: u8,
-) -> Result<Completed, SurfaceSketchFailure> {
+) -> Result<Completed, CurvedBandFailure> {
     let plan = AperturePlan::admit_cone(
         band,
         request,
@@ -56,14 +56,14 @@ pub fn normal_extrude_cone_band_with_rational_hole(
         }
         None => normal_extrude_rational_cone(request, reference_level, || false),
     }
-    .map_err(|cause| rational_failure(&plan, cause))?;
+    .map_err(|cause| CurvedBandFailure::rational(&plan, cause))?;
     finish_rational(plan, tool)
 }
 
 fn finish_rational(
     plan: AperturePlan,
     tool: RationalWrappedResult,
-) -> Result<Completed, SurfaceSketchFailure> {
+) -> Result<Completed, CurvedBandFailure> {
     let angular_error = angle_from_chord(plan.minimum_radius(), tool.spatial_error().upper)
         .map_err(|cause| plan.stock.sweep.failure(SurfaceStage::Validation, cause))?;
     let evidence = FitEvidence {
@@ -72,13 +72,6 @@ fn finish_rational(
     };
     let detached = tool
         .export_native()
-        .map_err(|cause| export_failure(&plan, cause))?;
+        .map_err(|cause| CurvedBandFailure::wrapped(&plan, cause))?;
     finish(plan, tool, evidence, &detached)
-}
-
-fn rational_failure(plan: &AperturePlan, cause: RationalWrappedFailure) -> SurfaceSketchFailure {
-    plan.stock.sweep.failure(
-        SurfaceStage::Construction,
-        incomplete("certified rational wrapped aperture", cause.to_string()),
-    )
 }

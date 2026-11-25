@@ -37,6 +37,7 @@ fn repeated_source_tangent_contact_refuses_at_admission() {
     let (band, request) = two_crossings(-0.3125);
     let failure =
         normal_extrude_cylinder_band_with_curved_hole(&band, &request, options()).unwrap_err();
+    let failure = surface_failure(failure);
     assert_eq!(failure.stage, SurfaceStage::Admission);
     assert!(matches!(
         failure.cause,

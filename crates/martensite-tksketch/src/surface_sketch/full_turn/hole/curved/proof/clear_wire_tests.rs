@@ -4,7 +4,7 @@ use crate::surface_sketch::full_turn::tests::{
     conic_aperture::{arc_profile, native_short_area, short_arc},
     curved_aperture::fixture,
     curved_batch::{add_rectangle, count_cap_wires},
-    curved_cone_aperture, options,
+    curved_cone_aperture, options, surface_failure,
 };
 use martensite_tkbrep::topods::{Builder, Compound};
 
@@ -79,6 +79,7 @@ fn count_and_admit_mixed(band: &FullTurnBand, request: &WrappedNormalRequest) ->
     let failure = normal_extrude_cylinder_band_with_rational_hole(band, request, options(), 4)
         .err()
         .unwrap();
+    let failure = surface_failure(failure);
     assert_eq!(failure.stage, SurfaceStage::Admission);
     assert!(matches!(
         failure.cause,

@@ -82,6 +82,7 @@ fn native_arc_with_nonbinary_stereographic_weights_refuses() {
     let failure = normal_extrude_cylinder_band_with_rational_hole(&band, &request, options(), 4)
         .err()
         .unwrap();
+    let failure = surface_failure(failure);
     assert_eq!(failure.stage, SurfaceStage::Admission);
     assert!(matches!(
         failure.cause,
@@ -153,6 +154,7 @@ fn exact_conic_quarter_refuses_an_unproved_long_original_arc() {
     let failure = normal_extrude_cylinder_band_with_rational_hole(&band, &request, options(), 4)
         .err()
         .unwrap();
+    let failure = surface_failure(failure);
     assert_eq!(failure.stage, SurfaceStage::Admission);
     assert!(matches!(
         failure.cause,

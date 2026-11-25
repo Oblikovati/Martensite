@@ -184,6 +184,7 @@ fn fitted_apertures_without_meridian_separation_refuse_before_boolean() {
     request.selections.push(plain);
     let failure =
         normal_extrude_cylinder_band_with_curved_holes(&band, &request, options()).unwrap_err();
+    let failure = surface_failure(failure);
     assert_eq!(failure.stage, SurfaceStage::Admission);
     assert!(matches!(
         failure.cause,

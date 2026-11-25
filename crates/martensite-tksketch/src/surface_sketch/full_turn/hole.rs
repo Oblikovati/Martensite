@@ -14,7 +14,7 @@ mod curved;
 mod images;
 pub use crossed::*;
 pub use curved::{
-    CurvedBandResult, normal_extrude_cone_band_with_curved_hole,
+    CurvedBandFailure, CurvedBandResult, normal_extrude_cone_band_with_curved_hole,
     normal_extrude_cone_band_with_curved_holes, normal_extrude_cone_band_with_rational_hole,
     normal_extrude_cylinder_band_with_curved_hole, normal_extrude_cylinder_band_with_curved_holes,
     normal_extrude_cylinder_band_with_rational_hole,

@@ -5,9 +5,11 @@ use crate::surface_sketch::full_turn::hole::crossed::CrossedBandResult;
 
 mod admission;
 mod binding;
+mod failure;
 mod proof;
 mod rational;
 use admission::{AperturePlan, Scope, SourceModel};
+pub use failure::CurvedBandFailure;
 pub use rational::*;
 use std::collections::BTreeMap;
 
@@ -53,7 +55,7 @@ pub fn normal_extrude_cylinder_band_with_curved_hole(
     band: &FullTurnBand,
     request: &WrappedNormalRequest,
     options: NormalExtrusionOptions,
-) -> Result<CurvedBandResult, SurfaceSketchFailure> {
+) -> Result<CurvedBandResult, CurvedBandFailure> {
     let plan = AperturePlan::admit(
         band,
         request,
@@ -68,7 +70,7 @@ pub fn normal_extrude_cylinder_band_with_curved_hole(
         .map_err(|cause| plan.stock.sweep.failure(SurfaceStage::Validation, cause))?;
     let detached = cutter
         .export_native()
-        .map_err(|cause| export_failure(&plan, cause))?;
+        .map_err(|cause| CurvedBandFailure::wrapped(&plan, cause))?;
     finish(plan, report, evidence, &detached)
 }
 
@@ -81,7 +83,7 @@ pub fn normal_extrude_cone_band_with_curved_hole(
     band: &FullTurnBand,
     request: &WrappedConeNormalRequest,
     options: NormalExtrusionOptions,
-) -> Result<CurvedBandResult<WrappedConeMemberReport>, SurfaceSketchFailure> {
+) -> Result<CurvedBandResult<WrappedConeMemberReport>, CurvedBandFailure> {
     let plan = AperturePlan::admit_cone(
         band,
         request,
@@ -96,7 +98,7 @@ pub fn normal_extrude_cone_band_with_curved_hole(
         .map_err(|cause| plan.stock.sweep.failure(SurfaceStage::Validation, cause))?;
     let detached = cutter
         .export_native()
-        .map_err(|cause| export_failure(&plan, cause))?;
+        .map_err(|cause| CurvedBandFailure::wrapped(&plan, cause))?;
     finish(plan, report, evidence, &detached)
 }
 
@@ -108,8 +110,7 @@ pub fn normal_extrude_cylinder_band_with_curved_holes(
     band: &FullTurnBand,
     request: &WrappedNormalRequest,
     options: NormalExtrusionOptions,
-) -> Result<CurvedBandResult<BTreeMap<SurfaceRegionId, WrappedMemberReport>>, SurfaceSketchFailure>
-{
+) -> Result<CurvedBandResult<BTreeMap<SurfaceRegionId, WrappedMemberReport>>, CurvedBandFailure> {
     let request = canonical_cylinder_request(request);
     let plan = AperturePlan::admit(
         band,
@@ -126,7 +127,7 @@ pub fn normal_extrude_cylinder_band_with_curved_holes(
     })?;
     let detached = cutter
         .export_native()
-        .map_err(|cause| export_failure(&plan, cause))?;
+        .map_err(|cause| CurvedBandFailure::wrapped(&plan, cause))?;
     finish(plan, reports.clone(), evidence, &detached)
 }
 
@@ -137,10 +138,8 @@ pub fn normal_extrude_cone_band_with_curved_holes(
     band: &FullTurnBand,
     request: &WrappedConeNormalRequest,
     options: NormalExtrusionOptions,
-) -> Result<
-    CurvedBandResult<BTreeMap<SurfaceRegionId, WrappedConeMemberReport>>,
-    SurfaceSketchFailure,
-> {
+) -> Result<CurvedBandResult<BTreeMap<SurfaceRegionId, WrappedConeMemberReport>>, CurvedBandFailure>
+{
     let mut request = request.clone();
     request.selections.sort_by_key(|selection| selection.region);
     let plan = AperturePlan::admit_cone(
@@ -156,7 +155,7 @@ pub fn normal_extrude_cone_band_with_curved_holes(
     let evidence = batch_evidence(&plan, reports, |report| FitEvidence::cone(&plan, report))?;
     let detached = cutter
         .export_native()
-        .map_err(|cause| export_failure(&plan, cause))?;
+        .map_err(|cause| CurvedBandFailure::wrapped(&plan, cause))?;
     finish(plan, reports.clone(), evidence, &detached)
 }
 
@@ -171,13 +170,13 @@ fn finish<T>(
     tool: T,
     evidence: FitEvidence,
     detached: &DetachedWrappedBodies,
-) -> Result<CurvedBandResult<T>, SurfaceSketchFailure> {
+) -> Result<CurvedBandResult<T>, CurvedBandFailure> {
     let stock = export_stock(&plan.stock, plan.band.rims)?;
     let bound = binding::bind(&plan, &stock, detached, evidence.angular_error)
         .map_err(|cause| plan.stock.sweep.failure(SurfaceStage::History, cause))?;
     let authored = evidence.authored_volume;
     plan.stock.sweep.expected_volume -= authored.lower.midpoint(authored.upper);
-    publish(&plan, tool, evidence.angular_error, detached, bound)
+    publish(&plan, tool, evidence.angular_error, detached, bound).map_err(CurvedBandFailure::from)
 }
 
 struct FitEvidence {
@@ -280,29 +279,15 @@ fn admission_failure(band: &FullTurnBand, cause: SurfaceFailureCause) -> Surface
     }
 }
 
-fn export_failure(plan: &AperturePlan, cause: WrappedNormalFailure) -> SurfaceSketchFailure {
-    plan.stock.sweep.failure(
-        SurfaceStage::Encoding,
-        incomplete("detached certified curved aperture", format!("{cause:?}")),
-    )
-}
-
-fn tool_failure(plan: &AperturePlan, cause: WrappedNormalFailure) -> SurfaceSketchFailure {
-    plan.stock.sweep.failure(
-        SurfaceStage::Construction,
-        incomplete("certified wrapped aperture", format!("{cause:?}")),
-    )
-}
-
 fn fitted_cone(
     plan: &AperturePlan,
     request: &WrappedConeNormalRequest,
-) -> Result<WrappedConeNormalResult, SurfaceSketchFailure> {
+) -> Result<WrappedConeNormalResult, CurvedBandFailure> {
     let tool = match cone_execution(plan)? {
         Some(selection) => normal_extrude_cone_profile_with_selection(request, selection),
         None => normal_extrude_cone_profile(request),
     };
-    tool.map_err(|cause| tool_failure(plan, cause))
+    tool.map_err(|cause| CurvedBandFailure::wrapped(plan, cause))
 }
 
 fn cone_execution(
@@ -333,8 +318,8 @@ fn cone_execution(
 fn fitted_cutter(
     plan: &AperturePlan,
     request: &WrappedNormalRequest,
-) -> Result<WrappedNormalResult, SurfaceSketchFailure> {
-    normal_extrude_profile(request).map_err(|cause| tool_failure(plan, cause))
+) -> Result<WrappedNormalResult, CurvedBandFailure> {
+    normal_extrude_profile(request).map_err(|cause| CurvedBandFailure::wrapped(plan, cause))
 }
 
 fn publish<T>(

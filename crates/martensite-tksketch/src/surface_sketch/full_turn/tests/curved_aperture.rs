@@ -200,6 +200,7 @@ fn curved_aperture_refuses_periodic_overlap_and_ambiguous_corner_contact() {
     }
     let failure =
         normal_extrude_cylinder_band_with_curved_hole(&band, &request, options()).unwrap_err();
+    let failure = surface_failure(failure);
     assert_eq!(failure.stage, SurfaceStage::Admission);
     assert!(matches!(
         failure.cause,
@@ -215,6 +216,7 @@ fn curved_aperture_refuses_periodic_overlap_and_ambiguous_corner_contact() {
     }
     let failure =
         normal_extrude_cylinder_band_with_curved_hole(&band, &request, options()).unwrap_err();
+    let failure = surface_failure(failure);
     assert_eq!(failure.stage, SurfaceStage::Admission);
     assert!(matches!(
         failure.cause,
