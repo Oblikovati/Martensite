@@ -169,6 +169,27 @@ fn test_only_edits_keep_the_existing_package_version_and_select_qa() {
     assert_eq!(scope.tests, ["martensite-kernel"]);
 }
 
+#[test]
+fn successor_packages_source_from_the_unpublished_tag() {
+    let mut fixture = ReleaseScopeFixture::new("M\0crates/martensite-kernel/src/lib.rs\0");
+    fixture.runner = fixture
+        .runner
+        .with_stdout("git tag --list v*", "v0.3.0\nv0.3.1")
+        .with_stdout("git diff --name-status --no-renames -z v0.3.1", "");
+    write_runtime_source(&fixture);
+    let context = context_at(&fixture.runner, fixture.directory.path());
+    let workspace = crate::workspace::CargoWorkspace::load(context.runner, context.root()).unwrap();
+    let scope = crate::release_scope::ReleaseScope::load(
+        &context,
+        &workspace,
+        &semver::Version::new(0, 3, 2),
+    )
+    .unwrap();
+    assert_eq!(scope.baseline.as_deref(), Some("v0.3.0"));
+    assert_eq!(scope.packages, ["martensite-kernel"]);
+    assert!(scope.tests.contains(&"martensite-kernel".to_owned()));
+}
+
 fn write_runtime_source(fixture: &ReleaseScopeFixture) {
     let source = fixture
         .directory
