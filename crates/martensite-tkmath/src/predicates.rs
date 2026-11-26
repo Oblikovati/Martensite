@@ -2,13 +2,42 @@
 //! Exact signs of supplied binary64 coordinates, separate from metric tolerance.
 //! This extension does not change the metric decisions.
 
+mod affine_point;
 /// Exact injectivity certificates for supported bilinear patches.
 pub mod bilinear_patch;
+mod circular_arc;
 mod compare;
+mod direction_band;
+mod homothety;
+mod line_trace;
+mod plane_sign;
+mod reflected_point;
 /// Certified polynomial roots for extension topology.
 pub mod roots;
+mod segment_contact;
+mod triangle;
 mod triple_product;
-pub use compare::{compare_line_projections_2d, compare_squared_distances_2d};
+pub use affine_point::compare_affine_point_error_3d;
+pub use circular_arc::{ArcTripleFailure, ArcTripleMetrics, compare_arc_endpoint_tangent_3d};
+pub use compare::{
+    compare_length_difference_3d, compare_line_projections_2d, compare_squared_distances_2d,
+    compare_squared_length_3d,
+};
+pub use direction_band::compare_directed_line_sine_3d;
+pub use homothety::{Homothety3dFailure, positive_homothety_3d};
+pub use line_trace::{
+    affine_line_trace_bound, placed_affine_line_trace_bound, placed_point_distance_upper_bound,
+    point_distance_upper_bound,
+};
+pub use plane_sign::{compare_plane_direction_3d, compare_tetrahedron_orientation_3d};
+pub use reflected_point::{
+    ReflectionComparisonError, compare_reflected_point_error_3d, round_reflected_point_3d,
+};
+pub use segment_contact::{SegmentContact3d, exact_segment_contact_3d};
+pub use triangle::{
+    compare_triangle_altitude_3d, compare_triangle_orientation_3d,
+    compare_triangle_projected_dot_3d, point_on_anchored_direction_3d,
+};
 pub use triple_product::compare_scalar_triple_product_3d;
 
 use num_bigint::{BigInt, Sign};
@@ -87,6 +116,14 @@ fn exact_point(point: [f64; 2], index: usize) -> Result<[BigInt; 2], NonFiniteCo
     ])
 }
 
+fn exact_vector3(vector: [f64; 3], index: usize) -> Result<[BigInt; 3], NonFiniteCoordinate> {
+    Ok([
+        exact_coordinate(vector[0], index, 0)?,
+        exact_coordinate(vector[1], index, 1)?,
+        exact_coordinate(vector[2], index, 2)?,
+    ])
+}
+
 fn exact_coordinate(value: f64, point: usize, axis: usize) -> Result<BigInt, NonFiniteCoordinate> {
     let parts = binary64_parts(value, point, axis)?;
     let integer = BigInt::from(parts.significand) << parts.shift;
@@ -95,7 +132,7 @@ fn exact_coordinate(value: f64, point: usize, axis: usize) -> Result<BigInt, Non
 
 struct Binary64Parts {
     significand: u64,
-    shift: usize,
+    shift: u16,
     negative: bool,
 }
 
@@ -108,7 +145,7 @@ fn binary64_parts(
         return Err(NonFiniteCoordinate { point, axis, value });
     }
     let bits = value.to_bits();
-    let exponent = ((bits >> 52) & 0x7ff) as usize;
+    let exponent = ((bits >> 52) & 0x7ff) as u16;
     let fraction = bits & ((1_u64 << 52) - 1);
     let significand = fraction | if exponent == 0 { 0 } else { 1_u64 << 52 };
     // Every finite binary64 is an integer multiple of 2^-1074. The common

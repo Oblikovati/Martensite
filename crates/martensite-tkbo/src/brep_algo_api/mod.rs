@@ -13,6 +13,7 @@ pub use operations::{BRepAlgoAPICommon, BRepAlgoAPICut, BRepAlgoAPIFuse};
 
 mod section;
 pub use section::BRepAlgoAPISection;
+mod section_operands;
 
 mod check;
 pub use check::BRepAlgoAPICheck;

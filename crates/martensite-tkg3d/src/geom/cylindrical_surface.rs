@@ -27,6 +27,9 @@ use martensite_tkmath::gp::{Axis3, Cylinder3, GeneralTransform2, Point3, Transfo
 use std::f64::consts::PI;
 use std::io;
 
+mod input_lease;
+pub use input_lease::CylinderInputLease;
+
 #[derive(Clone, Copy)]
 struct CylinderState {
     pos: Axis3,

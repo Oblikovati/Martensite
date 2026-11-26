@@ -1,6 +1,6 @@
 //! `BRepAlgoAPIBuilderAlgo`: the API of the General Fuse, and the root of the Boolean and
 //! split APIs: intersection by a pave filler, then the result by a General Fuse algorithm.
-use super::algo::BRepAlgoAPIAlgo;
+use super::{algo::BRepAlgoAPIAlgo, section_operands::SectionOperandRoots};
 use crate::bop_algo::{
     BOPAlgoBuilder, BOPAlgoPaveFiller, GeneralFuseAlgorithm, Glue, SectionAttribute,
 };
@@ -37,6 +37,8 @@ pub struct BRepAlgoAPIBuilderAlgo {
     simplifier_history: Handle<History>,
     /// The face/face intersection options set by the section API, none for the others.
     pub(crate) section_attribute: Option<SectionAttribute>,
+    /// Operand roots in the same source table as the completed section.
+    pub(super) completed_section_operands: Option<SectionOperandRoots>,
 }
 
 impl BRepAlgoAPIBuilderAlgo {
@@ -56,6 +58,7 @@ impl BRepAlgoAPIBuilderAlgo {
             history: Handle::default(),
             simplifier_history: Handle::default(),
             section_attribute: None,
+            completed_section_operands: None,
         }
     }
 
@@ -165,6 +168,7 @@ impl BRepAlgoAPIBuilderAlgo {
             self.ds_filler = None;
         }
         self.builder = None;
+        self.completed_section_operands = None;
         self.history = Handle::default();
         self.simplifier_history = Handle::default();
     }

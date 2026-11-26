@@ -72,33 +72,23 @@ impl HelixGeomTools {
         the_max_error: &mut f64,
     ) -> Result<i32, Failure> {
         let adaptor: &dyn Adaptor3dCurve = the_hc.get().ok_or_else(|| null_object("theHC"))?;
-        let mut three_d_tol: Array1<'static, f64> =
-            Array1::with_bounds(1, 1).map_err(array_failure("NCollection_HArray1"))?;
-        three_d_tol.init(the_tol);
-        let (first, last): (f64, f64) = (adaptor.first_parameter()?, adaptor.last_parameter()?);
+        let tolerance = approximation_tolerance(the_tol)?;
+        let range = [adaptor.first_parameter()?, adaptor.last_parameter()?];
         let mut ev = HelixGeomToolsEval::new(the_hc.clone());
-        let approx = AdvApproxApproxAFunction::with_cutting(
-            0,
-            0,
-            1,
-            None,
-            None,
-            Some(&three_d_tol),
-            first,
-            last,
-            the_cont,
-            the_max_deg,
-            the_max_seg,
-            &mut ev,
-            &AdvApproxDichoCutting::new(),
-        );
+        let approx = Approximation {
+            range,
+            continuity: the_cont,
+            degree: the_max_deg,
+            segments: the_max_seg,
+        }
+        .fit(&tolerance, &mut ev);
         // An evaluator exception unwinds through AdvApprox natively; it comes first.
         ev.take_failure()?;
         Self::extract_result(&approx?, the_bspl, the_max_error)
     }
 
     // The result part of ApprCurve3D after the approximation.
-    fn extract_result(
+    pub(crate) fn extract_result(
         approx: &AdvApproxApproxAFunction,
         the_bspl: &mut Handle<GeomBSplineCurve>,
         the_max_error: &mut f64,
@@ -121,6 +111,43 @@ impl HelixGeomTools {
         *the_bspl = Handle::new(curve);
         *the_max_error = approx.max_error(3, 1)?;
         Ok(0)
+    }
+}
+
+pub(crate) fn approximation_tolerance(value: f64) -> Result<Array1<'static, f64>, Failure> {
+    let mut tolerance = Array1::with_bounds(1, 1).map_err(array_failure("NCollection_HArray1"))?;
+    tolerance.init(value);
+    Ok(tolerance)
+}
+
+pub(crate) struct Approximation {
+    pub range: [f64; 2],
+    pub continuity: Shape,
+    pub degree: i32,
+    pub segments: i32,
+}
+
+impl Approximation {
+    pub(crate) fn fit(
+        self,
+        tolerance: &Array1<'_, f64>,
+        evaluator: &mut dyn AdvApproxEvaluatorFunction,
+    ) -> Result<AdvApproxApproxAFunction, Failure> {
+        AdvApproxApproxAFunction::with_cutting(
+            0,
+            0,
+            1,
+            None,
+            None,
+            Some(tolerance),
+            self.range[0],
+            self.range[1],
+            self.continuity,
+            self.degree,
+            self.segments,
+            evaluator,
+            &AdvApproxDichoCutting::new(),
+        )
     }
 }
 

@@ -2,10 +2,12 @@
 use super::{owners::Owner, types::FaceCaptureIncomplete as Incomplete};
 use crate::{brep::*, topods::TShape};
 use martensite_tkernel::standard::{Handle, RuntimeTyped, SharedState};
-use martensite_tkg2d::geom2d::{PlanarLineInputLease, PlanarSplineInputLease};
+use martensite_tkg2d::geom2d::{
+    PlanarCircleInputLease, PlanarLineInputLease, PlanarSplineInputLease,
+};
 use martensite_tkg3d::geom::{
-    ExtrusionInputLease, GeomCurve, LineInputLease, PlaneInputLease, SplineInputLease,
-    SplineSurfaceInputLease,
+    CircleInputLease, CylinderInputLease, ExtrusionInputLease, GeomCurve, LineInputLease,
+    PlaneInputLease, SphereInputLease, SplineInputLease, SplineSurfaceInputLease,
 };
 use martensite_tkmath::toploc::Location;
 use std::sync::RwLockReadGuard;
@@ -34,6 +36,10 @@ pub(super) enum Lease<'a> {
     Range(RwLockReadGuard<'a, (f64, f64)>),
     Location(RwLockReadGuard<'a, Location>),
     Line(LineInputLease<'a>),
+    Cylinder(CylinderInputLease<'a>),
+    Sphere(SphereInputLease<'a>),
+    SpatialCircle(CircleInputLease<'a>),
+    PlanarCircle(PlanarCircleInputLease<'a>),
     PlanarLine(PlanarLineInputLease<'a>),
     PlanarSpline(PlanarSplineInputLease<'a>),
     Spline(SplineInputLease<'a>),
@@ -85,6 +91,10 @@ fn live<T: RuntimeTyped + ?Sized>(handle: &Handle<T>) -> Result<&T, Incomplete> 
 fn geometry_lease(owner: &Owner) -> Result<Lease<'_>, Incomplete> {
     let result = match owner {
         Owner::Line(h) => live(h)?.try_input_lease().map(Lease::Line),
+        Owner::Cylinder(h) => live(h)?.try_input_lease().map(Lease::Cylinder),
+        Owner::Sphere(h) => live(h)?.try_input_lease().map(Lease::Sphere),
+        Owner::SpatialCircle(h) => live(h)?.try_input_lease().map(Lease::SpatialCircle),
+        Owner::PlanarCircle(h) => live(h)?.try_input_lease().map(Lease::PlanarCircle),
         Owner::PlanarLine(h) => live(h)?.try_input_lease().map(Lease::PlanarLine),
         Owner::PlanarSpline(h) => live(h)?.try_input_lease().map(Lease::PlanarSpline),
         Owner::Spline(h) => live(h)?.try_input_lease().map(Lease::Spline),
@@ -225,6 +235,10 @@ fn geometry_order(lease: &Lease<'_>) -> u8 {
         Lease::Extrusion(_) => 14,
         Lease::SplineSurface(_) => 15,
         Lease::Regularity(_) => 16,
+        Lease::Cylinder(_) => 17,
+        Lease::Sphere(_) => 20,
+        Lease::SpatialCircle(_) => 18,
+        Lease::PlanarCircle(_) => 19,
         _ => unreachable!("topology and representation leases classified first"),
     }
 }

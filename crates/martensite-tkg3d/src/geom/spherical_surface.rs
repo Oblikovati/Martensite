@@ -25,6 +25,9 @@ use martensite_tkmath::gp::{Axis3, Point3, Sphere3, Transform3, Vector3};
 use std::f64::consts::PI;
 use std::io;
 
+mod input_lease;
+pub use input_lease::SphereInputLease;
+
 #[derive(Clone, Copy)]
 struct SphereState {
     pos: Axis3,

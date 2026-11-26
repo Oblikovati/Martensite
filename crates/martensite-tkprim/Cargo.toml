@@ -39,3 +39,7 @@ path = "tests/dataset_cases/main.rs"
 [[test]]
 name = "gprop_primitives"
 path = "tests/gprop_primitives.rs"
+
+[[test]]
+name = "planar_face_attachment"
+path = "tests/planar_face_attachment.rs"

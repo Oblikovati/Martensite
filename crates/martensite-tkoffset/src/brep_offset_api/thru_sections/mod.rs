@@ -1,11 +1,16 @@
 //! `BRepOffsetAPIThruSections`: a shell or a solid passing through a set of sections
 //! (wires, or vertices at the ends), ruled or smoothed by an approximated surface.
+mod corresponding_pair;
 mod generated;
 mod indices;
 mod ruled;
 mod smoothed;
 mod solid;
 mod total_surf;
+
+pub use corresponding_pair::{
+    CorrespondingRuledPair, CorrespondingRuledPairFailure, CorrespondingRuledSection,
+};
 
 use martensite_tkbool::brep_fill::{BRepFillGenerator, ThruSectionErrorStatus};
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
@@ -92,6 +97,22 @@ impl BRepBuilderAPIMakeShape for BRepOffsetAPIThruSections {
     /// The loft; a failure of the shell construction leaves the algorithm
     /// not done (the status keeps its value).
     fn build(&mut self, _range: &ProgressRange<'_>) -> Result<(), Failure> {
+        self.build_with_construction_error(false)
+    }
+
+    /// The faces grown from a section edge, or the longitudinal edges
+    /// from a section vertex.
+    fn generated(&mut self, shape: &Shape) -> Result<&List<Shape>, Failure> {
+        self.base.my_generated = self.generated_shapes(shape)?;
+        Ok(&self.base.my_generated)
+    }
+}
+
+impl BRepOffsetAPIThruSections {
+    fn build_with_construction_error(
+        &mut self,
+        keep_construction_error: bool,
+    ) -> Result<(), Failure> {
         self.my_status = ThruSectionErrorStatus::Done;
         self.my_bf_generator = None;
         if wrong_punctual_sections(&self.my_wires)? {
@@ -106,22 +127,17 @@ impl BRepBuilderAPIMakeShape for BRepOffsetAPIThruSections {
         } else {
             self.index_unchecked_wires()?;
         }
-        if self.create_shell().is_err() || self.my_status != ThruSectionErrorStatus::Done {
+        let construction = self.create_shell();
+        if construction.is_err() || self.my_status != ThruSectionErrorStatus::Done {
             self.base.set_not_done();
+            if keep_construction_error {
+                construction?;
+            }
             return Ok(());
         }
         encode_regularity(&self.base.my_shape, 1.0e-10)
     }
 
-    /// The faces grown from a section edge, or the longitudinal edges
-    /// from a section vertex.
-    fn generated(&mut self, shape: &Shape) -> Result<&List<Shape>, Failure> {
-        self.base.my_generated = self.generated_shapes(shape)?;
-        Ok(&self.base.my_generated)
-    }
-}
-
-impl BRepOffsetAPIThruSections {
     /// `BRepOffsetAPIThruSections(isSolid, ruled, pres3d)` (usually a
     /// smoothed shell within 1e-6): checked compatibility, mutable input, chord-length
     /// parameters, degree 8, C2 and the criterion weights (0.4, 0.2, 0.4);

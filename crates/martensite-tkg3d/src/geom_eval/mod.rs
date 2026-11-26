@@ -19,10 +19,20 @@ pub mod rep_utils;
 
 // GeomEval curves.
 mod aht_bezier_curve;
+mod angular_equation_curve;
+pub use angular_equation_curve::{
+    AngularEquationExport, AngularEquationExportError, export_angular_equation,
+};
 mod curve_support;
+mod equation_curve;
 pub use aht_bezier_curve::GeomEvalAHTBezierCurve;
+pub use equation_curve::{
+    CartesianEquationExport, CartesianEquationExportError, export_cartesian_equation,
+};
 mod circular_helix_curve;
 pub use circular_helix_curve::GeomEvalCircularHelixCurve;
+mod planar_spiral_curve;
+pub use planar_spiral_curve::{GeomEvalPlanarSpiralCurve, SpiralRotation};
 mod sine_wave_curve;
 pub use sine_wave_curve::GeomEvalSineWaveCurve;
 mod tbezier_curve;

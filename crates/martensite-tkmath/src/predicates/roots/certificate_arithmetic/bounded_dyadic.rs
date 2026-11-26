@@ -269,7 +269,7 @@ impl<'a> Arithmetic<'a> {
         }
         Ok(())
     }
-    fn charge(&mut self) -> Checked<()> {
+    pub fn charge(&mut self) -> Checked<()> {
         self.check_cancelled()?;
         if self.operations == self.options.max_operations {
             return Err(Failure::WorkLimit {
@@ -289,7 +289,7 @@ fn scalar_bounds(value: f64, fractional_bits: usize) -> Checked<Interval> {
     if magnitude == 0 {
         return checked(0.into(), 0.into());
     }
-    let numerator_shift = parts.shift + fractional_bits;
+    let numerator_shift = usize::from(parts.shift) + fractional_bits;
     // Keep the original fixed-grid numerator limit even though we never build that numerator.
     check_bits(u64::from(magnitude.ilog2() + 1) + numerator_shift as u64)?;
     let value = if parts.negative {

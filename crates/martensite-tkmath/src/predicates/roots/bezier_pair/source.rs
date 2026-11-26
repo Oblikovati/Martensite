@@ -178,7 +178,7 @@ impl DyadicPart {
             } else {
                 significand
             },
-            shift: parts.shift + trailing as usize,
+            shift: usize::from(parts.shift) + trailing as usize,
         })
     }
 

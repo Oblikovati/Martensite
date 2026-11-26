@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::super::{NonFiniteCoordinate, binary64_parts};
-use super::certificate_arithmetic::{ExactRatio, rounding::outward_binary64};
+use super::certificate_arithmetic::{
+    ExactRatio,
+    rounding::{nearest_binary64, outward_binary64},
+};
 use num_bigint::BigInt;
 use std::{cmp::Ordering, fmt};
 
@@ -31,7 +34,7 @@ impl DyadicBound {
         // Strip powers of two in the machine word before constructing the BigInt.
         Ok(Self {
             significand: signed.into(),
-            exponent: parts.shift as i32 + zeros as i32 - 1074,
+            exponent: i32::from(parts.shift) + zeros as i32 - 1074,
         })
     }
     /// Compare a root bound to an exact binary64 value. Example: `bound.compare_f64(0.)?`.
@@ -43,6 +46,34 @@ impl DyadicBound {
     pub fn binary64_bounds(&self) -> Option<[f64; 2]> {
         outward_binary64(&ExactRatio::from_dyadic(self))
     }
+    /// Round this exact dyadic to nearest binary64 with ties to even.
+    /// Use `bound.nearest_binary64()` when a construction needs one nominal coordinate.
+    pub fn nearest_binary64(&self) -> Option<f64> {
+        nearest_binary64(&ExactRatio::from_dyadic(self))
+    }
+
+    /// Add dyadics without intermediate binary64 rounding.
+    /// Use `left.sum(&right)` to establish ordered authored stations.
+    pub fn sum(&self, other: &Self) -> Self {
+        let (left, right, exponent) = self.aligned(other);
+        Self::new(left + right, exponent)
+    }
+
+    /// Multiply two finite literals and optionally scale by a negative power of two.
+    /// Use `DyadicBound::product_of_f64(pitch, width, 1)?` to compute exact half rise.
+    pub fn product_of_f64(
+        left: f64,
+        right: f64,
+        halvings: u8,
+    ) -> Result<Self, NonFiniteCoordinate> {
+        let left = Self::from_f64(left)?;
+        let right = Self::from_f64(right)?;
+        Ok(Self::new(
+            left.significand * right.significand,
+            left.exponent + right.exponent - i32::from(halvings),
+        ))
+    }
+
     pub(super) fn new(significand: BigInt, exponent: i32) -> Self {
         // Binary64 bounds plus at most u16::MAX subdivisions fit i32 exponents
         // and 32-bit shift counts, including a difference across opposite signs.
@@ -60,11 +91,27 @@ impl DyadicBound {
     pub(super) fn scale_pow2(&self, power: u8) -> Self {
         Self::new(self.significand.clone(), self.exponent + i32::from(power))
     }
-    pub(super) fn midpoint(&self, other: &Self) -> Self {
+    /// Compute the exact midpoint before any binary64 rounding.
+    /// Use `start.midpoint(&end)` for a shared Bernstein control.
+    pub fn midpoint(&self, other: &Self) -> Self {
         let (left, right, exponent) = self.aligned(other);
         Self::new(left + right, exponent - 1)
     }
-    pub(super) fn difference(&self, other: &Self) -> Self {
+    pub(super) fn product(&self, other: &Self) -> Self {
+        Self::new(
+            &self.significand * &other.significand,
+            self.exponent + other.exponent,
+        )
+    }
+    pub(super) fn absolute(&self) -> Self {
+        Self {
+            significand: self.significand.magnitude().clone().into(),
+            exponent: self.exponent,
+        }
+    }
+    /// Subtract dyadics without intermediate binary64 rounding.
+    /// Use `total.difference(&reserved)` to check the exact remaining width.
+    pub fn difference(&self, other: &Self) -> Self {
         let (left, right, exponent) = self.aligned(other);
         Self::new(left - right, exponent)
     }

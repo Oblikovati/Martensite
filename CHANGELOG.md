@@ -8,6 +8,76 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added native three-station planar Curve On Face with a matched quadratic edge and pcurve (#611).
+
+- Added an explicit Radius continuation for supported free sketch arcs through an exact half turn (#611).
+
+- Added native four-station Curve On Face on bounded planar trims and Point On Face on full non-pole spherical bands (#611).
+
+- Added directed line-to-arc tangency at a shared endpoint with separate authored and retained circular-jet checks (#611).
+
+- Added source-bound Point On Face on finite cylindrical walls and directed tangency from a line to a four-station fit cubic (#611).
+
+- Added certified normal extrusion from a closed mixed quarter-arc profile in either direction (#611).
+
+- Added native pitched-table and flat-end helix wires and checked Cartesian, cylindrical and spherical equation curves (#611).
+
+- Added exact line splits on supported cylindrical walls and one interior UV aperture and live Include for named straight edges with rebind and detachment (#611).
+
+- Added driving Radius, Equal Radius and Fix Arc for supported midpoint-witness arcs, and native mixed line and circular-quarter wire export (#611).
+
+- Added directed tangent and G2 relations at supported control-cubic endpoints and native Section of finite planar faces by a work plane (#611).
+
+- Added point and straight-curve attachment to supported trimmed planar faces, exact planar line splits, and axial line projection onto supported trimmed cylinder walls (#611).
+
+- Added checked cylindrical and conical helix construction, analytic pitch-table and flat-end laws, and normalized Sketch3D point, polyline, drawing-edge and fit-cubic imports (#611).
+
+- Added the constraint solver toolkit for residual equations, numerical rank analysis, coordinate preferences, and bounded Sketch3D drag previews (#611).
+
+- Added immutable model-space point and line sketches with atomic edits and exact minimum-length checks (#611).
+
+- Added preferred cursor motion for feasible underconstrained Sketch3D previews, with bounded work and a checked settlement report (#611).
+
+- Added revision-bound point classification against a located native planar solid face with an outer trim and one convex hole (#611).
+
+- Added frozen spatial sketch points with captured source revisions and explicit detachment (#611).
+
+- Added ordered spatial line wires with exact authored contact checks, detached BRep export, and point and edge bindings for Sweep and Loft (#611).
+
+- Added spatial circular arcs placed through an interior point or from a center and oriented plane, with directed trim and point-fit checks (#611).
+
+- Added construction roles for spatial lines and arcs. Construction lines remain available to the sketch solver and are excluded from model wires (#611).
+
+- Added the analytic finite planar spiral with signed radial pitch, independent rotation sense, and checked derivatives (#611).
+
+- Added checked translation and rotation of spatial point selections with constraint preservation and bounded placement error (#611).
+
+- Added checked replay of saved spatial relations and anchors, with historical session stamps for frozen source points (#611).
+
+- Added parting silhouettes on supported planar and cylindrical faces, with rim and exclusion rules, detached curves, and source occurrence provenance (#611).
+
+- Added ordinary extrusion from certified coplanar Sketch3D line wires with detached history and volume bounded on the retained native trims (#611).
+
+- Added rounded sheet and solid Sweep for a centered rectangular Sketch3D section and a three-leg orthogonal path, with certified native traces and solid volume (#611).
+
+- Added ruled solid lofts between corresponding closed Sketch3D line sections, with detached native history and certified volume on retained trims (#611).
+
+- Added directed axis and plane parallelism, perpendicularity, equal length and driving angles for spatial lines (#611).
+
+- Added point-on-line and directed colinear constraints with exact incidence checks and bounded continuation across solver frames (#611).
+
+- Added open clamped spatial control cubics with certified regularity and exact binary64-rounded position and derivative evaluation (#611).
+
+- Added spatial fit cubics that retain four authored stations, with checked parameter spacing, interpolation error and analytic station sensitivities (#611).
+
+- Added tangent quarter-circle bends at exclusive orthogonal cardinal corners, with separate radius, position and tangency checks (#611).
+
+- Added exact work-plane splits for spatial lines with ordered fragment history and bounded cut placement (#611).
+
+- Added Trim and Extend for spatial lines with exact crossings, bounded placement and source parameter history (#611).
+
+- Added mirror copies of spatial points and directed lines, preserving roles and recording source identities and certified placement bounds (#611).
+
 - Added explicit full-turn cylinder and cone bands with authored rim history and paired native seams (#419).
 
 - Added rectangular and curved apertures across native seams in full-turn cylinder and cone bands, with exact authored split intervals and stable replay (#419).
@@ -15,6 +85,8 @@ follows [Semantic Versioning](https://semver.org/).
 - Added certified cylindrical bosses and pockets for selected full cylinders, including multiline glyph contours and source-bound seam and topology history, and typed proof refusals with authored identities (#420, #425).
 
 - Added a per-operation worker limit for certified cylinder attachments so applications could reserve CPU time for interactive edits (#425).
+
+- Added fixed points and lines, coincident points, directed parallel lines, and driving lengths for spatial sketches with bounded drag and independent geometry checks (#611).
 
 - Added source-bound radial motion and stock-contact bounds for stored cylindrical ruled sides (#420).
 
@@ -93,6 +165,10 @@ follows [Semantic Versioning](https://semver.org/).
 - Added revision-checked extraction of the extrusion chart from a saved cylindrical face, so edits could reuse the selected face's native location, axes and radius (#420).
 
 ### Fixed
+
+- Isolated Contap surface sampling per operation and made contour diagnostics opt-in through the caller's writer (#611).
+
+- Fixed section ancestry queries for boundary-coincident edges with a unique source face on each operand (#613).
 
 - Enabled wrapped bosses and pockets on indirectly parameterized cylindrical sides from planar circle extrusions, with the original seam, trim checks and feature history preserved (#600).
 

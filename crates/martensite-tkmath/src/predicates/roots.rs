@@ -5,9 +5,11 @@ mod bernstein;
 pub mod bezier_line;
 /// Source-bound exact Bézier pair and canonical self-contact certificates.
 pub mod bezier_pair;
+pub mod cartesian_equation;
 mod certificate_arithmetic;
 mod chain;
 mod coefficient_enclosure;
+mod cubic_bernstein;
 mod dyadic;
 mod error;
 mod isolate;
@@ -21,8 +23,26 @@ pub mod signs;
 pub mod sketch_incidence;
 /// Exact bounded embeddings of supplied rational tensor query charts.
 pub mod surface_query;
+pub use cubic_bernstein::{
+    CubicBernsteinFailure, CubicBernsteinJet, CubicChordDistortion, CubicEndJet,
+    CubicEndJetFailure, CubicEndStencil, CubicFitEnd, CubicFitMaterialization,
+    CubicFitNumericError, CubicFitOperator, CubicFitTangent, ExactCubicBernstein3,
+    QuadraticFitMaterialization, RoundedCubicEndJet, TangentDirectionBand, cubic_chord_distortion,
+    evaluate_fit_quadratic, materialize_fit_quadratic, quadratic_fit_chord_distortion,
+};
 pub use dyadic::DyadicBound;
 pub use error::RootIsolationError;
+
+pub(super) fn round_positive_ratio_binary64(
+    numerator: num_bigint::BigInt,
+    denominator: num_bigint::BigInt,
+) -> Option<f64> {
+    if denominator.sign() != num_bigint::Sign::Plus {
+        return None;
+    }
+    let ratio = certificate_arithmetic::ExactRatio::new(numerator, denominator);
+    certificate_arithmetic::rounding::nearest_binary64(&ratio)
+}
 
 /// Explicit approximation and work policy. Width is not a modelling tolerance.
 #[derive(Clone, Copy, Debug, PartialEq)]

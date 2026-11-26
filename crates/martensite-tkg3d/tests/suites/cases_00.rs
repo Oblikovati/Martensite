@@ -59,6 +59,8 @@ pub mod geom_eval_hyp_paraboloid_surface;
 pub mod geom_eval_hyperboloid_surface;
 #[path = "../geom_eval_paraboloid_surface.rs"]
 pub mod geom_eval_paraboloid_surface;
+#[path = "../geom_eval_planar_spiral_curve.rs"]
+pub mod geom_eval_planar_spiral_curve;
 #[path = "../geom_eval_sine_wave_curve.rs"]
 pub mod geom_eval_sine_wave_curve;
 #[path = "../geom_eval_tbezier_curve.rs"]

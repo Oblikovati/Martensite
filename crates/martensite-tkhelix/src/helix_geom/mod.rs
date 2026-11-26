@@ -11,7 +11,7 @@ mod builder_helix_coil;
 mod builder_helix_gen;
 pub(crate) mod errors;
 mod helix_curve;
-mod tools;
+pub(crate) mod tools;
 
 pub use builder_approx_curve::{HelixGeomBuilderApproxCurve, HelixGeomBuilderApproxCurveBase};
 pub use builder_helix::HelixGeomBuilderHelix;
@@ -19,3 +19,5 @@ pub use builder_helix_coil::HelixGeomBuilderHelixCoil;
 pub use builder_helix_gen::{HelixGeomBuilderHelixGen, HelixGeomBuilderHelixGenBase};
 pub use helix_curve::{HelixGeomHelixCurve, HelixParameters};
 pub use tools::HelixGeomTools;
+
+pub(crate) mod local;

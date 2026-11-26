@@ -9,6 +9,16 @@ mod affine_support;
 mod curve_identity_tests;
 mod mapped;
 pub use affine_coordinate::exact_affine_coordinate;
+mod cylindrical_generators;
+pub mod cylindrical_projection;
+mod planar_section;
+pub use planar_section::*;
+mod placed_plane;
+pub mod planar_attachment;
+pub use cylindrical_generators::{
+    CylindricalGeneratorChart, CylindricalGeneratorError, CylindricalPullKind,
+};
+pub use placed_plane::{PlacedPlane, exact_placed_line_ends, exact_placed_point};
 mod parameter;
 mod prism_jacobian;
 pub use prism_jacobian::affine_prism_jacobian;
@@ -67,6 +77,7 @@ mod conical_material;
 pub use conical_development::{
     ConicalDevelopment, ConicalDevelopmentFailure, ConicalFootprint, ConicalTrimBand,
 };
+pub mod angular_equation;
 mod conical_profile;
 mod cylindrical_profile;
 mod cylindrical_storage;
@@ -326,3 +337,30 @@ pub use conical_profile::{
 ///
 /// See [`conical_separation::certify_separation`] for admitted frames and caller obligations.
 pub mod conical_separation;
+
+/// Exact directed segment contacts against a full-period finite cylinder.
+pub mod segment_cylinder;
+mod segment_plane;
+pub mod spherical_band;
+pub use segment_plane::{
+    SegmentPlaneCut, SegmentPlaneFailure, SegmentPlaneIntersection, SegmentWorkPlane,
+    intersect_segment_plane,
+};
+
+mod cardinal_bend;
+pub use cardinal_bend::{
+    BINARY64_QUARTER_ANGLE_ERROR, CardinalBendFailure, CardinalBendPlacement, CardinalLegCut,
+    cardinal_bend_placement, cardinal_quarter_terminal_bound,
+};
+mod directed_line;
+pub use directed_line::{
+    DirectedLineContact, DirectedLineHit, DirectedLineIncidenceFailure, DirectedLineParameter,
+    DirectedLinePlacement, LineEvidenceQuantity, LineParameterLocation, directed_line_contact,
+};
+
+mod helix_trace;
+pub use helix_trace::{
+    HelixCylindricalSpanLaw, HelixSpanProgress, HelixSplineSource, HelixTraceBounds,
+    HelixTraceFailure, HelixTraceLaw, HelixTraceLead, HelixTraceLimits,
+    certify_cylindrical_helix_span, certify_polynomial_helix_trace,
+};

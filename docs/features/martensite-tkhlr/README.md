@@ -17,10 +17,13 @@ lines of surfaces and the conversion of the results back to shapes (#208).
 ## Ownership and thread safety
 
 The algorithms keep their inputs by handle and build new shapes for their results.
-The contour sampling range and the exception stack capture setting are process-wide;
-the tests that observe them run in dedicated executables (`contap_hcont_tool`,
-`contap_analytic_failure_capture`, `sampling_context`). A completed hidden line
-computation does not validate its result as a modelling operation.
+Contour, interior search and walking each own their sampling range. Use
+`ContapContour::perform_with_diagnostics` to collect internal-point diagnostics
+in a caller-supplied writer. `ContapContour::perform` discards those messages.
+The legacy low-level sampling calls and the exception stack capture setting use
+process-wide state. Their replay tests run in dedicated executables
+(`contap_hcont_tool`, `contap_analytic_failure_capture`, `sampling_context`).
+A completed hidden line computation does not validate its result as a modelling operation.
 
 ## Verification
 

@@ -1,6 +1,8 @@
 // Helix test suite registrations; preserve case files.
 #[path = "../assertion_contracts.rs"]
 pub mod assertion_contracts;
+#[path = "../authored_helix.rs"]
+mod authored_helix;
 #[path = "../builder_destruction.rs"]
 pub mod builder_destruction;
 #[path = "../helix_behavior.rs"]
@@ -27,6 +29,8 @@ pub mod helix_script_cases;
 pub mod helix_script_inputs;
 #[path = "../helix_script_wire.rs"]
 pub mod helix_script_wire;
+#[path = "../helix_sequence.rs"]
+mod helix_sequence;
 #[path = "../helix_spiral_stage.rs"]
 pub mod helix_spiral_stage;
 #[path = "../numeric_corpus.rs"]

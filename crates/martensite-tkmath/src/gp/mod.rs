@@ -53,7 +53,7 @@ pub fn vector_with_null_magnitude_with_stack(message: &str, stack: &str) -> Fail
 mod placement;
 
 mod transform;
-pub use transform::{Transform3, TransformForm, TransformNLerp};
+pub use transform::{Transform3, TransformForm, TransformNLerp, UnitPlacementError};
 mod xyz;
 pub use xyz::Xyz;
 mod matrix;

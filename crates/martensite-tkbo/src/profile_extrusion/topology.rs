@@ -9,7 +9,11 @@ use super::plane_math::{length2, sub2};
 use super::profile::{ArcSense, ProfileCurveId, ProfileVertexId};
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{Builder, Edge, Face, Vertex, Wire};
-use martensite_tkernel::standard::Failure;
+use martensite_tkernel::{
+    precision,
+    standard::{Failure, Handle},
+};
+use martensite_tkg3d::geom::{GeomCircle, GeomCurve};
 use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkmath::gp::{Axis3, Plane3, Point3};
 use martensite_tktopalgo::brep_builder_api::{BRepBuilderAPIMakeEdge, BRepBuilderAPIMakeFace};
@@ -21,8 +25,23 @@ pub(crate) struct ProfileTopology {
     pub edges: BTreeMap<ProfileCurveId, Edge>,
 }
 
+/// Keep existing construction semantics for callers of the original profile APIs.
+#[derive(Clone, Copy)]
+pub(crate) enum ProfileTopologyMode {
+    Legacy,
+    ScopedLines,
+    ScopedCardinalQuarter,
+}
+
 /// Build every vertex and edge of the admitted profile; `build_topology(&profile)?`.
 pub(crate) fn build_topology(profile: &AdmittedProfile) -> Result<ProfileTopology, Failure> {
+    build_topology_with_mode(profile, ProfileTopologyMode::Legacy)
+}
+
+pub(crate) fn build_topology_with_mode(
+    profile: &AdmittedProfile,
+    mode: ProfileTopologyMode,
+) -> Result<ProfileTopology, Failure> {
     let mut vertices = BTreeMap::new();
     for (id, point) in &profile.vertices {
         let tolerance = vertex_tolerance(profile, *id, *point);
@@ -30,7 +49,10 @@ pub(crate) fn build_topology(profile: &AdmittedProfile) -> Result<ProfileTopolog
     }
     let mut edges = BTreeMap::new();
     for curve in &profile.curves {
-        edges.insert(curve.id(), make_edge(&profile.frame, curve, &vertices)?);
+        edges.insert(
+            curve.id(),
+            make_edge(&profile.frame, curve, &vertices, mode)?,
+        );
     }
     Ok(ProfileTopology { vertices, edges })
 }
@@ -63,13 +85,23 @@ fn make_edge(
     frame: &WorldFrame,
     curve: &AdmittedCurve,
     vertices: &BTreeMap<ProfileVertexId, Vertex>,
+    mode: ProfileTopologyMode,
 ) -> Result<Edge, Failure> {
     let ends = |ends: &[ProfileVertexId; 2]| [&vertices[&ends[0]], &vertices[&ends[1]]];
     let ccw = ArcSense::CounterClockwise;
     let maker = match curve {
         AdmittedCurve::Line { ends: ids, .. } => {
             let [start, end] = ends(ids);
-            BRepBuilderAPIMakeEdge::from_vertices(start, end)?
+            match mode {
+                ProfileTopologyMode::Legacy => BRepBuilderAPIMakeEdge::from_vertices(start, end)?,
+                ProfileTopologyMode::ScopedLines | ProfileTopologyMode::ScopedCardinalQuarter => {
+                    BRepBuilderAPIMakeEdge::from_vertices_with_tolerance(
+                        start,
+                        end,
+                        martensite_tkernel::precision::confusion(),
+                    )?
+                }
+            }
         }
         AdmittedCurve::Arc {
             ends: ids,
@@ -78,11 +110,19 @@ fn make_edge(
             ..
         } => {
             let [start, end] = ends(ids);
-            BRepBuilderAPIMakeEdge::from_circ_vertices(
-                circle(frame, *carrier, *sense)?,
-                start,
-                end,
-            )?
+            let circle = circle(frame, *carrier, *sense)?;
+            if matches!(mode, ProfileTopologyMode::ScopedCardinalQuarter) {
+                let curve: Handle<dyn GeomCurve> =
+                    Handle::new(GeomCircle::from_circ(circle)).into_upcast();
+                BRepBuilderAPIMakeEdge::from_curve_vertices_params_with_tolerance(
+                    &curve,
+                    [start, end],
+                    [0., std::f64::consts::FRAC_PI_2],
+                    precision::confusion(),
+                )?
+            } else {
+                BRepBuilderAPIMakeEdge::from_circ_vertices(circle, start, end)?
+            }
         }
         AdmittedCurve::Circle { carrier, .. } => {
             BRepBuilderAPIMakeEdge::from_circ(circle(frame, *carrier, ccw)?)?

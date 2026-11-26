@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Supplied-coordinate ordering, checked against independent exact rational arithmetic.
-use martensite_tkmath::predicates::{compare_line_projections_2d, compare_squared_distances_2d};
+use martensite_tkmath::predicates::{
+    compare_line_projections_2d, compare_squared_distances_2d, compare_squared_length_3d,
+};
 use std::cmp::Ordering;
 fn fixture(line: &str) -> ([[f64; 2]; 4], [Ordering; 2]) {
     let fields: Vec<&str> = line.split(',').collect();
@@ -196,4 +198,73 @@ fn finite_rounded_ties_do_not_replace_true_orderings() {
         compare_line_projections_2d([0., 0.], [1., 1.], [1., -1.], [displacement, 0.]),
         Ok(Ordering::Less)
     );
+}
+
+#[test]
+fn exact_spatial_length_uses_the_supplied_endpoints_before_subtraction_rounds() {
+    let tiny = f64::from_bits(1);
+    assert_eq!((1. - tiny).to_bits(), 1_f64.to_bits());
+    assert_eq!((1. + tiny).to_bits(), 1_f64.to_bits());
+    for (offset, expected) in [(tiny, Ordering::Less), (-tiny, Ordering::Greater)] {
+        let start = [offset, 0., 0.];
+        let end = [1., 0., 0.];
+        assert_eq!(compare_squared_length_3d(start, end, 1.), Ok(expected));
+        assert_eq!(compare_squared_length_3d(end, start, 1.), Ok(expected));
+    }
+}
+
+#[test]
+fn exact_spatial_length_preserves_closed_form_ties() {
+    for (limit, expected) in [
+        (13_f64.next_down(), Ordering::Greater),
+        (13., Ordering::Equal),
+        (13_f64.next_up(), Ordering::Less),
+    ] {
+        assert_eq!(
+            compare_squared_length_3d([100., 200., 300.], [103., 204., 312.], limit),
+            Ok(expected)
+        );
+    }
+    assert_eq!(
+        compare_squared_length_3d([0.; 3], [3., 4., 12.], -13.),
+        Ok(Ordering::Equal)
+    );
+    assert_eq!(
+        compare_squared_length_3d([-0.; 3], [0.; 3], -0.),
+        Ok(Ordering::Equal)
+    );
+}
+
+#[test]
+fn exact_spatial_length_compares_subnormal_and_overflowing_displacements() {
+    let tiny = f64::from_bits(1);
+    let max = f64::MAX;
+    for (start, end, limit, expected) in [
+        ([0.; 3], [tiny, 0., 0.], tiny, Ordering::Equal),
+        ([0.; 3], [tiny, tiny, 0.], tiny, Ordering::Greater),
+        (
+            [-max / 2., 0., 0.],
+            [max / 2., 0., 0.],
+            max,
+            Ordering::Equal,
+        ),
+        ([-max, 0., 0.], [max, 0., 0.], max, Ordering::Greater),
+        ([0.; 3], [max, max, 0.], max, Ordering::Greater),
+    ] {
+        assert_eq!(compare_squared_length_3d(start, end, limit), Ok(expected));
+    }
+}
+
+#[test]
+fn exact_spatial_length_reports_the_first_nonfinite_operand() {
+    let nan = f64::from_bits(0x7ff8_0000_0000_0001);
+    for (first, second, limit, point, axis, value) in [
+        ([0., 0., nan], [nan, 0., 0.], nan, 0, 2, nan),
+        ([0.; 3], [0., f64::INFINITY, 0.], nan, 1, 1, f64::INFINITY),
+        ([0.; 3], [0.; 3], f64::NEG_INFINITY, 2, 0, f64::NEG_INFINITY),
+    ] {
+        let error = compare_squared_length_3d(first, second, limit).unwrap_err();
+        assert_eq!((error.point, error.axis), (point, axis));
+        assert_eq!(error.value.to_bits(), value.to_bits());
+    }
 }

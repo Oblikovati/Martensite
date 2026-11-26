@@ -7,12 +7,15 @@ use super::admitted::{AdmittedCurve, AdmittedProfile};
 use super::decline::{Decliner, OperationDecline, OperationKind, OperationStage as Stage};
 use super::loop_geometry::{loop_scale, signed_area};
 use super::loops::{ProfileLoop, require_closed};
-use super::profile::{ProfileCurveId, ProfileVertexId, SketchProfile};
+use super::profile::{ProfileCurve, ProfileCurveId, ProfileVertexId, SketchProfile};
 use super::proof::{CertifiedFace, CertifiedRegions, certify_regions};
 use super::region_area::{RegionAreaInput, region_area};
 use super::regions::*;
 use super::resolution::Resolution;
-use super::topology::{ProfileTopology, build_topology, loop_wire, region_face};
+use super::topology::{
+    ProfileTopology, ProfileTopologyMode, build_topology, build_topology_with_mode, loop_wire,
+    region_face,
+};
 use super::validation::{CheckedShape, SelfIntersectionEvidence, check_publication};
 use crate::measured::Measured;
 use martensite_tkbrep::topods::{Edge, Face, Vertex};
@@ -80,6 +83,40 @@ pub fn build_planar_regions_with_work_and_cancel(
         cancelled,
     )
 }
+/// Certify and construct straight-line regions in their intrinsic UV plane, then place
+/// them in the admitted world frame. Line construction uses operation-local tolerance.
+/// Example: `build_planar_line_regions_with_work_and_cancel(&profile, resolution, work, || false)?`.
+pub fn build_planar_line_regions_with_work_and_cancel(
+    profile: &SketchProfile,
+    resolution: Resolution,
+    requested: super::PlanarProofWorkLimit,
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> super::PlanarRegionWorkResult {
+    for curve in &profile.curves {
+        if cancelled() {
+            return Err(cancelled_failure(requested, Stage::Admission, None));
+        }
+        if !matches!(curve, ProfileCurve::Line { .. }) {
+            let cause = super::DeclineCause::UnsupportedCurve {
+                curve: curve.id(),
+                kind: "nonlinear curve in a straight-line profile",
+            };
+            return Err(super::PlanarRegionWorkFailure::new(
+                requested,
+                DECLINE.at(Stage::Admission, cause),
+                None,
+            ));
+        }
+    }
+    placement::build_located(
+        profile,
+        resolution,
+        requested,
+        ProfileTopologyMode::ScopedLines,
+        &mut cancelled,
+    )
+}
+
 /// Build planar regions with an explicit versioned exact proof route and finite work.
 /// Example: `build_planar_regions_with_proof_and_cancel(&profile, resolution, limit, PlanarProofVersion::BernsteinV3, || false)?`.
 pub fn build_planar_regions_with_proof_and_cancel(
@@ -98,9 +135,13 @@ pub fn build_planar_regions_with_proof_and_cancel(
         requested,
         version,
         allowance,
+        ProfileTopologyMode::Legacy,
         &mut cancelled,
     )
 }
+mod placement;
+mod quarter;
+pub use quarter::build_planar_cardinal_quarter_regions_with_work_and_cancel;
 mod program;
 pub use program::build_planar_regions_with_integration_budget_and_cancel;
 
@@ -194,10 +235,11 @@ fn construct_regions_with_cancel(
     profile: &AdmittedProfile,
     certified: &CertifiedRegions,
     requested: super::PlanarProofWorkLimit,
+    mode: ProfileTopologyMode,
     cancelled: &mut impl FnMut() -> bool,
 ) -> super::PlanarRegionWorkResult {
     let work = Some(certified.work);
-    let topology = topology_with_receipt(profile, requested, work)?;
+    let topology = topology_with_receipt(profile, requested, work, mode)?;
     let context = RegionContext {
         profile,
         certified,
@@ -220,8 +262,9 @@ fn topology_with_receipt(
     profile: &AdmittedProfile,
     requested: super::PlanarProofWorkLimit,
     work: Option<super::PlanarProofWorkReceipt>,
+    mode: ProfileTopologyMode,
 ) -> Result<ProfileTopology, super::PlanarRegionWorkFailure> {
-    build_topology(profile).map_err(|failure| {
+    build_topology_with_mode(profile, mode).map_err(|failure| {
         let decline = DECLINE.native(Stage::Construction, "profile topology", failure);
         super::PlanarRegionWorkFailure::new(requested, decline, work)
     })

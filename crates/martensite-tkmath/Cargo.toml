@@ -62,3 +62,7 @@ harness = false
 name = "certified_bezier_pairs"
 path = "benches/certified_bezier_pairs.rs"
 harness = false
+
+[[test]]
+name = "planar_attachment_math"
+path = "tests/planar_attachment_math.rs"

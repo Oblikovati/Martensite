@@ -6,6 +6,8 @@ use super::super::super::{
 use super::super::{MetricBezier, coefficients};
 use super::*;
 
+mod monotone;
+
 pub(super) struct RegularityParts {
     denominator: RootIsolation,
     denominator_degree: usize,
@@ -41,6 +43,19 @@ pub(super) fn classify(
     bisections: &mut u16,
 ) -> Result<RegularityParts, BezierRegularityCause> {
     let (bounds, width) = admit(query)?;
+    if let Some(parts) = monotone::classify(query, cancelled)? {
+        return Ok(parts);
+    }
+    classify_generic(query, bounds, width, cancelled, bisections)
+}
+
+fn classify_generic(
+    query: BezierRegularityQuery<'_>,
+    bounds: [DyadicBound; 2],
+    width: DyadicBound,
+    cancelled: &mut impl FnMut() -> bool,
+    bisections: &mut u16,
+) -> Result<RegularityParts, BezierRegularityCause> {
     let curve = construct(query, cancelled)?;
     let mut work = IsolationWork {
         bounds,

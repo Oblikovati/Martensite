@@ -10,13 +10,16 @@ mod math_helpers;
 mod process_segments;
 mod restriction_internal;
 mod tangency;
+#[cfg(test)]
+mod tests;
 mod walking_endpoints;
 mod walking_internal;
 mod walking_lines;
 mod walking_root;
 use self::{analytic::AnalyticContour, general::GeneralContour};
 use super::{
-    ContapArcFunction, ContapLine, ContapSurfFunction, ContapTheSearch, ContapTheSearchInside,
+    ContapArcFunction, ContapLine, ContapSamplingContext, ContapSurfFunction, ContapTheSearch,
+    ContapTheSearchInside,
 };
 use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::adaptor3d::h_surface_tool::{self as surface_tool, Adaptor3dSurfaceHandle};
@@ -91,7 +94,7 @@ impl ContapContour {
         self.state.function.set_eye(eye);
         self.state.arc_function.set_eye(eye);
     }
-    /// Search a surface with the selected view and native diagnostic output.
+    /// Search a surface with operation-local sampling and discard diagnostic text.
     ///
     /// `contour.perform(&surface, &domain)?;`
     pub fn perform(
@@ -99,7 +102,7 @@ impl ContapContour {
         surface: &Adaptor3dSurfaceHandle,
         domain: &(dyn TheTopolTool + 'static),
     ) -> Result<(), Failure> {
-        self.perform_with_diagnostics(surface, domain, &mut std::io::stdout().lock())
+        self.perform_with_diagnostics(surface, domain, &mut std::io::sink())
     }
     /// Search while routing native internal-point diagnostics to a supplied writer.
     ///
@@ -133,8 +136,13 @@ impl ContapContour {
                 "Contour view is unset; expected direction, draft angle, or eye initialization",
             ));
         }
-        self.state.function.set_surface(surface)?;
-        self.state.arc_function.set_surface(surface)?;
+        let mut sampling = ContapSamplingContext::new();
+        self.state
+            .function
+            .set_surface_with_context(surface, &mut sampling)?;
+        self.state
+            .arc_function
+            .set_surface_with_context(surface, &mut sampling)?;
         Ok(())
     }
     /// Return completion even when result access would raise NotDone.
