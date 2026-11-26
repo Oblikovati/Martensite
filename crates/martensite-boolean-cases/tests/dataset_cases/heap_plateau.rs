@@ -36,9 +36,11 @@ fn slope(values: &[f64]) -> f64 {
 
 fn require_flat(values: &[f64], what: &str) {
     let measured = slope(values);
+    // #438: a decreasing post-warm-up heap slope reflects allocator reclamation, not a leak;
+    // reject any non-finite value or positive growth at or above FLAT bytes/iteration.
     assert!(
-        measured.abs() < FLAT,
-        "{what}: {measured} bytes per iteration over {} iterations, from {} to {}; expected 0",
+        measured.is_finite() && measured < FLAT,
+        "{what}: {measured} bytes per iteration over {} iterations, from {} to {}; expected < {FLAT}",
         values.len(),
         values[0],
         values[values.len() - 1]
@@ -164,4 +166,6 @@ fn a_real_leak_is_refused() {
 fn the_slope_of_a_line_and_of_a_constant() {
     assert_eq!(slope(&[1., 3., 5.]), 2.);
     assert_eq!(slope(&[7., 7., 7., 7.]), 0.);
+    // #438: decreasing post-warm-up slope is accepted as a valid plateau.
+    require_flat(&[835_888., 835_500., 835_100., 834_800.], "decreasing");
 }
