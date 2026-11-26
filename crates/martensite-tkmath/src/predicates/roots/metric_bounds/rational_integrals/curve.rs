@@ -23,24 +23,71 @@ pub(super) fn curve_integral(
     width_share: &ExactRatio,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<CurveIntegral, RationalIntegralFailure> {
-    let (numerator, weight) = prepare_curve(source, options, cancelled)?;
+    let (numerator, weight, shift) = prepare_curve(source, options, cancelled)?;
     if weight.len() == 1 {
-        return constant_curve(&numerator, &weight[0], cancelled);
+        let mut res = constant_curve(&numerator, &weight[0], cancelled)?;
+        add_exact_shift(&mut res.bounds, &shift);
+        return Ok(res);
     }
     let squared = product(&weight, &weight, cancelled)?;
-    quotient_integral(numerator, squared, options, width_share, cancelled)
+    let mut res = quotient_integral(numerator, squared, options, width_share, cancelled)?;
+    add_exact_shift(&mut res.bounds, &shift);
+    Ok(res)
 }
 
 fn prepare_curve(
     source: MetricCurve<'_, 2>,
     options: RationalIntegralOptions,
     cancelled: &mut impl FnMut() -> bool,
-) -> Result<(Vec<BigInt>, Vec<BigInt>), RationalIntegralFailure> {
+) -> Result<(Vec<BigInt>, Vec<BigInt>, ExactRatio), RationalIntegralFailure> {
     poll(cancelled)?;
     admit_degree(source, options)?;
-    let curve = coefficients::embedded(source, native_plane(), "integral curve", cancelled)?;
+    let mut curve = coefficients::embedded(source, native_plane(), "integral curve", cancelled)?;
+    let shift = shift_to_start_endpoint(&mut curve);
     let numerator = green_numerator(&curve, cancelled)?;
-    Ok((numerator, trimmed(&curve[3])))
+    Ok((numerator, trimmed(&curve[3]), shift))
+}
+
+/// Shift `C(t) = (X/W, Y/W)` by its exact start endpoint `(x0, y0) = (X(0)/W(0), Y(0)/W(0))`
+/// so translated rational conics do not lose conditioning under interval bisection (#458).
+/// Returns the exact closed-form correction `(X(0)*Y(1) - Y(0)*X(1)) / (2*W(0)*W(1))`.
+fn shift_to_start_endpoint(curve: &mut [Vec<BigInt>; 4]) -> ExactRatio {
+    let x0 = curve[0].first().cloned().unwrap_or_default();
+    let y0 = curve[1].first().cloned().unwrap_or_default();
+    let w0 = curve[3].first().cloned().unwrap_or_default();
+    if w0.sign() != Sign::Plus || (x0.sign() == Sign::NoSign && y0.sign() == Sign::NoSign) {
+        return ExactRatio::from_finite(0.);
+    }
+    let x1: BigInt = curve[0].iter().sum();
+    let y1: BigInt = curve[1].iter().sum();
+    let w1: BigInt = curve[3].iter().sum();
+    if w1.sign() != Sign::Plus {
+        return ExactRatio::from_finite(0.);
+    }
+    let delta_num = &x0 * &y1 - &y0 * &x1;
+    let delta_den = BigInt::from(2) * &w0 * &w1;
+    let shift = ExactRatio::new(delta_num, delta_den);
+    let len = curve[0].len().max(curve[1].len()).max(curve[3].len());
+    let mut shifted_x = Vec::with_capacity(len);
+    let mut shifted_y = Vec::with_capacity(len);
+    let mut scaled_w = Vec::with_capacity(len);
+    for i in 0..len {
+        let xi = curve[0].get(i).cloned().unwrap_or_default();
+        let yi = curve[1].get(i).cloned().unwrap_or_default();
+        let wi = curve[3].get(i).cloned().unwrap_or_default();
+        shifted_x.push(&w0 * &xi - &x0 * &wi);
+        shifted_y.push(&w0 * &yi - &y0 * &wi);
+        scaled_w.push(&w0 * &wi);
+    }
+    curve[0] = shifted_x;
+    curve[1] = shifted_y;
+    curve[3] = scaled_w;
+    shift
+}
+
+fn add_exact_shift(bounds: &mut ContributionBounds, shift: &ExactRatio) {
+    bounds.lower = bounds.lower.add(shift);
+    bounds.upper = bounds.upper.add(shift);
 }
 
 fn constant_curve(
@@ -61,20 +108,31 @@ pub(super) fn curve_integral_accounted(
     cancelled: &mut impl FnMut() -> bool,
 ) -> (Result<CurveIntegral, RationalIntegralFailure>, u64) {
     let prepared = prepare_curve(source, options, cancelled);
-    let (numerator, weight) = match prepared {
+    let (numerator, weight, shift) = match prepared {
         Ok(prepared) => prepared,
         Err(cause) => return (Err(cause), 0),
     };
     if weight.len() == 1 {
-        return (constant_curve(&numerator, &weight[0], cancelled), 0);
+        let res = constant_curve(&numerator, &weight[0], cancelled).map(|mut r| {
+            add_exact_shift(&mut r.bounds, &shift);
+            r
+        });
+        return (res, 0);
     }
-    accounted_quotient(
+    let (res, examined) = accounted_quotient(
         numerator,
         weight,
         options,
         width_share,
         remaining,
         cancelled,
+    );
+    (
+        res.map(|mut r| {
+            add_exact_shift(&mut r.bounds, &shift);
+            r
+        }),
+        examined,
     )
 }
 
@@ -244,4 +302,52 @@ fn accumulate(total: &mut ContributionBounds, part: &ContributionBounds) {
 fn downward(value: &ExactRatio) -> f64 {
     super::super::super::certificate_arithmetic::rounding::outward_binary64(value)
         .map_or(0., |bounds| bounds[0])
+}
+
+#[cfg(test)]
+mod translated_conic_tests {
+    use super::super::super::{MetricBezier, MetricCurve, OrientedMetricCurve};
+    use super::super::{RationalIntegralOptions, certify_rational_boundary_integral};
+
+    fn quarter_arcs(cx: f64, cy: f64, rx: f64, ry: f64) -> [[([f64; 2], f64); 3]; 4] {
+        let w = std::f64::consts::FRAC_1_SQRT_2;
+        [
+            (([cx + rx, cy], 1.0), ([cx + rx, cy + ry], w), ([cx, cy + ry], 1.0)),
+            (([cx, cy + ry], 1.0), ([cx - rx, cy + ry], w), ([cx - rx, cy], 1.0)),
+            (([cx - rx, cy], 1.0), ([cx - rx, cy - ry], w), ([cx, cy - ry], 1.0)),
+            (([cx, cy - ry], 1.0), ([cx + rx, cy - ry], w), ([cx + rx, cy], 1.0)),
+        ]
+        .map(|(a, b, c)| [a, b, c])
+    }
+
+    #[test]
+    fn translated_circle_and_ellipse_certify_within_default_work_limit() {
+        for (cx, cy, rx, ry) in [(0.0, 0.0, 1.0, 1.0), (10_000.0, -25_000.0, 1.5, 2.5)] {
+            let arcs = quarter_arcs(cx, cy, rx, ry);
+            let poles: Vec<[[f64; 2]; 3]> = arcs.iter().map(|a| [a[0].0, a[1].0, a[2].0]).collect();
+            let weights: Vec<[f64; 3]> = arcs.iter().map(|a| [a[0].1, a[1].1, a[2].1]).collect();
+            let occurrences: Vec<OrientedMetricCurve<'_>> = (0..4)
+                .map(|i| OrientedMetricCurve {
+                    curve: MetricCurve::Bezier(MetricBezier {
+                        poles: &poles[i],
+                        weights: Some(&weights[i]),
+                    }),
+                    reversed: false,
+                })
+                .collect();
+            let report = certify_rational_boundary_integral(
+                &occurrences,
+                RationalIntegralOptions::default(),
+                || false,
+            )
+            .unwrap();
+            let expected = std::f64::consts::PI * rx * ry;
+            assert!(
+                (report.representative() - expected).abs()
+                    <= report.absolute_error_bound() + 1e-12,
+                "cx={cx}, cy={cy}: got {} expected {expected}",
+                report.representative()
+            );
+        }
+    }
 }
