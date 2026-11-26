@@ -34,7 +34,7 @@ impl DyadicBound {
         // Strip powers of two in the machine word before constructing the BigInt.
         Ok(Self {
             significand: signed.into(),
-            exponent: parts.shift as i32 + zeros as i32 - 1074,
+            exponent: i32::from(parts.shift) + zeros as i32 - 1074,
         })
     }
     /// Compare a root bound to an exact binary64 value. Example: `bound.compare_f64(0.)?`.

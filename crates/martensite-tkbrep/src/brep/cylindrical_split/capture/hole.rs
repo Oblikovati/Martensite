@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Bind a clockwise exact rectangle to original arc/generator and vertex owners.
-use super::*;
+use super::{
+    Captured, Checked, Curve, CylinderWallTraceInput, Error, RawUse, RawWire, SegmentCylinderWall,
+    numeric_failure, required,
+};
 use martensite_tkmath::predicates::roots::metric_bounds::segment_cylinder::{
     CylinderHoleCarrier, CylinderHoleTraceEdge, certify_cylinder_hole_trace,
 };

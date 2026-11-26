@@ -152,7 +152,7 @@ impl Coordinate {
         });
         Ok(Self::Polynomial {
             poles,
-            exponent: shift as i32 - 1074,
+            exponent: i32::from(shift) - 1074,
         })
     }
 

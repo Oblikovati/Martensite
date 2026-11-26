@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Model-space trace of the actual arcs, generators and vertices of a rectangular UV hole.
-use super::*;
+use super::{
+    Circle3, CylinderWallTraceInput, Error, ExactVector, Line3, Ratio, Trace, add, distance,
+    exact_point, exact_vector, finite, is_zero, outward_binary64, poll, scale,
+};
 use crate::predicates::roots::metric_bounds::segment_cylinder::hole::trig_bounds;
 
 /// Actual native curve of an oriented hole coedge, stored in increasing curve parameter.

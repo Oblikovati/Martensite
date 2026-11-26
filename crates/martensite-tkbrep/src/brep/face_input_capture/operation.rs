@@ -4,7 +4,7 @@ use super::{
     cells::Lease,
     copy::CopyContext,
     inventory::Inventory,
-    types::*,
+    types::{FaceCaptureBehavior, FaceCaptureIncomplete, FaceCaptureLimits, FaceInputSnapshot},
 };
 use crate::topods::Face;
 

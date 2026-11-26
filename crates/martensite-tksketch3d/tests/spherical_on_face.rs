@@ -259,7 +259,7 @@ fn pole_and_antipodal_targets_never_publish_a_false_two_direction_rank() {
             Err(Failure::Attachment(cause)) if matches!(*cause, SphericalFaceError::Numeric(SphericalBandError::Lift { .. }))
         )
     );
-    let above = point([9.705_049_044_119_011, -4., 17.045_374_457_861_32]);
+    let above = point([9.705_049_044_119_011, -4., 17.045_374_457_861_32_f64]);
     assert!(matches!(
         seed.drag_preferred(pid(1), above, 1e-9, || source, || false),
         Err(Failure::Trim(Place::Above))

@@ -132,7 +132,7 @@ fn exact_coordinate(value: f64, point: usize, axis: usize) -> Result<BigInt, Non
 
 struct Binary64Parts {
     significand: u64,
-    shift: usize,
+    shift: u16,
     negative: bool,
 }
 
@@ -145,7 +145,7 @@ fn binary64_parts(
         return Err(NonFiniteCoordinate { point, axis, value });
     }
     let bits = value.to_bits();
-    let exponent = ((bits >> 52) & 0x7ff) as usize;
+    let exponent = ((bits >> 52) & 0x7ff) as u16;
     let fraction = bits & ((1_u64 << 52) - 1);
     let significand = fraction | if exponent == 0 { 0 } else { 1_u64 << 52 };
     // Every finite binary64 is an integer multiple of 2^-1074. The common

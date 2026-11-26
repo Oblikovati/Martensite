@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
-use super::*;
-use martensite_tkbrep::{brep::BRepBuilder, topods::Vertex};
+use super::{BRepOffsetAPIThruSections, CorrespondingRuledPairFailure};
+use martensite_tkbrep::{
+    brep::BRepBuilder,
+    topods::{Edge, Vertex, Wire},
+};
+use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkmath::gp::Point3;
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeEdge;
 

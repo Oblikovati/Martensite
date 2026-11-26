@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-only
-use super::*;
+use super::{Failure, FluxMode, contribution};
 use martensite_tkbo::profile_extrusion::{
     DisplayTolerance, ExtrudeOptions, HistoryRole, ProfileCurve, ProfileCurveId, ProfilePlane,
     ProfileVertex, ProfileVertexId, Resolution, ResultEntity, SketchProfile, ToleranceCap,
     build_planar_regions, extrude,
 };
-use martensite_tkg3d::geom::GeomGeometry;
+use martensite_tkbrep::brep::BRepTool;
+use martensite_tkg3d::geom::{GeomGeometry, GeomPlane};
 use martensite_tkmath::gp::Vector3;
 
 #[test]

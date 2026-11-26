@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
-use super::*;
+use super::{
+    DyadicBound, HelixCylindricalSpanLaw, HelixSpanProgress, HelixSplineSource, HelixTraceBounds,
+    HelixTraceFailure, LAW, LIMITS, ResultOf, TAU, certify_cylindrical_helix_span,
+};
 
 fn exact(value: f64) -> DyadicBound {
     DyadicBound::from_f64(value).unwrap()
