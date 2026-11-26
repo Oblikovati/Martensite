@@ -198,3 +198,8 @@ path = "tests/connection_graphs_native.rs"
 [[test]]
 name = "tangency_graphs_native"
 path = "tests/tangency_graphs_native.rs"
+
+
+[[test]]
+name = "general_fuse_blend_assembly"
+path = "tests/general_fuse_blend_assembly.rs"
