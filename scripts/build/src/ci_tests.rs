@@ -23,6 +23,11 @@ fn planned_packages(context: &BuildContext<'_>, plan: &CiPlan) -> BuildResult<Pl
     match plan {
         CiPlan::PullRequest { base } => planned_pull_request(context, &workspace, base),
         CiPlan::Release { version, .. } => planned_release(context, &workspace, version),
+        CiPlan::Sanitizer => Ok(PlannedPackages {
+            names: BTreeSet::new(),
+            history_sha256: None,
+            changed: Vec::new(),
+        }),
     }
 }
 
@@ -68,6 +73,11 @@ pub(crate) fn sanitizer_controls(
     context: &BuildContext<'_>,
     plan: &CiPlan,
 ) -> BuildResult<Vec<crate::thread_sanitizer_selection::Control>> {
+    if matches!(plan, CiPlan::Sanitizer) {
+        return Ok(vec![
+            crate::thread_sanitizer_selection::Control::ToolkitBorrowedJobs,
+        ]);
+    }
     let selection = planned_packages(context, plan)?;
     Ok(crate::thread_sanitizer_selection::select(
         &selection.names,
@@ -84,12 +94,23 @@ pub fn matrix_outputs(
     context: &BuildContext<'_>,
     plan: &CiPlan,
 ) -> BuildResult<Vec<(&'static str, String)>> {
+    if matches!(plan, CiPlan::Sanitizer) {
+        return Ok(vec![
+            ("has-tests", "false".to_owned()),
+            (
+                "test-matrix",
+                serde_json::json!({ "include": [] }).to_string(),
+            ),
+            ("has-sanitizer", "true".to_owned()),
+        ]);
+    }
     let selection = planned_packages(context, plan)?;
     let sanitizer = crate::thread_sanitizer_selection::select(&selection.names, &selection.changed);
     let packages = selection.names;
     let matrix = match plan {
         CiPlan::PullRequest { .. } => crate::pr_matrix::pr_test_matrix(&packages),
         CiPlan::Release { .. } => crate::release_ci::release_test_matrix(&packages),
+        CiPlan::Sanitizer => unreachable!("handled above"),
     };
     let mut outputs = vec![
         ("has-tests", (!packages.is_empty()).to_string()),

@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added an opt-in `sanitizer` workflow dispatch mode and `ToolkitBorrowedJobs` ThreadSanitizer control in the CI planner for `martensite-tkernel` borrowed-job migration and thread lifecycle tests (#110).
+
 - Added native three-station planar Curve On Face with a matched quadratic edge and pcurve (#611).
 
 - Added an explicit Radius continuation for supported free sketch arcs through an exact half turn (#611).

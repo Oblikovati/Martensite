@@ -80,6 +80,25 @@ fn sanitizer_initial_release_uses_release_package_scope() {
 }
 
 #[test]
+fn opt_in_sanitizer_mode_selects_only_toolkit_borrowed_jobs_without_native_matrix() {
+    let (runner, _) = sanitizer_fixture("README.md");
+    let context = context_at(&runner, Path::new("/repo"));
+    assert_eq!(
+        sanitizer_controls(&context, &CiPlan::Sanitizer).unwrap(),
+        vec![crate::thread_sanitizer_selection::Control::ToolkitBorrowedJobs]
+    );
+    let outputs = matrix_outputs(&context, &CiPlan::Sanitizer).unwrap();
+    assert_eq!(
+        outputs,
+        vec![
+            ("has-tests", "false".to_owned()),
+            ("test-matrix", "{\"include\":[]}".to_owned()),
+            ("has-sanitizer", "true".to_owned()),
+        ]
+    );
+}
+
+#[test]
 fn sanitizer_aggregate_requires_exact_planned_job_status() {
     for (planned, status, accepted) in [
         (false, "skipped", true),

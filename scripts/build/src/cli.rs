@@ -391,6 +391,9 @@ fn dispatch_plan_using(
         CiPlan::Release { version, .. } => {
             release_for_using(context, version, triple, !checks_only, sources)
         }
+        CiPlan::Sanitizer => Err(BuildError::Usage(
+            "ci run does not execute sanitizer mode; use `cargo xtask ci thread-sanitizer`".into(),
+        )),
     }
 }
 

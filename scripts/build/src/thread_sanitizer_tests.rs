@@ -44,6 +44,7 @@ fn expected_control_commands() -> Vec<String> {
             format!("cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkv3d --test toolkit -- {CERTIFIED_CONE_ATTACHMENT_TEST} --exact --ignored --test-threads=1 --show-output"),
             format!("cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tksketch --lib {CERTIFIED_CYLINDER_ATTACHMENT_TEST} -- --exact --test-threads=1 --show-output"),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkbo --lib -- bop_algo::context_tasks int_tools::context::cache sketch_region_validation::self_check_tests --test-threads=1 --show-output".to_owned(),
+            "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkernel --lib -- osd::parallel::launcher::migration_tests osd::parallel::thread::tests --test-threads=1 --show-output".to_owned(),
     ]
 }
 
