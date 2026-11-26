@@ -3,11 +3,11 @@ use super::{Function, Vector, kronrod_points_and_weights, ordered_gauss_points_a
 mod adaptive;
 mod results;
 mod rule;
-struct Quadrature {
-    gp: Vector<'static>,
-    gw: Vector<'static>,
-    kp: Vector<'static>,
-    kw: Vector<'static>,
+struct Quadrature<'a> {
+    gp: Vector<'a>,
+    gw: Vector<'a>,
+    kp: Vector<'a>,
+    kw: Vector<'a>,
 }
 /// Integration result and error estimates; `KronrodSingleIntegration::new(&mut f,0.0,1.0,15)`.
 #[derive(Default)]
@@ -20,20 +20,57 @@ pub struct KronrodSingleIntegration {
     iterations: i32,
     absolute_floor: f64,
 }
-impl Quadrature {
-    fn new(order: i32) -> Option<Self> {
-        let mut q: Self = Self {
-            gp: Vector::with_bounds(1, order / 2).ok()?,
-            gw: Vector::with_bounds(1, order / 2).ok()?,
-            kp: Vector::with_bounds(1, order).ok()?,
-            kw: Vector::with_bounds(1, order).ok()?,
+impl<'a> Quadrature<'a> {
+    fn from_slices(
+        order: i32,
+        gp_buf: &'a mut [f64],
+        gw_buf: &'a mut [f64],
+        kp_buf: &'a mut [f64],
+        kw_buf: &'a mut [f64],
+    ) -> Option<Self> {
+        let half = order / 2;
+        let mut q = Self {
+            gp: Vector::from_buffer(gp_buf, 1, half).ok()?,
+            gw: Vector::from_buffer(gw_buf, 1, half).ok()?,
+            kp: Vector::from_buffer(kp_buf, 1, order).ok()?,
+            kw: Vector::from_buffer(kw_buf, 1, order).ok()?,
         };
         if !kronrod_points_and_weights(order, &mut q.kp, &mut q.kw)
-            || !ordered_gauss_points_and_weights(order / 2, &mut q.gp, &mut q.gw)
+            || !ordered_gauss_points_and_weights(half, &mut q.gp, &mut q.gw)
         {
             return None;
         }
         Some(q)
+    }
+    fn with_order<R>(order: i32, f: impl FnOnce(&Quadrature<'_>) -> R) -> Option<R> {
+        let half = (order / 2) as usize;
+        let n = order as usize;
+        if order <= 123 {
+            let mut gp_buf = [0.0_f64; 64];
+            let mut gw_buf = [0.0_f64; 64];
+            let mut kp_buf = [0.0_f64; 128];
+            let mut kw_buf = [0.0_f64; 128];
+            let q = Quadrature::from_slices(
+                order,
+                &mut gp_buf[..half],
+                &mut gw_buf[..half],
+                &mut kp_buf[..n],
+                &mut kw_buf[..n],
+            )?;
+            return Some(f(&q));
+        }
+        let mut gp_buf = vec![0.0_f64; half];
+        let mut gw_buf = vec![0.0_f64; half];
+        let mut kp_buf = vec![0.0_f64; n];
+        let mut kw_buf = vec![0.0_f64; n];
+        let q = Quadrature::from_slices(
+            order,
+            &mut gp_buf,
+            &mut gw_buf,
+            &mut kp_buf,
+            &mut kw_buf,
+        )?;
+        Some(f(&q))
     }
     fn evaluate(
         &self,
@@ -76,11 +113,13 @@ impl KronrodSingleIntegration {
         }
         self.order = if order % 2 == 0 { order + 1 } else { order };
         self.error = f64::MAX;
-        let Some(q) = Quadrature::new(self.order) else {
+        let Some(ok) = Quadrature::with_order(self.order, |q| {
+            q.evaluate(f, [lower, upper], &mut self.value, &mut self.error)
+        }) else {
             self.done = false;
             return;
         };
-        self.done = q.evaluate(f, [lower, upper], &mut self.value, &mut self.error);
+        self.done = ok;
         if !self.done {
             return;
         }
@@ -109,25 +148,27 @@ impl KronrodSingleIntegration {
             return;
         }
         self.order = if order % 2 == 0 { order + 1 } else { order };
-        let Some(q) = Quadrature::new(self.order) else {
-            self.done = false;
-            return;
-        };
-        self.done = q.evaluate(f, [lower, upper], &mut self.value, &mut self.error);
-        if !self.done {
-            return;
-        }
-        self.absolute = self.error;
-        if self.value.abs() > super::real_epsilon(1.0) {
-            self.error /= self.value.abs();
-        }
-        self.iterations += 1;
-        if self.error <= tolerance
-            || self.absolute <= self.absolute_floor
-            || self.iterations >= limit
+        if Quadrature::with_order(self.order, |q| {
+            self.done = q.evaluate(f, [lower, upper], &mut self.value, &mut self.error);
+            if !self.done {
+                return;
+            }
+            self.absolute = self.error;
+            if self.value.abs() > super::real_epsilon(1.0) {
+                self.error /= self.value.abs();
+            }
+            self.iterations += 1;
+            if self.error <= tolerance
+                || self.absolute <= self.absolute_floor
+                || self.iterations >= limit
+            {
+                return;
+            }
+            self.refine(f, q, [lower, upper], tolerance, limit);
+        })
+        .is_none()
         {
-            return;
+            self.done = false;
         }
-        self.refine(f, &q, [lower, upper], tolerance, limit);
     }
 }

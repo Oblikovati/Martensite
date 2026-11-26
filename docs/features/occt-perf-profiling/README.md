@@ -15,7 +15,7 @@ Systematic toolkit-by-toolkit p95 profiling and optimization against OCCT 8.0.0 
 | 5 | `martensite-tkgeombase` | prebuilt | **Done** (10 APIs; up to 1.40x speedup across BndLib, GCPnts, GeomConvert, ExtremaPC) | [tkgeombase.md](tkgeombase.md) |
 | 6 | `martensite-tkbrep` | prebuilt | **Done** (10 APIs; up to 2.85x speedup on TopExp_Explorer, BRepTools, BRep_Tool) | [tkbrep.md](tkbrep.md) |
 | 7 | `martensite-tkgeomalgo` | prebuilt | **Done** (9 APIs; up to 1.19x speedup via zero-alloc BSplSLib cache & stack basis matrices) | [tkgeomalgo.md](tkgeomalgo.md) |
-| 8 | `martensite-tktopalgo` | prebuilt | Pending | |
+| 8 | `martensite-tktopalgo` | prebuilt | **Done** (8 APIs; 1.28x speedup on Gauss-Kronrod VolumeProperties, 1.10x on BRepBndLib) | [tktopalgo.md](tktopalgo.md) |
 | 9 | `martensite-tkhelix`, `martensite-tkhlr`, `martensite-tkprim`, `martensite-tkshhealing`, `martensite-tkmesh` | prebuilt | Pending | |
 | 10+ | `martensite-tkbo`, `martensite-tkbool`, `martensite-tkfeat`, `martensite-tkfillet`, `martensite-tkoffset`, `martensite-tkv3d`, `martensite-tkxmesh`, `martensite-tkmeshvs` | prebuilt | Pending | |
 | AF/DE | `tkcdf`, `tklcaf`, `tktobj`, `tkcaf`, `tkvcaf`, `tkxcaf`, `tkde`, `tkxsbase`, `tkrwmesh`, `tkdestl`, `tkdeiges`, `tkdestep`, `tkdeobj`, `tkdeply` | build from `../OCCT` | Pending | |

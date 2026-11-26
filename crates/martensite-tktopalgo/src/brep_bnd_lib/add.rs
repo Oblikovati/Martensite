@@ -5,12 +5,11 @@ use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::brep_adaptor::{BRepAdaptorCurve, BRepAdaptorSurface};
 use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::{self, Edge, Face, Shape};
-use martensite_tkernel::standard::Failure;
-use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkg3d::geom::{GeomPlane, GeomSurface};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkgeombase::bnd_lib::{Add3dCurve, AddSurface};
 use martensite_tkmath::bnd::BoundingBox3;
-use martensite_tkmath::geom_abs::SurfaceType;
 use martensite_tkmath::poly::{Polygon3D, PolygonOnTriangulation, Triangulation, mesh_purpose};
 use martensite_tkmath::toploc::Location;
 
@@ -26,11 +25,15 @@ impl BRepBndLib {
         bounds: &mut BoundingBox3,
         use_triangulation: bool,
     ) -> Result<(), Failure> {
-        for face in Explorer::new(shape, ShapeEnum::Face, ShapeEnum::Shape)? {
-            add_face(&topods::face(&face)?, bounds, use_triangulation)?;
+        let mut faces = Explorer::new(shape, ShapeEnum::Face, ShapeEnum::Shape)?;
+        while faces.more() {
+            add_face(&topods::face(faces.current())?, bounds, use_triangulation)?;
+            faces.next()?;
         }
-        for edge in Explorer::new(shape, ShapeEnum::Edge, ShapeEnum::Face)? {
-            add_free_edge(&topods::edge(&edge)?, bounds, use_triangulation)?;
+        let mut edges = Explorer::new(shape, ShapeEnum::Edge, ShapeEnum::Face)?;
+        while edges.more() {
+            add_free_edge(&topods::edge(edges.current())?, bounds, use_triangulation)?;
+            edges.next()?;
         }
         add_free_vertices(shape, bounds, true)
     }
@@ -40,11 +43,13 @@ impl BRepBndLib {
     /// added (only right for polygonal planar faces, as natively);
     /// `BRepBndLib::add_close(&shape, &mut bounds)?`.
     pub fn add_close(shape: &Shape, bounds: &mut BoundingBox3) -> Result<(), Failure> {
-        for edge in Explorer::new(shape, ShapeEnum::Edge, ShapeEnum::Shape)? {
-            let edge = topods::edge(&edge)?;
+        let mut edges = Explorer::new(shape, ShapeEnum::Edge, ShapeEnum::Shape)?;
+        while edges.more() {
+            let edge = topods::edge(edges.current())?;
             if BRepTool::is_geometric_edge(&edge)? {
                 Add3dCurve::add(&BRepAdaptorCurve::with_edge(&edge)?, 0.0, bounds)?;
             }
+            edges.next()?;
         }
         add_free_vertices(shape, bounds, false)
     }
@@ -56,18 +61,19 @@ fn add_face(
     bounds: &mut BoundingBox3,
     use_triangulation: bool,
 ) -> Result<(), Failure> {
-    let (mesh, location) = BRepTool::triangulation(face, mesh_purpose::NONE)?;
     let (surface, _) = BRepTool::surface_with_location(face)?;
-    // The mesh is only asked for its bounds when the first two tests pass (`&&`).
-    if (use_triangulation || surface.is_null()) && mesh_min_max(&mesh, &location, bounds) {
-        let deflection: f64 = mesh.get().map_or(0.0, Triangulation::deflection);
-        bounds.enlarge(deflection + BRepTool::face_tolerance(face)?);
-        return Ok(());
+    if use_triangulation || surface.is_null() {
+        let (mesh, location) = BRepTool::triangulation(face, mesh_purpose::NONE)?;
+        if mesh_min_max(&mesh, &location, bounds) {
+            let deflection: f64 = mesh.get().map_or(0.0, Triangulation::deflection);
+            bounds.enlarge(deflection + BRepTool::face_tolerance(face)?);
+            return Ok(());
+        }
     }
     if surface.is_null() {
         return Ok(());
     }
-    add_face_geometry(face, bounds)
+    add_face_geometry(face, &surface, bounds)
 }
 
 /// `!T.IsNull() && T->MinMax(B, l)`: extends `bounds` by the (located) mesh nodes.
@@ -83,19 +89,24 @@ fn mesh_min_max(
 /// The exact face of `Add`: the surface box, except on a plane with edges, where the
 /// 3d curves of its geometric edges are added and the box enlarged by the face
 /// tolerance ("on travaille directement sur les courbes 3d").
-fn add_face_geometry(face: &Face, bounds: &mut BoundingBox3) -> Result<(), Failure> {
-    let unrestricted = BRepAdaptorSurface::with_face(face, false)?;
+fn add_face_geometry(
+    face: &Face,
+    surface: &Handle<dyn GeomSurface>,
+    bounds: &mut BoundingBox3,
+) -> Result<(), Failure> {
     let mut edges = Explorer::new(face, ShapeEnum::Edge, ShapeEnum::Shape)?;
-    if unrestricted.get_type()? != SurfaceType::Plane || !edges.more() {
+    let is_plane = surface.is_kind(GeomPlane::static_type());
+    if !is_plane || !edges.more() {
         let surface = BRepAdaptorSurface::with_face(face, true)?;
         return AddSurface::add(&surface, BRepTool::face_tolerance(face)?, bounds);
     }
-    for edge in &mut edges {
-        let edge = topods::edge(&edge)?;
+    while edges.more() {
+        let edge = topods::edge(edges.current())?;
         if BRepTool::is_geometric_edge(&edge)? {
             let curve = BRepAdaptorCurve::with_edge(&edge)?;
             Add3dCurve::add(&curve, BRepTool::edge_tolerance(&edge)?, bounds)?;
         }
+        edges.next()?;
     }
     bounds.enlarge(BRepTool::face_tolerance(face)?);
     Ok(())
