@@ -33,3 +33,21 @@ pub use native_std::NativePosixCalls;
 #[cfg(unix)]
 pub use native_unix::NativePosixCalls;
 pub use osd_file::File;
+
+#[cfg(test)]
+mod nix_dir_guard_tests {
+    /// Guard against enabling `nix`'s `dir` feature while `nix 0.31.3` `Dir::from_fd`
+    /// leaks consumed file descriptors on failure (#126).
+    #[test]
+    fn tkernel_manifest_keeps_nix_dir_feature_disabled() {
+        let manifest = include_str!("../../Cargo.toml");
+        for line in manifest.lines() {
+            if line.trim_start().starts_with("nix =") {
+                assert!(
+                    !line.contains("\"dir\""),
+                    "nix `dir` feature must remain disabled until upstream fixes Dir::from_fd (#126): {line}"
+                );
+            }
+        }
+    }
+}
