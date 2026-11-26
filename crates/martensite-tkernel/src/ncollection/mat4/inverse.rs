@@ -3,44 +3,58 @@ use super::Mat4;
 use crate::ncollection::MatrixScalar;
 use crate::standard::Failure;
 
-/// For output element `i`: `[p, a, b, c, d, q, e, f, g, h, s, j, k, l, m]` encodes
-/// `m[p]*(m[a]*m[b] - m[c]*m[d]) - m[q]*(m[e]*m[f] - m[g]*m[h]) - m[s]*(m[j]*m[k] - m[l]*m[m])`.
-const COFACTORS: [[usize; 15]; 16] = [
-    [5, 10, 15, 11, 14, 9, 6, 15, 7, 14, 13, 7, 10, 6, 11],
-    [1, 11, 14, 10, 15, 9, 3, 14, 2, 15, 13, 2, 11, 3, 10],
-    [1, 6, 15, 7, 14, 5, 2, 15, 3, 14, 13, 3, 6, 2, 7],
-    [1, 7, 10, 6, 11, 5, 3, 10, 2, 11, 9, 2, 7, 3, 6],
-    [4, 11, 14, 10, 15, 8, 7, 14, 6, 15, 12, 6, 11, 7, 10],
-    [0, 10, 15, 11, 14, 8, 2, 15, 3, 14, 12, 3, 10, 2, 11],
-    [0, 7, 14, 6, 15, 4, 3, 14, 2, 15, 12, 2, 7, 3, 6],
-    [0, 6, 11, 7, 10, 4, 2, 11, 3, 10, 8, 3, 6, 2, 7],
-    [4, 9, 15, 11, 13, 8, 5, 15, 7, 13, 12, 7, 9, 5, 11],
-    [0, 11, 13, 9, 15, 8, 3, 13, 1, 15, 12, 1, 11, 3, 9],
-    [0, 5, 15, 7, 13, 4, 1, 15, 3, 13, 12, 3, 5, 1, 7],
-    [0, 7, 9, 5, 11, 4, 3, 9, 1, 11, 8, 1, 7, 3, 5],
-    [4, 10, 13, 9, 14, 8, 6, 13, 5, 14, 12, 5, 10, 6, 9],
-    [0, 9, 14, 10, 13, 8, 1, 14, 2, 13, 12, 2, 9, 1, 10],
-    [0, 6, 13, 5, 14, 4, 2, 13, 1, 14, 12, 1, 6, 2, 5],
-    [0, 5, 10, 6, 9, 4, 1, 10, 2, 9, 8, 2, 5, 1, 6],
-];
-
-fn cofactor<T: MatrixScalar>(m: &[T; 16], term: &[usize; 15]) -> T {
-    let minor = |at: usize| m[term[at + 1]] * m[term[at + 2]] - m[term[at + 3]] * m[term[at + 4]];
-    m[term[0]] * minor(0) - m[term[5]] * minor(5) - m[term[10]] * minor(10)
-}
-
 impl<T: MatrixScalar> Mat4<T> {
     /// Writes the adjugate-based inverse and determinant.
     ///
     /// Returns false for a zero determinant; `out` then holds the unscaled cofactors,
     /// on purpose. Example: `matrix.inverted_into(&mut out, &mut det)`.
+    #[inline]
     pub fn inverted_into(&self, output: &mut Self, determinant: &mut T) -> bool {
         let m = self.data();
-        let inverse: [T; 16] = std::array::from_fn(|index| cofactor(&m, &COFACTORS[index]));
+        // 12 shared 2x2 sub-determinants (Laplace expansion) replace 48 redundant minors.
+        let s0 = m[10] * m[15] - m[11] * m[14];
+        let s1 = m[6] * m[15] - m[7] * m[14];
+        let s2 = m[6] * m[11] - m[7] * m[10];
+        let s3 = m[2] * m[15] - m[3] * m[14];
+        let s4 = m[2] * m[11] - m[3] * m[10];
+        let s5 = m[2] * m[7] - m[3] * m[6];
+
+        let c0 = m[9] * m[15] - m[11] * m[13];
+        let c1 = m[5] * m[15] - m[7] * m[13];
+        let c2 = m[5] * m[11] - m[7] * m[9];
+        let c3 = m[1] * m[15] - m[3] * m[13];
+        let c4 = m[1] * m[11] - m[3] * m[9];
+        let c5 = m[1] * m[7] - m[3] * m[5];
+
+        let d0 = m[9] * m[14] - m[10] * m[13];
+        let d1 = m[5] * m[14] - m[6] * m[13];
+        let d2 = m[5] * m[10] - m[6] * m[9];
+        let d3 = m[1] * m[14] - m[2] * m[13];
+        let d4 = m[1] * m[10] - m[2] * m[9];
+        let d5 = m[1] * m[6] - m[2] * m[5];
+
+        let inverse: [T; 16] = [
+            m[5] * s0 - m[9] * s1 + m[13] * s2,
+            m[9] * s3 - m[1] * s0 - m[13] * s4,
+            m[1] * s1 - m[5] * s3 + m[13] * s5,
+            m[5] * s4 - m[1] * s2 - m[9] * s5,
+            m[8] * s1 - m[4] * s0 - m[12] * s2,
+            m[0] * s0 - m[8] * s3 + m[12] * s4,
+            m[4] * s3 - m[0] * s1 - m[12] * s5,
+            m[0] * s2 - m[4] * s4 + m[8] * s5,
+            m[4] * c0 - m[8] * c1 + m[12] * c2,
+            m[8] * c3 - m[0] * c0 - m[12] * c4,
+            m[0] * c1 - m[4] * c3 + m[12] * c5,
+            m[4] * c4 - m[0] * c2 - m[8] * c5,
+            m[8] * d1 - m[4] * d0 - m[12] * d2,
+            m[0] * d0 - m[8] * d3 + m[12] * d4,
+            m[4] * d3 - m[0] * d1 - m[12] * d5,
+            m[0] * d2 - m[4] * d4 + m[8] * d5,
+        ];
         *determinant =
             m[0] * inverse[0] + m[1] * inverse[4] + m[2] * inverse[8] + m[3] * inverse[12];
-        *output = Self::from_data(inverse);
         if *determinant == T::from(0) {
+            *output = Self::from_data(inverse);
             return false;
         }
         let divisor = T::from(1) / *determinant;

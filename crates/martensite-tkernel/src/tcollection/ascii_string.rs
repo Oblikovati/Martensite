@@ -14,16 +14,19 @@ pub struct AsciiString {
 impl AsciiString {
     /// Copies a C string through its first NUL;
     /// `AsciiString::new("abc\0def").as_bytes() == b"abc"`.
+    #[inline]
     pub fn new(text: &str) -> Self {
         Self::from_bytes(text)
     }
     /// Copies arbitrary byte values through the first NUL, as the C-string constructor
     /// does; `AsciiString::from_bytes([255, 0]).as_bytes() == [255]`.
+    #[inline]
     pub fn from_bytes(bytes: impl AsRef<[u8]>) -> Self {
         let bytes = bytes.as_ref();
         Self::from_raw(&bytes[..c_string_length(bytes)])
     }
     /// Copies an explicit byte span including embedded NULs; `AsciiString::from_raw(b"a\0b").len() == 3`.
+    #[inline]
     pub fn from_raw(bytes: &[u8]) -> Self {
         if bytes.is_empty() {
             return Self::default();
@@ -63,8 +66,21 @@ impl AsciiString {
         self.append_bytes(suffix.as_bytes());
     }
     /// Appends raw bytes before the terminator; shared by every concatenating member.
+    #[inline]
     fn append_bytes(&mut self, bytes: &[u8]) {
-        self.splice_bytes(self.len(), bytes);
+        if bytes.is_empty() {
+            return;
+        }
+        if self.terminated.is_empty() {
+            self.terminated.reserve(bytes.len() + 1);
+            self.terminated.extend_from_slice(bytes);
+            self.terminated.push(0);
+            return;
+        }
+        self.terminated.pop();
+        self.terminated.reserve(bytes.len() + 1);
+        self.terminated.extend_from_slice(bytes);
+        self.terminated.push(0);
     }
     /// Inserts raw bytes at a zero-based offset that the caller already validated.
     fn splice_bytes(&mut self, offset: usize, bytes: &[u8]) {

@@ -126,20 +126,25 @@ impl<T> DynamicArray<T> {
         self.emplace_append(|| value)
     }
     /// Reserves storage before constructing the appended value; `array.emplace_append(||42)`.
+    #[inline]
     pub(crate) fn emplace_append(&mut self, construct: impl FnOnce() -> T) -> &mut T {
         self.append_constructed_with(|_| construct())
     }
+    #[inline]
     fn append_constructed_with(&mut self, construct: impl FnOnce(&mut Self) -> T) -> &mut T {
         let (block, offset) = self.prepare_append_location();
         let value = construct(self);
-        if offset < self.blocks[block].len() {
-            self.blocks[block][offset] = value;
-        } else {
-            self.blocks[block].push(value);
-        }
         self.used += 1;
-        self.needs_tail_scan |= self.increment == 0;
-        &mut self.blocks[block][offset]
+        if self.increment == 0 {
+            self.needs_tail_scan = true;
+        }
+        let target = &mut self.blocks[block];
+        if offset < target.len() {
+            target[offset] = value;
+        } else {
+            target.push(value);
+        }
+        &mut target[offset]
     }
     fn ensure_storage_for_index(&mut self, index: usize) {
         if self.increment == 0 {
@@ -168,12 +173,15 @@ impl<T> DynamicArray<T> {
     ) -> Result<&mut T, ArrayError> {
         let index = checked_index(index)?;
         let (block_index, offset) = self.element_coordinates(index);
-        let error = self.index_error(index);
-        self.blocks
-            .as_mut_slice()
-            .get_mut(block_index)
-            .and_then(|block| block.get_mut(offset))
-            .ok_or(error)
+        let in_bounds = self
+            .blocks
+            .as_slice()
+            .get(block_index)
+            .is_some_and(|block| offset < block.len());
+        if !in_bounds {
+            return Err(self.index_error(index));
+        }
+        Ok(&mut self.blocks.as_mut_slice()[block_index][offset])
     }
     /// Reads the first value; `array.first()?`.
     #[cfg(test)]

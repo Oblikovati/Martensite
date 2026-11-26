@@ -55,17 +55,19 @@ impl Color {
     pub fn name(self) -> NamedColor {
         // The double conversion is narrowed to float before comparing.
         let srgb = self.rgb.map(|v| Self::linear_to_srgb(f64::from(v)) as f32);
-        let mut best = (f32::MAX, NamedColor::BLACK);
-        for candidate in NamedColor::all() {
-            let distance = float_square_distance(srgb, candidate.srgb());
-            if distance < best.0 {
-                best = (distance, candidate);
+        let mut best_dist = f32::MAX;
+        let mut best_idx = 0usize;
+        for (idx, &candidate) in NamedColor::srgb_table().iter().enumerate() {
+            let distance = float_square_distance(srgb, candidate);
+            if distance < best_dist {
+                best_dist = distance;
+                best_idx = idx;
                 if distance == 0.0 {
                     break;
                 }
             }
         }
-        best.1
+        NamedColor::from_index(best_idx as i32).unwrap_or(NamedColor::BLACK)
     }
     /// Validates linear RGB like the constructor, then searches;
     /// `Color::nearest_name(1.0, 0.0, 0.0)? == NamedColor::RED`.

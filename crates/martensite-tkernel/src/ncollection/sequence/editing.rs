@@ -5,6 +5,7 @@ mod removal;
 mod transfer;
 
 impl<T> Sequence<T> {
+    #[inline]
     fn construct_node(&self, construct: impl FnOnce() -> T) -> SequenceNodeOwner<T> {
         if self.common_nodes {
             return SequenceNodeOwner::construct_common(construct);
@@ -12,6 +13,7 @@ impl<T> Sequence<T> {
         SequenceNodeOwner::construct(self.allocator(), construct)
     }
 
+    #[inline]
     pub(super) fn own_link(&mut self, owner: SequenceNodeOwner<T>) -> *mut super::SeqNode {
         let link = owner.into_link();
         if let Some(registry) = &mut self.clear_nodes {
@@ -34,6 +36,7 @@ impl<T> Sequence<T> {
     }
 
     /// Appends an independently allocated item; `*sequence.append(10) == 10`.
+    #[inline]
     pub fn append(&mut self, value: T) -> &mut T {
         self.insert_node(self.len(), value)
     }

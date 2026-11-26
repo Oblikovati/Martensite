@@ -19,6 +19,7 @@ pub struct ProgressRange<'a> {
 }
 impl Default for ProgressRange<'_> {
     /// The empty range: no parent, start 0, delta 0; `ProgressRange::default()`.
+    #[inline]
     fn default() -> Self {
         Self {
             parent: None,
@@ -108,6 +109,7 @@ impl Clone for ProgressRange<'_> {
 }
 impl Drop for ProgressRange<'_> {
     /// Dropping the range closes it.
+    #[inline]
     fn drop(&mut self) {
         self.close();
     }

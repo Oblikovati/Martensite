@@ -3,6 +3,7 @@ use super::DynamicArray;
 #[cfg(test)]
 use crate::standard::Failure;
 impl<T> DynamicArray<T> {
+    #[inline]
     pub(super) fn prepare_append_location(&mut self) -> (usize, usize) {
         if self.increment == 0 {
             self.require_retained_first_append();

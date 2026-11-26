@@ -162,6 +162,7 @@ impl SequenceTopology {
             shared: observation.clone(),
         }
     }
+    #[inline]
     fn publish_observation(&self) {
         if let Some(observer) = self.observer.get() {
             observer.publish(|| self.observation());
@@ -178,10 +179,12 @@ impl SequenceTopology {
             cached_index: index,
         }
     }
+    #[inline]
     pub(super) fn size(&self) -> usize {
         // SAFETY: the inspection guard never writes structural fields. Edits require &mut self.
         unsafe { (*self.base.get()).size }
     }
+    #[inline]
     pub(super) fn endpoints(&self) -> (*mut SeqNode, *mut SeqNode) {
         // SAFETY: the inspection guard never writes structural fields. Edits require &mut self.
         unsafe { ((*self.base.get()).first, (*self.base.get()).last) }
@@ -203,8 +206,24 @@ impl SequenceTopology {
     #[inline]
     pub(super) fn find(&self, index: usize, update_cache: bool) -> *mut SeqNode {
         let (previous, previous_index) = self.cache.position();
-        // SAFETY: Sequence validates index and retains the live chain or its clear-scope liveness.
-        let node = unsafe { self.search().find(index, previous, previous_index) };
+        // Fast path for sequential/repeated indexed reads outside controlled clear.
+        let node = if self.clear_scope().is_none() && !previous.is_null() {
+            if index == previous_index {
+                return previous;
+            } else if index == previous_index + 1 {
+                // SAFETY: caller validated index <= size and previous is live at previous_index.
+                unsafe { (*previous).next() }
+            } else if index + 1 == previous_index {
+                // SAFETY: caller validated index >= 1 and previous is live at previous_index.
+                unsafe { (*previous).previous() }
+            } else {
+                // SAFETY: Sequence validates index and retains the live chain.
+                unsafe { self.search().find(index, previous, previous_index) }
+            }
+        } else {
+            // SAFETY: Sequence validates index and retains the live chain or its clear-scope liveness.
+            unsafe { self.search().find(index, previous, previous_index) }
+        };
         if update_cache {
             self.cache.publish(node, index);
             self.publish_observation();

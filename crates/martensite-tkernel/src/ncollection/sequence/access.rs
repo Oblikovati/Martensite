@@ -37,6 +37,7 @@ impl<T> Sequence<T> {
         }
         None
     }
+    #[inline]
     pub(super) fn checked_node(
         &self,
         member: &str,
@@ -46,11 +47,13 @@ impl<T> Sequence<T> {
         self.offset(member, index)?;
         Ok(self.topology.find(index, cache))
     }
+    #[inline]
     pub(super) fn read_indexed(&self, index: usize) -> Result<&T, Failure> {
         let node = self.checked_node("Value", index, true)?;
         // SAFETY: this shared sequence borrow keeps its owned node live and immutable.
         Ok(unsafe { owner::item_ref(node) })
     }
+    #[inline]
     pub(super) fn write_indexed(&mut self, index: usize) -> Result<&mut T, Failure> {
         let node = self.checked_node("ChangeValue", index, true)?;
         // SAFETY: exclusive sequence borrowing excludes all other item references.

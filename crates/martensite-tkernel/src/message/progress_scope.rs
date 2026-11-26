@@ -193,6 +193,7 @@ impl<'a> ProgressScope<'a> {
 }
 impl Drop for ProgressScope<'_> {
     /// Dropping the scope closes it.
+    #[inline]
     fn drop(&mut self) {
         self.close();
     }
