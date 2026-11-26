@@ -28,11 +28,21 @@ fn assert_orient2d_permutations(a: [f64; 2], b: [f64; 2], c: [f64; 2], expected:
 fn orient2d_stress_underflow_subnormal_overflow_and_near_collinear() {
     // Subnormal / underflow triangle where naive f64 determinant underflows to 0.0.
     let tiny = f64::MIN_POSITIVE / 1024.0;
-    assert_orient2d_permutations([0.0, 0.0], [tiny, 0.0], [0.0, tiny], OrientationSign::Positive);
+    assert_orient2d_permutations(
+        [0.0, 0.0],
+        [tiny, 0.0],
+        [0.0, tiny],
+        OrientationSign::Positive,
+    );
 
     // Exponent extreme triangle where naive f64 products overflow to Inf.
     let huge = 1e200_f64;
-    assert_orient2d_permutations([0.0, 0.0], [huge, 0.0], [0.0, huge], OrientationSign::Positive);
+    assert_orient2d_permutations(
+        [0.0, 0.0],
+        [huge, 0.0],
+        [0.0, huge],
+        OrientationSign::Positive,
+    );
 
     // Near-collinear FMA-sensitive input: (1 + 2^-27)^2 - 1 = 2^-26 + 2^-54 > 0.
     let eps = f64::from_bits(0x3e40_0000_0000_0000); // 2^-27

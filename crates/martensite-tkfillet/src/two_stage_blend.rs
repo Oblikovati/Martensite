@@ -243,8 +243,7 @@ mod blend_corpus_tests {
             assert_eq!(receipt.valid_edges(), 1);
             assert!(receipt.faults().is_empty());
 
-            let analyzer =
-                BRepCheckAnalyzer::new(&blended, true, false, false).expect("analyzer");
+            let analyzer = BRepCheckAnalyzer::new(&blended, true, false, false).expect("analyzer");
             assert!(
                 analyzer.is_valid().expect("is_valid"),
                 "blended solid must be BRepCheck valid"

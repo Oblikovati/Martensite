@@ -78,15 +78,15 @@ mod unix {
     /// Thread-safe IPv4 lookup via POSIX `getaddrinfo` (#150).
     pub(super) fn resolve_ipv4(name: &[u8]) -> Option<[u8; 4]> {
         let name: CString = CString::new(name).ok()?;
+        // SAFETY: `libc::addrinfo` is a plain C struct valid when all-zero initialized.
         let mut hints: libc::addrinfo = unsafe { std::mem::zeroed() };
         hints.ai_family = libc::AF_INET;
         hints.ai_socktype = libc::SOCK_STREAM;
         let mut result: *mut libc::addrinfo = std::ptr::null_mut();
         // SAFETY: `name` is NUL-terminated, `hints` is initialized for AF_INET,
         // and `result` receives an owned linked list freed via `freeaddrinfo`.
-        let status = unsafe {
-            libc::getaddrinfo(name.as_ptr(), std::ptr::null(), &hints, &mut result)
-        };
+        let status =
+            unsafe { libc::getaddrinfo(name.as_ptr(), std::ptr::null(), &hints, &mut result) };
         if status != 0 || result.is_null() {
             return None;
         }

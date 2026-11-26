@@ -163,7 +163,10 @@ mod tests {
         let composed = ComposedTolerance::compose(&resolution, &[solver]).expect("within cap");
         assert_eq!(composed.linear(), 5e-6);
         assert_eq!(composed.contributors().len(), 2);
-        assert_eq!(composed.contributors()[1].source(), UncertaintySource::SketchSolver);
+        assert_eq!(
+            composed.contributors()[1].source(),
+            UncertaintySource::SketchSolver
+        );
 
         let too_wide = InputUncertainty::new(UncertaintySource::ImportedBrep, 2e-4, 0.0)
             .expect("valid imported uncertainty");

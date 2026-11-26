@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Regression contracts for non-destructive input preservation (#461), `Send` operation
 //! objects (#64), and multi-threaded determinism vs single-threaded execution (#66).
-use super::{
-    BRepAlgoAPIBuilderAlgo, BRepAlgoAPICommon, BRepAlgoAPICut, BRepAlgoAPIFuse,
-};
+use super::{BRepAlgoAPIBuilderAlgo, BRepAlgoAPICommon, BRepAlgoAPICut, BRepAlgoAPIFuse};
 use martensite_tkbrep::brep_tools;
 use martensite_tkbrep::operation::OperationResult;
 use martensite_tkbrep::topods::Shape;
@@ -17,11 +15,9 @@ use std::io::{Read, Seek, SeekFrom};
 fn assert_send<T: Send>() {}
 
 fn make_box(x: f64, y: f64, z: f64, dx: f64, dy: f64, dz: f64) -> Shape {
-    let mut maker = BRepPrimAPIMakeBox::from_points(
-        Point3::new(x, y, z),
-        Point3::new(x + dx, y + dy, z + dz),
-    )
-    .expect("make box");
+    let mut maker =
+        BRepPrimAPIMakeBox::from_points(Point3::new(x, y, z), Point3::new(x + dx, y + dy, z + dz))
+            .expect("make box");
     maker.shape().expect("box shape").clone()
 }
 

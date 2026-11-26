@@ -193,13 +193,10 @@ impl HistoryGraph {
                         } else if relation.parents.len() == 1 && final_products.len() > 1 {
                             builder.record_split(relation.parents[0].clone(), final_products);
                         } else if relation.parents.len() > 1 && final_products.len() == 1 {
-                            builder.record_merged(
-                                relation.parents.clone(),
-                                final_products.remove(0),
-                            );
+                            builder
+                                .record_merged(relation.parents.clone(), final_products.remove(0));
                         } else {
-                            let non_unique =
-                                relation.parents.len() > 1 || final_products.len() > 1;
+                            let non_unique = relation.parents.len() > 1 || final_products.len() > 1;
                             builder.record_derived(
                                 relation.parents.clone(),
                                 final_products,

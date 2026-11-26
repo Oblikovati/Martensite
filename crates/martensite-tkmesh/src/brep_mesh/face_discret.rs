@@ -99,7 +99,10 @@ impl ModelAlgo for BRepMeshFaceDiscret {
         if parameters.in_parallel && faces_nb > 1 {
             if !scope.more() {
                 for index in 0..faces_nb {
-                    model.get_face(index)?.status().set_status(Status::UserBreak);
+                    model
+                        .get_face(index)?
+                        .status()
+                        .set_status(Status::UserBreak);
                 }
                 return Ok(false);
             }

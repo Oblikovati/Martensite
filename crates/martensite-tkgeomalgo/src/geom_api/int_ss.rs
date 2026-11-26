@@ -93,9 +93,7 @@ impl IntSS {
             .collect();
         let completeness = if count > max_curves_budget {
             IntersectionCompleteness::Inconclusive {
-                reason: format!(
-                    "SSI curve count {count} exceeded budget {max_curves_budget}"
-                ),
+                reason: format!("SSI curve count {count} exceeded budget {max_curves_budget}"),
                 budget_exhausted: true,
             }
         } else {

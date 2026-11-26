@@ -133,7 +133,7 @@ pub fn extrude_tapered(
 
     let bottom_pts = ordered_outer_vertices(region, &resolution)?;
     let (centroid, min_radius) = polygon_centroid_and_min_radius(&bottom_pts);
-    let radial_delta = height.abs() * options.taper_angle.tan();
+    let radial_delta = height.abs() * martensite_cmath::tan(options.taper_angle);
     if min_radius + radial_delta <= resolution.weld {
         return Err(DECLINE.at(
             Stage::Admission,
@@ -191,14 +191,13 @@ fn ordered_outer_vertices(
     resolution: &Resolution,
 ) -> Result<Vec<[f64; 3]>, OperationDecline> {
     let mut pts = Vec::new();
-    let mut explorer =
-        Explorer::new(region.face(), ShapeEnum::Vertex, ShapeEnum::Shape)
-            .map_err(|f| DECLINE.native(Stage::Admission, "explore region vertices", f))?;
+    let mut explorer = Explorer::new(region.face(), ShapeEnum::Vertex, ShapeEnum::Shape)
+        .map_err(|f| DECLINE.native(Stage::Admission, "explore region vertices", f))?;
     while explorer.more() {
         let v = vertex(explorer.current())
             .map_err(|f| DECLINE.native(Stage::Admission, "cast vertex", f))?;
-        let p = BRepTool::pnt(&v)
-            .map_err(|f| DECLINE.native(Stage::Admission, "vertex point", f))?;
+        let p =
+            BRepTool::pnt(&v).map_err(|f| DECLINE.native(Stage::Admission, "vertex point", f))?;
         let coords = [p.x(), p.y(), p.z()];
         let duplicate = pts.iter().any(|existing: &[f64; 3]| {
             let dx = existing[0] - coords[0];
@@ -230,8 +229,8 @@ fn ordered_outer_vertices(
     pts.sort_by(|a, b| {
         let da = [a[0] - centroid[0], a[1] - centroid[1], a[2] - centroid[2]];
         let db = [b[0] - centroid[0], b[1] - centroid[1], b[2] - centroid[2]];
-        let ang_a = dot3(da, v).atan2(dot3(da, u));
-        let ang_b = dot3(db, v).atan2(dot3(db, u));
+        let ang_a = martensite_cmath::atan2(dot3(da, v), dot3(da, u));
+        let ang_b = martensite_cmath::atan2(dot3(db, v), dot3(db, u));
         ang_a.total_cmp(&ang_b)
     });
     Ok(pts)
@@ -276,11 +275,14 @@ fn cross3(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {
     ]
 }
 
-fn make_planar_face(points: &[[f64; 3]]) -> Result<martensite_tkbrep::topods::Face, OperationDecline> {
+fn make_planar_face(
+    points: &[[f64; 3]],
+) -> Result<martensite_tkbrep::topods::Face, OperationDecline> {
     let native = |f| DECLINE.native(Stage::Construction, "tapered face", f);
     let mut poly = BRepBuilderAPIMakePolygon::new();
     for p in points {
-        poly.add_point(Point3::new(p[0], p[1], p[2])).map_err(native)?;
+        poly.add_point(Point3::new(p[0], p[1], p[2]))
+            .map_err(native)?;
     }
     poly.close().map_err(native)?;
     let wire = poly.wire().map_err(native)?;
@@ -310,12 +312,10 @@ fn build_frustum_solid(
             .add(&make_planar_face(&quad)?.into_shape())
             .map_err(native)?;
     }
-    sewing
-        .perform(&ProgressRange::default())
-        .map_err(native)?;
+    sewing.perform(&ProgressRange::default()).map_err(native)?;
     let sewed = sewing.sewed_shape();
     let shell_explorer =
-        Explorer::new(&sewed, ShapeEnum::Shell, ShapeEnum::Shape).map_err(native)?;
+        Explorer::new(sewed, ShapeEnum::Shell, ShapeEnum::Shape).map_err(native)?;
     if !shell_explorer.more() {
         return Err(DECLINE.at(
             Stage::Construction,

@@ -153,10 +153,8 @@ fn max_f32(a: f32, b: f32) -> f32 {
 /// The advance loop of `Append` over only the newly appended `run` (#576).
 fn layout_glyphs(state: &mut TextFormatterState, run: &[u32], font: &FontFTFont) {
     let mut symbols_counter = current_line_symbol_count(&state.text);
-    let mut it = FontTextFormatterIterator::over(
-        run.to_vec(),
-        FontTextFormatterIterationFilter::None,
-    );
+    let mut it =
+        FontTextFormatterIterator::over(run.to_vec(), FontTextFormatterIterationFilter::None);
     while it.more() {
         let (this, next) = (it.symbol(), it.symbol_next());
         it.next();

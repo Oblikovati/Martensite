@@ -156,7 +156,8 @@ pub fn build_guided_loft(
                 gap: f64::INFINITY,
             }));
         }
-        for (idx, (anchor, section)) in rail.station_points.iter().zip(sections.iter()).enumerate() {
+        for (idx, (anchor, section)) in rail.station_points.iter().zip(sections.iter()).enumerate()
+        {
             let min_gap = section
                 .points
                 .iter()

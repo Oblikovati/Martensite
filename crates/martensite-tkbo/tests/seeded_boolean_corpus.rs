@@ -51,8 +51,7 @@ fn make_box(min: [f64; 3], size: [f64; 3]) -> Shape {
 
 fn volume_of(shape: &Shape) -> f64 {
     let mut props = GProps::default();
-    BRepGProp::volume_properties(shape, &mut props, true, false, false)
-        .expect("volume properties");
+    BRepGProp::volume_properties(shape, &mut props, true, false, false).expect("volume properties");
     props.mass()
 }
 
@@ -84,7 +83,10 @@ fn verify_planar_solid_faces(shape: &Shape, label: &str) {
         face_count += 1;
         explorer.next().expect("next face");
     }
-    assert!(face_count >= 6, "{label}: expected >= 6 faces, got {face_count}");
+    assert!(
+        face_count >= 6,
+        "{label}: expected >= 6 faces, got {face_count}"
+    );
 }
 
 #[test]
@@ -92,13 +94,21 @@ fn seeded_boolean_corpus_satisfies_per_face_and_volume_invariants() {
     let mut rng = XorShift64(CORPUS_SEED);
 
     for case in 0..8 {
-        let a_size = [rng.range(1.5, 3.0), rng.range(1.5, 3.0), rng.range(1.5, 3.0)];
+        let a_size = [
+            rng.range(1.5, 3.0),
+            rng.range(1.5, 3.0),
+            rng.range(1.5, 3.0),
+        ];
         let b_min = [
             rng.range(0.3, 1.0),
             rng.range(0.3, 1.0),
             rng.range(0.3, 1.0),
         ];
-        let b_size = [rng.range(1.2, 2.5), rng.range(1.2, 2.5), rng.range(1.2, 2.5)];
+        let b_size = [
+            rng.range(1.2, 2.5),
+            rng.range(1.2, 2.5),
+            rng.range(1.2, 2.5),
+        ];
 
         let a = make_box([0.0, 0.0, 0.0], a_size);
         let b = make_box(b_min, b_size);

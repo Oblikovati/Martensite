@@ -79,7 +79,11 @@ fn fnv_mix(lane_a: &mut u64, lane_b: &mut u64, bytes: &[u8]) {
 
 impl fmt::Debug for GeometryRevision {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "GeometryRevision({:016x}{:016x})", self.high, self.low)
+        write!(
+            formatter,
+            "GeometryRevision({:016x}{:016x})",
+            self.high, self.low
+        )
     }
 }
 

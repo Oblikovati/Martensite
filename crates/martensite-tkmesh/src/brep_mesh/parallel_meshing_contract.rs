@@ -7,10 +7,12 @@ use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::brep_tools;
 use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::{Shape, face};
+use martensite_tkernel::message::{
+    ProgressIndicator, ProgressIndicatorHooks, ProgressRange, ProgressScope,
+};
+use martensite_tkernel::storage::IoStream;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::poly::mesh_purpose;
-use martensite_tkernel::message::{ProgressIndicator, ProgressIndicatorHooks, ProgressRange, ProgressScope};
-use martensite_tkernel::storage::IoStream;
 use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeBox;
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
 use std::io::{Read, Seek, SeekFrom};
@@ -56,7 +58,10 @@ fn parallel_face_meshing_is_byte_identical_to_sequential() {
     assert!(par.is_done());
     assert_eq!(seq.get_status_flags(), 0);
     assert_eq!(par.get_status_flags(), 0);
-    assert_eq!(serialize_brep(&parallel_shape), serialize_brep(&sequential_shape));
+    assert_eq!(
+        serialize_brep(&parallel_shape),
+        serialize_brep(&sequential_shape)
+    );
 }
 
 #[test]
@@ -82,9 +87,7 @@ fn cancelled_meshing_publishes_no_partial_triangulation() {
     let mut triangulated_faces = 0usize;
     while explorer.more() {
         let face = face(explorer.current()).expect("face");
-        if BRepTool::triangulation(&face, mesh_purpose::NONE)
-            .is_ok_and(|(tri, _)| !tri.is_null())
-        {
+        if BRepTool::triangulation(&face, mesh_purpose::NONE).is_ok_and(|(tri, _)| !tri.is_null()) {
             triangulated_faces += 1;
         }
         explorer.next().expect("next face");

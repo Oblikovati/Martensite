@@ -57,17 +57,18 @@ impl BooleanContext {
     }
 
     /// Records an incidence decision for canonical pair `(left_id, right_id)` once.
-    pub fn record_incidence(&mut self, left_id: usize, right_id: usize, decision: IncidenceDecision) {
+    pub fn record_incidence(
+        &mut self,
+        left_id: usize,
+        right_id: usize,
+        decision: IncidenceDecision,
+    ) {
         let key = if left_id <= right_id {
             (left_id, right_id)
         } else {
             (right_id, left_id)
         };
-        if let Some(entry) = self
-            .incidences
-            .iter_mut()
-            .find(|(l, r, _)| (*l, *r) == key)
-        {
+        if let Some(entry) = self.incidences.iter_mut().find(|(l, r, _)| (*l, *r) == key) {
             entry.2 = decision;
         } else {
             self.incidences.push((key.0, key.1, decision));
@@ -88,7 +89,12 @@ impl BooleanContext {
     }
 
     /// Appends an ordered diagnostic.
-    pub fn push_diagnostic(&mut self, stage: &'static str, message: impl Into<String>, is_fatal: bool) {
+    pub fn push_diagnostic(
+        &mut self,
+        stage: &'static str,
+        message: impl Into<String>,
+        is_fatal: bool,
+    ) {
         self.diagnostics.push(BooleanDiagnostic {
             stage,
             message: message.into(),
