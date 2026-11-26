@@ -5,9 +5,10 @@
 mod bspline;
 mod general;
 mod owned;
+mod spline_roots;
 
 use super::gen_ext_pc::GGenExtPC;
-use crate::extrema::StationaryNature;
+use crate::extrema::{PointCurveClassification, StationaryNature};
 use crate::extrema::curve_reference::CurveReference;
 use crate::extrema::curve_tool::ExtremaCurveTool;
 use crate::extrema::elementary_point_curve::ElementaryPointCurve;
@@ -44,6 +45,7 @@ pub struct GGExtPC<'a, T: ExtremaCurveTool> {
     uinf: f64,
     usup: f64,
     kind: CurveType,
+    classification_policy: PointCurveClassification,
     root_natures: Vec<StationaryNature>,
     sq_dist: Vec<f64>,
 }
@@ -72,6 +74,7 @@ where
             uinf: self.uinf,
             usup: self.usup,
             kind: self.kind,
+            classification_policy: self.classification_policy,
             root_natures: self.root_natures.clone(),
             sq_dist: self.sq_dist.clone(),
         }
@@ -99,6 +102,7 @@ impl<T: ExtremaCurveTool> Default for GGExtPC<'_, T> {
             uinf: infinite,
             usup: infinite,
             kind: CurveType::OtherCurve,
+            classification_policy: PointCurveClassification::default(),
             root_natures: Vec::new(),
             sq_dist: Vec::new(),
         }
@@ -110,8 +114,9 @@ impl<'a, T: ExtremaCurveTool> GGExtPC<'a, T> {
     pub fn new() -> Self {
         Self::default()
     }
-    /// Select the conic result version before perform; `extrema.set_classification_policy(PointCurveClassification::LegacyV1)`.
-    pub fn set_classification_policy(&mut self, policy: crate::extrema::PointCurveClassification) {
+    /// Select the conic and spline result version before perform; `extrema.set_classification_policy(PointCurveClassification::LegacyV1)`.
+    pub fn set_classification_policy(&mut self, policy: PointCurveClassification) {
+        self.classification_policy = policy;
         self.ext_p_el_c.set_classification_policy(policy);
         self.done = false;
     }
@@ -225,16 +230,18 @@ impl<'a, T: ExtremaCurveTool> GGExtPC<'a, T> {
         }
         Ok(())
     }
-    // The whole range with twice the pole count as samples (no postprocessing).
+    // Certified Bernstein isolation by default (#462); legacy sampling under LegacyV1.
     fn perform_bezier(&mut self, point: T::Point, curve: &T::Curve) -> Result<(), Failure> {
+        let bezier = T::bezier(curve)?;
+        let bezier_ref = bezier
+            .get()
+            .ok_or_else(|| null_object("Extrema_GGExtPC: Bezier()"))?;
+        if self.classification_policy == PointCurveClassification::DifferentialV2 {
+            return spline_roots::perform_bezier_certified(self, point, curve, bezier_ref);
+        }
         self.int_uinf = self.uinf;
         self.int_usup = self.usup;
-        let bezier = T::bezier(curve)?;
-        let poles: i32 = bezier
-            .get()
-            .ok_or_else(|| null_object("Extrema_GGExtPC: Bezier()"))?
-            .pole_count();
-        self.sample = poles * 2;
+        self.sample = bezier_ref.pole_count() * 2;
         self.ext_pc
             .initialize_reference(self.curve.clone().unwrap())?;
         self.interval_perform(point)
@@ -339,6 +346,15 @@ impl<'a, T: ExtremaCurveTool> GGExtPC<'a, T> {
     /// `AddSol(U, P, SqDist, IsMin)` (protected): appends unless a solution lies within
     /// the parameter tolerance.
     fn add_sol(&mut self, u: f64, point: T::Point, sq_dist: f64, is_min: bool) {
+        self.add_classified_sol(u, point, sq_dist, is_min.into());
+    }
+    pub(super) fn add_classified_sol(
+        &mut self,
+        u: f64,
+        point: T::Point,
+        sq_dist: f64,
+        nature: StationaryNature,
+    ) {
         if self
             .points
             .iter()
@@ -347,7 +363,7 @@ impl<'a, T: ExtremaCurveTool> GGExtPC<'a, T> {
             return;
         }
         self.sq_dist.push(sq_dist);
-        self.root_natures.push(is_min.into());
+        self.root_natures.push(nature);
         self.points.push(POnCurve::new(u, point));
     }
     // Appends one extremum without the duplicate test.

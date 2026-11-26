@@ -54,3 +54,8 @@ path = "tests/bivariate_output_capacity.rs"
 [[test]]
 name = "extrema_conic_classification"
 path = "tests/extrema_conic_classification.rs"
+
+
+[[test]]
+name = "extrema_spline_minima"
+path = "tests/extrema_spline_minima.rs"
