@@ -16,6 +16,27 @@ pub(crate) fn cross(left: [f64; 3], right: [f64; 3]) -> [f64; 3] {
 pub(crate) fn dot(left: [f64; 3], right: [f64; 3]) -> f64 {
     left[0] * right[0] + left[1] * right[1] + left[2] * right[2]
 }
+/// Normalizes a finite nonzero vector without squared-norm overflow or underflow (#550).
+pub(crate) fn normalize_finite<const N: usize>(coordinates: [f64; N]) -> Option<[f64; N]> {
+    if coordinates.iter().any(|value| !value.is_finite()) {
+        return None;
+    }
+    let squared = coordinates.iter().fold(0.0, |acc, &v| acc + v * v);
+    if squared == 1.0 {
+        return Some(coordinates);
+    }
+    if squared.is_finite() && squared > f64::MIN_POSITIVE {
+        let magnitude = squared.sqrt();
+        return Some(coordinates.map(|value| martensite_cmath::quotient(value, magnitude)));
+    }
+    let scale = coordinates.iter().fold(0.0_f64, |acc, v| acc.max(v.abs()));
+    if scale == 0.0 {
+        return None;
+    }
+    let scaled = coordinates.map(|value| martensite_cmath::quotient(value, scale));
+    let magnitude = scaled.iter().fold(0.0, |acc, &v| acc + v * v).sqrt();
+    Some(scaled.map(|value| martensite_cmath::quotient(value, magnitude)))
+}
 /// Reflects `value` about the unit line `normal` with the precomputed terms and operation
 /// order shared by Direction3::mirror_direction and Vector3::mirror_vector; `reflect([1.0,0.0,0.0],[1.0,2.0,3.0])`.
 pub(crate) fn reflect(normal: [f64; 3], value: [f64; 3]) -> [f64; 3] {

@@ -125,11 +125,15 @@ impl Xyz {
         Ok(())
     }
     fn normalize_with_message(self, message: &str) -> Result<Self, Failure> {
-        let norm = self.modulus();
-        if norm <= f64::MIN_POSITIVE {
-            return Err(construction(message));
-        }
-        Ok(self / norm)
+        let coordinates = super::normalize_finite(self.coordinates).ok_or_else(|| {
+            construction(&format!(
+                "{message}: ({}, {}, {})",
+                self.x(),
+                self.y(),
+                self.z()
+            ))
+        })?;
+        Ok(Self { coordinates })
     }
     /// Reverses all component signs; `xyz.reversed()`.
     pub fn reversed(self) -> Self {

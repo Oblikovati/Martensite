@@ -110,15 +110,9 @@ impl Xy {
         Ok(())
     }
     fn normalized_with(self, message: &str) -> Result<Self, Failure> {
-        let norm = self.modulus();
-        if norm <= f64::MIN_POSITIVE {
-            return Err(construction(&format!(
-                "{message}: ({}, {}) has norm {norm}",
-                self.x(),
-                self.y()
-            )));
-        }
-        Ok(self / norm)
+        let [x, y] = crate::gp::normalize_finite([self.x(), self.y()])
+            .ok_or_else(|| construction(&format!("{message}: ({}, {})", self.x(), self.y())))?;
+        Ok(Self::new(x, y))
     }
     /// Reverses the signs; `xy.reversed()`.
     pub fn reversed(self) -> Self {
