@@ -6,7 +6,7 @@ use super::{
 };
 use crate::{
     ArcGeometry, MinimumLength,
-    constraints::{ArcBranch, ConstraintPolicy, arc_layout},
+    constraints::{ArcBranch, ArcConstraintFailure, ConstraintPolicy, arc_layout},
 };
 use std::collections::BTreeSet;
 
@@ -23,11 +23,18 @@ impl Layout<'_> {
                     .copied()
                     .ok_or(Failure::MissingPoint(point))
             })?;
+            let branch = if self.crossings.contains(&layout.id) {
+                ArcBranch::CrossHalfTurn
+            } else {
+                // The differential rows remain regular at a bare half turn. Adoption
+                // keeps its exact branch until a Radius explicitly permits crossing.
+                layout.radius_branch()
+            };
             // Exact pins already determine the entire chart. Its actual midpoint and branch
             // still pass the independent physical publication gate.
             if !variables.iter().all(|slot| self.fixed.contains_key(slot)) {
                 let source = Arc::new(Equation::ArcIntrinsic {
-                    branch: layout.branch,
+                    branch,
                     scale: self.scale,
                 });
                 self.blocks.push(EquationBlock {
@@ -47,7 +54,7 @@ impl Layout<'_> {
         anchors: [Point3; 3],
         branch: ArcBranch,
     ) -> Result<(), Failure> {
-        let layout = self.arc_operand(id, arc, branch)?;
+        let layout = self.strict_arc_operand(id, arc, branch)?;
         // With both endpoints fixed, two sagitta rows and the intrinsic row uniquely fix the
         // witness. Hard pins express the same isolated solution and preserve exact anchor bits.
         for (point, position) in layout.points.into_iter().zip(anchors) {
@@ -82,8 +89,8 @@ impl Layout<'_> {
         [first, second]: [ArcId; 2],
         branches: [ArcBranch; 2],
     ) -> Result<(), Failure> {
-        let a = self.arc_operand(id, first, branches[0])?;
-        let b = self.arc_operand(id, second, branches[1])?;
+        let a = self.strict_arc_operand(id, first, branches[0])?;
+        let b = self.strict_arc_operand(id, second, branches[1])?;
         if a.circle_key() == b.circle_key() {
             // The shared authored triangle already fixes both circles to the same radius.
             return Ok(());
@@ -102,6 +109,21 @@ impl Layout<'_> {
         )
     }
 
+    fn strict_arc_operand(
+        &self,
+        relation: RelationId,
+        arc: ArcId,
+        branch: ArcBranch,
+    ) -> Result<ArcLayout, Failure> {
+        if branch == ArcBranch::CrossHalfTurn {
+            return Err(Failure::Arc(
+                arc,
+                ArcConstraintFailure::CrossingRequiresRadius,
+            ));
+        }
+        self.arc_operand(relation, arc, branch)
+    }
+
     fn arc_operand(
         &self,
         relation: RelationId,
@@ -112,6 +134,12 @@ impl Layout<'_> {
             .arcs
             .get(&arc)
             .ok_or(Failure::MissingOperand(relation, EntityId::Arc(arc)))?;
+        if branch != ArcBranch::CrossHalfTurn && self.crossings.contains(&arc) {
+            return Err(Failure::Arc(
+                arc,
+                ArcConstraintFailure::ConflictingSweep(branch),
+            ));
+        }
         layout.require_branch(branch)?;
         Ok(layout)
     }
@@ -124,7 +152,11 @@ pub(super) fn capture_fix(
     policy: ConstraintPolicy,
 ) -> Result<Relation, Failure> {
     let (arc_geometry, layout) = capture_operand(geometry, id, arc, policy)?;
-    Ok(Relation::FixArc(arc, arc_geometry.points(), layout.branch))
+    Ok(Relation::FixArc(
+        arc,
+        arc_geometry.points(),
+        layout.strict_branch()?,
+    ))
 }
 
 pub(super) fn capture_radius(
@@ -138,7 +170,7 @@ pub(super) fn capture_radius(
     if target.value() < geometry.minimum.value() {
         return Err(Failure::RadiusBelowMinimum(id, arc, target.value()));
     }
-    Ok(Relation::Radius(arc, target, layout.branch))
+    Ok(Relation::Radius(arc, target, layout.radius_branch()))
 }
 
 pub(super) fn capture_equal(
@@ -151,7 +183,10 @@ pub(super) fn capture_equal(
     distinct(id, EntityId::Arc(first), EntityId::Arc(second))?;
     let (_, a) = capture_operand(geometry, id, first, policy)?;
     let (_, b) = capture_operand(geometry, id, second, policy)?;
-    Ok(Relation::EqualRadius(arcs, [a.branch, b.branch]))
+    Ok(Relation::EqualRadius(
+        arcs,
+        [a.strict_branch()?, b.strict_branch()?],
+    ))
 }
 
 fn capture_operand(

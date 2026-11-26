@@ -6,20 +6,24 @@ use super::{
     continuity::JoinReference,
     poll, residual,
 };
-use crate::{Edit, EntityId, PointId, Snapshot};
+use crate::{ArcId, Edit, EntityId, PointId, Snapshot};
 use martensite_tkmath::gp::Point3;
 use martensite_tksolve::{
     nonlinear::{SolveOptions, SolveTermination, solve_constraints_with_constants},
     preview::{Block, Domain, Incomplete, PreferenceReport, Prepared, PreviewError, Update},
     residual::ResidualBlock,
 };
-use std::{borrow::Cow, collections::BTreeMap, sync::Arc};
+use std::{
+    borrow::Cow,
+    collections::{BTreeMap, BTreeSet},
+    sync::Arc,
+};
 
 mod admission;
 mod chart;
 mod failure;
 mod fit_replay;
-use admission::admit;
+use admission::{admit, check_crossing_attachment};
 use failure::{preview_failure, solve_failure};
 
 #[derive(Clone)]
@@ -27,6 +31,7 @@ pub(super) struct Program {
     points: Arc<[PointId]>,
     point_columns: Arc<BTreeMap<PointId, usize>>,
     fixed: Arc<[(usize, f64)]>,
+    crossings: Arc<BTreeSet<ArcId>>,
     blocks: Arc<[EquationBlock]>,
     chart_sources: Arc<[(usize, RelationId, JoinReference)]>,
     authored_rows: usize,
@@ -70,6 +75,7 @@ impl Program {
             .collect::<BTreeMap<_, _>>();
         let Binding {
             fixed,
+            crossings,
             mut blocks,
             mut authored_rows,
             frozen_coordinates,
@@ -77,6 +83,7 @@ impl Program {
         let mut domains = vec![Domain::Length(policy.length_scale.value()); 3 * points.len()];
         let attachment_block = attachment.map(|_| blocks.len());
         if let Some((id, point, equation)) = attachment {
+            check_crossing_attachment(geometry, &crossings, id, point)?;
             let start = *point_columns
                 .get(&point)
                 .ok_or(Failure::MissingPoint(point))?;
@@ -115,6 +122,7 @@ impl Program {
             points: points.into(),
             point_columns: Arc::new(point_columns),
             fixed: fixed.into(),
+            crossings: Arc::new(crossings),
             blocks: blocks.into(),
             chart_sources,
             authored_rows,
@@ -428,7 +436,14 @@ impl Program {
                 });
             }
         }
-        apply_checked(geometry, relations, &edits, policy, cancelled)
+        apply_checked(
+            geometry,
+            relations,
+            &edits,
+            &self.crossings,
+            policy,
+            cancelled,
+        )
     }
 }
 

@@ -5,23 +5,34 @@ use crate::{ArcDefinition, ArcGeometry, ArcId, EntityId, MinimumLength, PointId,
 use martensite_tkmath::predicates::{
     ArcTripleFailure, ArcTripleMetrics, compare_length_difference_3d,
 };
-use std::{cmp::Ordering, f64::consts::PI, fmt};
+use std::{cmp::Ordering, collections::BTreeSet, f64::consts::PI, fmt};
 
-/// The directed sweep branch retained by a constrained three-point arc.
+/// The directed sweep policy retained by an authored arc relation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ArcBranch {
     /// The through witness selects a sweep less than a half turn.
     Minor,
     /// The through witness selects a sweep greater than a half turn.
     Major,
+    /// A Radius captured at an exact half turn permits both directions of sweep change.
+    /// The connected layout requires a free witness and at least one free chord endpoint.
+    CrossHalfTurn,
 }
 
 impl ArcBranch {
-    fn from_order(order: Ordering) -> Result<Self, ArcConstraintFailure> {
-        match order {
-            Ordering::Less => Ok(Self::Minor),
-            Ordering::Greater => Ok(Self::Major),
-            Ordering::Equal => Err(ArcConstraintFailure::Semicircle),
+    fn strict(sweep: Ordering) -> Option<Self> {
+        match sweep {
+            Ordering::Less => Some(Self::Minor),
+            Ordering::Greater => Some(Self::Major),
+            Ordering::Equal => None,
+        }
+    }
+
+    fn admits(self, sweep: Ordering) -> bool {
+        match self {
+            Self::Minor => sweep.is_lt(),
+            Self::Major => sweep.is_gt(),
+            Self::CrossHalfTurn => true,
         }
     }
 
@@ -29,6 +40,7 @@ impl ArcBranch {
         match self {
             Self::Minor => sagitta < half_chord,
             Self::Major => sagitta > half_chord,
+            Self::CrossHalfTurn => true,
         }
     }
 }
@@ -45,6 +57,24 @@ pub enum ArcConstraintFailure {
     Semicircle,
     /// The stored nominal trim and exact authored triangle disagree on their branch.
     CarrierBranch(ArcBranch, f64),
+    /// An exact authored half turn lacks a native end angle of PI.
+    HalfTurnCarrier(f64),
+    /// Only a Radius relation can carry an explicit half-turn crossing policy.
+    CrossingRequiresRadius,
+    /// A strict sweep policy conflicts with the arc's authored crossing permission.
+    ConflictingSweep(ArcBranch),
+    /// A second arc uses a crossing point and introduces its own sweep constraint.
+    AliasedCrossing(ArcId),
+    /// Both chord endpoints are pinned, leaving disconnected branches at a fixed radius.
+    LockedCrossing([PointId; 2]),
+    /// A crossing requires the witness to be free.
+    CrossingPinnedWitness(PointId),
+    /// Another incident curve is outside the connected crossing layout.
+    CrossingSharedEntity(EntityId),
+    /// The relation prevents certification of a connected crossing layout.
+    CrossingCoupledRelation(RelationId),
+    /// A bare half turn has no authored Radius permitting departure.
+    HalfTurnDeparture(ArcBranch),
     /// A solve or restored relation would switch the authored branch.
     BranchChanged {
         /// Branch carried by the accepted geometry or persisted relation.
@@ -78,18 +108,18 @@ impl std::error::Error for ArcConstraintFailure {
 pub(super) struct ArcLayout {
     pub(super) id: ArcId,
     pub(super) points: [PointId; 3],
-    pub(super) branch: ArcBranch,
+    sweep: Ordering,
 }
 
 impl ArcLayout {
     pub(super) fn capture(arc: ArcGeometry, policy: ConstraintPolicy) -> Result<Self, Failure> {
         let recipe = arc.recipe();
-        let branch = checked_branch(arc, policy.length_tolerance)
+        let sweep = checked_sweep(arc, policy.length_tolerance)
             .map_err(|cause| Failure::Arc(recipe.id, cause))?;
         Ok(Self {
             id: recipe.id,
             points: recipe.points(),
-            branch,
+            sweep,
         })
     }
 
@@ -107,13 +137,32 @@ impl ArcLayout {
     }
 
     pub(super) fn require_branch(self, expected: ArcBranch) -> Result<(), Failure> {
-        if self.branch != expected {
+        if expected.admits(self.sweep) {
+            return Ok(());
+        }
+        let actual = self.strict_branch()?;
+        Err(Failure::Arc(
+            self.id,
+            ArcConstraintFailure::BranchChanged { expected, actual },
+        ))
+    }
+
+    pub(super) fn strict_branch(self) -> Result<ArcBranch, Failure> {
+        ArcBranch::strict(self.sweep).ok_or(Failure::Arc(self.id, ArcConstraintFailure::Semicircle))
+    }
+
+    pub(super) fn radius_branch(self) -> ArcBranch {
+        ArcBranch::strict(self.sweep).unwrap_or(ArcBranch::CrossHalfTurn)
+    }
+
+    fn require_transition(self, previous: Ordering) -> Result<(), Failure> {
+        if let Some(expected) = ArcBranch::strict(previous) {
+            return self.require_branch(expected);
+        }
+        if let Some(actual) = ArcBranch::strict(self.sweep) {
             return Err(Failure::Arc(
                 self.id,
-                ArcConstraintFailure::BranchChanged {
-                    expected,
-                    actual: self.branch,
-                },
+                ArcConstraintFailure::HalfTurnDeparture(actual),
             ));
         }
         Ok(())
@@ -133,6 +182,7 @@ pub(super) fn operand(
 pub(super) fn verify_adopted(
     before: &Snapshot,
     after: &Snapshot,
+    crossings: &BTreeSet<ArcId>,
     policy: ConstraintPolicy,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<(), Failure> {
@@ -143,9 +193,11 @@ pub(super) fn verify_adopted(
             continue;
         };
         if arc != previous {
-            // Published source arcs already had their exact branch checked against the carrier.
-            let expected = nominal_branch(previous).map_err(|cause| Failure::Arc(id, cause))?;
-            ArcLayout::capture(arc, policy)?.require_branch(expected)?;
+            let actual = ArcLayout::capture(arc, policy)?;
+            // Previously published poses already passed the exact triangle/native agreement.
+            if !crossings.contains(&id) {
+                actual.require_transition(nominal_sweep(previous))?;
+            }
         }
     }
     Ok(())
@@ -188,8 +240,7 @@ pub(super) fn branch_matches(arc: ArcGeometry, branch: ArcBranch) -> bool {
 
 fn on_branch(arc: ArcGeometry, branch: ArcBranch) -> Option<ArcTripleMetrics> {
     let metrics = metrics(arc).ok()?;
-    (metrics.branch() == branch_order(branch) && nominal_branch(arc) == Ok(branch))
-        .then_some(metrics)
+    (branch.admits(metrics.branch()) && nominal_sweep(arc) == metrics.branch()).then_some(metrics)
 }
 
 fn nominal_radii_agree(first: f64, second: f64, tolerance: f64) -> bool {
@@ -200,36 +251,37 @@ fn nominal_radii_agree(first: f64, second: f64, tolerance: f64) -> bool {
     )
 }
 
-fn branch_order(branch: ArcBranch) -> Ordering {
-    match branch {
-        ArcBranch::Minor => Ordering::Less,
-        ArcBranch::Major => Ordering::Greater,
-    }
-}
-
-fn checked_branch(
+fn checked_sweep(
     arc: ArcGeometry,
     tolerance: MinimumLength,
-) -> Result<ArcBranch, ArcConstraintFailure> {
+) -> Result<Ordering, ArcConstraintFailure> {
     if !matches!(arc.recipe().definition, ArcDefinition::Through { .. }) {
         return Err(ArcConstraintFailure::CenterDefinition);
     }
     let metrics = metrics(arc)?;
-    let branch = ArcBranch::from_order(metrics.branch())?;
     let offset = metrics
         .midpoint_offset(tolerance.value())
         .map_err(ArcConstraintFailure::Metric)?;
     if offset.is_gt() {
         return Err(ArcConstraintFailure::WitnessOffset(tolerance));
     }
-    if nominal_branch(arc) != Ok(branch) {
-        return Err(ArcConstraintFailure::CarrierBranch(branch, arc.range()[1]));
-    }
-    Ok(branch)
+    verify_carrier(arc, metrics.branch())?;
+    Ok(metrics.branch())
 }
 
-fn nominal_branch(arc: ArcGeometry) -> Result<ArcBranch, ArcConstraintFailure> {
-    ArcBranch::from_order(arc.range()[1].total_cmp(&PI))
+fn verify_carrier(arc: ArcGeometry, sweep: Ordering) -> Result<(), ArcConstraintFailure> {
+    if nominal_sweep(arc) == sweep {
+        return Ok(());
+    }
+    let stored = arc.range()[1];
+    match ArcBranch::strict(sweep) {
+        Some(branch) => Err(ArcConstraintFailure::CarrierBranch(branch, stored)),
+        None => Err(ArcConstraintFailure::HalfTurnCarrier(stored)),
+    }
+}
+
+fn nominal_sweep(arc: ArcGeometry) -> Ordering {
+    arc.range()[1].total_cmp(&PI)
 }
 
 fn metrics(arc: ArcGeometry) -> Result<ArcTripleMetrics, ArcConstraintFailure> {

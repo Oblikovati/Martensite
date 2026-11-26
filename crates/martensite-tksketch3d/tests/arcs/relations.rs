@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 mod pairing;
+mod semicircle;
 
 use super::*;
 use crate::constraints::{length, policy, rid};
@@ -101,7 +102,6 @@ fn unsupported_witnesses_keep_their_standalone_geometry_and_typed_layout_refusal
             create([START, END, [7., 1., 2.]], through(), 1e-9).unwrap(),
             ArcConstraintFailure::WitnessOffset(policy().length_tolerance),
         ),
-        (layout(4.), ArcConstraintFailure::Semicircle),
         (
             create(
                 [START, END, [7., 0., 0.]],

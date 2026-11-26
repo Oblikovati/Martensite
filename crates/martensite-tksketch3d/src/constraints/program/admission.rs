@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Limit the prepared solver to the admitted authored geometry and coordinates.
-use super::{BTreeMap, ConstraintPolicy, EntityId, Failure, Relation, RelationId, Snapshot};
-use crate::constraints::PolicyQuantity;
+use super::{
+    BTreeMap, BTreeSet, ConstraintPolicy, EntityId, Failure, Relation, RelationId, Snapshot,
+};
+use crate::{
+    ArcId, PointId,
+    constraints::{ArcConstraintFailure, PolicyQuantity},
+};
 
 pub(super) fn admit(
     geometry: &Snapshot,
@@ -45,6 +50,27 @@ fn bound(quantity: PolicyQuantity, requested: usize, maximum: usize) -> Result<(
             requested,
             maximum,
         });
+    }
+    Ok(())
+}
+
+pub(super) fn check_crossing_attachment(
+    geometry: &Snapshot,
+    crossings: &BTreeSet<ArcId>,
+    relation: RelationId,
+    point: PointId,
+) -> Result<(), Failure> {
+    // Surface rows are appended after the ordinary crossing scope has been checked.
+    let crossing = crossings.iter().copied().find(|arc| {
+        geometry
+            .arc(*arc)
+            .is_some_and(|geometry| geometry.recipe().points().contains(&point))
+    });
+    if let Some(arc) = crossing {
+        return Err(Failure::Arc(
+            arc,
+            ArcConstraintFailure::CrossingCoupledRelation(relation),
+        ));
     }
     Ok(())
 }

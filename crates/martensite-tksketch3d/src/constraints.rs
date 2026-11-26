@@ -119,7 +119,7 @@ pub enum RelationSpec {
     Parallel([LineId; 2], ParallelDirection),
     /// Drive the length of one line in model-space units.
     Length(LineId, MinimumLength),
-    /// Drive the radius of a midpoint-witness arc and retain its sweep branch.
+    /// Drive the radius of a midpoint-witness arc, preserving the authored sweep policy.
     Radius(ArcId, MinimumLength),
     /// Constrain two distinct midpoint-witness arcs to the same physical radius.
     EqualRadius([ArcId; 2]),
@@ -159,7 +159,7 @@ pub enum Relation {
     Parallel([LineId; 2], ParallelDirection),
     /// A line identity and its target model-space length.
     Length(LineId, MinimumLength),
-    /// An arc identity, target radius in model units and captured sweep branch.
+    /// An arc identity, target radius in model units and captured sweep policy.
     Radius(ArcId, MinimumLength, ArcBranch),
     /// Ordered arc IDs and their corresponding captured sweep branches.
     EqualRadius([ArcId; 2], [ArcBranch; 2]),
@@ -246,8 +246,8 @@ pub struct ConstrainedSketch {
 impl ConstrainedSketch {
     /// Prepare existing admitted geometry with an empty relation set.
     ///
-    /// Through arcs require a strict minor or major branch and a witness within the
-    /// length tolerance of the chord midpoint's normal plane.
+    /// Through arcs require agreement between their exact authored sweep class and stored trim.
+    /// The witness must be within the length tolerance of the chord midpoint's normal plane.
     /// Example: `ConstrainedSketch::new(snapshot, policy)?`.
     pub fn new(geometry: Snapshot, policy: ConstraintPolicy) -> Result<Self, ConstraintFailure> {
         let relations = BTreeMap::new();

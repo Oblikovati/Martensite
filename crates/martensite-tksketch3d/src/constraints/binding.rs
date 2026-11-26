@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Bind authored relations to solver columns and exact fixed coordinates.
 mod arc;
+mod arc_crossing;
 use super::{
-    ConstraintFailure as Failure, ConstraintPolicy, ContinuityFailure, ContinuityJoin, LineAngle,
-    Relation, RelationId, RelationSpec,
+    ArcBranch, ConstraintFailure as Failure, ConstraintPolicy, ContinuityFailure, ContinuityJoin,
+    LineAngle, Relation, RelationId, RelationSpec,
     arc_layout::ArcLayout,
     continuity,
     incidence::{SharedEnds, shared_ends},
@@ -12,7 +13,10 @@ use super::{
 };
 use crate::{ArcId, EntityId, LineGeometry, LineId, PointId, Snapshot};
 use martensite_tkmath::gp::Point3;
-use std::{collections::BTreeMap, sync::Arc};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    sync::Arc,
+};
 
 #[derive(Clone, Copy)]
 pub(super) enum BlockOwner {
@@ -38,6 +42,7 @@ impl EquationBlock {
 
 pub(super) struct Binding {
     pub(super) fixed: Vec<(usize, f64)>,
+    pub(super) crossings: BTreeSet<ArcId>,
     pub(super) blocks: Vec<EquationBlock>,
     pub(super) authored_rows: usize,
     pub(super) frozen_coordinates: usize,
@@ -58,8 +63,16 @@ pub(super) fn bind(
             Ok((id, ArcLayout::capture(arc, policy)?))
         })
         .collect::<Result<BTreeMap<_, _>, Failure>>()?;
+    let crossings = relations
+        .values()
+        .filter_map(|relation| match relation {
+            Relation::Radius(arc, _, ArcBranch::CrossHalfTurn) => Some(*arc),
+            _ => None,
+        })
+        .collect::<BTreeSet<_>>();
     let mut builder = Layout {
         arcs,
+        crossings: &crossings,
         geometry,
         point_columns,
         fixed: BTreeMap::new(),
@@ -81,11 +94,13 @@ pub(super) fn bind(
     for (&id, &relation) in relations {
         builder.bind(id, relation)?;
     }
+    builder.check_crossings(cancelled)?;
     builder.arc_intrinsics()?;
     let (blocks, authored_rows) = (builder.blocks, builder.authored_rows);
     let fixed = builder.fixed.into_iter().collect::<Vec<_>>();
     Ok(Binding {
         fixed,
+        crossings,
         blocks,
         authored_rows,
         frozen_coordinates,
@@ -94,6 +109,7 @@ pub(super) fn bind(
 
 struct Layout<'a> {
     arcs: BTreeMap<ArcId, ArcLayout>,
+    crossings: &'a BTreeSet<ArcId>,
     geometry: &'a Snapshot,
     point_columns: &'a BTreeMap<PointId, usize>,
     fixed: BTreeMap<usize, f64>,

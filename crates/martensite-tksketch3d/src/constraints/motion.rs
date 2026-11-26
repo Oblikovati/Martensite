@@ -123,10 +123,12 @@ impl ConstrainedSketch {
             self.policy.length_tolerance,
             &mut cancelled,
         )?;
+        // Rigid edits keep every unselected point fixed, including a solver-free chord.
         let geometry = apply_checked(
             &self.geometry,
             &self.relations,
             &edits,
+            &BTreeSet::new(),
             self.policy,
             &mut cancelled,
         )?;

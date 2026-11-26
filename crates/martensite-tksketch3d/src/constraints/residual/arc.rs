@@ -78,4 +78,18 @@ mod tests {
             assert!(validate_branch(branch, 4., 4.).is_err());
         }
     }
+
+    #[test]
+    fn half_turn_radius_keeps_a_chord_derivative_after_the_witness_derivative_vanishes() {
+        let points = [-4., 0., 0., 4., 0., 0., 0., 4., 0.];
+        let trial = DualNumber::seed(&points).unwrap();
+        let chord = displacement(&trial, 0).unwrap();
+        let chart = Sagitta::new(&trial, 0, chord, ArcBranch::CrossHalfTurn).unwrap();
+        let radius = chart.radius().unwrap();
+        assert_eq!(radius.value(), 4.);
+        assert_eq!(radius.gradient()[0], -0.5);
+        assert_eq!(radius.gradient()[3], 0.5);
+        assert_eq!(radius.gradient()[7], 0.);
+        assert_eq!(chart.intrinsic().unwrap().gradient()[6], 1.);
+    }
 }

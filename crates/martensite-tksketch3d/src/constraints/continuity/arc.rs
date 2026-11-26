@@ -12,7 +12,7 @@ use martensite_tkmath::{
         compare_squared_length_3d,
     },
 };
-use std::cmp::Ordering;
+use std::{cmp::Ordering, f64::consts::PI};
 
 /// An incoming reference line and an outgoing midpoint-witness circular arc.
 ///
@@ -54,6 +54,9 @@ pub(super) fn bind(
             join.arc,
             ArcConstraintFailure::CenterDefinition,
         ));
+    }
+    if arc.range()[1] == PI {
+        return Err(Failure::Arc(join.arc, ArcConstraintFailure::Semicircle));
     }
     let points = slots(line.line.endpoints, arc.recipe().points(), join)
         .map_err(|cause| Failure::Continuity(id, cause))?;
