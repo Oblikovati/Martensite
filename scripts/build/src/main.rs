@@ -15,6 +15,7 @@ mod error;
 #[cfg(test)]
 mod fake_runner;
 mod git;
+mod global_state_guard;
 mod inventory_impact;
 mod lint;
 mod occt_parity;

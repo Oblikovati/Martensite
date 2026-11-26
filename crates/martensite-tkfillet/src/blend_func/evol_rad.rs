@@ -17,17 +17,9 @@ use martensite_tkgeombase::failure_capture::FailureCapture;
 use martensite_tkmath::geom_abs::Shape;
 use martensite_tkmath::gp::Circle3;
 use martensite_tkmath::math::Vector;
-use std::cell::RefCell;
-
-thread_local! {
-    /// The native `static thread_local` scratch of `ComputeValues`, shared by every
-    /// `EvolRad` of the thread (and distinct from the `ConstRad` one).
-    static SCRATCH: RefCell<SurfaceScratch> = RefCell::new(SurfaceScratch::default());
-}
 
 /// `BlendFuncEvolRad`: the fillet between two surfaces whose radius is the law `Law`
-/// of the guide parameter. As natively, the sign fields are 0 until `Set(Choix)`, and the
-/// third-order positioning keeps the normal derivatives of the previous computation.
+/// of the guide parameter. Scratch state is per-instance (#62).
 ///
 /// ```ignore
 /// let mut function = EvolRad::new(&surface1, &surface2, &guide, &law)?;
@@ -46,6 +38,7 @@ pub struct EvolRad {
     d2ray: f64,
     lengthmin: f64,
     lengthmax: f64,
+    scratch: SurfaceScratch,
     pub(super) capture: FailureCapture,
 }
 
@@ -73,6 +66,7 @@ impl EvolRad {
             d2ray: 0.0,
             lengthmin: f64::MAX,
             lengthmax: f64::MIN,
+            scratch: SurfaceScratch::default(),
             capture: FailureCapture::default(),
         })
     }
@@ -107,9 +101,9 @@ impl EvolRad {
         by_param: bool,
         param: f64,
     ) -> Result<bool, Failure> {
-        let mut scratch = SCRATCH.with(|cell| *cell.borrow());
+        let mut scratch = self.scratch;
         let result = self.compute_with(&mut scratch, x, order, (by_param, param));
-        SCRATCH.with(|cell| *cell.borrow_mut() = scratch);
+        self.scratch = scratch;
         result
     }
 

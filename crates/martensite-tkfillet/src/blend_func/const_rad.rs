@@ -11,21 +11,13 @@ use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dSurface};
 use martensite_tkgeombase::failure_capture::FailureCapture;
 use martensite_tkmath::gp::{self, Axis1, Circle3, Direction3, Point3, Vector3};
 use martensite_tkmath::math::Vector;
-use std::cell::RefCell;
-
-thread_local! {
-    /// The native `static thread_local` scratch of `ComputeValues`, shared by every
-    /// `ConstRad` of the thread.
-    static SCRATCH: RefCell<SurfaceScratch> = RefCell::new(SurfaceScratch::default());
-}
 
 /// `BlendFuncConstRad`: the fillet of constant radius between two surfaces. The
 /// variables are `(U1, V1, U2, V2)`; the four equations put the middle of the two contact
 /// points in the plane normal to the guide and make the two points the ends of a circular
 /// section of the radius, centred on both surface offsets.
 ///
-/// `ComputeValues` caches its last point and parameter; as natively, the guide values and
-/// the third surface derivatives are thread-wide scratch shared by every `ConstRad`.
+/// `ComputeValues` caches its last point, parameter, and per-instance scratch (#62).
 ///
 /// ```ignore
 /// let mut function = ConstRad::new(&surface1, &surface2, &guide)?;
@@ -37,6 +29,7 @@ pub struct ConstRad {
     tcurv: Handle<dyn Adaptor3dCurve>,
     ray1: f64,
     ray2: f64,
+    scratch: SurfaceScratch,
     pub(super) capture: FailureCapture,
 }
 
@@ -54,6 +47,7 @@ impl ConstRad {
             tcurv: c.clone(),
             ray1: 0.0,
             ray2: 0.0,
+            scratch: SurfaceScratch::default(),
             capture: FailureCapture::default(),
         })
     }
@@ -85,9 +79,9 @@ impl ConstRad {
         by_param: bool,
         param: f64,
     ) -> Result<bool, Failure> {
-        let mut scratch = SCRATCH.with(|cell| *cell.borrow());
+        let mut scratch = self.scratch;
         let result = self.compute_with(&mut scratch, x, order, (by_param, param));
-        SCRATCH.with(|cell| *cell.borrow_mut() = scratch);
+        self.scratch = scratch;
         result
     }
 
