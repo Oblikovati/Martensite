@@ -36,7 +36,7 @@ pub use face_iterator::FaceIterator;
 mod hider;
 pub use hider::Hider;
 mod hlr_to_shape;
-pub use hlr_to_shape::HLRToShape;
+pub use hlr_to_shape::{HLRToShape, OutlineClassificationBehavior};
 mod inter_c_surf;
 pub use inter_c_surf::{
     InterCSurf, InterCSurfTypes, TheCSFunctionOfInterCSurf, TheExactInterCSurf,

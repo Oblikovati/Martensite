@@ -14,7 +14,7 @@ use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkg3d::geom_adaptor::GeomAdaptorCurve;
 use martensite_tkgeombase::extrema::{
     Curve2dTool, CurveTool, ExtremaCurveTool, GCurveLocator, GFuncExtPC, GGExtPC, GGenExtPC,
-    GLocateExtPC, GenLocateExtPC, POnCurve,
+    GLocateExtPC, GenLocateExtPC, POnCurve, PointCurveClassification,
 };
 use martensite_tkmath::gp::{Point2, Point3};
 
@@ -98,14 +98,12 @@ fn extpc_body<S: Space>(output: &Output, r: &mut Reader) -> Result<(), Failure> 
     let (tolf, s1, s2) = (r.real(), r.real(), r.real());
     let n = r.integer();
     let mut reused = GGExtPC::<S::Tool>::new();
+    reused.set_classification_policy(PointCurveClassification::LegacyV1);
     attempt(output, || reused.initialize(&*a, s1, s2, tolf));
     for _ in 0..n {
         let p = S::point(r);
         attempt(output, || {
-            Ok(extpc_result::<S>(
-                output,
-                &GGExtPC::<S::Tool>::with_curve(p, &*a, tolf)?,
-            ))
+            Ok(extpc_result::<S>(output, &legacy_extpc::<S>(p, &*a, tolf)?))
         });
         attempt(output, || {
             reused.perform(p)?;
@@ -174,6 +172,7 @@ fn locpc_body<S: Space>(output: &Output, r: &mut Reader, owned: bool) -> Result<
     let (tolf, s1, s2) = (r.real(), r.real(), r.real());
     let n = r.integer();
     let mut reused = GLocateExtPC::<S::Tool>::new();
+    reused.set_classification_policy(PointCurveClassification::LegacyV1);
     if owned {
         attempt(output, || {
             reused.initialize_owned(a.clone(), (s1, s2), tolf)
@@ -187,7 +186,7 @@ fn locpc_body<S: Space>(output: &Output, r: &mut Reader, owned: bool) -> Result<
         attempt(output, || {
             Ok(loc_result::<S>(
                 output,
-                &GLocateExtPC::<S::Tool>::with_curve(p, &*a, u0, tolf)?,
+                &legacy_locpc::<S>(p, &*a, u0, tolf)?,
             ))
         });
         attempt(output, || {
@@ -412,4 +411,37 @@ pub fn locpc2d_owned_case(output: &Output, values: &[f64]) {
     let mut reader = Reader::new(values);
     attempt(output, || locpc_body::<Space2>(output, &mut reader, true));
     end(output);
+}
+
+// #406: these locked transcripts replay V1; corrected defaults have independent corpus tests.
+fn legacy_extpc<'a, S: Space>(
+    point: P<S>,
+    curve: &'a <S::Tool as ExtremaCurveTool>::Curve,
+    tolerance: f64,
+) -> Result<GGExtPC<'a, S::Tool>, Failure> {
+    let mut result = GGExtPC::new();
+    result.set_classification_policy(PointCurveClassification::LegacyV1);
+    let range = (
+        S::Tool::first_parameter(curve)?,
+        S::Tool::last_parameter(curve)?,
+    );
+    result.initialize(curve, range.0, range.1, tolerance)?;
+    result.perform(point)?;
+    Ok(result)
+}
+fn legacy_locpc<'a, S: Space>(
+    point: P<S>,
+    curve: &'a <S::Tool as ExtremaCurveTool>::Curve,
+    start: f64,
+    tolerance: f64,
+) -> Result<GLocateExtPC<'a, S::Tool>, Failure> {
+    let mut result = GLocateExtPC::new();
+    result.set_classification_policy(PointCurveClassification::LegacyV1);
+    let range = (
+        S::Tool::first_parameter(curve)?,
+        S::Tool::last_parameter(curve)?,
+    );
+    result.initialize(curve, range, tolerance)?;
+    result.perform(point, start)?;
+    Ok(result)
 }

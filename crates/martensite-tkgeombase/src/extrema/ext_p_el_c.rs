@@ -1,5 +1,6 @@
 //! `ExtPElC`: the extrema of the distance between a 3D point and a segment
 //! of an elementary curve, in closed form.
+use super::conic_classification::PointCurveClassification;
 use super::curve_tools::CurveTool;
 use super::elementary_point_curve::{ElementaryPointCurve, PointCurveExtrema};
 use super::pon::POnCurv;
@@ -45,6 +46,12 @@ fn plane_projection(point: Point3, origin: Point3, axis: Vector3) -> Point3 {
 }
 
 impl ExtPElC {
+    /// Select replay behavior before the next perform; `extrema.set_classification_policy(PointCurveClassification::LegacyV1)`.
+    pub fn set_classification_policy(&mut self, policy: PointCurveClassification) {
+        self.result.classification = policy;
+        self.result.done = false;
+    }
+
     /// `ExtPElC()`: not done; `ExtPElC::new().is_done() == false`.
     pub fn new() -> Self {
         Self::default()
@@ -116,10 +123,13 @@ impl ExtPElC {
             if ((uinf - us) < tol_u) && ((us - usup) < tol_u) {
                 let cu: Point3 = elclib::value(us, circle);
                 let sq_dist: f64 = cu.square_distance(&point);
-                self.result.push(sq_dist, index == 0, POnCurv::new(us, cu));
+                let retained_flag = self.result.classification.legacy_seed(|| index == 0);
+                self.result
+                    .push(sq_dist, retained_flag, POnCurv::new(us, cu));
             }
         }
         self.result.done = true;
+        self.result.classify_roots(point, |u| elclib::d2(u, circle));
         Ok(())
     }
 }
@@ -211,11 +221,16 @@ impl ExtPElC {
             let us: f64 = roots.value(index)?;
             let cu: Point3 = elclib::value(us, ellipse);
             let sq_dist: f64 = cu.square_distance(&point);
-            let next: Point3 = elclib::value(us + 0.1, ellipse);
-            let is_min: bool = sq_dist < next.square_distance(&point);
+            // #406: the displaced-point rule is selected only for explicit V1 replay.
+            let is_min = self
+                .result
+                .classification
+                .legacy_seed(|| sq_dist < elclib::value(us + 0.1, ellipse).square_distance(&point));
             self.result.push(sq_dist, is_min, POnCurv::new(us, cu));
         }
         self.result.done = true;
+        self.result
+            .classify_roots(point, |u| elclib::d2(u, ellipse));
         Ok(())
     }
 }
@@ -272,6 +287,8 @@ impl ExtPElC {
             .collect();
         self.push_distinct(point, hyperbola, &parameters, (uinf, usup), tol * tol);
         self.result.done = true;
+        self.result
+            .classify_roots(point, |u| elclib::d2(u, hyperbola));
         Ok(())
     }
     // The 3D minimum test compares with the point at `u + 1`.
@@ -286,7 +303,10 @@ impl ExtPElC {
         C: elclib::ElementaryCurve<Point = Point3>,
     {
         let value = |u: f64| elclib::value(u, curve);
-        let is_min = |u: f64, sq_dist: f64| sq_dist < point.square_distance(&value(u + 1.));
+        let policy = self.result.classification;
+        let is_min = |u: f64, sq_dist: f64| {
+            policy.legacy_seed(|| sq_dist < point.square_distance(&value(u + 1.)))
+        };
         self.result
             .push_distinct(point, parameters, bounds, sq_tol, value, is_min);
     }
@@ -341,6 +361,8 @@ impl ExtPElC {
         let sq_tol: f64 = precision::square_confusion();
         self.push_distinct(point, parabola, &parameters, (uinf, usup), sq_tol);
         self.result.done = true;
+        self.result
+            .classify_roots(point, |u| elclib::d2(u, parabola));
         Ok(())
     }
 }
@@ -396,6 +418,9 @@ impl ElementaryPointCurve<CurveTool> for ExtPElC {
         usup: f64,
     ) -> Result<(), Failure> {
         ExtPElC::perform_parabola(self, point, parabola, tol, uinf, usup)
+    }
+    fn set_classification_policy(&mut self, policy: PointCurveClassification) {
+        ExtPElC::set_classification_policy(self, policy);
     }
     fn point_extrema(&self) -> &PointCurveExtrema<Point3> {
         &self.result

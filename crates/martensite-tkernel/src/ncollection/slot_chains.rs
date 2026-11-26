@@ -63,14 +63,17 @@ impl SlotChains {
         self.heads.as_deref().unwrap_or(&[])
     }
     /// The first slot of `bucket`; callers pass `hash % NbBuckets + 1` of an allocated table.
+    #[inline]
     pub(super) fn head(&self, bucket: usize) -> SlotLink {
         self.table()[bucket]
     }
     /// The chain successor of a linked slot.
+    #[inline]
     pub(super) fn next(&self, slot: usize) -> SlotLink {
         self.links[slot].next
     }
     /// The first slot of `bucket`'s chain, head first, that `accept` matches.
+    #[inline]
     pub(super) fn find(&self, bucket: usize, mut accept: impl FnMut(usize) -> bool) -> SlotLink {
         let mut link = self.head(bucket);
         while let Some(slot) = link {
@@ -82,10 +85,11 @@ impl SlotChains {
         None
     }
     /// Links a new slot (the next free index) at the head of `bucket`; returns that slot.
+    #[inline]
     pub(super) fn push_front(&mut self, bucket: usize) -> usize {
         let slot = self.links.len();
-        self.links.push(ChainLink { next: None, bucket });
-        self.relink_front(slot, bucket);
+        let next = self.head_mut(bucket).replace(slot);
+        self.links.push(ChainLink { next, bucket });
         slot
     }
     /// Prepends a detached slot to `bucket`.

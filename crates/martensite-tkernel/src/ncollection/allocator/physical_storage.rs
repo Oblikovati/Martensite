@@ -47,21 +47,30 @@ impl BaseAllocator {
     }
     pub(in crate::ncollection) fn detached_policy(&self) -> Self {
         Self {
-            fields: Box::new(super::AllocatorFacadeFields {
+            fields: Arc::new(super::AllocatorFacadeFields {
                 inner: self.fields.inner.clone(),
-                registration: Arc::new(Default::default()),
+                registration: Arc::default(),
                 virtual_allocations: self.fields.virtual_allocations.clone(),
                 reference: super::reference::AllocatorReference::Policy,
+                lease: std::sync::OnceLock::new(),
             }),
         }
     }
     pub(super) fn storage_source_retired(&self) -> bool {
-        let registered = !self.fields.registration.read().is_null();
+        let registered = self.fields.registration.is_registered();
         matches!(
             self.fields.reference,
             super::reference::AllocatorReference::Storage(_)
         ) && registered
             && self.source_observer().is_none()
+    }
+    /// Whether this is a lease of an accumulating arena: its fallback Free releases an owned
+    /// block count, which differs from the policy Free, so it keeps the dispatch path (#584).
+    pub(super) fn leases_accumulating_storage(&self) -> bool {
+        matches!(
+            self.fields.reference,
+            super::reference::AllocatorReference::Storage(_)
+        ) && matches!(&*self.fields.inner, super::AllocatorKind::Accumulating(_))
     }
     unsafe fn free_backing_nullable(&self, pointer: *mut u8) -> Result<(), Failure> {
         if let super::AllocatorKind::Accumulating(engine) = &*self.fields.inner {

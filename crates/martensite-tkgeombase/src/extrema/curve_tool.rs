@@ -7,11 +7,53 @@ use crate::gcpnts::{PoleCurve, TCurveTypes, TangentialCriteria, TangentialDeflec
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
-use martensite_tkg2d::geom2d::Geom2dBSplineCurve;
 use martensite_tkg2d::geom2d::native::std_max;
-use martensite_tkg3d::geom::GeomBSplineCurve;
+use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dBezierCurve, Geom2dCurve};
+use martensite_tkg3d::geom::{GeomBSplineCurve, GeomBezierCurve, GeomCurve};
 use martensite_tkmath::geom_abs::{CurveType, Shape};
 use std::f64::consts::PI;
+
+/// Homogeneous control-point access (`[x, y, z, w]`) for Bézier curves in GGExtPC (#462).
+pub trait BezierPoles: PoleCurve {
+    /// Returns `[x, y, z, w]` for each pole (`z = 0` in 2D, `w = 1` when non-rational).
+    fn homogeneous_poles(&self) -> Vec<[f64; 4]>;
+    /// Whether the curve has non-unit weights.
+    fn is_bezier_rational(&self) -> bool;
+}
+
+impl BezierPoles for GeomBezierCurve {
+    fn homogeneous_poles(&self) -> Vec<[f64; 4]> {
+        let poles = self.poles();
+        let weights = self.weights();
+        (poles.lower()..=poles.upper())
+            .map(|i| {
+                let p = poles[i];
+                let w = weights.as_ref().map_or(1.0, |ws| ws[i]);
+                [p.x(), p.y(), p.z(), w]
+            })
+            .collect()
+    }
+    fn is_bezier_rational(&self) -> bool {
+        self.is_rational()
+    }
+}
+
+impl BezierPoles for Geom2dBezierCurve {
+    fn homogeneous_poles(&self) -> Vec<[f64; 4]> {
+        let poles = self.poles();
+        let weights = self.weights();
+        (poles.lower()..=poles.upper())
+            .map(|i| {
+                let p = poles[i];
+                let w = weights.as_ref().map_or(1.0, |ws| ws[i]);
+                [p.x(), p.y(), 0.0, w]
+            })
+            .collect()
+    }
+    fn is_bezier_rational(&self) -> bool {
+        self.is_rational()
+    }
+}
 
 /// The knot access of `BSplineCurve` and `BSplineCurve` that
 /// GGExtPC reads.
@@ -22,24 +64,81 @@ pub trait SplineKnots: PoleCurve {
     fn last_knot_index(&self) -> Result<i32, Failure>;
     /// `Knots()`, the 1-based knot values; `spline.knot_values()`.
     fn knot_values(&self) -> Array1<'static, f64>;
+    /// Homogeneous poles `[x, y, z, w]` (`z = 0` in 2D, `w = 1` when non-rational) (#462).
+    fn homogeneous_poles(&self) -> Vec<[f64; 4]>;
+    /// Expanded flat knot sequence with multiplicities (#462).
+    fn flat_knots(&self) -> Vec<f64>;
+    /// Whether the spline has non-unit weights.
+    fn is_spline_rational(&self) -> bool;
+    /// Whether the spline is periodic.
+    fn is_spline_periodic(&self) -> bool;
 }
 
-macro_rules! spline_knots {
-    ($($spline:ty),*) => {$(
-        impl SplineKnots for $spline {
-            fn first_knot_index(&self) -> Result<i32, Failure> {
-                self.first_u_knot_index()
-            }
-            fn last_knot_index(&self) -> Result<i32, Failure> {
-                self.last_u_knot_index()
-            }
-            fn knot_values(&self) -> Array1<'static, f64> {
-                self.knots()
-            }
-        }
-    )*};
+impl SplineKnots for GeomBSplineCurve {
+    fn first_knot_index(&self) -> Result<i32, Failure> {
+        self.first_u_knot_index()
+    }
+    fn last_knot_index(&self) -> Result<i32, Failure> {
+        self.last_u_knot_index()
+    }
+    fn knot_values(&self) -> Array1<'static, f64> {
+        self.knots()
+    }
+    fn homogeneous_poles(&self) -> Vec<[f64; 4]> {
+        let poles = self.poles();
+        let weights = self.weights();
+        (poles.lower()..=poles.upper())
+            .map(|i| {
+                let p = poles[i];
+                let w = weights.as_ref().map_or(1.0, |ws| ws[i]);
+                [p.x(), p.y(), p.z(), w]
+            })
+            .collect()
+    }
+    fn flat_knots(&self) -> Vec<f64> {
+        let seq = self.knot_sequence();
+        (seq.lower()..=seq.upper()).map(|i| seq[i]).collect()
+    }
+    fn is_spline_rational(&self) -> bool {
+        self.is_rational()
+    }
+    fn is_spline_periodic(&self) -> bool {
+        self.is_periodic()
+    }
 }
-spline_knots!(GeomBSplineCurve, Geom2dBSplineCurve);
+
+impl SplineKnots for Geom2dBSplineCurve {
+    fn first_knot_index(&self) -> Result<i32, Failure> {
+        self.first_u_knot_index()
+    }
+    fn last_knot_index(&self) -> Result<i32, Failure> {
+        self.last_u_knot_index()
+    }
+    fn knot_values(&self) -> Array1<'static, f64> {
+        self.knots()
+    }
+    fn homogeneous_poles(&self) -> Vec<[f64; 4]> {
+        let poles = self.poles();
+        let weights = self.weights();
+        (poles.lower()..=poles.upper())
+            .map(|i| {
+                let p = poles[i];
+                let w = weights.as_ref().map_or(1.0, |ws| ws[i]);
+                [p.x(), p.y(), 0.0, w]
+            })
+            .collect()
+    }
+    fn flat_knots(&self) -> Vec<f64> {
+        let seq = self.knot_sequence();
+        (seq.lower()..=seq.upper()).map(|i| seq[i]).collect()
+    }
+    fn is_spline_rational(&self) -> bool {
+        self.is_rational()
+    }
+    fn is_spline_periodic(&self) -> bool {
+        self.is_periodic()
+    }
+}
 
 /// A point with its first derivative.
 pub type ToolD1<T> = (
@@ -155,7 +254,7 @@ pub trait ExtremaCurveTool: 'static {
     /// `Parab` or `Parab2d`.
     type Parabola: Copy;
     /// `BezierCurve` or `BezierCurve`.
-    type Bezier: PoleCurve + RuntimeTyped;
+    type Bezier: BezierPoles + RuntimeTyped;
     /// `BSplineCurve` or `BSplineCurve`.
     type BSpline: SplineKnots + RuntimeTyped;
     /// `ExtPElC` or `ExtPElC2d`.

@@ -41,7 +41,7 @@ fn check_zero_angle(
         (first.x(), first.y(), first.z()),
         (slope, sign * radius, rise),
     );
-    // The final Y component deliberately pins the legacy tapered-D2 sign defect.
+    // The final Y component deliberately pins the legacy tapered-D2 sign defect for OCCT replay.
     check_components(
         (second.x(), second.y(), second.z()),
         (-radius, -sign * 2. * slope, 0.),

@@ -40,6 +40,18 @@ static_assertions = "=1.1.0"
 name = "toolkit"
 path = "tests/toolkit.rs"
 
+[[test]]
+name = "thread_safety_contract"
+path = "tests/thread_safety_contract.rs"
+
+[[test]]
+name = "two_process_determinism"
+path = "tests/two_process_determinism.rs"
+
+[[test]]
+name = "deep_isolation"
+path = "tests/deep_isolation.rs"
+
 # The boolean case scripts: one child process, one memory raster and one graded stream per case.
 [[test]]
 name = "perf_modalg_bug26542"
@@ -191,3 +203,7 @@ path = "tests/modeling_fixture_box_cut.rs"
 [[test]]
 name = "surface_projection"
 path = "tests/surface_projection.rs"
+
+[[test]]
+name = "seeded_boolean_corpus"
+path = "tests/seeded_boolean_corpus.rs"

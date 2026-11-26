@@ -43,7 +43,9 @@ mod solid_validation;
 mod spline;
 mod sweep_history;
 mod sweep_images;
+mod tapered_extrude;
 mod topology;
+mod uncertainty;
 mod validation;
 mod work;
 
@@ -72,6 +74,8 @@ pub use operation_result::*;
 pub use profile::*;
 pub use regions::*;
 pub use resolution::*;
+pub use tapered_extrude::{TaperedExtrudeOptions, TaperedExtrudeResult, extrude_tapered};
+pub use uncertainty::{ComposedTolerance, InputUncertainty, UncertaintySource};
 pub use validation::{Finding, RegionValidation, SelfIntersectionEvidence, StageStatus};
 pub use work::{
     PlanarPairRootFailure, PlanarProofVersion, PlanarProofWorkLimit, PlanarRegionWorkFailure,

@@ -21,3 +21,4 @@ pub mod geom2d_adaptor;
 pub mod geom2d_eval;
 pub mod geom2d_grid_eval;
 pub mod geom2d_hash;
+pub mod published;

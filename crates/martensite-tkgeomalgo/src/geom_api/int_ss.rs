@@ -62,6 +62,49 @@ impl IntSS {
         self.my_intersec.is_done()
     }
 
+    /// Returns a structured completeness and per-curve fitting-error receipt (#38).
+    ///
+    /// When `nb_lines()` exceeds `max_curves_budget` or `!is_done()`, returns
+    /// [`crate::completeness::IntersectionCompleteness::Inconclusive`].
+    pub fn completeness_receipt(
+        &self,
+        max_curves_budget: usize,
+    ) -> crate::completeness::SsiCompletenessReceipt {
+        use crate::completeness::{
+            IntersectionCompleteness, SsiCompletenessReceipt, SsiCurveReceipt,
+        };
+        if !self.is_done() {
+            return SsiCompletenessReceipt {
+                completeness: IntersectionCompleteness::Inconclusive {
+                    reason: "IntSS did not complete".to_owned(),
+                    budget_exhausted: false,
+                },
+                curves: Vec::new(),
+            };
+        }
+        let count = self.nb_lines().max(0) as usize;
+        let tol = self.my_intersec.tol_reached3d();
+        let curves: Vec<SsiCurveReceipt> = (1..=count.min(max_curves_budget))
+            .map(|curve_index| SsiCurveReceipt {
+                curve_index,
+                fitting_error: tol,
+                near_tangent_uncertainty: None,
+            })
+            .collect();
+        let completeness = if count > max_curves_budget {
+            IntersectionCompleteness::Inconclusive {
+                reason: format!("SSI curve count {count} exceeded budget {max_curves_budget}"),
+                budget_exhausted: true,
+            }
+        } else {
+            IntersectionCompleteness::Complete
+        };
+        SsiCompletenessReceipt {
+            completeness,
+            curves,
+        }
+    }
+
     /// `NbLines()`: the number of intersection curves (not checked for a failed
     /// computation, as natively); `inter.nb_lines()`.
     pub fn nb_lines(&self) -> i32 {

@@ -1,5 +1,7 @@
 //! Independent closed-form checks of BRepOffsetAPIMakeThickSolid.
+use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::topexp::Explorer;
+use martensite_tkbrep::topods;
 use martensite_tkernel::message::ProgressRange;
 use martensite_tkernel::ncollection::List;
 use martensite_tkernel::precision;
@@ -42,6 +44,45 @@ fn hollow_box_wall_volume_is_the_closed_form() -> Result<(), Failure> {
     assert!(
         (wall - 1844.0).abs() < 1.0e-6 * 1844.0,
         "wall volume {wall}"
+    );
+    Ok(())
+}
+
+#[test]
+fn hollow_box_must_not_widen_entity_tolerances() -> Result<(), Failure> {
+    let source = BRepPrimAPIMakeBox::from_sizes(20., 20., 20.)?
+        .shape()?
+        .clone();
+    let opening = Explorer::new(&source, ShapeEnum::Face, ShapeEnum::Shape)?
+        .current()
+        .clone();
+    let mut removed = List::default();
+    removed.append(opening);
+    let mut maker = BRepOffsetAPIMakeThickSolid::new();
+    maker.make_thick_solid_by_join(
+        &source,
+        &removed,
+        -1.,
+        1e-7,
+        MakeOffsetOptions::default(),
+        &ProgressRange::default(),
+    )?;
+    let body = maker.shape()?.clone();
+    let max_vertex = |shape: &topods::Shape| -> Result<f64, Failure> {
+        let mut explorer = Explorer::new(shape, ShapeEnum::Vertex, ShapeEnum::Shape)?;
+        let mut maximum: f64 = 0.;
+        while explorer.more() {
+            let v = topods::vertex(explorer.current())?;
+            maximum = maximum.max(BRepTool::vertex_tolerance(&v)?);
+            explorer.next()?;
+        }
+        Ok(maximum)
+    };
+    let before = max_vertex(&source)?;
+    let after = max_vertex(&body)?;
+    assert!(
+        after <= before,
+        "shell vertex tolerance widened from {before:.17e} to {after:.17e}"
     );
     Ok(())
 }

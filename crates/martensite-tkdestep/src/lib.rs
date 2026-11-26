@@ -1,6 +1,7 @@
 //! STEP exchange: the data structures, the file parser and the configuration values.
 pub mod api_header_section;
 pub mod de_step;
+pub mod exchange_contract;
 pub mod geom_to_step;
 pub mod header_section;
 #[cfg(test)]

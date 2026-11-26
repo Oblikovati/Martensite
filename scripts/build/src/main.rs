@@ -15,6 +15,7 @@ mod error;
 #[cfg(test)]
 mod fake_runner;
 mod git;
+mod global_state_guard;
 mod inventory_impact;
 mod lint;
 mod occt_parity;
@@ -44,6 +45,7 @@ mod report;
 mod source_sdk;
 mod suite_weights;
 mod targets;
+mod thread_safety_manifest;
 mod thread_sanitizer;
 mod thread_sanitizer_selection;
 #[cfg(test)]

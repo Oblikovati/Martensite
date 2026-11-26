@@ -34,7 +34,7 @@ impl TheProjPCurOfGInter {
         )?;
         let defaultparam: f64 = pon_c.parameter();
         let loc = TheLocateExtPCOfTheProjPCurOfGInter::with_curve(p, c, defaultparam, the_eps_x)?;
-        if !loc.is_done() || !loc.is_min()? {
+        if !loc.is_done() || !loc.is_min().unwrap_or(false) {
             return Ok(defaultparam);
         }
         Ok(loc.point()?.parameter())

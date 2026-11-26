@@ -93,9 +93,17 @@ fn nearest_extremum(
     let mut best = f64::MAX;
     let mut candidate = None;
     for i in 1..=global.nb_ext()? {
-        if global.is_min(i)? && global.square_distance(i)? < best {
+        if global.is_min(i).unwrap_or(false) && global.square_distance(i)? < best {
             best = global.square_distance(i)?;
             candidate = Some(global.point(i)?);
+        }
+    }
+    if candidate.is_none() {
+        for i in 1..=global.nb_ext()? {
+            if global.square_distance(i)? < best {
+                best = global.square_distance(i)?;
+                candidate = Some(global.point(i)?);
+            }
         }
     }
     Ok(candidate)

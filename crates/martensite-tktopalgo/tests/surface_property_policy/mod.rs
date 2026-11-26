@@ -16,20 +16,22 @@ fn established_geometry_and_mesh_measurements_keep_closed_form_controls() {
 }
 
 #[test]
-fn established_ellipse_modes_remain_distinct_from_the_independent_enclosure() {
+fn adaptive_ellipse_area_meets_the_independent_enclosure_target() {
     let shape = fixtures::elliptic_prism_faces();
     let mut fixed = GProps::new();
     BRepGProp::surface_properties_eps(&shape, &mut fixed, 1.0, false).unwrap();
-    let mut adaptive = GProps::new();
-    let error = BRepGProp::surface_properties_eps(&shape, &mut adaptive, 1e-5, false).unwrap();
-    println!(
-        "fixed={:.17} adaptive={:.17} estimate={:.17e}",
-        fixed.mass(),
-        adaptive.mass(),
-        error
-    );
+    let adaptive = BRepGProp::surface_properties_with_options(
+        &shape,
+        martensite_tktopalgo::brep_gprop::SurfacePropertyOptions {
+            integration: martensite_tktopalgo::brep_gprop::SurfaceIntegration::AdaptiveEstimate {
+                requested_relative_target: 1e-5,
+            },
+            ..Default::default()
+        },
+    )
+    .unwrap();
     assert!((fixed.mass() - 41.6317152760022).abs() < 0.002);
-    assert!((adaptive.mass() - 41.6317152760022).abs() > 0.1);
+    assert!((adaptive.properties().mass() - 41.6317152760022).abs() <= 41.6317152760022 * 1e-5);
 }
 mod options;
 
@@ -51,19 +53,24 @@ mod replay;
 mod support;
 
 #[test]
-fn narrow_parameter_square_records_existing_fixed_and_adaptive_outputs() {
+fn nonzero_narrow_parameter_square_keeps_its_physical_area() {
     let face = fixtures::narrow_parameter_square();
-    let mut fixed = GProps::new();
-    BRepGProp::surface_properties_eps(&face, &mut fixed, 1.0, false).unwrap();
-    let mut adaptive = GProps::new();
-    let error = BRepGProp::surface_properties_eps(&face, &mut adaptive, 1e-5, false).unwrap();
-    println!(
-        "narrow fixed={:?} adaptive={:?} error={:?}",
-        support::property_bits(&fixed),
-        support::property_bits(&adaptive),
-        error.to_bits()
-    );
-    assert!((fixed.mass() - 1.0).abs() < 1e-12);
-    assert_eq!(adaptive.mass(), 0.0);
+    let fixed_result = BRepGProp::surface_properties_with_options(
+        &face,
+        fixed(martensite_tktopalgo::brep_gprop::SurfaceRepresentation::PreferGeometry),
+    )
+    .unwrap();
+    let adaptive = BRepGProp::surface_properties_with_options(
+        &face,
+        martensite_tktopalgo::brep_gprop::SurfacePropertyOptions {
+            integration: martensite_tktopalgo::brep_gprop::SurfaceIntegration::AdaptiveEstimate {
+                requested_relative_target: 1e-5,
+            },
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    assert!((fixed_result.properties().mass() - 1.0).abs() < 1e-12);
+    assert!((adaptive.properties().mass() - 1.0).abs() < 1e-12);
 }
 mod empty;

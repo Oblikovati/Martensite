@@ -111,3 +111,6 @@ pub use mesh_algo::{
     BRepMeshDelabellaBaseMeshAlgo, BRepMeshDelabellaMeshAlgoFactory, BRepMeshDelaunayBaseMeshAlgo,
     BRepMeshMeshAlgoFactory,
 };
+
+#[cfg(test)]
+mod parallel_meshing_contract;

@@ -116,3 +116,33 @@ fn check_box_policy(receipt: &super::SelfCheckCompletion, checker: &BOPAlgoCheck
         );
     }
 }
+
+#[test]
+fn checker_si_records_face_observations_on_fused_box_union() {
+    use crate::brep_algo_api::BRepAlgoAPIFuse;
+    use martensite_tkernel::message::ProgressRange;
+    use martensite_tkmath::gp::Point3;
+    use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeBox;
+    use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
+
+    let a = BRepPrimAPIMakeBox::from_points(Point3::new(0.0, 0.0, 0.0), Point3::new(2.0, 2.0, 2.0))
+        .expect("box a")
+        .shape()
+        .expect("shape a")
+        .clone();
+    let b = BRepPrimAPIMakeBox::from_points(Point3::new(1.0, 0.5, 0.5), Point3::new(3.0, 1.5, 1.5))
+        .expect("box b")
+        .shape()
+        .expect("shape b")
+        .clone();
+    let fuse = BRepAlgoAPIFuse::from_shapes(&a, &b).expect("fuse");
+    assert!(fuse.is_done());
+
+    let mut checker = BOPAlgoCheckerSI::new();
+    checker.add_argument(fuse.shape());
+    let obs = checker.perform_with_progress_observed(&ProgressRange::default());
+    assert!(
+        !obs.faces().is_empty(),
+        "CheckerSI must record observed faces on fused union (#421)"
+    );
+}

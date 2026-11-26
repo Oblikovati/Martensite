@@ -6,6 +6,7 @@ use super::print::Output;
 use martensite_tkernel::standard::Failure;
 use martensite_tkgeombase::extrema::{
     ElementType, ExtElC, ExtElC2d, ExtPElC, ExtPElC2d, POnCurv, POnCurv2d, POnSurf, POnSurfParams,
+    PointCurveClassification,
 };
 use martensite_tkmath::gp::{
     Circle2, Circle3, Ellipse2, Ellipse3, Hyperbola2, Hyperbola3, Line2, Line3, Parabola2,
@@ -107,15 +108,20 @@ fn pelc_step(
     reused: &mut ExtPElC,
     q: (martensite_tkmath::gp::Point3, f64, f64, f64),
 ) -> Result<(), Failure> {
-    let (pt, tol, u1, u2) = q;
-    let fresh = match c {
-        Conic3::Line(l) => ExtPElC::with_line(pt, *l, tol, u1, u2),
-        Conic3::Circle(x) => ExtPElC::with_circle(pt, *x, tol, u1, u2)?,
-        Conic3::Ellipse(x) => ExtPElC::with_ellipse(pt, *x, tol, u1, u2)?,
-        Conic3::Hyperbola(x) => ExtPElC::with_hyperbola(pt, *x, tol, u1, u2)?,
-        Conic3::Parabola(x) => ExtPElC::with_parabola(pt, *x, tol, u1, u2)?,
-    };
+    let mut fresh = ExtPElC::new();
+    fresh.set_classification_policy(PointCurveClassification::LegacyV1);
+    pelc_perform(c, &mut fresh, q)?;
     pelc_result(output, &fresh, |point| poncurv(output, point));
+    pelc_perform(c, reused, q)?;
+    Ok(())
+}
+
+fn pelc_perform(
+    c: &Conic3,
+    reused: &mut ExtPElC,
+    q: (martensite_tkmath::gp::Point3, f64, f64, f64),
+) -> Result<(), Failure> {
+    let (pt, tol, u1, u2) = q;
     match c {
         Conic3::Line(l) => reused.perform_line(pt, l, tol, u1, u2),
         Conic3::Circle(x) => reused.perform_circle(pt, x, tol, u1, u2)?,
@@ -132,6 +138,7 @@ pub fn pelc_case(output: &Output, values: &[f64]) {
         let c = conic3(&mut r)?;
         let n = r.integer();
         let mut reused = ExtPElC::new();
+        reused.set_classification_policy(PointCurveClassification::LegacyV1);
         pelc_result(output, &reused, |point| poncurv(output, point));
         for _ in 0..n {
             let pt = r.pnt();
@@ -176,15 +183,20 @@ fn pelc2d_step(
     reused: &mut ExtPElC2d,
     q: (Point2, f64, f64, f64),
 ) -> Result<(), Failure> {
-    let (pt, tol, u1, u2) = q;
-    let fresh = match c {
-        Conic2::Line(l) => ExtPElC2d::with_line(pt, *l, tol, u1, u2),
-        Conic2::Circle(x) => ExtPElC2d::with_circle(pt, *x, tol, u1, u2)?,
-        Conic2::Ellipse(x) => ExtPElC2d::with_ellipse(pt, *x, tol, u1, u2)?,
-        Conic2::Hyperbola(x) => ExtPElC2d::with_hyperbola(pt, *x, tol, u1, u2)?,
-        Conic2::Parabola(x) => ExtPElC2d::with_parabola(pt, *x, tol, u1, u2)?,
-    };
+    let mut fresh = ExtPElC2d::new();
+    fresh.set_classification_policy(PointCurveClassification::LegacyV1);
+    pelc2d_perform(c, &mut fresh, q)?;
     pelc_result(output, &fresh, |point| poncurv2d(output, point));
+    pelc2d_perform(c, reused, q)?;
+    Ok(())
+}
+
+fn pelc2d_perform(
+    c: &Conic2,
+    reused: &mut ExtPElC2d,
+    q: (Point2, f64, f64, f64),
+) -> Result<(), Failure> {
+    let (pt, tol, u1, u2) = q;
     match c {
         Conic2::Line(l) => reused.perform_line(pt, l, tol, u1, u2),
         Conic2::Circle(x) => reused.perform_circle(pt, x, tol, u1, u2)?,
@@ -201,6 +213,7 @@ pub fn pelc2d_case(output: &Output, values: &[f64]) {
         let c = conic2(&mut r)?;
         let n = r.integer();
         let mut reused = ExtPElC2d::new();
+        reused.set_classification_policy(PointCurveClassification::LegacyV1);
         pelc_result(output, &reused, |point| poncurv2d(output, point));
         for _ in 0..n {
             let pt = r.pnt2d();

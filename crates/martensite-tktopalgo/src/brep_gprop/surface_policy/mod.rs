@@ -121,7 +121,7 @@ impl BRepGProp {
             shape,
             &mut props,
             epsilon,
-            (options.skip_shared, prefer_mesh),
+            (options.skip_shared, prefer_mesh, true),
             &mut observations,
         )?;
         observations.finish(props, options, error)

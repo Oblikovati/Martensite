@@ -9,6 +9,8 @@ impl<T> DynamicArray<T> {
             blocks: LinearVector::default(),
             allocator,
             increment,
+            increment_shift: increment.trailing_zeros(),
+            increment_mask: increment.wrapping_sub(1),
             used: 0,
             needs_tail_scan: false,
         }
@@ -20,12 +22,14 @@ impl<T> DynamicArray<T> {
             self.increment
         );
     }
+    #[inline(always)]
     pub(super) fn element_coordinates(&self, index: usize) -> (usize, usize) {
         if self.increment == 0 {
             // log2 of 0 is 0 and the unsigned mask wraps to usize::MAX.
             return (index, index);
         }
-        (index / self.increment, index % self.increment)
+        // `increment` is always a power of two; shift/mask replaces hardware DIV/REM (#589).
+        (index >> self.increment_shift, index & self.increment_mask)
     }
 }
 #[cfg(test)]

@@ -4,6 +4,7 @@ use crate::ncollection::{BaseMap, HashPolicy, slot_chains::SlotLink};
 
 impl<K, V> ChainedSlots<K, V> {
     /// Finds a bound key; an empty map skips the user hasher.
+    #[inline]
     pub(in crate::ncollection) fn lookup(
         &self,
         key: &K,
@@ -16,6 +17,7 @@ impl<K, V> ChainedSlots<K, V> {
         slot.map(|slot| (bucket, slot))
     }
     /// Hashes once and returns the bucket with the matching slot; callers prepared a table.
+    #[inline]
     pub(in crate::ncollection) fn lookup_with_bucket(
         &self,
         key: &K,

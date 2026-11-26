@@ -2,6 +2,14 @@
 use super::BaseAllocator;
 use crate::ncollection::AllocatorSource;
 use crate::standard::{Handle, HandleObserver, HandleUpcast};
+use std::sync::Arc;
+
+/// The state every facade of one embedded base shares.
+struct FacadeParts {
+    inner: Arc<super::AllocatorKind>,
+    registration: Arc<super::SourceRegistration>,
+    virtual_allocations: Arc<super::virtual_typed::VirtualAllocationRecords>,
+}
 pub(super) enum AllocatorReference {
     Policy,
     Owned(Handle<dyn AllocatorSource>),
@@ -19,16 +27,23 @@ impl BaseAllocator {
             "allocator={:?}; expected registered AllocatorSource interface",
             handle
         );
-        let resource = source.allocator_object_base().resource();
-        *resource.fields.registration.write() = source.downgrade();
-        let mut facade = resource.facade_with_reference(AllocatorReference::Policy);
-        facade.fields.reference = AllocatorReference::Owned(source);
-        facade
+        let parts = source.allocator_object_base().resource().facade_parts();
+        parts.registration.register(&source);
+        Self::assembled(parts, AllocatorReference::Owned(source))
     }
     /// Retain physical storage with zero handle ownership; `let lease=allocator.storage_lease()`.
     pub fn storage_lease(&self) -> Self {
-        if let AllocatorReference::Storage(backing) = &self.fields.reference {
-            return self.facade_with_reference(AllocatorReference::Storage(backing.clone()));
+        if let AllocatorReference::Storage(_) = &self.fields.reference {
+            return self.clone();
+        }
+        if !self.ever_custom() {
+            // A built-in source leases this facade's own policy, so one lease serves every
+            // allocation (#584).
+            return self
+                .fields
+                .lease
+                .get_or_init(|| self.builtin_lease())
+                .clone();
         }
         let backend = self
             .dispatch_source(|source| source.physical_storage())
@@ -36,20 +51,36 @@ impl BaseAllocator {
         let reference = AllocatorReference::Storage(backend);
         self.facade_with_reference(reference)
     }
+    fn builtin_lease(&self) -> Self {
+        self.facade_with_reference(AllocatorReference::Storage(self.physical_storage()))
+    }
     fn facade_with_reference(&self, reference: AllocatorReference) -> Self {
+        Self::assembled(self.facade_parts(), reference)
+    }
+    fn facade_parts(&self) -> FacadeParts {
+        FacadeParts {
+            inner: self.fields.inner.clone(),
+            registration: self.fields.registration.clone(),
+            virtual_allocations: self.fields.virtual_allocations.clone(),
+        }
+    }
+    fn assembled(parts: FacadeParts, reference: AllocatorReference) -> Self {
         Self {
-            fields: Box::new(super::AllocatorFacadeFields {
-                inner: self.fields.inner.clone(),
-                registration: self.fields.registration.clone(),
+            fields: Arc::new(super::AllocatorFacadeFields {
+                inner: parts.inner,
+                registration: parts.registration,
                 reference,
-                virtual_allocations: self.fields.virtual_allocations.clone(),
+                virtual_allocations: parts.virtual_allocations,
+                lease: std::sync::OnceLock::new(),
             }),
         }
     }
     pub(super) fn source_observer(&self) -> Option<HandleObserver<'_, dyn AllocatorSource>> {
         let observed = match &self.fields.reference {
             AllocatorReference::Owned(owner) => owner.observe(),
-            _ => HandleObserver::Snapshot(self.fields.registration.read().upgrade()),
+            AllocatorReference::Storage(_) | AllocatorReference::Policy => {
+                self.fields.registration.observe()
+            }
         };
         (!observed.is_null()).then_some(observed)
     }
@@ -71,7 +102,12 @@ impl BaseAllocator {
 impl Clone for BaseAllocator {
     fn clone(&self) -> Self {
         let reference = match &self.fields.reference {
-            AllocatorReference::Storage(lease) => AllocatorReference::Storage(lease.clone()),
+            // A lease never changes what it retains, so its copies share one facade (#584).
+            AllocatorReference::Storage(_) => {
+                return Self {
+                    fields: Arc::clone(&self.fields),
+                };
+            }
             _ => self
                 .source_observer()
                 .map_or(AllocatorReference::Policy, |source| {

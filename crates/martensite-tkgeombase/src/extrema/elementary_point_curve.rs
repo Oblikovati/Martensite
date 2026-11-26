@@ -2,6 +2,7 @@
 
 //! The `TheExtPElC` parameter of GGExtPC ([`ElementaryPointCurve`]) and the
 //! result storage that ExtPElC and ExtPElC2d share.
+use super::conic_classification::{PointCurveClassification, StationaryNature, certified_minimum};
 use super::curve_tool::ExtremaCurveTool;
 use super::failures::{extremum_index, not_done};
 use super::gp_space::GpPoint;
@@ -57,6 +58,8 @@ pub trait ElementaryPointCurve<T: ExtremaCurveTool + ?Sized> {
         uinf: f64,
         usup: f64,
     ) -> Result<(), Failure>;
+    /// Select replay policy before perform; `extrema.set_classification_policy(PointCurveClassification::LegacyV1)`.
+    fn set_classification_policy(&mut self, policy: PointCurveClassification);
     /// The shared result.
     fn point_extrema(&self) -> &PointCurveExtrema<T::Point>;
 }
@@ -66,10 +69,12 @@ pub trait ElementaryPointCurve<T: ExtremaCurveTool + ?Sized> {
 #[derive(Clone, Debug)]
 pub struct PointCurveExtrema<P> {
     class_name: &'static str,
+    pub(super) classification: PointCurveClassification,
     pub(super) done: bool,
     pub(super) nb_ext: i32,
     pub(super) sq_dist: [f64; 4],
     pub(super) is_min: [bool; 4],
+    classification_errors: [Option<Failure>; 4],
     pub(super) points: [POnCurve<P>; 4],
 }
 
@@ -78,10 +83,12 @@ impl<P: Copy + Default> PointCurveExtrema<P> {
     pub(super) fn new(class_name: &'static str) -> Self {
         Self {
             class_name,
+            classification: PointCurveClassification::default(),
             done: false,
             nb_ext: 0,
             sq_dist: [f64::MAX; 4],
             is_min: [false; 4],
+            classification_errors: std::array::from_fn(|_| None),
             points: [POnCurve::default(); 4],
         }
     }
@@ -90,10 +97,12 @@ impl<P: Copy + Default> PointCurveExtrema<P> {
         let index: usize = self.nb_ext as usize;
         self.sq_dist[index] = sq_dist;
         self.is_min[index] = is_min;
+        self.classification_errors[index] = None;
         self.points[index] = point;
         self.nb_ext += 1;
     }
-    /// `IsDone()`; `extrema.is_done()`.
+    /// Completed root search; local minimum classifications can remain unresolved.
+    /// `extrema.is_done()`.
     pub fn is_done(&self) -> bool {
         self.done
     }
@@ -109,9 +118,21 @@ impl<P: Copy + Default> PointCurveExtrema<P> {
     pub fn square_distance(&self, n: i32) -> Result<f64, Failure> {
         Ok(self.sq_dist[self.index("SquareDistance", n)?])
     }
-    /// `IsMin(N)`; `extrema.is_min(1)?`.
+    /// Minimum flag; unresolved roots return their named classification error.
+    /// `extrema.is_min(1)?`.
     pub fn is_min(&self, n: i32) -> Result<bool, Failure> {
-        Ok(self.is_min[self.index("IsMin", n)?])
+        self.root_nature(self.index("IsMin", n)?).minimum_flag()
+    }
+    /// Local evidence; an unresolved root retains its point and distance.
+    /// `matches!(extrema.classification(1)?, StationaryNature::Unresolved(_))`.
+    pub fn classification(&self, n: i32) -> Result<StationaryNature, Failure> {
+        Ok(self.root_nature(self.index("Classification", n)?))
+    }
+    fn root_nature(&self, index: usize) -> StationaryNature {
+        match &self.classification_errors[index] {
+            Some(error) => StationaryNature::Unresolved(error.clone()),
+            None => self.is_min[index].into(),
+        }
     }
     /// `Point(N)`; `extrema.point(1)?.parameter()`.
     pub fn point(&self, n: i32) -> Result<POnCurve<P>, Failure> {
@@ -151,5 +172,24 @@ impl<P: Copy + Default> PointCurveExtrema<P> {
     fn index(&self, member: &str, n: i32) -> Result<usize, Failure> {
         let name: String = format!("{}::{member}()", self.class_name);
         extremum_index(&name, n, || self.nb_ext())
+    }
+}
+
+impl<P: GpPoint> PointCurveExtrema<P> {
+    pub(super) fn classify_roots(
+        &mut self,
+        query: P,
+        derivatives: impl Fn(f64) -> (P, P::Vector, P::Vector),
+    ) {
+        if self.classification == PointCurveClassification::LegacyV1 {
+            return;
+        }
+        for index in 0..self.nb_ext as usize {
+            let parameter = self.points[index].parameter();
+            match certified_minimum(query, parameter, derivatives(parameter)) {
+                Ok(minimum) => self.is_min[index] = minimum,
+                Err(error) => self.classification_errors[index] = Some(error),
+            }
+        }
     }
 }

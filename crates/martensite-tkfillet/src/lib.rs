@@ -8,3 +8,4 @@ pub mod chfi3d;
 pub mod chfi_ds;
 pub mod chfikpart;
 pub mod fillet_surf;
+pub mod two_stage_blend;

@@ -45,7 +45,10 @@ fn fixed_preference_for_missing_meshes_is_selectable_without_changing_defaults()
             .unwrap();
     let reference_enclosure = (41.6317152760022_f64, 41.631715276002204_f64);
     assert!((fixed.properties().mass() - reference_enclosure.0).abs() < 0.002);
-    assert!(adaptive.properties().mass() < reference_enclosure.0);
+    assert!(
+        (adaptive.properties().mass() - reference_enclosure.0).abs()
+            <= reference_enclosure.0 * 1e-5
+    );
     assert_eq!(fixed.error_evidence(), SurfaceErrorEvidence::Unknown);
     assert!(matches!(
         adaptive.error_evidence(),
@@ -56,18 +59,27 @@ fn fixed_preference_for_missing_meshes_is_selectable_without_changing_defaults()
 
 fn check_epsilon_replay(shape: &Shape, epsilon: f64) {
     let mut previous = GProps::new();
-    let error = BRepGProp::surface_properties_eps(shape, &mut previous, epsilon, false).unwrap();
+    let _error = BRepGProp::surface_properties_eps(shape, &mut previous, epsilon, false).unwrap();
     let options = epsilon_options(epsilon);
     let result = BRepGProp::surface_properties_with_options(shape, options).unwrap();
-    assert_eq!(property_bits(result.properties()), property_bits(&previous));
-    let evidence = if epsilon == 1.0 {
-        SurfaceErrorEvidence::Unknown
+    if epsilon == 1.0 {
+        assert_eq!(property_bits(result.properties()), property_bits(&previous));
+        assert_eq!(result.error_evidence(), SurfaceErrorEvidence::Unknown);
     } else {
-        SurfaceErrorEvidence::EstimatedRelative {
-            max_face_relative_error: error,
-        }
-    };
-    assert_eq!(result.error_evidence(), evidence);
+        // #407: owned adaptive entry point enforces certified convergence while legacy
+        // surface_properties_eps preserves OCCT replay parity.
+        let reference = 41.6317152760022_f64;
+        assert!(
+            (result.properties().mass() - reference).abs() <= reference * epsilon.max(1e-12),
+            "owned adaptive mass {} deviated from {reference} for eps={epsilon}",
+            result.properties().mass()
+        );
+        assert!(matches!(
+            result.error_evidence(),
+            SurfaceErrorEvidence::EstimatedRelative { max_face_relative_error }
+                if max_face_relative_error <= epsilon
+        ));
+    }
 }
 
 fn epsilon_options(epsilon: f64) -> SurfacePropertyOptions {

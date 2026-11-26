@@ -65,7 +65,23 @@ fn control_command(root: &Path, control: Control) -> CommandSpec {
         Control::CertifiedConeAttachment => certified_cone_attachment_controls(root),
         Control::CertifiedCylinderAttachment => certified_cylinder_attachment_controls(root),
         Control::SharedContext => shared_context_controls(root),
+        Control::ToolkitBorrowedJobs => toolkit_borrowed_jobs_controls(root),
     }
+}
+
+fn toolkit_borrowed_jobs_controls(root: &Path) -> CommandSpec {
+    // Toolkit borrowed-job migration and thread lifecycle controls (#87, #110).
+    sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tkernel",
+        "--lib",
+        "--",
+        "osd::parallel::launcher::migration_tests",
+        "osd::parallel::thread::tests",
+        "--test-threads=1",
+        "--show-output",
+    ])
 }
 
 fn shared_context_controls(root: &Path) -> CommandSpec {

@@ -1,7 +1,8 @@
 //! `ExtPElC2d`: the extrema of the distance between a 2D point and a segment
-//! of an elementary 2D curve, in closed form. Its code differs from the 3D class:
-//! the circle marks both extrema as minima, the ellipse, hyperbola and parabola none,
-//! and a line outside its bounds is done with no extremum.
+//! of an elementary 2D curve, in closed form. Conic roots use the shared local
+//! differential certificate. Explicit LegacyV1 selection retains the original flags
+//! for replay (#406). A line outside its bounds is done with no extremum.
+use super::conic_classification::PointCurveClassification;
 use super::curve_tools::Curve2dTool;
 use super::elementary_point_curve::{ElementaryPointCurve, PointCurveExtrema};
 use super::ext_p_el_c::{adjust_pair, polynomial_roots};
@@ -40,6 +41,12 @@ impl Deref for ExtPElC2d {
 }
 
 impl ExtPElC2d {
+    /// Select replay behavior before the next perform; `extrema.set_classification_policy(PointCurveClassification::LegacyV1)`.
+    pub fn set_classification_policy(&mut self, policy: PointCurveClassification) {
+        self.result.classification = policy;
+        self.result.done = false;
+    }
+
     /// `ExtPElC2d()`: not done; `ExtPElC2d::new().is_done() == false`.
     pub fn new() -> Self {
         Self::default()
@@ -81,7 +88,7 @@ impl ExtPElC2d {
         Ok(extrema)
     }
     /// `Perform(P, Circ2d, Tol, Uinf, Usup)`: the two points on the line through
-    /// the centre, both flagged as minima; not done when the point is within
+    /// the centre, classified by their local second variation; not done when the point is within
     /// Precision::Confusion() of the centre;
     /// `extrema.perform_circle(point, &circle, 1e-7, 0.0, 2.0 * PI)?`.
     pub fn perform_circle(
@@ -110,10 +117,15 @@ impl ExtPElC2d {
         let (u2, far) = snap_to_start(circle, (u2, far), uinf, tol);
         for (u, p) in [(u1, near), (u2, far)] {
             if ((uinf - u) < tol) && ((u - usup) < tol) {
-                self.result
-                    .push(point.square_distance(p), true, POnCurv2d::new(u, p));
+                let retained_flag = self.result.classification.legacy_seed(|| true);
+                self.result.push(
+                    point.square_distance(p),
+                    retained_flag,
+                    POnCurv2d::new(u, p),
+                );
             }
         }
+        self.result.classify_roots(point, |u| elclib::d2(u, circle));
         Ok(())
     }
 }
@@ -148,7 +160,7 @@ impl ExtPElC2d {
         Ok(extrema)
     }
     /// `Perform(P, Elips2d, Tol, Uinf, Usup)`: the roots of the trigonometric
-    /// equation of the 3D class, none flagged as a minimum (`NoSol == 0` never holds);
+    /// equation of the 3D class, certified with their first two derivatives;
     /// not done at the centre of a circular ellipse or when the solver fails;
     /// `extrema.perform_ellipse(point, &ellipse, 1e-7, 0.0, 2.0 * PI)?`.
     pub fn perform_ellipse(
@@ -181,6 +193,8 @@ impl ExtPElC2d {
                 .push(cu.square_distance(point), false, POnCurv2d::new(us, cu));
         }
         self.result.done = true;
+        self.result
+            .classify_roots(point, |u| elclib::d2(u, ellipse));
         Ok(())
     }
     /// `ExtPElC2d(P, Hypr2d, Tol, Uinf, Usup)`;
@@ -200,7 +214,7 @@ impl ExtPElC2d {
 
 impl ExtPElC2d {
     /// `Perform(P, Hypr2d, Tol, Uinf, Usup)`: the quartic of the 3D class; points
-    /// closer than Tol count once, none is flagged as a minimum;
+    /// closer than Tol count once, then receive the shared local certificate;
     /// `extrema.perform_hyperbola(point, &hyperbola, 1e-7, -2.0, 2.0)?`.
     pub fn perform_hyperbola(
         &mut self,
@@ -229,11 +243,14 @@ impl ExtPElC2d {
             .map(martensite_cmath::log)
             .collect();
         let value = |u: f64| elclib::value(u, hyperbola);
+        // #406: false is the V1 flag seed; V2 publishes only the shared certificate.
         let never_min = |_: f64, _: f64| false;
         let bounds: (f64, f64) = (uinf, usup);
         self.result
             .push_distinct(point, &parameters, bounds, tol * tol, value, never_min);
         self.result.done = true;
+        self.result
+            .classify_roots(point, |u| elclib::d2(u, hyperbola));
         Ok(())
     }
     /// `ExtPElC2d(P, Parab2d, Tol, Uinf, Usup)`;
@@ -250,7 +267,7 @@ impl ExtPElC2d {
         Ok(extrema)
     }
     /// `Perform(P, Parab2d, Tol, Uinf, Usup)`: the cubic of the 3D class in the
-    /// mirror-axis frame; points closer than Tol count once, none is a minimum;
+    /// mirror-axis frame; points closer than Tol count once, then receive the local certificate;
     /// `extrema.perform_parabola(point, &parabola, 1e-7, -2.0, 2.0)?`.
     pub fn perform_parabola(
         &mut self,
@@ -273,11 +290,14 @@ impl ExtPElC2d {
         }
         let parameters: Vec<f64> = polynomial_roots(&roots)?;
         let value = |u: f64| elclib::value(u, parabola);
+        // #406: false is the V1 flag seed; V2 publishes only the shared certificate.
         let never_min = |_: f64, _: f64| false;
         let bounds: (f64, f64) = (uinf, usup);
         self.result
             .push_distinct(point, &parameters, bounds, tol * tol, value, never_min);
         self.result.done = true;
+        self.result
+            .classify_roots(point, |u| elclib::d2(u, parabola));
         Ok(())
     }
 }
@@ -333,6 +353,9 @@ impl ElementaryPointCurve<Curve2dTool> for ExtPElC2d {
         usup: f64,
     ) -> Result<(), Failure> {
         ExtPElC2d::perform_parabola(self, point, parabola, tol, uinf, usup)
+    }
+    fn set_classification_policy(&mut self, policy: PointCurveClassification) {
+        ExtPElC2d::set_classification_policy(self, policy);
     }
     fn point_extrema(&self) -> &PointCurveExtrema<Point2> {
         &self.result

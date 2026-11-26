@@ -270,28 +270,38 @@ fn ext_el_cs_line_cone_is_not_implemented() {
 }
 
 #[test]
-fn ext_p_el_c2d_marks_both_circle_extrema_as_minima_and_no_ellipse_extremum() {
+fn ext_p_el_c2d_legacy_v1_retains_original_minimum_flags() {
     let position =
         Axis22d::new(Point2::default(), Direction2::new(1.0, 0.0).unwrap(), true).unwrap();
     let point = Point2::new(0.5, 0.25);
-    let circle = ExtPElC2d::with_circle(
-        point,
-        Circle2::new(position, 2.0).unwrap(),
-        1.0e-9,
-        0.0,
-        2.0 * PI,
-    )
-    .unwrap();
+    let mut circle = ExtPElC2d::new();
+    circle.set_classification_policy(
+        martensite_tkgeombase::extrema::PointCurveClassification::LegacyV1,
+    );
+    circle
+        .perform_circle(
+            point,
+            &Circle2::new(position, 2.0).unwrap(),
+            1.0e-9,
+            0.0,
+            2.0 * PI,
+        )
+        .unwrap();
     assert_eq!(circle.nb_ext().unwrap(), 2);
     assert!(circle.is_min(1).unwrap() && circle.is_min(2).unwrap());
-    let ellipse = ExtPElC2d::with_ellipse(
-        point,
-        Ellipse2::new(position, 3.0, 1.0).unwrap(),
-        1.0e-9,
-        0.0,
-        2.0 * PI,
-    )
-    .unwrap();
+    let mut ellipse = ExtPElC2d::new();
+    ellipse.set_classification_policy(
+        martensite_tkgeombase::extrema::PointCurveClassification::LegacyV1,
+    );
+    ellipse
+        .perform_ellipse(
+            point,
+            &Ellipse2::new(position, 3.0, 1.0).unwrap(),
+            1.0e-9,
+            0.0,
+            2.0 * PI,
+        )
+        .unwrap();
     assert!(ellipse.nb_ext().unwrap() > 0);
     for n in 1..=ellipse.nb_ext().unwrap() {
         assert!(!ellipse.is_min(n).unwrap());

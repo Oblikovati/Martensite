@@ -23,3 +23,6 @@ pub use splitter::BRepAlgoAPISplitter;
 
 mod defeaturing;
 pub use defeaturing::BRepAlgoAPIDefeaturing;
+
+#[cfg(test)]
+mod concurrency_contract;

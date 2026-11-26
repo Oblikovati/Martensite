@@ -20,9 +20,10 @@ pub(crate) enum Control {
     CertifiedConeAttachment,
     CertifiedCylinderAttachment,
     SharedContext,
+    ToolkitBorrowedJobs,
 }
 
-pub(crate) const CONTROLS: [Control; 16] = [
+pub(crate) const CONTROLS: [Control; 17] = [
     Control::Cache2d,
     Control::Cache3d,
     Control::Capture,
@@ -39,6 +40,7 @@ pub(crate) const CONTROLS: [Control; 16] = [
     Control::CertifiedConeAttachment,
     Control::CertifiedCylinderAttachment,
     Control::SharedContext,
+    Control::ToolkitBorrowedJobs,
 ];
 
 impl Control {
@@ -60,6 +62,7 @@ impl Control {
             Self::CertifiedConeAttachment => "certified-cone-attachment",
             Self::CertifiedCylinderAttachment => "certified-cylinder-attachment",
             Self::SharedContext => "shared-context",
+            Self::ToolkitBorrowedJobs => "toolkit-borrowed-jobs",
         }
     }
 
@@ -78,6 +81,7 @@ impl Control {
             | Self::CertifiedCylinderAttachment => "martensite-tksketch",
             Self::FontTextCapture | Self::CertifiedConeAttachment => "martensite-tkv3d",
             Self::SharedContext => "martensite-tkbo",
+            Self::ToolkitBorrowedJobs => "martensite-tkernel",
         }
     }
 }
@@ -213,7 +217,8 @@ mod tests {
                 "wrapped-cone",
                 "certified-cone-attachment",
                 "certified-cylinder-attachment",
-                "shared-context"
+                "shared-context",
+                "toolkit-borrowed-jobs"
             ]
         );
         assert_eq!(ids.iter().collect::<BTreeSet<_>>().len(), CONTROLS.len());

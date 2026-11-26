@@ -165,9 +165,17 @@ impl ProjectedState {
         }
         let (mut min_dist, mut value): (f64, f64) = (f64::MAX, 0.0);
         for idx in 1..=extrema.nb_ext()? {
-            if extrema.is_min(idx)? && extrema.square_distance(idx)? < min_dist {
+            if extrema.is_min(idx).unwrap_or(false) && extrema.square_distance(idx)? < min_dist {
                 min_dist = extrema.square_distance(idx)?;
                 value = extrema.point(idx)?.parameter();
+            }
+        }
+        if min_dist == f64::MAX {
+            for idx in 1..=extrema.nb_ext()? {
+                if extrema.square_distance(idx)? < min_dist {
+                    min_dist = extrema.square_distance(idx)?;
+                    value = extrema.point(idx)?.parameter();
+                }
             }
         }
         Ok(value)

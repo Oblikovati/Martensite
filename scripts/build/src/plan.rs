@@ -60,6 +60,8 @@ pub enum CiPlan {
         /// Create the GitHub release afterwards (tag pushes only).
         publish: bool,
     },
+    /// Run opt-in Linux ThreadSanitizer toolkit validation without replacing the native matrix (#110).
+    Sanitizer,
 }
 
 /// Chooses the pipeline for a trigger.
@@ -113,8 +115,9 @@ fn dispatch_plan(mode: &str, version: &str, base: &str) -> BuildResult<CiPlan> {
             version: parse_version_argument(version)?,
             publish: false,
         }),
+        "sanitizer" => Ok(CiPlan::Sanitizer),
         other => Err(BuildError::Usage(format!(
-            "dispatch mode {other:?}; expected \"pr\" or \"release\""
+            "dispatch mode {other:?}; expected \"pr\", \"release\", or \"sanitizer\""
         ))),
     }
 }
@@ -141,6 +144,7 @@ pub fn plan_outputs(plan: &CiPlan) -> Vec<(&'static str, String)> {
             *publish,
             RELEASE_TARGETS.to_vec(),
         ),
+        CiPlan::Sanitizer => ("sanitizer", String::new(), false, Vec::new()),
     };
     vec![
         ("mode", mode.to_owned()),
@@ -151,7 +155,7 @@ pub fn plan_outputs(plan: &CiPlan) -> Vec<(&'static str, String)> {
             "base-sha",
             match plan {
                 CiPlan::PullRequest { base } => base.clone(),
-                CiPlan::Release { .. } => String::new(),
+                CiPlan::Release { .. } | CiPlan::Sanitizer => String::new(),
             },
         ),
     ]
@@ -165,7 +169,7 @@ fn matrix_json(targets: &[ReleaseTarget], plan: &CiPlan) -> String {
         .map(|target| serde_json::json!({"target": target.triple, "runner": target.runner}));
     let include: Vec<_> = match plan {
         CiPlan::PullRequest { .. } => rows.flat_map(with_check_stages).collect(),
-        CiPlan::Release { .. } => rows.collect(),
+        CiPlan::Release { .. } | CiPlan::Sanitizer => rows.collect(),
     };
     serde_json::json!({ "include": include }).to_string()
 }
@@ -342,6 +346,21 @@ mod tests {
             global_env
                 .contains("MARTENSITE_CI_BASE_SHA: ${{ github.event.pull_request.base.sha }}")
         );
+    }
+
+    #[test]
+    fn dispatch_sanitizer_mode_selects_opt_in_sanitizer_plan() {
+        let trigger = CiTrigger {
+            event: "workflow_dispatch".into(),
+            dispatch_mode: "sanitizer".into(),
+            ..Default::default()
+        };
+        let plan = plan_for(&trigger).unwrap();
+        assert_eq!(plan, CiPlan::Sanitizer);
+        let outputs = plan_outputs(&plan);
+        assert!(outputs.contains(&("mode", "sanitizer".into())));
+        assert!(outputs.contains(&("publish", "false".into())));
+        assert!(outputs.contains(&("matrix", "{\"include\":[]}".into())));
     }
 
     #[test]

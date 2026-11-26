@@ -70,6 +70,11 @@ impl<'a, T: ExtremaCurveTool> GLocateExtPC<'a, T> {
     pub fn new() -> Self {
         Self::default()
     }
+    /// Select the conic replay policy before perform; `extrema.set_classification_policy(crate::extrema::PointCurveClassification::LegacyV1)`.
+    pub fn set_classification_policy(&mut self, policy: crate::extrema::PointCurveClassification) {
+        self.extrem_pc.set_classification_policy(policy);
+        self.done = false;
+    }
     /// `GLocateExtPC(P, C, U0, TolF)`: the whole curve range;
     /// `LocateExtPC::with_curve(point, &adaptor, 0.5, 1e-9)?`.
     pub fn with_curve(

@@ -42,7 +42,7 @@ fn empty_query_centroid_is_the_located_origin_not_a_physical_center() {
 }
 
 #[test]
-fn exhausted_nonempty_geometry_is_not_published_as_completed_empty() {
+fn nonzero_narrow_geometry_is_published_with_its_physical_area() {
     let face = fixtures::narrow_parameter_square();
     let fixed = BRepGProp::surface_properties_with_options(
         &face,
@@ -51,9 +51,9 @@ fn exhausted_nonempty_geometry_is_not_published_as_completed_empty() {
     .unwrap();
     assert!(!fixed.is_empty());
     assert!((fixed.properties().mass() - 1.0).abs() < 1e-12);
-    let error =
+    let adaptive =
         BRepGProp::surface_properties_with_options(&face, SurfacePropertyOptions::default())
-            .unwrap_err();
-    assert_eq!(error.exception_type(), "StdFail_NotDone");
-    assert!(error.message().contains("refinement"));
+            .unwrap();
+    assert!(!adaptive.is_empty());
+    assert!((adaptive.properties().mass() - 1.).abs() < 1e-12);
 }

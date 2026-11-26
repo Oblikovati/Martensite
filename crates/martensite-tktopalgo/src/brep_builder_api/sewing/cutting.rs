@@ -137,7 +137,7 @@ impl BRepBuilderAPISewing {
         let mut param_proj = projector.point(ind_min)?.parameter();
         let mut pt_proj = curve.adaptor.value(param_proj)?;
         let mut dist_proj2 = pt_proj.square_distance(&pt);
-        if !projector.is_min(ind_min)? && std_min(dist_f2, dist_l2) < dist2_min {
+        if !projector.is_min(ind_min).unwrap_or(false) && std_min(dist_f2, dist_l2) < dist2_min {
             (param_proj, dist_proj2, pt_proj) = if dist_f2 < dist_l2 {
                 (curve.range.0, dist_f2, pfirst)
             } else {

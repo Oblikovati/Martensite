@@ -116,6 +116,57 @@ impl FontFTFont {
     pub fn line_spacing(&self) -> f32 {
         self.vertical_metric(|f| f.height, |m| m.height)
     }
+    /// Scaled underline offset from the baseline in pixels (negative below baseline, #578);
+    /// `font.underline_position()`.
+    pub fn underline_position(&self) -> f32 {
+        self.sized_face(|face, metrics| {
+            if face.units_per_em == 0 {
+                return 0.0;
+            }
+            scaled(
+                f32::from(face.underline_position),
+                metrics.y_ppem,
+                face.units_per_em,
+            )
+        })
+        .unwrap_or(0.0)
+    }
+    /// Scaled underline stroke thickness in pixels (#578); `font.underline_thickness()`.
+    pub fn underline_thickness(&self) -> f32 {
+        self.sized_face(|face, metrics| {
+            if face.units_per_em == 0 {
+                return 0.0;
+            }
+            scaled(
+                f32::from(face.underline_thickness),
+                metrics.y_ppem,
+                face.units_per_em,
+            )
+        })
+        .unwrap_or(0.0)
+    }
+    /// Scaled strike-through offset above the baseline in pixels (#578);
+    /// `font.strikeout_position()`.
+    pub fn strikeout_position(&self) -> f32 {
+        if !self.is_valid() {
+            return 0.0;
+        }
+        // Standard typographic midline when OS/2 yStrikeoutPosition is not loaded separately.
+        self.ascender() * 0.35
+    }
+    /// Scaled strike-through stroke thickness in pixels (#578);
+    /// `font.strikeout_thickness()`.
+    pub fn strikeout_thickness(&self) -> f32 {
+        if !self.is_valid() {
+            return 0.0;
+        }
+        let underline = self.underline_thickness();
+        if underline > 0.0 {
+            underline
+        } else {
+            self.ascender() * 0.08
+        }
+    }
 }
 
 impl FontFTFont {
@@ -256,5 +307,19 @@ impl FontFTFont {
         rect.top = slot.bitmap_top as f32;
         rect.right = (slot.bitmap_left + slot.bitmap.width as i32) as f32;
         rect.bottom = (slot.bitmap_top - slot.bitmap.rows as i32) as f32;
+    }
+}
+
+#[cfg(test)]
+mod decoration_metric_tests {
+    use super::FontFTFont;
+
+    #[test]
+    fn invalid_font_reports_zero_decoration_metrics() {
+        let font = FontFTFont::default();
+        assert_eq!(font.underline_position(), 0.0);
+        assert_eq!(font.underline_thickness(), 0.0);
+        assert_eq!(font.strikeout_position(), 0.0);
+        assert_eq!(font.strikeout_thickness(), 0.0);
     }
 }

@@ -5,11 +5,14 @@ use crate::bop_algo::{
     BOPAlgoBuilder, BOPAlgoPaveFiller, GeneralFuseAlgorithm, Glue, SectionAttribute,
 };
 use martensite_tkbrep::brep_tools::History;
+use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::Shape;
-use martensite_tkbrep::toptools::MapOfShape;
+use martensite_tkbrep::toptools::{IndexedMapOfShape, MapOfShape};
 use martensite_tkernel::ncollection::List;
 use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkshhealing::shape_upgrade::ShapeUpgradeUnifySameDomain;
+use martensite_tktopalgo::brep_builder_api::{BRepBuilderAPICopy, BRepBuilderAPIMakeShape};
 use std::ops::{Deref, DerefMut};
 
 #[path = "builder_algo_progress.rs"]
@@ -32,7 +35,7 @@ pub struct BRepAlgoAPIBuilderAlgo {
     /// False when the filler was given at construction (`myIsIntersectionNeeded`).
     pub(crate) is_intersection_needed: bool,
     pub(crate) ds_filler: Option<BOPAlgoPaveFiller>,
-    pub(crate) builder: Option<Box<dyn GeneralFuseAlgorithm>>,
+    pub(crate) builder: Option<Box<dyn GeneralFuseAlgorithm + Send>>,
     history: Handle<History>,
     simplifier_history: Handle<History>,
     /// The face/face intersection options set by the section API, none for the others.
@@ -146,6 +149,42 @@ impl BRepAlgoAPIBuilderAlgo {
         self.fill_history.then_some(&self.history)
     }
 
+    /// Seals the completed Boolean or General Fuse result into an immutable [`OperationResult`]
+    /// with unified [`HistoryGraph`] or returns a typed [`OperationError`] (#6, #18, #27).
+    pub fn seal_result(
+        &self,
+        operation: martensite_tkbrep::operation::OperationKind,
+    ) -> Result<
+        martensite_tkbrep::operation::OperationResult,
+        martensite_tkbrep::operation::OperationError,
+    > {
+        use martensite_tkbrep::operation::{HistoryGraph, OperationError, OperationResult};
+        if self.has_errors() {
+            let mut err =
+                OperationError::kernel_failure(operation, "Boolean builder completed with errors");
+            for arg in self.arguments.iter() {
+                err = err.with_entity(arg.clone());
+            }
+            return Err(err);
+        }
+        if !self.base.is_done() || self.base.my_shape.is_null() {
+            return Err(OperationError::kernel_failure(
+                operation,
+                "Boolean builder has no completed result shape",
+            ));
+        }
+        let result_shape = self.base.my_shape.clone();
+        let args: Vec<Shape> = self.arguments.iter().cloned().collect();
+        let graph = if let Some(history) = self.history.get() {
+            HistoryGraph::from_brep_history(&args, history).map_err(|err| {
+                OperationError::kernel_failure(operation, err.to_string()).with_cause(err)
+            })?
+        } else {
+            HistoryGraph::empty()
+        };
+        OperationResult::seal(operation, result_shape, graph)
+    }
+
     /// Splits the arguments (`Build`); `builder.build()?`.
     pub fn build(&mut self) -> Result<(), Failure> {
         self.base.set_not_done();
@@ -211,11 +250,47 @@ impl BRepAlgoAPIBuilderAlgo {
     /// its history (`BuildResult`).
     pub(crate) fn build_result(&mut self) -> Result<(), Failure> {
         self.configure_general_fuse();
+        let saved_free = self.capture_input_free_flags();
         let (Some(builder), Some(filler)) = (self.builder.as_mut(), self.ds_filler.as_mut()) else {
             return Ok(());
         };
         builder.perform_with_filler(filler);
-        self.retain_general_fuse_result()
+        let retained = self.retain_general_fuse_result();
+        Self::restore_input_free_flags(&saved_free);
+        retained
+    }
+
+    /// Captures the `Free` flag of every input shape (arguments and tools) before a
+    /// non-destructive build so adding untouched inputs to a temporary result compound
+    /// cannot leak flag mutation (#461).
+    pub(crate) fn capture_input_free_flags(&self) -> Vec<(Shape, bool)> {
+        if !self.non_destructive {
+            return Vec::new();
+        }
+        let mut saved = Vec::new();
+        if let Some(filler) = self.ds_filler.as_ref() {
+            for shape in filler.arguments().iter() {
+                if let Ok(is_free) = shape.free() {
+                    saved.push((shape.clone(), is_free));
+                }
+            }
+        }
+        if let Some(builder) = self.builder.as_ref() {
+            for shape in builder.general_fuse().arguments().iter() {
+                if let Ok(is_free) = shape.free() {
+                    saved.push((shape.clone(), is_free));
+                }
+            }
+        }
+        saved
+    }
+
+    /// Restores captured `Free` flags on original input shapes after non-destructive detachment (#461).
+    pub(crate) fn restore_input_free_flags(saved: &[(Shape, bool)]) {
+        for (shape, was_free) in saved {
+            let restored = shape.clone();
+            let _ = restored.set_free(*was_free);
+        }
     }
 
     fn configure_general_fuse(&mut self) {
@@ -255,6 +330,42 @@ impl BRepAlgoAPIBuilderAlgo {
             self.history = Handle::new(history);
         }
         Ok(())
+    }
+
+    /// Deep-copy the published non-destructive Boolean result and compose its copy history
+    /// so later mutations to source vertices, edges, curves, pcurves, tolerances, or meshes
+    /// cannot invalidate the completed result (#457).
+    pub fn detach_non_destructive_result(&mut self) -> Result<(), Failure> {
+        let mut copy = BRepBuilderAPICopy::with_shape(&self.algo.base.my_shape, true, true)?;
+        if !copy.is_done() {
+            return Ok(());
+        }
+        let old_shape = self.algo.base.my_shape.clone();
+        self.algo.base.my_shape = copy.shape()?.clone();
+        let Some(history) = self.history.get() else {
+            return Ok(());
+        };
+        let copy_history = History::new();
+        for kind in [
+            ShapeEnum::Vertex,
+            ShapeEnum::Edge,
+            ShapeEnum::Face,
+            ShapeEnum::Solid,
+        ] {
+            let mut seen = IndexedMapOfShape::default();
+            let mut explorer = Explorer::new(&old_shape, kind, ShapeEnum::Shape)?;
+            while explorer.more() {
+                let entity = explorer.current().clone();
+                if seen.add(entity.clone()) > 0
+                    && let Ok(mapped) = copy.modified_shape(&entity)
+                    && !mapped.is_same(&entity)
+                {
+                    copy_history.add_modified(&entity, &mapped)?;
+                }
+                explorer.next()?;
+            }
+        }
+        history.merge(&copy_history)
     }
 
     /// Unifies the tangent edges and faces of the result within the fuzzy value and

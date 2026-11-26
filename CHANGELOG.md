@@ -8,6 +8,32 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added Wave 3 surface, STEP/IGES exchange, validation, meshing, viewport, and CI contracts: explicit repair-on-copy (`repair_on_copy`) in `martensite-tkshhealing` (#57), checked STEP exchange with diagnostics and per-face identity mapping (`export_step_checked`, `import_step_checked`) in `martensite-tkdestep` (#58, #59), localized changed-entity validation (`validate_changed_entities`, `validate_full_publication`), phased `ImprintGlueSelectPipeline` with verified coincidence hints, and per-operation tolerance-growth measurement in `martensite-tkbo` (#16, #24, #42, #213), transitive `CoincidenceClassSet` in `martensite-tkmath` (#34), homogeneous `RationalBezierPatch` de Casteljau bounds without near-unit weight demotion and independent SSI corpus in `martensite-tkgeomalgo` (#37, #39, #464), non-destructive `MeshReuseCache`, `measure_achieved_deflection`, and safe `RetainedSlotPool<T>` in `martensite-tkmesh` (#32, #104), checked batch point projection (`project_world_points_checked`), `PreviewCapturePlan`, and `ChildViewComposition` in `martensite-tkv3d` (#308, #504, #505), embedded Western glyph fallback in `martensite-tkservice` (#575), workspace `unsafe` soundness audit (`docs/architecture/safe-toolkit-unsafe-audit.md`, #83-#90, #95, #109, #171, #184, #573), and integration-test-only affected-package isolation in `martensite-build` (#492).
+
+- Added Wave 2 modelling contracts, corpora, and performance improvements: conical helix D2 sign fix (#614), predicate policy ADR & stress corpus (#33, #36), SSI and 2D curve intersection completeness receipts (#38, #568), thread-safe `getaddrinfo` IPv4 resolution (#150), serialized `Launcher::perform_job` (#106), non-destructive `Free`-flag preservation (#461), content-addressed `GeometryRevision` (#28), `Send` bounds on Boolean operations and multi-threaded determinism checks (#64, #66), `ProgressScope` null-range fast path, `DynamicArray` power-of-two shift/mask indexing, and map `push_front` optimizations (#590, #589, #587, #591, #583), deterministic parallel face meshing and cancellation verification (#55, #56), font underline/strike-through metrics and multi-run `FontTextFormatter::append` fixes (#578, #576, #510, #388), `HistoryGraph::compose` and strict `HistoryCoverageReport` (#19), `ToleranceCapPolicy` (#23), `BooleanContext` (#41), `PersistentBodyArchive` (#495), extrusion uncertainty attribution (#494), `extrude_tapered` (#463), `CheckerSI` face observation coverage (#421), seeded Boolean corpus (#3, #40), owned blend corpus and `TwoStageBlendBuilder` (#45, #46), `OffsetConfigurationClassifier` and offset corpus (#48, #49, #50), and checked guided spline-rail solid loft (#616).
+
+- Added `OperationError`, `HistoryGraph`, and sealed `OperationResult` in `martensite-tkbrep::operation`, wired into `BRepPrimAPIMakePrism::execute_operation` and `BRepAlgoAPIBuilderAlgo::seal_result` (#6, #18, #27).
+
+- Added immutable, lock-free published geometry (`PublishedCurve2d`, `PublishedCurve3d`, `PublishedSurface`) and copy-on-write builders in `martensite-tkg2d` and `martensite-tkg3d` (#65).
+
+- Added `GeneralFuseBlendAssembler` in `martensite-tkfillet` to assemble filleted and chamfered solids through `BRepAlgoAPIBuilderAlgo` with unified history and sealed results (#44).
+
+- Added `Graphic3dRenderView::try_present` and `capture_color` for checked interactive presentation without mandatory per-frame CPU readback (#501).
+
+- Added certified Bernstein orthogonality root isolation for B-spline and Bézier point-to-curve extrema so interior minima are never silently omitted (#462).
+
+- Added the `global_state_guard` CI check in `martensite-build` and moved `BlendFunc` scratch state out of `thread_local!` into per-instance fields (#62).
+
+- Added built-in allocator fast-path dispatch with direct `std::alloc` provenance in `martensite-tkernel` (#584).
+
+- Added the deep isolation test suite (`deep_isolation`) covering source vertex, tolerance, and location mutations after Boolean success, failure, and cancellation (#25).
+
+- Added the two-process byte-for-byte determinism gate (`two_process_determinism`) and `HashMap`/`HashSet` determinism audit (`docs/features/determinism/hashmap-audit.md`) (#53).
+
+- Added the written thread-safety contract, public type classification manifest (`docs/architecture/thread-safety-manifest.tsv`), compile-time `Send`/`Sync` assertions, and CI manifest check in `cargo xtask` (#61).
+
+- Added an opt-in `sanitizer` workflow dispatch mode and `ToolkitBorrowedJobs` ThreadSanitizer control in the CI planner for `martensite-tkernel` borrowed-job migration and thread lifecycle tests (#110).
+
 - Added native three-station planar Curve On Face with a matched quadratic edge and pcurve (#611).
 
 - Added an explicit Radius continuation for supported free sketch arcs through an exact half turn (#611).
@@ -164,7 +190,23 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added revision-checked extraction of the extrusion chart from a saved cylindrical face, so edits could reuse the selected face's native location, axes and radius (#420).
 
+### Changed
+
+- Changed Booleans (`BOPAlgoBuilder`, `BOPAlgoPaveFiller`, `BRepAlgoAPIBuilderAlgo`) and lofts (`BRepOffsetAPIThruSections`, `BRepFillGenerator`) to be non-destructive by default (`non_destructive: true`, `mutable_input: false`) (#26).
+
 ### Fixed
+
+- Detached non-destructive `BRepAlgoAPIBuilderAlgo` Boolean results with a deep copy and merged copy history so later source vertex or location mutations cannot invalidate completed results (#457).
+
+- Replaced `BaseAllocator`'s inner `Box<AllocatorFacadeFields>` with `Arc<AllocatorFacadeFields>` to fix a Stacked Borrows violation detected by Miri under `allocator-api2` and added Miri-verified `Send`/`Sync` audit tests for all audited collection and allocator implementations (#63).
+
+- Normalized finite nonzero `Direction3`, `Direction2`, `Vector3`, `Vector2`, `Xyz`, and `Xy` inputs without squared-norm overflow or underflow, and rejected zero and non-finite inputs (#550).
+
+- Excluded planar-face restriction edges from Exact HLR smooth 3D outline compounds by default while keeping legacy planar restriction replay selectable through `OutlineClassificationBehavior::LegacyPlanarRestrictionsV1` (#612).
+
+- Preserved incident edge maximum tolerance instead of summing edge tolerances when storing 2D offset intersection vertices, preventing thick-solid shell operations from widening exact cube vertex tolerances (#554).
+
+- Enforced admitted `VK_KHR_line_rasterization` device extension gating through `LineCapabilities::enabled_extension` before `vkCreateDevice` (#382).
 
 - Isolated Contap surface sampling per operation and made contour diagnostics opt-in through the caller's writer (#611).
 
@@ -425,6 +467,10 @@ changes and migration notes are listed in the [0.14.0 changelog](https://github.
 - Limited ThreadSanitizer controls to affected packages and execution inputs, accepting skipped jobs only when no controls were selected. (#410)
 
 - Corrected the PR formatting failure hint to list checked files and explain direct formatting for sources included by test suites. (#122)
+
+- Corrected adaptive surface integration to refine both parameter directions, retain weighted inner error estimates, and report exhausted work instead of relaxing error budgets. Nonzero parameter intervals no longer lose their physical area to an absolute parameter cutoff. (#407)
+
+- Corrected elementary conic minimum flags with a shared differential certificate in 2D and 3D. Added explicit legacy classification for replay and named errors for roots that cannot be certified. (#406)
 
 ## [0.13.0] - 2026-11-07
 

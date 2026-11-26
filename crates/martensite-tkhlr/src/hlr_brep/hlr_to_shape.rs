@@ -9,6 +9,24 @@ use martensite_tkbrep::topods::{Compound, Shape};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::ShapeEnum;
 
+/// Outline classification policy for 3D outline extraction (#612).
+///
+/// ```
+/// use martensite_tkhlr::hlr_brep::OutlineClassificationBehavior;
+/// assert_eq!(
+///     OutlineClassificationBehavior::default(),
+///     OutlineClassificationBehavior::LegacyPlanarRestrictionsV1
+/// );
+/// ```
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum OutlineClassificationBehavior {
+    /// Exclude planar-face restriction edges from smooth 3D outline compounds.
+    CurvedFaceOnlyV2,
+    /// Preserve legacy OCCT restriction-outline inclusion on planar faces for replay.
+    #[default]
+    LegacyPlanarRestrictionsV1,
+}
+
 /// HLRBRep_HLRToShape: the results of a hidden line algorithm as compounds of 2D
 /// edges in the view plane (or of 3D edges): the visible (`V`) or hidden (`H`)
 /// parts of the sharp edges, smooth edges (`Rg1Line`), sewn edges (`RgNLine`),
@@ -23,6 +41,7 @@ use martensite_tkg3d::top_abs::ShapeEnum;
 /// ```
 pub struct HLRToShape {
     algo: Handle<Algo>,
+    outline_behavior: OutlineClassificationBehavior,
 }
 
 // The compound being built and whether an edge was added (`added`).
@@ -47,7 +66,19 @@ macro_rules! compounds {
 impl HLRToShape {
     /// HLRBRep_HLRToShape(A); `HLRToShape::new(&algo)`.
     pub fn new(a: &Handle<Algo>) -> Self {
-        Self { algo: a.clone() }
+        Self::with_outline_behavior(a, OutlineClassificationBehavior::default())
+    }
+
+    /// Construct with an explicit outline classification policy (#612);
+    /// `HLRToShape::with_outline_behavior(&algo, OutlineClassificationBehavior::CurvedFaceOnlyV2)`.
+    pub fn with_outline_behavior(
+        a: &Handle<Algo>,
+        outline_behavior: OutlineClassificationBehavior,
+    ) -> Self {
+        Self {
+            algo: a.clone(),
+            outline_behavior,
+        }
     }
 
     compounds! {
@@ -113,7 +144,15 @@ impl HLRToShape {
         if let Some(data) = ds.get() {
             data.change_projector(|p| p.scaled(true))?;
             // A failure leaves the projector scaled, as the native exception does.
-            self.draw_all(algo, data, (typ, visible, in_3d), s, &mut out)?;
+            let exclude_planar =
+                self.outline_behavior == OutlineClassificationBehavior::CurvedFaceOnlyV2;
+            self.draw_all(
+                algo,
+                data,
+                (typ, visible, in_3d, exclude_planar),
+                s,
+                &mut out,
+            )?;
             data.change_projector(|p| p.scaled(false))?;
         }
         if !out.added {
@@ -126,7 +165,7 @@ impl HLRToShape {
         &self,
         algo: &Algo,
         data: &Data,
-        mode: (i32, bool, bool),
+        mode: (i32, bool, bool, bool),
         s: &Shape,
         out: &mut Result3,
     ) -> Result<(), Failure> {
@@ -153,7 +192,7 @@ impl HLRToShape {
         if mode.0 >= 3 {
             let mut ed = data.e_data_array();
             for ie in e1..=e2 {
-                draw_free_edge(&mut ed, ie, mode, out)?;
+                draw_free_edge(&mut ed, ie, (mode.0, mode.1, mode.2), out)?;
             }
         }
         Ok(())
@@ -184,7 +223,7 @@ fn mark_used(data: &Data, e1: i32, e2: i32) -> Result<(), Failure> {
 // the data structure.
 fn draw_explored(
     data: &Data,
-    mode: (i32, bool, bool),
+    mode: (i32, bool, bool, bool),
     s: &Shape,
     out: &mut Result3,
 ) -> Result<(), Failure> {
@@ -208,7 +247,7 @@ fn draw_explored(
     };
     let mut ed = data.e_data_array();
     for ie in edges.into_iter().filter(|i| *i != 0) {
-        draw_free_edge(&mut ed, ie, mode, out)?;
+        draw_free_edge(&mut ed, ie, (mode.0, mode.1, mode.2), out)?;
     }
     Ok(())
 }
@@ -232,12 +271,14 @@ fn draw_free_edge(
 fn face_edge_to_draw(
     typ: i32,
     in_3d: bool,
+    exclude_planar: bool,
+    is_plane: bool,
     itf: &FaceIterator,
     edf: &EdgeData,
 ) -> Result<bool, Failure> {
     Ok(match typ {
         1 => itf.iso_line()?,
-        2 if in_3d => itf.internal()? || itf.out_line()?,
+        2 if in_3d => itf.internal()? || (itf.out_line()? && !(exclude_planar && is_plane)),
         2 => itf.internal()?,
         3 => edf.rg1_line() && !edf.rgn_line() && !itf.out_line()?,
         4 => edf.rgn_line() && !itf.out_line()?,
@@ -250,26 +291,29 @@ fn face_edge_to_draw(
 // with one more face before it is used.
 fn draw_face(
     data: &Data,
-    (typ, visible, in_3d): (i32, bool, bool),
+    (typ, visible, in_3d, exclude_planar): (i32, bool, bool, bool),
     iface: i32,
     out: &mut Result3,
 ) -> Result<(), Failure> {
     let mut itf = FaceIterator::new();
-    {
+    let is_plane = {
         let fd = data.f_data_array();
-        itf.init_edge(
-            fd.value(iface)
-                .map_err(|x| x.into_failure("HLRBRep_HLRToShape::DrawFace"))?,
-        )?;
-    }
+        let face = fd
+            .value(iface)
+            .map_err(|x| x.into_failure("HLRBRep_HLRToShape::DrawFace"))?;
+        itf.init_edge(face)?;
+        face.plane()
+    };
     let mut ed = data.e_data_array();
     while itf.more_edge() {
         let edf = edge_mut(&mut ed, itf.edge()?)?;
         if !edf.used() {
-            if face_edge_to_draw(typ, in_3d, &itf, edf)? {
+            if face_edge_to_draw(typ, in_3d, exclude_planar, is_plane, &itf, edf)? {
                 draw_edge(visible, true, typ, edf, out, in_3d)?;
                 edf.set_used(true);
-            } else if (typ > 4 || typ == 2) && edf.rg1_line() && !itf.out_line()? {
+            } else if ((typ > 4 || typ == 2) && edf.rg1_line() && !itf.out_line()?)
+                || (typ == 2 && in_3d && exclude_planar && is_plane)
+            {
                 let hc = edf.hide_count();
                 if hc > 0 {
                     edf.set_used(true);

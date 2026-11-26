@@ -40,6 +40,6 @@ impl BaseAllocator {
         &self,
         size: usize,
     ) -> Option<NonNull<u8>> {
-        self.policy_invocation().allocate_optimal(size)
+        self.fields.inner.allocate_optimal(size)
     }
 }

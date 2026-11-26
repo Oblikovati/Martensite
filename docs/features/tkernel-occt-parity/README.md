@@ -253,3 +253,10 @@ Tracked by #583.
    it changes. Areas without cases yet get them before their fix.
 4. After each fix, measure the attached cone text workload of #419 in release and record
    the effect.
+
+## Wave 2 parity progress (#590, #589, #587, #591, #583)
+
+- **#590 (`ProgressScope` null-range fast path):** `ProgressRange::is_unbound`, `ProgressScope::from_range`, `ProgressScope::is_active`, `ProgressScope::next`, and `ProgressScope::close` short-circuit unbound ranges without touching `Cell` or `AtomicBool` loads/stores.
+- **#589 (`DynamicArray` append and value):** `DynamicArray` caches `increment_shift` and `increment_mask` for power-of-two block strides so `element_coordinates` uses single-cycle shift/mask instead of 64-bit integer `DIV`/`REM`.
+- **#587 (`DataMap` / `IndexedMap` insertion hot path):** `SlotChains::push_front` links and pushes in one write without dummy-slot overwrite, and hot lookup/insert helpers are marked `#[inline]`.
+- **#591 / #583 (public surface audit):** Unconsumed internal helpers are tracked in `consumed-public-api.tsv`; narrowing proceeds incrementally behind workspace-wide compile verification.

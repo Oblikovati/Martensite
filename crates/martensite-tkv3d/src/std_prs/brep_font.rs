@@ -416,4 +416,28 @@ impl StdPrsBRepFont {
     pub fn size(&self) -> f64 {
         self.implementation().metrics.size
     }
+    /// Scaled underline offset from the baseline (#578); `font.underline_position()`.
+    pub fn underline_position(&self) -> f64 {
+        let implementation = self.implementation();
+        let _lock = implementation.lock_font();
+        implementation.metrics.scale * f64::from(implementation.font.underline_position())
+    }
+    /// Scaled underline stroke thickness (#578); `font.underline_thickness()`.
+    pub fn underline_thickness(&self) -> f64 {
+        let implementation = self.implementation();
+        let _lock = implementation.lock_font();
+        implementation.metrics.scale * f64::from(implementation.font.underline_thickness())
+    }
+    /// Scaled strike-through offset above the baseline (#578); `font.strikeout_position()`.
+    pub fn strikeout_position(&self) -> f64 {
+        let implementation = self.implementation();
+        let _lock = implementation.lock_font();
+        implementation.metrics.scale * f64::from(implementation.font.strikeout_position())
+    }
+    /// Scaled strike-through stroke thickness (#578); `font.strikeout_thickness()`.
+    pub fn strikeout_thickness(&self) -> f64 {
+        let implementation = self.implementation();
+        let _lock = implementation.lock_font();
+        implementation.metrics.scale * f64::from(implementation.font.strikeout_thickness())
+    }
 }

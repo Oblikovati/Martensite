@@ -19,9 +19,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "pr: validate this branch against main. release: rehearse a release on every target without publishing. cache: refresh the PR build caches (run on main)."
+        description: "pr: validate this branch against main. release: rehearse a release on every target without publishing. cache: refresh the PR build caches (run on main). sanitizer: run opt-in Linux ThreadSanitizer toolkit controls (#110)."
         type: choice
-        options: [pr, release, cache]
+        options: [pr, release, cache, sanitizer]
         default: release
         required: true
       version:
@@ -89,7 +89,7 @@ jobs:
 
   checks:
     needs: plan
-    if: needs.plan.outputs.reuse-run == ''
+    if: needs.plan.outputs.reuse-run == '' && needs.plan.outputs.mode != 'sanitizer'
     env:
       MARTENSITE_CI_BASE_SHA: ${{ needs.plan.outputs.base-sha }}
       MARTENSITE_RELEASE_HISTORY_SHA256: ${{ needs.plan.outputs.release-history }}
@@ -250,7 +250,7 @@ jobs:
           PLAN_RESULT: ${{ needs.plan.result }}
           HAS_SANITIZER_FLAG: ${{ needs.plan.outputs.has-sanitizer == 'true' && '--has-tests' || '' }}
           SANITIZER_RESULT: ${{ needs.thread-sanitizer.result }}
-      - if: needs.plan.outputs.reuse-run == ''
+      - if: needs.plan.outputs.reuse-run == '' && needs.plan.outputs.mode != 'sanitizer'
         run: cargo xtask ci gate --checks "$CHECKS_RESULT" --tests "$TESTS_RESULT" $HAS_TESTS_FLAG
         env:
           CHECKS_RESULT: ${{ needs.checks.result }}

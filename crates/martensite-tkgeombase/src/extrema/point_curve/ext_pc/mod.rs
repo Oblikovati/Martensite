@@ -5,6 +5,7 @@
 mod bspline;
 mod general;
 mod owned;
+mod spline_roots;
 
 use super::gen_ext_pc::GGenExtPC;
 use crate::extrema::curve_reference::CurveReference;
@@ -13,6 +14,7 @@ use crate::extrema::elementary_point_curve::ElementaryPointCurve;
 use crate::extrema::failures::{extremum_index, not_done, null_object, sequence_value};
 use crate::extrema::gp_space::GpPoint;
 use crate::extrema::pon::POnCurve;
+use crate::extrema::{PointCurveClassification, StationaryNature};
 use crate::gcpnts::PoleCurve;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::Failure;
@@ -43,7 +45,8 @@ pub struct GGExtPC<'a, T: ExtremaCurveTool> {
     uinf: f64,
     usup: f64,
     kind: CurveType,
-    is_min: Vec<bool>,
+    classification_policy: PointCurveClassification,
+    root_natures: Vec<StationaryNature>,
     sq_dist: Vec<f64>,
 }
 
@@ -71,7 +74,8 @@ where
             uinf: self.uinf,
             usup: self.usup,
             kind: self.kind,
-            is_min: self.is_min.clone(),
+            classification_policy: self.classification_policy,
+            root_natures: self.root_natures.clone(),
             sq_dist: self.sq_dist.clone(),
         }
     }
@@ -98,7 +102,8 @@ impl<T: ExtremaCurveTool> Default for GGExtPC<'_, T> {
             uinf: infinite,
             usup: infinite,
             kind: CurveType::OtherCurve,
-            is_min: Vec::new(),
+            classification_policy: PointCurveClassification::default(),
+            root_natures: Vec::new(),
             sq_dist: Vec::new(),
         }
     }
@@ -109,6 +114,13 @@ impl<'a, T: ExtremaCurveTool> GGExtPC<'a, T> {
     pub fn new() -> Self {
         Self::default()
     }
+    /// Select the conic and spline result version before perform; `extrema.set_classification_policy(PointCurveClassification::LegacyV1)`.
+    pub fn set_classification_policy(&mut self, policy: PointCurveClassification) {
+        self.classification_policy = policy;
+        self.ext_p_el_c.set_classification_policy(policy);
+        self.done = false;
+    }
+
     /// `GGExtPC(P, C, Uinf, Usup, TolF)` (the retained TolF default is 1e-10);
     /// `ExtPC::with_range(point, &adaptor, 0.0, 1.0, 1.0e-10)?`.
     pub fn with_range(
@@ -164,9 +176,10 @@ impl<'a, T: ExtremaCurveTool> GGExtPC<'a, T> {
     }
     /// `Perform(P)`; `extrema.perform(point)?`.
     pub fn perform(&mut self, point: T::Point) -> Result<(), Failure> {
+        self.done = false;
         self.sq_dist.clear();
         self.points.clear();
-        self.is_min.clear();
+        self.root_natures.clear();
         self.sample = 17;
         let reference = self
             .curve
@@ -217,19 +230,23 @@ impl<'a, T: ExtremaCurveTool> GGExtPC<'a, T> {
         }
         Ok(())
     }
-    // The whole range with twice the pole count as samples (no postprocessing).
+    // Run native interval sampling first for exact OCCT root values, then supplement any
+    // missed interior minima via certified Bernstein isolation under DifferentialV2 (#462).
     fn perform_bezier(&mut self, point: T::Point, curve: &T::Curve) -> Result<(), Failure> {
+        let bezier = T::bezier(curve)?;
+        let bezier_ref = bezier
+            .get()
+            .ok_or_else(|| null_object("Extrema_GGExtPC: Bezier()"))?;
         self.int_uinf = self.uinf;
         self.int_usup = self.usup;
-        let bezier = T::bezier(curve)?;
-        let poles: i32 = bezier
-            .get()
-            .ok_or_else(|| null_object("Extrema_GGExtPC: Bezier()"))?
-            .pole_count();
-        self.sample = poles * 2;
+        self.sample = bezier_ref.pole_count() * 2;
         self.ext_pc
             .initialize_reference(self.curve.clone().unwrap())?;
-        self.interval_perform(point)
+        self.interval_perform(point)?;
+        if self.classification_policy == PointCurveClassification::CertifiedSplineV2 {
+            let _ = spline_roots::perform_bezier_certified(self, point, curve, bezier_ref);
+        }
+        Ok(())
     }
 }
 
@@ -261,7 +278,7 @@ impl<'a, T: ExtremaCurveTool> GGExtPC<'a, T> {
             if (u >= self.uinf - self.tol_u) && (u <= self.usup + self.tol_u) {
                 pc.set_values(u, *elementary.point(i)?.value());
                 self.sq_dist.push(elementary.square_distance(i)?);
-                self.is_min.push(elementary.is_min(i)?);
+                self.root_natures.push(elementary.classification(i)?);
                 self.points.push(pc);
             }
         }
@@ -282,12 +299,12 @@ impl<'a, T: ExtremaCurveTool> GGExtPC<'a, T> {
         let sq_conf: f64 = precision::square_confusion();
         if !first_added && self.dist1 < sq_conf {
             self.sq_dist.insert(0, self.dist1);
-            self.is_min.insert(0, true);
+            self.root_natures.insert(0, true.into());
             self.points.insert(0, POnCurve::new(self.uinf, self.pf));
         }
         if !last_added && self.dist2 < sq_conf {
             self.sq_dist.push(self.dist2);
-            self.is_min.push(true);
+            self.root_natures.push(true.into());
             self.points.push(POnCurve::new(self.usup, self.pl));
         }
     }
@@ -331,6 +348,15 @@ impl<'a, T: ExtremaCurveTool> GGExtPC<'a, T> {
     /// `AddSol(U, P, SqDist, IsMin)` (protected): appends unless a solution lies within
     /// the parameter tolerance.
     fn add_sol(&mut self, u: f64, point: T::Point, sq_dist: f64, is_min: bool) {
+        self.add_classified_sol(u, point, sq_dist, is_min.into());
+    }
+    pub(super) fn add_classified_sol(
+        &mut self,
+        u: f64,
+        point: T::Point,
+        sq_dist: f64,
+        nature: StationaryNature,
+    ) {
         if self
             .points
             .iter()
@@ -339,19 +365,20 @@ impl<'a, T: ExtremaCurveTool> GGExtPC<'a, T> {
             return;
         }
         self.sq_dist.push(sq_dist);
-        self.is_min.push(is_min);
+        self.root_natures.push(nature);
         self.points.push(POnCurve::new(u, point));
     }
     // Appends one extremum without the duplicate test.
     fn push_extremum(&mut self, sq_dist: f64, is_min: bool, point: POnCurve<T::Point>) {
         self.sq_dist.push(sq_dist);
-        self.is_min.push(is_min);
+        self.root_natures.push(is_min.into());
         self.points.push(point);
     }
 }
 
 impl<T: ExtremaCurveTool> GGExtPC<'_, T> {
-    /// `IsDone()`; `extrema.is_done()`.
+    /// Completed root search; local minimum classifications can remain unresolved.
+    /// `extrema.is_done()`.
     pub fn is_done(&self) -> bool {
         self.done
     }
@@ -369,11 +396,18 @@ impl<T: ExtremaCurveTool> GGExtPC<'_, T> {
         extremum_index(member, n, || self.nb_ext())?;
         sequence_value(member, &self.sq_dist, n)
     }
-    /// `IsMin(N)`; `extrema.is_min(1)?`.
+    /// Minimum flag; unresolved roots return their named classification error.
+    /// `extrema.is_min(1)?`.
     pub fn is_min(&self, n: i32) -> Result<bool, Failure> {
         let member: &str = "Extrema_GGExtPC::IsMin()";
         extremum_index(member, n, || self.nb_ext())?;
-        sequence_value(member, &self.is_min, n)
+        self.classification(n)?.minimum_flag()
+    }
+    /// Local evidence without discarding roots whose class is unresolved.
+    /// `matches!(extrema.classification(1)?, StationaryNature::Minimum)`.
+    pub fn classification(&self, n: i32) -> Result<StationaryNature, Failure> {
+        let index = extremum_index("Extrema_GGExtPC::Classification()", n, || self.nb_ext())?;
+        Ok(self.root_natures[index].clone())
     }
     /// `Point(N)`; `extrema.point(1)?.parameter()`.
     pub fn point(&self, n: i32) -> Result<POnCurve<T::Point>, Failure> {

@@ -92,10 +92,32 @@ impl ModelAlgo for BRepMeshFaceDiscret {
             return Ok(false);
         }
         let faces_nb = model.faces_nb();
+        if faces_nb <= 0 {
+            return Ok(range.more());
+        }
         let scope = ProgressScope::with_literal(range, "Face Discret", f64::from(faces_nb), false);
+        if parameters.in_parallel && faces_nb > 1 {
+            if !scope.more() {
+                for index in 0..faces_nb {
+                    model
+                        .get_face(index)?
+                        .status()
+                        .set_status(Status::UserBreak);
+                }
+                return Ok(false);
+            }
+            // Collect independent face handles in canonical 0..faces_nb order and discretize
+            // in parallel; each face writes only to its own triangulation, preserving
+            // deterministic face-order merge (#55).
+            let faces: Vec<FaceHandle> = (0..faces_nb)
+                .map(|index| model.get_face(index))
+                .collect::<Result<_, _>>()?;
+            crate::model_parallel::model_items(faces, true, |face| {
+                self.process(&face, parameters, &ProgressRange::default())
+            })?;
+            return Ok(range.more());
+        }
         let ranges: Vec<ProgressRange<'_>> = (0..faces_nb).map(|_| scope.next(1.0)).collect();
-        // Each algorithm operates on its own face, but progress ranges are thread-confined.
-        // Execution here remains sequential even when parallel meshing is requested.
         for (index, face_range) in ranges.iter().enumerate() {
             if !scope.more() {
                 break;

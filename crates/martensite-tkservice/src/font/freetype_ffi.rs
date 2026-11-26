@@ -197,8 +197,8 @@ pub(crate) struct FtFaceRec {
     pub(crate) height: c_short,
     max_advance_width: c_short,
     max_advance_height: c_short,
-    underline_position: c_short,
-    underline_thickness: c_short,
+    pub(crate) underline_position: c_short,
+    pub(crate) underline_thickness: c_short,
     pub(crate) glyph: *mut FtGlyphSlotRec,
     pub(crate) size: *mut FtSizeRec,
 }

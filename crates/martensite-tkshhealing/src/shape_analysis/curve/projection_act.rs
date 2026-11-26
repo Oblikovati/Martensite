@@ -69,13 +69,22 @@ fn finish_projection(
 fn nearest_minimum(extrema: &ExtPC) -> Result<i32, Failure> {
     let (mut minimum, mut index) = (f64::MAX, 0);
     for i in 1..=extrema.nb_ext()? {
-        if !extrema.is_min(i)? {
+        if !extrema.is_min(i).unwrap_or(false) {
             continue;
         }
         let distance = extrema.square_distance(i)?;
         if distance < minimum {
             minimum = distance;
             index = i;
+        }
+    }
+    if index == 0 {
+        for i in 1..=extrema.nb_ext()? {
+            let distance = extrema.square_distance(i)?;
+            if distance < minimum {
+                minimum = distance;
+                index = i;
+            }
         }
     }
     Ok(index)

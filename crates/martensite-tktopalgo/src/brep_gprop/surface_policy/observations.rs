@@ -92,7 +92,7 @@ impl SurfaceObservations {
             properties,
             options,
             evidence: self.evidence(options, error),
-            // The engine may raise absolute refinement budgets; it publishes no final global target.
+            // #407: a quadrature estimate is not a certified final global target.
             effective_relative_target: None,
             geometric_faces: self.geometric_faces,
             triangulated_faces: self.triangulated_faces,

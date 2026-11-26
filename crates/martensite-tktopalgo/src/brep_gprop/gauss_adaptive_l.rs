@@ -94,7 +94,11 @@ impl AdaptiveRun<'_, '_> {
         total: &mut Inertia,
     ) -> Result<(), Failure> {
         let (l1, l2) = boundary.range;
-        if (l2 - l1).abs() <= EPS_PARAM {
+        if self.strict_refinement {
+            if l2 == l1 {
+                return Ok(());
+            }
+        } else if (l2 - l1).abs() <= EPS_PARAM {
             self.state.refinement_exhausted |= l2 != l1;
             return Ok(());
         }
@@ -106,14 +110,25 @@ impl AdaptiveRun<'_, '_> {
         loop {
             j += 1;
             let range = self.l.next_range(j, end);
-            if self.l.is_exhausted(j, max) {
-                self.state.refinement_exhausted |=
-                    k_end != 1 || self.l.first[j - 1] != self.l.second[j - 1];
-                if k_end != 1 {
-                    j -= 1;
-                    self.state.eps_l = error_l;
-                    self.state.eps = self.state.eps_l / 0.9;
-                    break;
+            let exhausted = if self.strict_refinement {
+                self.l.is_exhausted(j, max)
+            } else {
+                self.l.is_exhausted_legacy(j, max)
+            };
+            if exhausted {
+                if self.strict_refinement {
+                    if j == max || k_end != 1 {
+                        return Err(self.refinement_failure("boundary", j, max, error_l));
+                    }
+                } else {
+                    self.state.refinement_exhausted |=
+                        k_end != 1 || self.l.first[j - 1] != self.l.second[j - 1];
+                    if k_end != 1 {
+                        j -= 1;
+                        self.state.eps_l = error_l;
+                        self.state.eps = self.state.eps_l / 0.9;
+                        break;
+                    }
                 }
                 self.l.inertia[j - 1] = Inertia::default();
                 self.l.error[j - 1] = 0.0;
@@ -127,7 +142,11 @@ impl AdaptiveRun<'_, '_> {
                 self.correct_epsilon(j);
             }
             if k_end == 2 {
-                error_l = self.l.error[max_element(&self.l.error)];
+                error_l = if self.strict_refinement {
+                    self.l.error[..j].iter().sum()
+                } else {
+                    self.l.error[max_element(&self.l.error)]
+                };
             }
             if !((error_l - self.state.eps_l > 0.0 && self.is_verify) || k_end == 1) {
                 break;
@@ -136,7 +155,11 @@ impl AdaptiveRun<'_, '_> {
         for inertia in &self.l.inertia[..j] {
             self.gauss.add_inertia(inertia, total);
         }
-        self.state.error_l_max = std_max(self.state.error_l_max, error_l);
+        if self.strict_refinement {
+            self.state.error_l_total += error_l;
+        } else {
+            self.state.error_l_total = std_max(self.state.error_l_total, error_l);
+        }
         Ok(())
     }
 
@@ -164,6 +187,7 @@ impl AdaptiveRun<'_, '_> {
         let lm = 0.5 * (self.l.second[index] + self.l.first[index]);
         let lr = 0.5 * (self.l.second[index] - self.l.first[index]);
         let mut sums = LineSums::default();
+        self.err_ul[index] = 0.0;
         for pass in 0..self.input.error_passes {
             (
                 sums.dim[pass],
@@ -193,9 +217,15 @@ impl AdaptiveRun<'_, '_> {
         if !self.boundary_point(surface, l, weight)? {
             return Ok(());
         }
-        self.err_ul[index] = 0.0;
+        if !self.strict_refinement {
+            self.err_ul[index] = 0.0;
+        }
         let u1 = self.input.bounds.0;
-        if (self.state.u2 - u1).abs() < EPS_PARAM {
+        if self.strict_refinement {
+            if self.state.u2 == u1 {
+                return Ok(());
+            }
+        } else if (self.state.u2 - u1).abs() < EPS_PARAM {
             self.state.refinement_exhausted |= self.state.u2 != u1;
             return Ok(());
         }
@@ -211,7 +241,11 @@ impl AdaptiveRun<'_, '_> {
         if pass > 0 {
             return Ok(());
         }
-        self.err_ul[index] = self.state.error_u * ((self.state.u2 - u1) * dul).abs();
+        if self.strict_refinement {
+            self.err_ul[index] += self.state.error_u * dul.abs();
+        } else {
+            self.err_ul[index] = self.state.error_u * ((self.state.u2 - u1) * dul).abs();
+        }
         for ui in &self.u.inertia[..count] {
             sums.ix = g.add(sums.ix, g.mult(ui.ix, dul));
             sums.iy = g.add(sums.iy, g.mult(ui.iy, dul));
@@ -225,7 +259,7 @@ impl AdaptiveRun<'_, '_> {
 
     /// The V, the U end and the weight `Dul` at the boundary parameter `l`: the V itself
     /// and the U upper bound on a natural face, else the pcurve point clamped to the
-    /// bounds; false (the point is skipped) when `|Dul|` is below EPS_PARAM.
+    /// bounds; only an exactly zero weighted derivative has no contribution (#407).
     fn boundary_point(
         &mut self,
         surface: &BRepGPropFace,
@@ -239,7 +273,11 @@ impl AdaptiveRun<'_, '_> {
         }
         let (puv, vuv) = surface.d12d(l)?;
         self.state.dul = vuv.y() * weight;
-        if self.state.dul.abs() < EPS_PARAM {
+        if self.strict_refinement {
+            if self.state.dul == 0.0 {
+                return Ok(false);
+            }
+        } else if self.state.dul.abs() < EPS_PARAM {
             return Ok(false);
         }
         self.state.v = clamp(puv.y(), bv1, bv2);
@@ -257,11 +295,15 @@ impl AdaptiveRun<'_, '_> {
         li.izz = g.mult(sums.izz[0], lr);
         if self.input.error_passes == 2 {
             let sub_dim = (sums.dim[1] - sums.dim[0]).abs();
-            if g.kind == super::gauss::GaussType::Vinert {
-                // Natively the Vinert branch copies ErrUL into the loop's ErrorU first.
-                self.state.error_u = self.err_ul[index];
+            if self.strict_refinement {
+                // #407: the former Vinert scratch-state copy must not govern U convergence.
+                self.l.error[index] = g.mult(g.add(sub_dim, self.err_ul[index]), lr.abs());
+            } else {
+                if g.kind == super::gauss::GaussType::Vinert {
+                    self.state.error_u = self.err_ul[index];
+                }
+                self.l.error[index] = g.add(g.mult(sub_dim, lr), self.err_ul[index]);
             }
-            self.l.error[index] = g.add(g.mult(sub_dim, lr), self.err_ul[index]);
         }
         li.ix = g.mult(sums.ix, lr);
         li.iy = g.mult(sums.iy, lr);

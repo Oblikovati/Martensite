@@ -70,7 +70,11 @@ impl<'a> ProgressScope<'a> {
     ///
     /// A range that was already used gives an inactive
     /// scope.
+    #[inline]
     fn from_range(range: &ProgressRange<'a>, max: f64, infinite: bool) -> Self {
+        if range.is_unbound() {
+            return Self::detached(None, None, 0., 0., 1.0e-6_f64.max(max), false, infinite);
+        }
         let (parent, start, delta, used) = range.disarm_for_scope();
         let progress = parent.and_then(|scope| scope.progress.clone());
         let active = progress.is_some() && !used;
@@ -119,10 +123,12 @@ impl<'a> ProgressScope<'a> {
         self.name = Some(Cow::Borrowed(name.as_bytes()));
     }
     /// True when the indicator signals a user break; `scope.user_break()`.
+    #[inline]
     pub fn user_break(&self) -> bool {
-        self.indicator_break()
+        self.progress.is_some() && self.indicator_break()
     }
     /// False when the indicator signals a user break; `while scope.more() {}`.
+    #[inline]
     pub fn more(&self) -> bool {
         !self.user_break()
     }
@@ -133,8 +139,9 @@ impl<'a> ProgressScope<'a> {
         }
     }
     /// True while armed and bound to an indicator; `scope.is_active()`.
+    #[inline]
     pub fn is_active(&self) -> bool {
-        self.active.load(Ordering::Acquire)
+        self.progress.is_some() && self.active.load(Ordering::Acquire)
     }
     /// The name as a C string (bytes up to the first NUL), or
     /// `None` for a null name; `scope.name() == Some(&b"Step"[..])`.

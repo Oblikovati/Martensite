@@ -28,3 +28,8 @@ path = "tests/toolkit.rs"
 [[test]]
 name = "geom_eval_stack_capture"
 path = "tests/geom_eval_stack_capture.rs"
+
+
+[[test]]
+name = "published_geometry"
+path = "tests/published_geometry.rs"

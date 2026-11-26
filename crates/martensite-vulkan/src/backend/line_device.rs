@@ -85,6 +85,11 @@ impl LineCapabilities {
             extension,
         })
     }
+    /// Return the admitted line rasterization extension name to pass to `vkCreateDevice`,
+    /// or `None` when the device or active layer does not admit Bresenham lines (#382).
+    pub fn enabled_extension(&self) -> Option<&'static CStr> {
+        self.extension.filter(|_| self.bresenham)
+    }
     pub fn validate(&self, style: LineStyle, range: [f32; 2]) -> Result<(), RenderError> {
         if !self.bresenham
             || (!self.wide && style.raster_width() != 1.)
@@ -218,6 +223,23 @@ mod tests {
         assert_eq!(line_extension(&[named(ext), named(khr)]), Some(khr));
         assert_eq!(line_extension(&[named(ext)]), Some(ext));
         assert_eq!(line_extension(&[]), None);
+    }
+    #[test]
+    fn device_extension_is_omitted_unless_admitted_and_bresenham_supported() {
+        let khr = ash::khr::line_rasterization::NAME;
+        let unsupported_feature = LineCapabilities {
+            extension: Some(khr),
+            bresenham: false,
+            ..Default::default()
+        };
+        assert_eq!(unsupported_feature.enabled_extension(), None);
+        assert_eq!(LineCapabilities::default().enabled_extension(), None);
+        let admitted = LineCapabilities {
+            extension: Some(khr),
+            bresenham: true,
+            ..Default::default()
+        };
+        assert_eq!(admitted.enabled_extension(), Some(khr));
     }
     #[test]
     fn widths_must_fit_the_selected_device_range() {

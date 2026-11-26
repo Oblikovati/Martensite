@@ -80,3 +80,53 @@ fn the_reflect_lines_of_a_box_have_no_outline() {
         .unwrap();
     assert_eq!(edges(&sharp), 9);
 }
+
+#[test]
+fn box_sharp_edges_are_never_classified_as_smooth_3d_outlines() {
+    let solid = BRepPrimAPIMakeBox::from_sizes(60., 40., 10.)
+        .unwrap()
+        .shape()
+        .unwrap()
+        .clone();
+    let cases = [
+        ((1., 0., 0.), 4, 4),
+        ((0., 1., 0.), 4, 4),
+        ((0., 0., 1.), 4, 4),
+        ((1., 1., 1.), 9, 3),
+    ];
+    for ((dx, dy, dz), expected_visible, expected_hidden) in cases {
+        let algo = Handle::new(Algo::new().unwrap());
+        let a = algo.get().unwrap();
+        a.add(&solid, 0);
+        let axis = Axis2::new(
+            Point3::new(0., 0., 0.),
+            Direction3::new(dx, dy, dz).unwrap(),
+        )
+        .unwrap();
+        a.set_projector(&Projector::with_frame(axis).unwrap());
+        a.update().unwrap();
+        a.hide().unwrap();
+        let to_shape = HLRToShape::with_outline_behavior(
+            &algo,
+            martensite_tkhlr::hlr_brep::OutlineClassificationBehavior::CurvedFaceOnlyV2,
+        );
+        assert!(
+            to_shape.out_line_v_compound_3d().unwrap().is_null(),
+            "planar box must not produce smooth 3D outlines for direction ({dx}, {dy}, {dz})"
+        );
+        assert!(
+            to_shape.out_line_v_compound().unwrap().is_null(),
+            "planar box must not produce smooth 2D outlines for direction ({dx}, {dy}, {dz})"
+        );
+        assert_eq!(
+            edges(&to_shape.v_compound().unwrap()),
+            expected_visible,
+            "visible sharp count for ({dx}, {dy}, {dz})"
+        );
+        assert_eq!(
+            edges(&to_shape.h_compound().unwrap()),
+            expected_hidden,
+            "hidden sharp count for ({dx}, {dy}, {dz})"
+        );
+    }
+}

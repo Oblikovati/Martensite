@@ -8,6 +8,7 @@
 //! their modules.
 pub mod app_blend;
 pub mod approx_int;
+pub mod completeness;
 pub mod fair_curve;
 pub mod gcc_ana;
 pub mod gcc_ent;
@@ -36,6 +37,9 @@ pub mod intf;
 pub mod law;
 pub mod local_analysis;
 pub mod plate;
+pub mod rational_bounds;
+#[cfg(test)]
+mod ssi_corpus;
 pub mod topclass;
 pub mod toptrans;
 

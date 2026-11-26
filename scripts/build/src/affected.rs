@@ -28,10 +28,20 @@ pub fn affected_packages(workspace: &CargoWorkspace, changed: &[ChangedFile]) ->
     if changed.iter().any(|file| is_workspace_wide(&file.path)) {
         return workspace.names().into_iter().collect();
     }
-    let owners = changed
-        .iter()
-        .filter_map(|file| owning_package(workspace, &file.path));
-    with_dependents(workspace, owners.collect())
+    let mut propagate_owners = BTreeSet::new();
+    let mut test_only_owners = BTreeSet::new();
+    for file in changed {
+        if let Some((name, is_test_only)) = owning_package_with_scope(workspace, &file.path) {
+            if is_test_only {
+                test_only_owners.insert(name);
+            } else {
+                propagate_owners.insert(name);
+            }
+        }
+    }
+    let mut affected = with_dependents(workspace, propagate_owners);
+    affected.extend(test_only_owners);
+    affected
 }
 
 fn is_workspace_wide(path: &str) -> bool {
@@ -39,15 +49,18 @@ fn is_workspace_wide(path: &str) -> bool {
         || WORKSPACE_WIDE_DIRS.iter().any(|dir| path.starts_with(dir))
 }
 
-/// The package whose directory is the longest prefix of `path`, so a crate
-/// nested inside another crate's directory still owns its own files.
-fn owning_package(workspace: &CargoWorkspace, path: &str) -> Option<String> {
+/// The package whose directory is the longest prefix of `path`, plus whether the
+/// change is confined to that package's `tests/` directory (#492).
+fn owning_package_with_scope(workspace: &CargoWorkspace, path: &str) -> Option<(String, bool)> {
     workspace
         .packages
         .iter()
-        .filter(|package| path.starts_with(&format!("{}/", package.dir)))
-        .max_by_key(|package| package.dir.len())
-        .map(|package| package.name.clone())
+        .filter_map(|package| {
+            let rel = path.strip_prefix(&format!("{}/", package.dir))?;
+            Some((package, rel))
+        })
+        .max_by_key(|(package, _)| package.dir.len())
+        .map(|(package, rel)| (package.name.clone(), rel.starts_with("tests/")))
 }
 
 /// Grows `names` until it holds every package that depends on a member.
@@ -119,5 +132,13 @@ mod tests {
     #[test]
     fn sibling_directory_with_common_prefix_is_not_an_owner() {
         assert!(affected(&["crates/martensite-math-extra/src/lib.rs"]).is_empty());
+    }
+
+    #[test]
+    fn integration_test_only_change_does_not_pull_in_dependents() {
+        assert_eq!(
+            affected(&["crates/martensite-math/tests/unit.rs"]),
+            ["martensite-math"]
+        );
     }
 }

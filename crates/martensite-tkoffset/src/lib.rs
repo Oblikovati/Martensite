@@ -3,3 +3,5 @@ pub mod bi_tgte;
 pub mod brep_offset;
 pub mod brep_offset_api;
 pub mod draft;
+pub mod guided_loft;
+pub mod offset_contract;

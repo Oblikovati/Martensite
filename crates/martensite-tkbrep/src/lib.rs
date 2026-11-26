@@ -32,6 +32,7 @@ pub mod brep_graph;
 pub mod brep_graph_inc;
 pub mod brep_lprop;
 pub mod brep_tools;
+pub mod operation;
 pub mod topexp;
 pub mod topods;
 pub mod toptools;
