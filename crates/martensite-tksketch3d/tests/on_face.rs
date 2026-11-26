@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+mod arc_composition;
 mod curve;
 
 use crate::{
