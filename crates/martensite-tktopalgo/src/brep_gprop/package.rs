@@ -150,7 +150,7 @@ impl BRepGProp {
             shape,
             props,
             1e-5,
-            (skip_shared, use_triangulation),
+            (skip_shared, use_triangulation, false),
             &mut SurfaceObservations::default(),
         )?;
         Ok(())
@@ -170,7 +170,7 @@ impl BRepGProp {
             shape,
             props,
             eps,
-            (skip_shared, false),
+            (skip_shared, false, false),
             &mut SurfaceObservations::default(),
         )
     }
@@ -183,7 +183,7 @@ pub(super) fn surface_props(
     shape: &Shape,
     props: &mut GProps,
     eps: f64,
-    (skip_shared, use_triangulation): (bool, bool),
+    (skip_shared, use_triangulation, strict_refinement): (bool, bool, bool),
     observations: &mut SurfaceObservations,
 ) -> Result<f64, Failure> {
     let centre = rough_bary_center(shape)?;
@@ -210,7 +210,13 @@ pub(super) fn surface_props(
             observations.mesh();
             continue;
         }
-        let (error, exhausted) = surface_face(&face, (&mut tool, &mut domain), &mut surface, eps)?;
+        let (error, exhausted) = surface_face(
+            &face,
+            (&mut tool, &mut domain),
+            &mut surface,
+            eps,
+            strict_refinement,
+        )?;
         observations.geometry(error, surface.mass(), exhausted);
         if error_max < error {
             error_max = error;
@@ -227,6 +233,7 @@ fn surface_face(
     (tool, domain): (&mut BRepGPropFace, &mut BRepGPropDomain),
     surface: &mut BRepGPropSinert,
     eps: f64,
+    strict_refinement: bool,
 ) -> Result<(f64, bool), Failure> {
     tool.load_face(face)?;
     let is_natural = face.nb_children() == 0;
@@ -234,7 +241,12 @@ fn surface_face(
         domain.init_face(face)?;
     }
     if eps < 1.0 {
-        return surface.perform_domain_eps_observed(tool, domain, eps);
+        if strict_refinement {
+            return surface.perform_domain_eps_observed(tool, domain, eps);
+        }
+        return surface
+            .perform_domain_eps(tool, domain, eps)
+            .map(|error| (error, false));
     }
     if is_natural {
         surface.perform(tool)?;

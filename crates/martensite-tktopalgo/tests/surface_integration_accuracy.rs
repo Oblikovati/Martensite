@@ -2,7 +2,9 @@
 #[path = "surface_integration_accuracy/fixtures.rs"]
 mod fixtures;
 use martensite_tkgeombase::gprop::GProps;
-use martensite_tktopalgo::brep_gprop::{BRepGProp, SurfaceIntegration, SurfacePropertyOptions};
+use martensite_tktopalgo::brep_gprop::{
+    BRepGProp, SurfaceErrorEvidence, SurfaceIntegration, SurfacePropertyOptions,
+};
 // Outward rational enclosure: docs/features/surface-integration-accuracy/reference-bounds.json.
 const HALF_ELLIPSE_AREA: f64 = 5.105399772679626;
 
@@ -30,9 +32,15 @@ fn verify_area_estimate(face: &martensite_tkbrep::topods::Shape, target: f64) {
     assert!((props.centre_of_mass().x() - 3.414590200008447).abs() <= target);
 }
 fn measurement(face: &martensite_tkbrep::topods::Shape, target: f64) -> (GProps, f64) {
-    let mut props = GProps::default();
-    let achieved = BRepGProp::surface_properties_eps(face, &mut props, target, false).unwrap();
-    (props, achieved)
+    let result =
+        BRepGProp::surface_properties_with_options(face, adaptive_options(target)).unwrap();
+    let achieved = match result.error_evidence() {
+        SurfaceErrorEvidence::EstimatedRelative {
+            max_face_relative_error,
+        } => max_face_relative_error,
+        other => panic!("expected EstimatedRelative evidence, got {other:?}"),
+    };
+    (result.properties().clone(), achieved)
 }
 
 #[test]
@@ -66,8 +74,7 @@ fn verify_period_and_orientation(scale: f64, phase: f64) {
 fn small_nonzero_parameter_intervals_are_integrated_instead_of_discarded() {
     for height in [1e-13, 1e-9, 1., 1e9] {
         let face = fixtures::extrusion(1., 0., height);
-        let mut props = GProps::default();
-        BRepGProp::surface_properties_eps(&face, &mut props, 1e-12, false).unwrap();
+        let (props, _) = measurement(&face, 1e-12);
         let reference = HALF_ELLIPSE_AREA * height / 2.;
         assert!(
             (props.mass() - reference).abs() <= reference * 1e-12,
