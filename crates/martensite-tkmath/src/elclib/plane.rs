@@ -71,6 +71,7 @@ pub fn parabola_value_2d(u: f64, position: Axis22d, focal: f64) -> Point2 {
 }
 
 /// Point and unit tangent of a planar line; `line_d1_2d(2.0,axis)`.
+#[inline]
 pub fn line_d1_2d(u: f64, position: Axis2d) -> PlaneD1 {
     let direction = position.direction().xy();
     (
@@ -79,17 +80,17 @@ pub fn line_d1_2d(u: f64, position: Axis2d) -> PlaneD1 {
     )
 }
 /// Planar circle point and first derivative; `circle_d1_2d(0.5,frame,2.0)`.
+#[inline]
 pub fn circle_d1_2d(u: f64, position: Axis22d, radius: f64) -> PlaneD1 {
-    let (x, y) = (
-        radius * martensite_cmath::cos(u),
-        radius * martensite_cmath::sin(u),
-    );
+    let (sine, cosine) = martensite_cmath::sincos(u);
+    let (x, y) = (radius * cosine, radius * sine);
     let frame = Frame::of(position);
     (frame.point(x, y), Vector2::from(frame.span(-y, x)))
 }
 /// Planar ellipse point and first derivative; `ellipse_d1_2d(0.5,frame,3.0,2.0)`.
+#[inline]
 pub fn ellipse_d1_2d(u: f64, position: Axis22d, major: f64, minor: f64) -> PlaneD1 {
-    let (cosine, sine) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
+    let (sine, cosine) = martensite_cmath::sincos(u);
     let frame = Frame::of(position);
     (
         frame.point(cosine * major, sine * minor),
@@ -122,11 +123,10 @@ pub fn parabola_d1_2d(u: f64, position: Axis22d, focal: f64) -> PlaneD1 {
 }
 
 /// Planar circle point and derivatives up to the second; `circle_d2_2d(0.5,frame,2.0)`.
+#[inline]
 pub fn circle_d2_2d(u: f64, position: Axis22d, radius: f64) -> PlaneD2 {
-    let (x, y) = (
-        radius * martensite_cmath::cos(u),
-        radius * martensite_cmath::sin(u),
-    );
+    let (sine, cosine) = martensite_cmath::sincos(u);
+    let (x, y) = (radius * cosine, radius * sine);
     let frame = Frame::of(position);
     let centred = frame.span(x, y);
     (
@@ -136,8 +136,9 @@ pub fn circle_d2_2d(u: f64, position: Axis22d, radius: f64) -> PlaneD2 {
     )
 }
 /// Planar ellipse point and derivatives up to the second; `ellipse_d2_2d(0.5,frame,3.0,2.0)`.
+#[inline]
 pub fn ellipse_d2_2d(u: f64, position: Axis22d, major: f64, minor: f64) -> PlaneD2 {
-    let (cosine, sine) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
+    let (sine, cosine) = martensite_cmath::sincos(u);
     let frame = Frame::of(position);
     let centred = frame.span(cosine * major, sine * minor);
     (

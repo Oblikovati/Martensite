@@ -1,10 +1,31 @@
 //! Evaluation of a span cached as polynomial coefficients in the normalized
 //! parameter `(U - CacheParameter) / SpanLength`.
+use super::MAX_DEGREE;
 use super::flat_points;
 use super::point::{CurveD3, CurvePoint};
 use crate::plib::{eval_polynomial, no_derivative_eval_polynomial, rational_derivatives};
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::standard::Failure;
+
+const MAX_STACK_FLAT: usize = (MAX_DEGREE as usize + 1) * 3;
+
+#[inline]
+fn with_flat_points<P: CurvePoint, R>(poles: &Array1<'_, P>, f: impl FnOnce(&[f64]) -> R) -> R {
+    let d = P::DIMENSION;
+    let total = poles.len() * d;
+    if total <= MAX_STACK_FLAT {
+        let mut stack = [0.0_f64; MAX_STACK_FLAT];
+        for (idx, p) in poles.as_slice().iter().enumerate() {
+            let base = idx * d;
+            for k in 0..d {
+                stack[base + k] = p.pole_coordinate(k);
+            }
+        }
+        return f(&stack[..total]);
+    }
+    let flat = flat_points(poles);
+    f(&flat)
+}
 
 /// Degree of a cached span and its parametrization.
 #[derive(Clone, Copy, Debug)]
@@ -44,17 +65,19 @@ pub fn cache_d0<P: CurvePoint>(
 ) -> Result<P, Failure> {
     let d: usize = P::DIMENSION;
     let new_parameter: f64 = span.normalized(u);
-    let flat: Vec<f64> = flat_points(poles);
-    let mut point: Vec<f64> = vec![0.0; d];
+    let mut point_buf = [0.0_f64; 3];
+    let point = &mut point_buf[..d];
     let degree: i32 = span.degree;
-    no_derivative_eval_polynomial(
-        new_parameter,
-        degree,
-        d as i32,
-        degree * d as i32,
-        &flat,
-        &mut point,
-    )?;
+    with_flat_points(poles, |flat| {
+        no_derivative_eval_polynomial(
+            new_parameter,
+            degree,
+            d as i32,
+            degree * d as i32,
+            flat,
+            point,
+        )
+    })?;
     if let Some(weights) = weights {
         let mut inverse: [f64; 1] = [0.0];
         no_derivative_eval_polynomial(
@@ -66,11 +89,11 @@ pub fn cache_d0<P: CurvePoint>(
             &mut inverse,
         )?;
         let inverse: f64 = 1.0e0 / inverse[0];
-        for value in &mut point {
+        for value in point.iter_mut() {
             *value *= inverse;
         }
     }
-    Ok(P::point_from(&point))
+    Ok(P::point_from(point))
 }
 
 /// Point and first derivative of a cached span (`bsplclib::cache_d1`);
@@ -83,15 +106,11 @@ pub fn cache_d1<P: CurvePoint>(
 ) -> Result<(P, P::Vector), Failure> {
     let d: usize = P::DIMENSION;
     let new_parameter: f64 = span.normalized(u);
-    let mut pd: Vec<f64> = vec![0.0; 2 * d];
-    eval_polynomial(
-        new_parameter,
-        1,
-        span.degree,
-        d as i32,
-        &flat_points(poles),
-        &mut pd,
-    )?;
+    let mut pd_buf = [0.0_f64; 6];
+    let pd = &mut pd_buf[..2 * d];
+    with_flat_points(poles, |flat| {
+        eval_polynomial(new_parameter, 1, span.degree, d as i32, flat, pd)
+    })?;
     for value in &mut pd[d..] {
         *value /= span.span_length;
     }
@@ -106,16 +125,18 @@ pub fn cache_d1<P: CurvePoint>(
             &mut wd,
         )?;
         wd[1] /= span.span_length;
-        rational_in_place(1, d, &mut pd, &wd)?;
+        rational_in_place(1, d, pd, &wd)?;
     }
-    Ok((P::point_from(&pd), P::vector_from(&pd[d..])))
+    Ok((P::point_from(pd), P::vector_from(&pd[d..])))
 }
 
 // plib::rational_derivatives called with the same array as input and output: each
 // row is read before it is written, so a copy of the input is equivalent.
 fn rational_in_place(request: i32, d: usize, pd: &mut [f64], wd: &[f64]) -> Result<(), Failure> {
-    let input: Vec<f64> = pd.to_vec();
-    rational_derivatives(request, d as i32, &input, wd, pd)
+    let mut input = [0.0_f64; 12];
+    let len = pd.len();
+    input[..len].copy_from_slice(pd);
+    rational_derivatives(request, d as i32, &input[..len], wd, pd)
 }
 
 /// Point and two derivatives of a cached span (`bsplclib::cache_d2`);
@@ -128,18 +149,14 @@ pub fn cache_d2<P: CurvePoint>(
 ) -> Result<(P, P::Vector, P::Vector), Failure> {
     let d: usize = P::DIMENSION;
     let new_parameter: f64 = span.normalized(u);
-    let mut pd: Vec<f64> = vec![0.0; 3 * d];
-    eval_polynomial(
-        new_parameter,
-        2,
-        span.degree,
-        d as i32,
-        &flat_points(poles),
-        &mut pd,
-    )?;
+    let mut pd_buf = [0.0_f64; 9];
+    let pd = &mut pd_buf[..3 * d];
+    with_flat_points(poles, |flat| {
+        eval_polynomial(new_parameter, 2, span.degree, d as i32, flat, pd)
+    })?;
     let end_index: usize = span.degree.clamp(0, 2) as usize;
-    scale_rows(&mut pd, d, end_index, span.span_length);
-    nullify_rows(&mut pd, d, span.degree, 2);
+    scale_rows(pd, d, end_index, span.span_length);
+    nullify_rows(pd, d, span.degree, 2);
     if let Some(weights) = weights {
         let mut wd: [f64; 3] = [0.0; 3];
         eval_polynomial(
@@ -152,10 +169,10 @@ pub fn cache_d2<P: CurvePoint>(
         )?;
         nullify_rows(&mut wd, 1, span.degree, 2);
         scale_rows(&mut wd, 1, end_index, span.span_length);
-        rational_in_place(2, d, &mut pd, &wd)?;
+        rational_in_place(2, d, pd, &wd)?;
     }
     Ok((
-        P::point_from(&pd),
+        P::point_from(pd),
         P::vector_from(&pd[d..]),
         P::vector_from(&pd[2 * d..]),
     ))
@@ -171,19 +188,15 @@ pub fn cache_d3<P: CurvePoint>(
 ) -> Result<CurveD3<P>, Failure> {
     let d: usize = P::DIMENSION;
     let new_parameter: f64 = span.normalized(u);
-    let mut pd: Vec<f64> = vec![0.0; 4 * d];
-    eval_polynomial(
-        new_parameter,
-        3,
-        span.degree,
-        d as i32,
-        &flat_points(poles),
-        &mut pd,
-    )?;
+    let mut pd_buf = [0.0_f64; 12];
+    let pd = &mut pd_buf[..4 * d];
+    with_flat_points(poles, |flat| {
+        eval_polynomial(new_parameter, 3, span.degree, d as i32, flat, pd)
+    })?;
     // D3 clears the rows above the degree before scaling, D2 after.
-    nullify_rows(&mut pd, d, span.degree, 3);
+    nullify_rows(pd, d, span.degree, 3);
     let end_index: usize = span.degree.clamp(0, 3) as usize;
-    scale_rows(&mut pd, d, end_index, span.span_length);
+    scale_rows(pd, d, end_index, span.span_length);
     if let Some(weights) = weights {
         let mut wd: [f64; 4] = [0.0; 4];
         eval_polynomial(
@@ -196,10 +209,10 @@ pub fn cache_d3<P: CurvePoint>(
         )?;
         scale_rows(&mut wd, 1, end_index, span.span_length);
         nullify_rows(&mut wd, 1, span.degree, 3);
-        rational_in_place(3, d, &mut pd, &wd)?;
+        rational_in_place(3, d, pd, &wd)?;
     }
     Ok((
-        P::point_from(&pd),
+        P::point_from(pd),
         P::vector_from(&pd[d..]),
         P::vector_from(&pd[2 * d..]),
         P::vector_from(&pd[3 * d..]),

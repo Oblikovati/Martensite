@@ -11,9 +11,14 @@ impl<K: BSplineCurveKind> BSplineCurveCore<K> {
     // The span location of EvalD0..D3. Quirk kept from the the implementation: the normalized
     // parameter is computed, then overwritten, because LocateParameter receives the
     // raw `U` and wraps it itself.
+    #[inline]
     fn eval_span(&self, u: f64) -> Result<CurveSpan<'_, 'static>, Failure> {
         let mut index: i32 = 0;
-        let mut new_u: f64 = self.periodic_normalization(u)?;
+        let mut new_u: f64 = if self.periodic {
+            self.periodic_normalization(u)?
+        } else {
+            u
+        };
         bsplclib::locate_parameter_for_eval(
             self.deg,
             &self.knots,

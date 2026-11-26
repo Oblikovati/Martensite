@@ -81,24 +81,82 @@ pub fn no_derivative_eval_polynomial(
     Ok(())
 }
 
+#[inline]
+fn value_only_fixed<const D: usize>(
+    u: f64,
+    degree: usize,
+    coefficients: &[f64],
+    results: &mut [f64],
+) {
+    let mut val = [0.0_f64; D];
+    val.copy_from_slice(&coefficients[degree * D..(degree + 1) * D]);
+    for row in (0..degree).rev() {
+        let row_c = &coefficients[row * D..(row + 1) * D];
+        for i in 0..D {
+            val[i] = val[i] * u + row_c[i];
+        }
+    }
+    results[..D].copy_from_slice(&val);
+}
+
+#[inline]
 fn value_only(u: f64, degree: usize, dim: usize, coefficients: &[f64], results: &mut [f64]) {
+    match dim {
+        1 => return value_only_fixed::<1>(u, degree, coefficients, results),
+        2 => return value_only_fixed::<2>(u, degree, coefficients, results),
+        3 => return value_only_fixed::<3>(u, degree, coefficients, results),
+        4 => return value_only_fixed::<4>(u, degree, coefficients, results),
+        _ => {}
+    }
     results[..dim].copy_from_slice(&coefficients[degree * dim..]);
     for row in (0..degree).rev() {
+        let row_c = &coefficients[row * dim..(row + 1) * dim];
         for i in 0..dim {
-            results[i] = results[i] * u + coefficients[row * dim + i];
+            results[i] = results[i] * u + row_c[i];
         }
     }
 }
 
+#[inline]
+fn value_and_first_fixed<const D: usize>(
+    u: f64,
+    degree: usize,
+    coefficients: &[f64],
+    results: &mut [f64],
+) {
+    let mut val = [0.0_f64; D];
+    let mut d1 = [0.0_f64; D];
+    val.copy_from_slice(&coefficients[degree * D..(degree + 1) * D]);
+    for row in (0..degree).rev() {
+        let row_c = &coefficients[row * D..(row + 1) * D];
+        for i in 0..D {
+            let prev = val[i];
+            d1[i] = d1[i] * u + prev;
+            val[i] = prev * u + row_c[i];
+        }
+    }
+    results[..D].copy_from_slice(&val);
+    results[D..2 * D].copy_from_slice(&d1);
+}
+
+#[inline]
 fn value_and_first(u: f64, degree: usize, dim: usize, coefficients: &[f64], results: &mut [f64]) {
+    match dim {
+        1 => return value_and_first_fixed::<1>(u, degree, coefficients, results),
+        2 => return value_and_first_fixed::<2>(u, degree, coefficients, results),
+        3 => return value_and_first_fixed::<3>(u, degree, coefficients, results),
+        4 => return value_and_first_fixed::<4>(u, degree, coefficients, results),
+        _ => {}
+    }
     let (value, first) = results.split_at_mut(dim);
     value.copy_from_slice(&coefficients[degree * dim..]);
     first[..dim].fill(0.0);
     for row in (0..degree).rev() {
+        let row_c = &coefficients[row * dim..(row + 1) * dim];
         for i in 0..dim {
             let previous: f64 = value[i];
             first[i] = first[i] * u + previous;
-            value[i] = previous * u + coefficients[row * dim + i];
+            value[i] = previous * u + row_c[i];
         }
     }
 }
