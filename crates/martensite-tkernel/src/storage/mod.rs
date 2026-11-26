@@ -9,6 +9,7 @@ mod header_data;
 mod internal_data;
 mod kinds;
 mod numbers;
+pub mod owned_extensions;
 mod root;
 mod root_data;
 mod schema;
@@ -34,6 +35,10 @@ pub use kinds::{
 };
 pub use kinds::{exception_bytes, exception_stacks};
 pub(crate) use numbers::PersistentNumbers;
+pub use owned_extensions::{
+    CheckedBorrowedInput, ExceptionAncestry, GapCleanupPolicy, OwnedDynamicRootView, SeekOrigin,
+    seek_from_origin,
+};
 pub(crate) use root::Root;
 pub(crate) use root_data::RootData;
 pub use schema::{

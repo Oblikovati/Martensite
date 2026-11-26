@@ -426,6 +426,21 @@ impl IoStream {
         u64::try_from(position).is_ok_and(|offset| device.seek(SeekFrom::Start(offset)).is_ok())
     }
 
+    /// Seeks the underlying device from `seek` after synchronizing pending buffers (#145).
+    pub(crate) fn seek_origin_device(&mut self, seek: SeekFrom) -> Option<u64> {
+        let device = self.device.as_mut()?;
+        if !pending_sync::synchronize_operation(
+            &mut self.pending,
+            &mut self.cursor,
+            &mut **device,
+            self.borrowed_session.as_deref(),
+            &mut self.state,
+        ) {
+            return None;
+        }
+        device.seek(seek).ok()
+    }
+
     /// Move the output position without clearing EOF or input-count state (#136).
     ///
     /// ```
