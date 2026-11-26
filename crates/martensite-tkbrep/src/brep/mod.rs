@@ -25,6 +25,7 @@ mod points_on_surface;
 mod polygon3d;
 mod polygon_on_surface;
 mod polygon_on_triangulation;
+pub mod spherical_attachment;
 mod tedge;
 mod tface;
 mod tool;

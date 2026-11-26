@@ -95,12 +95,29 @@ fn copy_snapshot(
 pub(crate) fn capture_cylindrical_input(
     face: &Face,
     limits: FaceCaptureLimits,
+    cancelled: impl FnMut() -> bool,
+) -> Result<AnalyticFaceInput, FaceCaptureIncomplete> {
+    capture_analytic(face, limits, CaptureMode::CylinderWall, cancelled)
+}
+
+pub(crate) fn capture_spherical_input(
+    face: &Face,
+    limits: FaceCaptureLimits,
+    cancelled: impl FnMut() -> bool,
+) -> Result<AnalyticFaceInput, FaceCaptureIncomplete> {
+    capture_analytic(face, limits, CaptureMode::SphereBand, cancelled)
+}
+
+fn capture_analytic(
+    face: &Face,
+    limits: FaceCaptureLimits,
+    mode: CaptureMode,
     mut cancelled: impl FnMut() -> bool,
 ) -> Result<AnalyticFaceInput, FaceCaptureIncomplete> {
     if cancelled() {
         return Err(FaceCaptureIncomplete::Cancelled);
     }
-    let result = captured(face, limits, CaptureMode::CylinderWall);
+    let result = captured(face, limits, mode);
     if cancelled() {
         return Err(FaceCaptureIncomplete::Cancelled);
     }

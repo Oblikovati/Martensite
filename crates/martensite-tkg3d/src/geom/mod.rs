@@ -73,7 +73,7 @@ pub use cylindrical_surface::{CylinderInputLease, GeomCylindricalSurface};
 mod conical_surface;
 pub use conical_surface::GeomConicalSurface;
 mod spherical_surface;
-pub use spherical_surface::GeomSphericalSurface;
+pub use spherical_surface::{GeomSphericalSurface, SphereInputLease};
 mod toroidal_surface;
 pub use toroidal_surface::GeomToroidalSurface;
 mod surface_of_linear_extrusion;

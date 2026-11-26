@@ -7,7 +7,7 @@ use martensite_tkg2d::geom2d::{
 };
 use martensite_tkg3d::geom::{
     CircleInputLease, CylinderInputLease, ExtrusionInputLease, GeomCurve, LineInputLease,
-    PlaneInputLease, SplineInputLease, SplineSurfaceInputLease,
+    PlaneInputLease, SphereInputLease, SplineInputLease, SplineSurfaceInputLease,
 };
 use martensite_tkmath::toploc::Location;
 use std::sync::RwLockReadGuard;
@@ -37,6 +37,7 @@ pub(super) enum Lease<'a> {
     Location(RwLockReadGuard<'a, Location>),
     Line(LineInputLease<'a>),
     Cylinder(CylinderInputLease<'a>),
+    Sphere(SphereInputLease<'a>),
     SpatialCircle(CircleInputLease<'a>),
     PlanarCircle(PlanarCircleInputLease<'a>),
     PlanarLine(PlanarLineInputLease<'a>),
@@ -91,6 +92,7 @@ fn geometry_lease(owner: &Owner) -> Result<Lease<'_>, Incomplete> {
     let result = match owner {
         Owner::Line(h) => live(h)?.try_input_lease().map(Lease::Line),
         Owner::Cylinder(h) => live(h)?.try_input_lease().map(Lease::Cylinder),
+        Owner::Sphere(h) => live(h)?.try_input_lease().map(Lease::Sphere),
         Owner::SpatialCircle(h) => live(h)?.try_input_lease().map(Lease::SpatialCircle),
         Owner::PlanarCircle(h) => live(h)?.try_input_lease().map(Lease::PlanarCircle),
         Owner::PlanarLine(h) => live(h)?.try_input_lease().map(Lease::PlanarLine),
@@ -234,6 +236,7 @@ fn geometry_order(lease: &Lease<'_>) -> u8 {
         Lease::SplineSurface(_) => 15,
         Lease::Regularity(_) => 16,
         Lease::Cylinder(_) => 17,
+        Lease::Sphere(_) => 20,
         Lease::SpatialCircle(_) => 18,
         Lease::PlanarCircle(_) => 19,
         _ => unreachable!("topology and representation leases classified first"),

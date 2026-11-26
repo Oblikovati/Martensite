@@ -6,6 +6,7 @@ use martensite_tkmath::gp::{Axis2, Axis3};
 pub(super) enum CaptureMode {
     Standard(FaceCaptureBehavior),
     CylinderWall,
+    SphereBand,
 }
 
 impl CaptureMode {
@@ -14,7 +15,7 @@ impl CaptureMode {
     }
 
     pub(super) fn analytic(self) -> bool {
-        self == Self::CylinderWall
+        matches!(self, Self::CylinderWall | Self::SphereBand)
     }
 }
 
@@ -31,6 +32,7 @@ pub(crate) struct AnalyticFaceInput {
 
 pub(crate) enum AnalyticCell {
     Cylinder(Axis3, f64),
+    Sphere(Axis3, f64),
     SpatialCircle(Axis2, f64),
     UnselectedPlanarCircle,
 }

@@ -341,6 +341,7 @@ pub mod conical_separation;
 /// Exact directed segment contacts against a full-period finite cylinder.
 pub mod segment_cylinder;
 mod segment_plane;
+pub mod spherical_band;
 pub use segment_plane::{
     SegmentPlaneCut, SegmentPlaneFailure, SegmentPlaneIntersection, SegmentWorkPlane,
     intersect_segment_plane,

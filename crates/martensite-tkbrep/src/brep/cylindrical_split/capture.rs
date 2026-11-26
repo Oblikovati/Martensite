@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Bind one exact periodic UV rectangle to its stored seam, rims and vertex identities.
 mod hole;
+pub(in crate::brep) mod sphere;
+
 use super::{CylindricalFaceError as Error, numeric_failure, poll};
 use crate::brep::{
     face_input_capture::{
@@ -90,11 +92,11 @@ impl<'a> Wall<'a> {
         wires: &[CapturedOccurrence],
         cancelled: &mut impl FnMut() -> bool,
     ) -> Checked<(RawWire, Option<RawWire>)> {
-        let first = self.wire(&wires[0], cancelled)?;
+        let first = self.wire(&wires[0], false, cancelled)?;
         let Some(second) = wires.get(1) else {
             return Ok((first, None));
         };
-        let second = self.wire(second, cancelled)?;
+        let second = self.wire(second, false, cancelled)?;
         match [first.has_seam(), second.has_seam()] {
             [true, false] => Ok((first, Some(second))),
             [false, true] => Ok((second, Some(first))),
@@ -116,6 +118,7 @@ impl<'a> Wall<'a> {
     fn wire(
         &self,
         wire: &CapturedOccurrence,
+        curved_seam: bool,
         cancelled: &mut impl FnMut() -> bool,
     ) -> Checked<RawWire> {
         local(wire).map_err(Error::Source)?;
@@ -130,7 +133,7 @@ impl<'a> Wall<'a> {
         let mut uses = Vec::with_capacity(4);
         for edge in edges {
             poll(cancelled)?;
-            uses.push(self.edge_use(edge, reverse)?);
+            uses.push(self.edge_use(edge, reverse, curved_seam)?);
         }
         Ok(RawWire {
             owner: wire.owner,
@@ -138,7 +141,12 @@ impl<'a> Wall<'a> {
         })
     }
 
-    fn edge_use(&self, edge: &CapturedOccurrence, wire_reverse: bool) -> Checked<RawUse> {
+    fn edge_use(
+        &self,
+        edge: &CapturedOccurrence,
+        wire_reverse: bool,
+        curved_seam: bool,
+    ) -> Checked<RawUse> {
         local(edge).map_err(Error::Source)?;
         let reversed = wire_reverse ^ reversed(edge).map_err(Error::Source)?;
         let vertices = self
@@ -151,10 +159,13 @@ impl<'a> Wall<'a> {
                 if *radius <= 0. {
                     return Err(required(edge.owner, "a circular rim with positive radius"));
                 }
-                Curve::Rim(
-                    Circle3::new(*axis, *radius)
-                        .map_err(|_| required(edge.owner, "a stored circular rim"))?,
-                )
+                let circle = Circle3::new(*axis, *radius)
+                    .map_err(|_| required(edge.owner, "a stored circular carrier"))?;
+                if curved_seam && parametric.second.is_some() {
+                    Curve::CurvedSeam(circle)
+                } else {
+                    Curve::Rim(circle)
+                }
             } else {
                 let [Cell::Line(axis)] = self.values.cells(spatial.curve).map_err(Error::Source)?
                 else {
@@ -351,6 +362,7 @@ struct RawUse {
 enum Curve {
     Rim(Circle3),
     Seam(Line3),
+    CurvedSeam(Circle3),
 }
 
 #[derive(Clone, Copy)]
@@ -360,6 +372,7 @@ struct Use {
     curve: Curve,
     range: [f64; 2],
     points: [[f64; 2]; 2],
+    offset: f64,
 }
 
 impl Use {
@@ -386,7 +399,7 @@ impl Use {
             {
                 [[0., b], [TAU, b]]
             }
-            Curve::Seam(_)
+            Curve::Seam(_) | Curve::CurvedSeam(_)
                 if paired
                     && vertices[0] != vertices[1]
                     && direction == [0., 1.]
@@ -413,6 +426,7 @@ impl Use {
             curve,
             range,
             points,
+            offset: b,
         })
     }
 }
@@ -425,8 +439,12 @@ fn seam_points(u: f64, offset: f64, [low, high]: [f64; 2]) -> Option<[[f64; 2]; 
 
 fn classify_uses(uses: Vec<Use>, wire: usize) -> Checked<([Use; 2], [Use; 2])> {
     let find = |predicate: fn(Use) -> bool| unique_use(&uses, predicate, wire);
-    let start = find(|edge| matches!(edge.curve, Curve::Seam(_)) && edge.points[0][0] == 0.)?;
-    let end = find(|edge| matches!(edge.curve, Curve::Seam(_)) && edge.points[0][0] == TAU)?;
+    let start = find(|edge| {
+        matches!(edge.curve, Curve::Seam(_) | Curve::CurvedSeam(_)) && edge.points[0][0] == 0.
+    })?;
+    let end = find(|edge| {
+        matches!(edge.curve, Curve::Seam(_) | Curve::CurvedSeam(_)) && edge.points[0][0] == TAU
+    })?;
     let low = find(|edge| matches!(edge.curve, Curve::Rim(_)) && edge.points[0][0] == 0.)?;
     let high = find(|edge| matches!(edge.curve, Curve::Rim(_)) && edge.points[0][0] == TAU)?;
     verify_rectangle(start, end, low, high, wire)?;

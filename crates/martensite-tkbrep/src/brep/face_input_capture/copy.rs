@@ -106,6 +106,10 @@ impl CopyContext {
                 let (frame, radius) = l.coefficients();
                 AnalyticCell::Cylinder(frame, finite(radius, "cylinder radius")?)
             }
+            Lease::Sphere(l) => {
+                let (frame, radius) = l.coefficients();
+                AnalyticCell::Sphere(frame, finite(radius, "sphere radius")?)
+            }
             Lease::SpatialCircle(l) => {
                 let (frame, radius) = l.coefficients();
                 AnalyticCell::SpatialCircle(frame, finite(radius, "spatial circle radius")?)

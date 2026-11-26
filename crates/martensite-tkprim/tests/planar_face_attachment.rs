@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Original located cap of a native square tube, with an independent square oracle.
+#[path = "planar_face_attachment/spherical.rs"]
+mod spherical;
+
 use martensite_tkbrep::{
     brep::{
         BRepBuilder, BRepCurve3D, BRepTool,

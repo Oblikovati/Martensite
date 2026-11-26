@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Certified line contact with a selected finite, full-period native cylindrical wall.
-mod capture;
+pub(super) mod capture;
 mod point;
 
 pub use super::planar_attachment::AttachmentSource;

@@ -5,7 +5,7 @@ use martensite_tkernel::standard::{Handle, RuntimeTyped, Transient, TransientHan
 use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dCircle, Geom2dCurve, Geom2dLine};
 use martensite_tkg3d::geom::{
     GeomBSplineCurve, GeomBSplineSurface, GeomCircle, GeomCurve, GeomCylindricalSurface, GeomLine,
-    GeomPlane, GeomSurface, GeomSurfaceOfLinearExtrusion,
+    GeomPlane, GeomSphericalSurface, GeomSurface, GeomSurfaceOfLinearExtrusion,
 };
 
 #[derive(Clone)]
@@ -16,6 +16,7 @@ pub(super) enum Owner {
     Seam(Handle<BRepCurveOnClosedSurface>),
     Line(Handle<GeomLine>),
     Cylinder(Handle<GeomCylindricalSurface>),
+    Sphere(Handle<GeomSphericalSurface>),
     SpatialCircle(Handle<GeomCircle>),
     PlanarCircle(Handle<Geom2dCircle>),
     PlanarLine(Handle<Geom2dLine>),
@@ -35,6 +36,7 @@ impl Owner {
             Self::Seam(h) => h.object_address() as usize,
             Self::Line(h) => h.object_address() as usize,
             Self::Cylinder(h) => h.object_address() as usize,
+            Self::Sphere(h) => h.object_address() as usize,
             Self::SpatialCircle(h) => h.object_address() as usize,
             Self::PlanarCircle(h) => h.object_address() as usize,
             Self::PlanarLine(h) => h.object_address() as usize,
@@ -94,10 +96,16 @@ pub(super) fn surface_owner(
     if exact(&surface) {
         return Ok(Owner::Extrusion(surface));
     }
-    if behavior.analytic() {
+    if behavior == Behavior::CylinderWall {
         let cylinder = handle.downcast::<GeomCylindricalSurface>();
         if exact(&cylinder) {
             return Ok(Owner::Cylinder(cylinder));
+        }
+    }
+    if behavior == Behavior::SphereBand {
+        let sphere = handle.downcast::<GeomSphericalSurface>();
+        if exact(&sphere) {
+            return Ok(Owner::Sphere(sphere));
         }
     }
     tensor_owner(handle, behavior)
