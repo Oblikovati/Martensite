@@ -9,7 +9,7 @@ use std::f64::consts::PI;
 const AXIAL: [f64; 2] = [0.5, 1.5];
 
 fn point(u: f64, v: f64) -> Point3 {
-    Point3::new(u.cos(), u.sin(), v)
+    Point3::new(martensite_cmath::cos(u), martensite_cmath::sin(u), v)
 }
 
 fn vertex(builder: BRepPrimBuilder, [u, v]: [f64; 2]) -> Vertex {

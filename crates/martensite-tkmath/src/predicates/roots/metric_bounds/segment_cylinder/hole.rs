@@ -151,7 +151,7 @@ mod tests {
 
     #[test]
     fn unresolved_nonzero_ray_is_typed_incomplete_under_the_fixed_grid() {
-        let angle = 2_f64.powi(-500);
+        let angle = martensite_cmath::powi(2., -500);
         assert!(
             matches!(Ray::capture(angle, &mut || false), Err(Error::AngularSign(value)) if value == angle)
         );
