@@ -194,7 +194,7 @@ impl ResidualSource for Equation {
                 checked_length(&first()?)?.shifted(-target)?.scaled(scale)?,
             ]),
             Self::ArcIntrinsic { branch, scale } => {
-                let chart = arc::Sagitta::new(v, 0, first(), branch)?;
+                let chart = arc::Sagitta::new(v, 0, first()?, branch)?;
                 Ok(vec![chart.intrinsic()?.scaled(scale)?])
             }
             Self::Radius {
@@ -202,14 +202,14 @@ impl ResidualSource for Equation {
                 target,
                 scale,
             } => {
-                let chart = arc::Sagitta::new(v, 0, first(), branch)?;
+                let chart = arc::Sagitta::new(v, 0, first()?, branch)?;
                 Ok(vec![chart.radius()?.shifted(-target)?.scaled(scale)?])
             }
             Self::EqualRadius {
                 branches: [a, b],
                 scale,
             } => {
-                let first = arc::Sagitta::new(v, 0, first(), a)?.radius()?;
+                let first = arc::Sagitta::new(v, 0, first()?, a)?.radius()?;
                 let second = arc::Sagitta::new(v, 9, displacement(v, 9)?, b)?.radius()?;
                 Ok(vec![first.minus(&second)?.scaled(scale)?])
             }
