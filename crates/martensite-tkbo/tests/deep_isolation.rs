@@ -159,3 +159,56 @@ fn source_is_unchanged_after_boolean_failure_and_cancellation() -> Result<(), Fa
     assert_eq!(snapshot_shape(&source)?, before);
     Ok(())
 }
+
+#[test]
+fn sealed_operation_result_covers_prism_and_boolean_history_and_errors() -> Result<(), Failure> {
+    use martensite_tkbrep::operation::{FailureClass, OperationKind};
+    use martensite_tkmath::gp::Vector3;
+    use martensite_tkprim::brep_prim_api::BRepPrimAPIMakePrism;
+
+    // #6: bad input on prism returns typed BadInput error with affected entity.
+    let box_shape = BRepPrimAPIMakeBox::from_sizes(10., 10., 10.)?
+        .shape()?
+        .clone();
+    let bad = BRepPrimAPIMakePrism::execute_operation(&box_shape, Vector3::new(0., 0., 0.), true)
+        .unwrap_err();
+    assert_eq!(bad.operation(), OperationKind::Prism);
+    assert_eq!(bad.failure_class(), FailureClass::BadInput);
+    assert_eq!(bad.affected_entities().len(), 1);
+
+    // #18 & #27: real prism produces sealed OperationResult with Derived history.
+    let face = martensite_tkbrep::topexp::Explorer::new(
+        &box_shape,
+        martensite_tkg3d::top_abs::ShapeEnum::Face,
+        martensite_tkg3d::top_abs::ShapeEnum::Shape,
+    )?
+    .current()
+    .clone();
+    let prism_res =
+        BRepPrimAPIMakePrism::execute_operation(&face, Vector3::new(0., 0., 5.), true).unwrap();
+    assert_eq!(prism_res.operation(), OperationKind::Prism);
+    assert!(!prism_res.shape().is_null());
+    assert!(!prism_res.history().is_empty());
+
+    // #18 & #27: real Boolean Cut seals detached result and monotonic revision.
+    let tool = BRepPrimAPIMakeCylinder::with_axes(
+        Axis2::new(Point3::new(5., 5., -2.), Direction3::Z)?,
+        2.,
+        14.,
+    )
+    .shape()?
+    .clone();
+    let mut cut = BRepAlgoAPICut::new();
+    let mut args = martensite_tkernel::ncollection::List::default();
+    args.append(box_shape.clone());
+    let mut tools = martensite_tkernel::ncollection::List::default();
+    tools.append(tool);
+    cut.set_arguments(&args);
+    cut.set_tools(&tools);
+    cut.build()?;
+    let bool_res = cut.seal_result(OperationKind::Boolean).unwrap();
+    assert!(bool_res.revision() > prism_res.revision());
+    assert!(!bool_res.shape().is_null());
+    assert!(!bool_res.history().is_empty());
+    Ok(())
+}

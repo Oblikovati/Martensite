@@ -95,6 +95,71 @@ impl BRepPrimAPIMakePrism {
     pub fn last_shape_of(&mut self, shape: &Shape) -> Result<Shape, Failure> {
         self.my_prism.last_shape_of(shape)
     }
+
+    /// Executes a detached prism extrusion and returns the sealed [`OperationResult`]
+    /// with unified [`HistoryGraph`] or a typed [`OperationError`] (#6, #18, #27).
+    pub fn execute_operation(
+        shape: &Shape,
+        vector: Vector3,
+        canonize: bool,
+    ) -> Result<
+        martensite_tkbrep::operation::OperationResult,
+        martensite_tkbrep::operation::OperationError,
+    > {
+        use martensite_tkbrep::brep_tools::History;
+        use martensite_tkbrep::operation::{HistoryGraph, OperationError, OperationKind, OperationResult};
+        use martensite_tkbrep::topexp;
+        use martensite_tkbrep::toptools::IndexedMapOfShape;
+        if shape.is_null() {
+            return Err(OperationError::bad_input(
+                OperationKind::Prism,
+                "prism base shape is null",
+            ));
+        }
+        if vector.magnitude() <= martensite_tkernel::precision::confusion() {
+            return Err(
+                OperationError::bad_input(
+                    OperationKind::Prism,
+                    "prism extrusion vector magnitude is within Precision::Confusion()",
+                )
+                .with_entity(shape.clone()),
+            );
+        }
+        let mut maker = Self::new(shape, vector, true, canonize).map_err(|err| {
+            OperationError::kernel_failure(OperationKind::Prism, err.to_string())
+                .with_entity(shape.clone())
+                .with_cause(err)
+        })?;
+        let result_shape = maker
+            .shape()
+            .map_err(|err| {
+                OperationError::kernel_failure(OperationKind::Prism, err.to_string())
+                    .with_entity(shape.clone())
+                    .with_cause(err)
+            })?
+            .clone();
+        let history = History::new();
+        let mut map = IndexedMapOfShape::default();
+        topexp::map_shapes(shape, &mut map, true, true);
+        for idx in 1..=map.extent() {
+            if let Ok(sub) = map.find_key(idx)
+                && History::is_supported_type(sub).unwrap_or(false)
+            {
+                if maker.is_deleted(sub).unwrap_or(false) {
+                    let _ = history.remove(sub);
+                }
+                if let Ok(generated) = maker.generated(sub) {
+                    for product in generated.iter() {
+                        let _ = history.add_generated(sub, product);
+                    }
+                }
+            }
+        }
+        let graph = HistoryGraph::from_brep_history(&[shape.clone()], &history).map_err(|err| {
+            OperationError::kernel_failure(OperationKind::Prism, err.to_string()).with_cause(err)
+        })?;
+        OperationResult::seal(OperationKind::Prism, result_shape, graph)
+    }
 }
 
 impl BRepBuilderAPIMakeShape for BRepPrimAPIMakePrism {

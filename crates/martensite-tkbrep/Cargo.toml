@@ -39,3 +39,8 @@ path = "tests/adaptor_value_copy.rs"
 [[test]]
 name = "bintools_location_wire"
 path = "tests/bintools_location_wire.rs"
+
+
+[[test]]
+name = "operation_contract"
+path = "tests/operation_contract.rs"

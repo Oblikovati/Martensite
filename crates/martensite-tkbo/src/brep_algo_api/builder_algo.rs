@@ -149,6 +149,44 @@ impl BRepAlgoAPIBuilderAlgo {
         self.fill_history.then_some(&self.history)
     }
 
+    /// Seals the completed Boolean or General Fuse result into an immutable [`OperationResult`]
+    /// with unified [`HistoryGraph`] or returns a typed [`OperationError`] (#6, #18, #27).
+    pub fn seal_result(
+        &self,
+        operation: martensite_tkbrep::operation::OperationKind,
+    ) -> Result<
+        martensite_tkbrep::operation::OperationResult,
+        martensite_tkbrep::operation::OperationError,
+    > {
+        use martensite_tkbrep::operation::{HistoryGraph, OperationError, OperationResult};
+        if self.has_errors() {
+            let mut err = OperationError::kernel_failure(
+                operation,
+                "Boolean builder completed with errors",
+            );
+            for arg in self.arguments.iter() {
+                err = err.with_entity(arg.clone());
+            }
+            return Err(err);
+        }
+        if !self.base.is_done() || self.base.my_shape.is_null() {
+            return Err(OperationError::kernel_failure(
+                operation,
+                "Boolean builder has no completed result shape",
+            ));
+        }
+        let result_shape = self.base.my_shape.clone();
+        let args: Vec<Shape> = self.arguments.iter().cloned().collect();
+        let graph = if let Some(history) = self.history.get() {
+            HistoryGraph::from_brep_history(&args, history).map_err(|err| {
+                OperationError::kernel_failure(operation, err.to_string()).with_cause(err)
+            })?
+        } else {
+            HistoryGraph::empty()
+        };
+        OperationResult::seal(operation, result_shape, graph)
+    }
+
     /// Splits the arguments (`Build`); `builder.build()?`.
     pub fn build(&mut self) -> Result<(), Failure> {
         self.base.set_not_done();
