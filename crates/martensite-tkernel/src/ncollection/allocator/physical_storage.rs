@@ -47,7 +47,7 @@ impl BaseAllocator {
     }
     pub(in crate::ncollection) fn detached_policy(&self) -> Self {
         Self {
-            fields: Box::new(super::AllocatorFacadeFields {
+            fields: Arc::new(super::AllocatorFacadeFields {
                 inner: self.fields.inner.clone(),
                 registration: Arc::new(Default::default()),
                 virtual_allocations: self.fields.virtual_allocations.clone(),

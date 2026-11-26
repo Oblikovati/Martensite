@@ -168,6 +168,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Replaced `BaseAllocator`'s inner `Box<AllocatorFacadeFields>` with `Arc<AllocatorFacadeFields>` to fix a Stacked Borrows violation detected by Miri under `allocator-api2` and added Miri-verified `Send`/`Sync` audit tests for all audited collection and allocator implementations (#63).
+
 - Normalized finite nonzero `Direction3`, `Direction2`, `Vector3`, `Vector2`, `Xyz`, and `Xy` inputs without squared-norm overflow or underflow, and rejected zero and non-finite inputs (#550).
 
 - Excluded planar-face restriction edges from Exact HLR smooth 3D outline compounds by default while keeping legacy planar restriction replay selectable through `OutlineClassificationBehavior::LegacyPlanarRestrictionsV1` (#612).

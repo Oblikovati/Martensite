@@ -19,11 +19,9 @@ impl BaseAllocator {
             "allocator={:?}; expected registered AllocatorSource interface",
             handle
         );
-        let resource = source.allocator_object_base().resource();
+        let resource = source.allocator_object_base().resource().clone();
         *resource.fields.registration.write() = source.downgrade();
-        let mut facade = resource.facade_with_reference(AllocatorReference::Policy);
-        facade.fields.reference = AllocatorReference::Owned(source);
-        facade
+        resource.facade_with_reference(AllocatorReference::Owned(source))
     }
     /// Retain physical storage with zero handle ownership; `let lease=allocator.storage_lease()`.
     pub fn storage_lease(&self) -> Self {
@@ -38,7 +36,7 @@ impl BaseAllocator {
     }
     fn facade_with_reference(&self, reference: AllocatorReference) -> Self {
         Self {
-            fields: Box::new(super::AllocatorFacadeFields {
+            fields: std::sync::Arc::new(super::AllocatorFacadeFields {
                 inner: self.fields.inner.clone(),
                 registration: self.fields.registration.clone(),
                 reference,

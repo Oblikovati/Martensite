@@ -53,7 +53,7 @@ use raw_heap::MALLOC_ALIGNMENT;
 
 /// A shared allocator identity and policy; `BaseAllocator::common().allocate(16)`.
 pub struct BaseAllocator {
-    fields: Box<AllocatorFacadeFields>,
+    fields: Arc<AllocatorFacadeFields>,
 }
 struct AllocatorFacadeFields {
     inner: Arc<AllocatorKind>,
@@ -132,7 +132,7 @@ impl BaseAllocator {
 
     fn with_kind(kind: AllocatorKind) -> Self {
         Self {
-            fields: Box::new(AllocatorFacadeFields {
+            fields: Arc::new(AllocatorFacadeFields {
                 inner: Arc::new(kind),
                 registration: Arc::new(SharedState::default()),
                 reference: reference::AllocatorReference::Policy,

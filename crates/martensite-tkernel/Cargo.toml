@@ -163,6 +163,11 @@ path = "tests/standard_services_api_behavior.rs"
 name = "osd_cpu_limit_signal"
 path = "tests/osd_cpu_limit_signal.rs"
 
+# Miri-verified Send/Sync concurrency contracts for audited unsafe impls (#63).
+[[test]]
+name = "unsafe_send_sync_audit"
+path = "tests/unsafe_send_sync_audit.rs"
+
 # Paired performance cases against OCCT TKernel (#583); `cargo xtask occt-parity` runs them.
 [[bench]]
 name = "occt_parity"
