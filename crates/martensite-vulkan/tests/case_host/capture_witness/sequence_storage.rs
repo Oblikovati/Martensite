@@ -462,5 +462,7 @@ fn write_error(path: &Path, error: io::Error) -> io::Error {
 }
 
 #[cfg(test)]
-#[path = "sequence_storage_controls.rs"]
-mod controls;
+support_unit_tests! {
+    #[path = "sequence_storage_controls.rs"]
+    mod controls;
+}

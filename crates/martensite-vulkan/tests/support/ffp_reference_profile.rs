@@ -114,5 +114,7 @@ pub fn profiled_driver_asset(
     profiled_ffp_asset(&identity, mode, host, software).unwrap()
 }
 #[cfg(test)]
-#[path = "ffp_reference_profile_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "ffp_reference_profile_tests.rs"]
+    mod tests;
+}

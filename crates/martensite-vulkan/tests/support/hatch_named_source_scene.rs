@@ -144,8 +144,10 @@ fn display_source_object(
 }
 
 #[cfg(test)]
-#[path = "hatch_named_display_controls.rs"]
-mod named_display_controls;
+support_unit_tests! {
+    #[path = "hatch_named_display_controls.rs"]
+    mod named_display_controls;
+}
 
 #[path = "hatch_named_source_commands.rs"]
 mod source_commands;

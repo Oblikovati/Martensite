@@ -71,9 +71,19 @@ pub(super) fn perform_circular(
     let mut nb_points: i32 = ElementCast::<i32>::cast((u2 - u1) / angle);
     nb_points = nb_points.wrapping_add(2);
     angle = (u2 - u1) / f64::from(nb_points.wrapping_sub(1));
+    let (lo, hi) = if u1 <= u2 { (u1, u2) } else { (u2, u1) };
     let mut u: f64 = u1;
-    for _ in 1..=nb_points {
-        sequence.append(u, curve.lifted_d0(u)?);
+    for step in 0..nb_points {
+        // #530: anchor exact endpoints and preserve OCCT's interior accumulation
+        // clamped to [lo, hi] so rounding never steps outside requested bounds.
+        let sample = if step == 0 {
+            u1
+        } else if step + 1 == nb_points {
+            u2
+        } else {
+            u.clamp(lo, hi)
+        };
+        sequence.append(sample, curve.lifted_d0(sample)?);
         u += angle;
     }
     Ok(true)
@@ -109,5 +119,55 @@ pub(super) fn perform_composite(
         // remove last point to avoid duplication
         sequence.remove_last()?;
         ua = ub;
+    }
+}
+
+#[cfg(test)]
+mod circular_endpoint_tests {
+    use crate::gcpnts::QuasiUniformDeflection;
+    use martensite_tkernel::standard::Handle;
+    use martensite_tkg3d::geom::{GeomCircle, GeomCurve};
+    use martensite_tkg3d::geom_adaptor::GeomAdaptorCurve;
+    use martensite_tkmath::geom_abs::Shape;
+    use martensite_tkmath::gp::{Axis2, Direction3, Point3};
+
+    #[test]
+    fn circular_deflection_anchors_exact_endpoints_for_positive_and_negative_ranges() {
+        let axis = Axis2::new(
+            Point3::new(0.0, 0.0, 0.0),
+            Direction3::new(0.0, 0.0, 1.0).unwrap(),
+        )
+        .unwrap();
+        let geom: Handle<dyn GeomCurve> = Handle::new(GeomCircle::new(axis, 2.0).unwrap()).cast();
+        let adaptor = GeomAdaptorCurve::with_curve(&geom).unwrap();
+
+        let pi_up = std::f64::consts::PI.next_up();
+        let half_pi = std::f64::consts::FRAC_PI_2;
+        let ranges = [
+            (half_pi, pi_up, 0.1),
+            (0.0, std::f64::consts::TAU, 0.03),
+            (-pi_up, -half_pi, 0.1),
+            (-1.0, 2.3, 0.07),
+        ];
+        for (u1, u2, deflection) in ranges {
+            let sampling =
+                QuasiUniformDeflection::with_range(&adaptor, deflection, u1, u2, Shape::C1)
+                    .unwrap();
+            assert!(sampling.is_done());
+            let count = sampling.nb_points().unwrap();
+            assert!(count >= 2);
+            assert_eq!(sampling.parameter(1).unwrap(), u1);
+            assert_eq!(sampling.parameter(count).unwrap(), u2);
+            let mut prev = u1;
+            for i in 1..=count {
+                let p = sampling.parameter(i).unwrap();
+                assert!(
+                    p >= u1 && p <= u2,
+                    "sample {i}/{count} parameter {p} outside [{u1}, {u2}]"
+                );
+                assert!(p >= prev, "non-monotone sample {p} < {prev}");
+                prev = p;
+            }
+        }
     }
 }

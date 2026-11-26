@@ -46,5 +46,7 @@ pub(super) fn command_font_record(
 }
 
 #[cfg(test)]
-#[path = "font_registration_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "font_registration_tests.rs"]
+    mod tests;
+}

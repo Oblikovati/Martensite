@@ -119,37 +119,13 @@ fn raster_coverage_tag(polygon_points: bool, topology: u32) -> u32 {
     topology
 }
 #[cfg(test)]
-mod raster_coverage_tests {
-    use super::*;
-    #[test]
-    fn polygon_point_coverage_is_explicitly_unknown_instead_of_filled_triangle() {
-        assert_eq!(raster_coverage_tag(true, 0), 3);
-        for tag in [0, 1, 2] {
-            assert_eq!(raster_coverage_tag(false, tag), tag);
-        }
-    }
+support_unit_tests! {
+    #[path = "raster_coverage_tests.rs"]
+    mod raster_coverage_tests;
 }
 
 #[cfg(all(test, feature = "raytrace-input-diagnostics"))]
-mod raytrace_controls {
-    use super::*;
-    #[test]
-    fn unrequested_metadata_preserves_existing_complete_bytes() {
-        let original =
-            "schema=existing\nlimits=no-uploaded-buffer-or-shader-interpolation-witness\n";
-        assert_eq!(raytrace_completion(original.into(), None), original);
-    }
-    #[test]
-    fn additive_inputs_stay_inside_the_existing_sealed_complete_piece() {
-        let original = "schema=existing\n";
-        let complete = raytrace_completion(original.into(), Some("{\"view_id\":7}"));
-        assert!(complete.starts_with(original));
-        let json = complete
-            .lines()
-            .find_map(|line| line.strip_prefix("raytrace_inputs_json="))
-            .unwrap();
-        let parsed: serde_json::Value = serde_json::from_str(json).unwrap();
-        assert_eq!(parsed["view_id"], 7);
-        assert_eq!(complete.matches("raytrace_inputs_json=").count(), 1);
-    }
+support_unit_tests! {
+    #[path = "raytrace_controls.rs"]
+    mod raytrace_controls;
 }

@@ -24,5 +24,7 @@ pub(crate) fn assign(
 }
 
 #[cfg(test)]
-#[path = "object_fill_program_controls.rs"]
-mod controls;
+support_unit_tests! {
+    #[path = "object_fill_program_controls.rs"]
+    mod controls;
+}

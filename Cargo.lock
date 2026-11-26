@@ -980,6 +980,7 @@ dependencies = [
  "martensite-cmath",
  "martensite-process-policy",
  "martensite-test-support",
+ "martensite-tkbo",
  "martensite-tkbrep",
  "martensite-tkernel",
  "martensite-tkg2d",

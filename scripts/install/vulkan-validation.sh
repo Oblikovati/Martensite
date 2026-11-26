@@ -53,6 +53,7 @@ prepare_lavapipe() {
     require_digest "$archive" "$LAVAPIPE_SHA256"
     mkdir -p "$directory"
     tar -xJf "$archive" -C "$directory"
+    mkdir -p "$directory/$LAVAPIPE/shader-cache"
     return 0
 }
 
@@ -62,6 +63,8 @@ environment_lines() {
     printf 'export LD_LIBRARY_PATH="%s${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\n' "$extracted/lib/x86_64-linux-gnu"
     # Every validated process must report zero errors, warnings and performance warnings.
     printf 'export MARTENSITE_LAVAPIPE_ICD="%s"\n' "$1/$LAVAPIPE/lvp_icd.json"
+    # Isolate pinned lavapipe from stale host Mesa disk shader cache entries (#389).
+    printf 'export MESA_SHADER_CACHE_DIR="%s"\n' "$1/$LAVAPIPE/shader-cache"
     printf 'export VK_KHRONOS_VALIDATION_DEBUG_ACTION="VK_DBG_LAYER_ACTION_LOG_MSG"\n'
     printf 'export VK_KHRONOS_VALIDATION_REPORT_FLAGS="error,warn,perf"\n'
     printf 'export VK_KHRONOS_VALIDATION_VALIDATE_SYNC="true"\n'
@@ -73,6 +76,7 @@ github_lines() {
     printf 'VK_LAYER_PATH=%s\n' "$extracted/share/vulkan/explicit_layer.d"
     printf 'LD_LIBRARY_PATH=%s\n' "$extracted/lib/x86_64-linux-gnu"
     printf 'VK_DRIVER_FILES=%s\n' "$1/$LAVAPIPE/lvp_icd.json"
+    printf 'MESA_SHADER_CACHE_DIR=%s\n' "$1/$LAVAPIPE/shader-cache"
     printf 'VK_KHRONOS_VALIDATION_DEBUG_ACTION=VK_DBG_LAYER_ACTION_LOG_MSG\n'
     printf 'VK_KHRONOS_VALIDATION_REPORT_FLAGS=error,warn,perf\n'
     printf 'VK_KHRONOS_VALIDATION_VALIDATE_SYNC=true\n'

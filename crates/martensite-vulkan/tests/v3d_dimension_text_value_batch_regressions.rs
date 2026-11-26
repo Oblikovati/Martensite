@@ -1,8 +1,6 @@
 //! Full text/value dimension cases retain picking, pixel checks and owner images.
 #![cfg(target_os = "linux")]
 include!("case_host/session_modules.rs");
-#[path = "support/case_v3d_policy_controls.rs"]
-mod case_v3d_policy_controls;
 #[allow(dead_code, unused_imports)]
 // Keep all canonical dimension programs unchanged while selecting these five cases.
 mod v3d_dimension_text_cases;

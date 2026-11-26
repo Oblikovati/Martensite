@@ -335,5 +335,7 @@ fn metadata(behavior: RenderLightDotBehavior) -> String {
     )
 }
 #[cfg(test)]
-#[path = "light_dot_selection_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "light_dot_selection_tests.rs"]
+    mod tests;
+}

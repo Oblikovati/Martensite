@@ -31,5 +31,7 @@ impl ViewerSession {
     }
 }
 #[cfg(test)]
-#[path = "lighting_capabilities_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "lighting_capabilities_tests.rs"]
+    mod tests;
+}

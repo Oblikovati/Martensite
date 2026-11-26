@@ -196,10 +196,14 @@ pub(crate) fn set_length_direction(
 }
 
 #[cfg(test)]
-mod dimension_cpu_contract {
-    include!("../support/dimension_params_contract.rs");
+support_unit_tests! {
+    mod dimension_cpu_contract {
+        include!("../support/dimension_params_contract.rs");
+    }
 }
 
 #[cfg(test)]
-#[path = "dimension_style_contract.rs"]
-mod dimension_style_contract;
+support_unit_tests! {
+    #[path = "dimension_style_contract.rs"]
+    mod dimension_style_contract;
+}

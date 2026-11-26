@@ -5,6 +5,7 @@ use martensite_tkbrep::{
     topods,
 };
 pub(super) fn encode(attempt: &Attempt, body: &Shape, face: &Face) -> Checked<Vec<u8>> {
+    admission::raw_tolerances(attempt, body)?;
     attempt.encoding(encoding::encode(
         body,
         &[(attempt.id, face.clone().into_shape())],

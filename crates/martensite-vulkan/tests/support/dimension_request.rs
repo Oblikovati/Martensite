@@ -293,24 +293,14 @@ fn require_valid_dimension(
 }
 
 #[cfg(test)]
-mod dimension_cpu_contract {
-    include!("../support/dimension_request_contract.rs");
+support_unit_tests! {
+    mod dimension_cpu_contract {
+        include!("../support/dimension_request_contract.rs");
+    }
 }
 
 #[cfg(test)]
-mod dimension_kind_command_contract {
-    use super::DimensionKind;
-
-    #[test]
-    fn dimension_kind_flags_match_the_command_grammar() {
-        let cases = [
-            (DimensionKind::Length, "-length"),
-            (DimensionKind::Angle, "-angle"),
-            (DimensionKind::Radius, "-radius"),
-            (DimensionKind::Diameter, "-diameter"),
-        ];
-        for (kind, flag) in cases {
-            assert_eq!(kind.flag(), flag);
-        }
-    }
+support_unit_tests! {
+    #[path = "dimension_kind_command_contract.rs"]
+    mod dimension_kind_command_contract;
 }

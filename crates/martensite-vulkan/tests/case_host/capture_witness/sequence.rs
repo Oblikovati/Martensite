@@ -13,5 +13,7 @@ pub(super) fn validate_sequence_flag(flag: Option<&OsStr>) -> io::Result<()> {
     }
 }
 #[cfg(test)]
-#[path = "sequence_controls.rs"]
-mod sequence_controls;
+support_unit_tests! {
+    #[path = "sequence_controls.rs"]
+    mod sequence_controls;
+}

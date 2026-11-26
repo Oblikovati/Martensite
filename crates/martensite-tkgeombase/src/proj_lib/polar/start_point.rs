@@ -6,7 +6,7 @@
 //! gives it.
 use super::ComputeApproxOnPolarSurface;
 use super::initial::Sampling;
-use crate::extrema::{ExtAlgo, ExtFlag, ExtPS};
+use crate::extrema::ExtPS;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::gp::{Direction2, Point2, Vector2};
@@ -27,14 +27,15 @@ pub(super) struct WalkStart {
 }
 
 // The first ExtPS, redone with PConfusion tolerances when no extremum is near.
-fn first_extrema<'a>(s: &mut Sampling<'a>) -> Result<ExtPS<'a>, Failure> {
+fn first_extrema<'a, 'b>(s: &'b mut Sampling<'a>) -> Result<&'b ExtPS<'a>, Failure> {
     let point = s.pts[1];
-    let mut ext =
-        ExtPS::with_surface(point, s.surf, s.tol_u, s.tol_v, ExtFlag::Min, ExtAlgo::Grad)?;
     let mut min_sq_dist: f64 = f64::MAX;
-    if ext.is_done() {
-        for i in 1..=ext.nb_ext()? {
-            min_sq_dist = min_sq_dist.min_native(ext.square_distance(i)?);
+    {
+        let ext = s.global_extrema(point)?;
+        if ext.is_done() {
+            for i in 1..=ext.nb_ext()? {
+                min_sq_dist = min_sq_dist.min_native(ext.square_distance(i)?);
+            }
         }
     }
     if min_sq_dist > s.dist_tol3d2 {
@@ -42,11 +43,9 @@ fn first_extrema<'a>(s: &mut Sampling<'a>) -> Result<ExtPS<'a>, Failure> {
         // rest of the construction.
         s.tol_u = s.tol_u.min(precision::p_confusion());
         s.tol_v = s.tol_v.min(precision::p_confusion());
-        let [uinf, usup, vinf, vsup] = s.bounds;
-        ext.initialize(s.surf, (uinf, usup), (vinf, vsup), (s.tol_u, s.tol_v))?;
-        ext.perform(point)?;
+        return s.reinit_global_extrema(point);
     }
-    Ok(ext)
+    Ok(s.ext_ps.as_ref().expect("ext_ps initialized above"))
 }
 
 trait NativeMin {
@@ -101,18 +100,26 @@ impl ComputeApproxOnPolarSurface {
         &mut self,
         s: &mut Sampling<'_>,
     ) -> Result<Option<WalkStart>, Failure> {
-        let ext = first_extrema(s)?;
-        if !(ext.is_done() && ext.nb_ext()? >= 1) {
-            return Ok(None);
-        }
-        let first: FirstProjection = collect(&ext, s.dist_tol3d2)?;
+        let (first, good) = {
+            let dist_tol3d2 = s.dist_tol3d2;
+            let ext = first_extrema(s)?;
+            if !(ext.is_done() && ext.nb_ext()? >= 1) {
+                return Ok(None);
+            }
+            let first: FirstProjection = collect(ext, dist_tol3d2)?;
+            let good = if first.dist2_min <= dist_tol3d2 {
+                Some(ext.point(first.good_value)?.parameter())
+            } else {
+                None
+            };
+            (first, good)
+        };
         let mut start = WalkStart {
             u: 0.,
             v: 0.,
             dist2_min: first.dist2_min,
         };
-        if first.dist2_min <= s.dist_tol3d2 {
-            let good: (f64, f64) = ext.point(first.good_value)?.parameter();
+        if let Some(good) = good {
             let uv: (f64, f64) = if first.sols.len() > 1 {
                 choose_solution(s, &first.sols, good, &mut start.dist2_min)?
             } else {
@@ -129,7 +136,7 @@ impl ComputeApproxOnPolarSurface {
 // Several exact solutions: when they are farther apart than the parametric
 // tolerance, the one the curve leaves from towards the next resolvable point.
 fn choose_solution(
-    s: &Sampling<'_>,
+    s: &mut Sampling<'_>,
     sols: &[Point2],
     good: (f64, f64),
     dist2_min: &mut f64,
@@ -177,25 +184,21 @@ impl NativeMax for f64 {
 // The first of five samples (at fifths of the curve) with exactly one extremum
 // within the distance tolerance, and its projection.
 fn single_solution_sample(
-    s: &Sampling<'_>,
+    s: &mut Sampling<'_>,
     dist2_min: &mut f64,
 ) -> Result<Option<(i32, Point2)>, Failure> {
+    let nb_of_pnts = s.nb_of_pnts;
+    let dist_tol3d2 = s.dist_tol3d2;
     for i in 1..=5 {
-        let i_t: i32 = 1 + (s.nb_of_pnts - 1) / 5 * i;
-        let ext = ExtPS::with_surface(
-            s.pts[i_t],
-            s.surf,
-            s.tol_u,
-            s.tol_v,
-            ExtFlag::Min,
-            ExtAlgo::Grad,
-        )?;
+        let i_t: i32 = 1 + (nb_of_pnts - 1) / 5 * i;
+        let pt = s.pts[i_t];
+        let ext = s.global_extrema(pt)?;
         *dist2_min = 1.0e+200;
         let (mut nb_ext_ok, mut ind_ext): (i32, i32) = (0, 0);
         if ext.is_done() && ext.nb_ext()? >= 1 {
             for j in 1..=ext.nb_ext()? {
                 let sq: f64 = ext.square_distance(j)?;
-                if sq < s.dist_tol3d2 {
+                if sq < dist_tol3d2 {
                     nb_ext_ok += 1;
                     if sq < *dist2_min {
                         (*dist2_min, ind_ext) = (sq, j);
@@ -213,19 +216,15 @@ fn single_solution_sample(
 
 // The projection of the first later sample with an extremum within the tolerance.
 fn next_projection(
-    s: &Sampling<'_>,
+    s: &mut Sampling<'_>,
     t_pp: i32,
     dist2_min: &mut f64,
 ) -> Result<Option<Point2>, Failure> {
-    for j in t_pp + 1..=s.nb_of_pnts {
-        let ext = ExtPS::with_surface(
-            s.pts[j],
-            s.surf,
-            s.tol_u,
-            s.tol_v,
-            ExtFlag::Min,
-            ExtAlgo::Grad,
-        )?;
+    let nb_of_pnts = s.nb_of_pnts;
+    let dist_tol3d2 = s.dist_tol3d2;
+    for j in t_pp + 1..=nb_of_pnts {
+        let pt = s.pts[j];
+        let ext = s.global_extrema(pt)?;
         *dist2_min = f64::MAX;
         if !(ext.is_done() && ext.nb_ext()? >= 1) {
             continue;
@@ -233,7 +232,7 @@ fn next_projection(
         let mut ind_ext: i32 = 0;
         for i in 1..=ext.nb_ext()? {
             let sq: f64 = ext.square_distance(i)?;
-            if sq < s.dist_tol3d2 && sq < *dist2_min {
+            if sq < dist_tol3d2 && sq < *dist2_min {
                 (*dist2_min, ind_ext) = (sq, i);
             }
         }

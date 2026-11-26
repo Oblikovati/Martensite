@@ -1,0 +1,3 @@
+before=true visited=583 resources=204 unknown={"skip crates/martensite-vulkan/src/backend/device_configuration.rs", "skip crates/martensite-vulkan/src/backend/pipeline.rs", "skip crates/martensite-vulkan/src/backend/runtime.rs", "skip crates/martensite-vulkan/src/backend/user_program_draw.rs", "skip crates/martensite-vulkan/src/backend/user_program_pipeline.rs"}
+before=false visited=583 resources=204 unknown={"skip crates/martensite-vulkan/src/backend/device_configuration.rs", "skip crates/martensite-vulkan/src/backend/pipeline.rs", "skip crates/martensite-vulkan/src/backend/runtime.rs", "skip crates/martensite-vulkan/src/backend/user_program_draw.rs", "skip crates/martensite-vulkan/src/backend/user_program_pipeline.rs"}
+normal_fingerprint_delta=[] elapsed=1.085776352s

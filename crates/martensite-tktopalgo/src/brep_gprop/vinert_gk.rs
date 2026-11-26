@@ -32,6 +32,28 @@ impl Default for VinertGKOptions {
     }
 }
 
+/// Explicit finite work limits for Gauss-Kronrod volume integration (#424).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct VolumeGKLimits {
+    /// Maximum adaptive subdivisions per outer T knot span.
+    pub max_outer_iterations: i32,
+    /// Maximum adaptive subdivisions per inner U knot span.
+    pub max_inner_iterations: i32,
+    /// Maximum outer T integrand evaluations per face-value span (`None` disables the cap).
+    pub max_t_evaluations: Option<usize>,
+}
+
+impl Default for VolumeGKLimits {
+    /// Bounded defaults: 1000 outer/inner subdivisions and 12_000 outer T evaluations per span.
+    fn default() -> Self {
+        Self {
+            max_outer_iterations: 1000,
+            max_inner_iterations: 1000,
+            max_t_evaluations: Some(12_000),
+        }
+    }
+}
+
 /// `BRepGProp_VinertGK`: the volume (and on request the centre and inertia) of the
 /// region delimited by a face and the location, a point or a plane (a `GProp_GProps`,
 ///); the inherited members are reached through
@@ -48,6 +70,7 @@ pub struct BRepGPropVinertGK {
     pub(super) error_reached: f64,
     pub(super) absolut_error: f64,
     pub(super) round_off_length: f64,
+    pub(super) limits: VolumeGKLimits,
 }
 
 impl Deref for BRepGPropVinertGK {
@@ -66,6 +89,11 @@ impl BRepGPropVinertGK {
     /// `SetLocation(theLocation)`: the vertex of the region; `props.set_location(p)`.
     pub fn set_location(&mut self, location: Point3) {
         self.base.loc = location;
+    }
+
+    /// Sets explicit finite work limits for Gauss-Kronrod volume integration (#424).
+    pub fn set_limits(&mut self, limits: VolumeGKLimits) {
+        self.limits = limits;
     }
 
     /// `GetErrorReached()`: the relative error of the volume (-1 after a failure);

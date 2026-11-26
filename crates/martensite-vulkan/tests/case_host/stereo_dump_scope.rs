@@ -50,5 +50,7 @@ pub(super) fn with_stereo_dump<T: StereoDumpTarget>(
 }
 
 #[cfg(test)]
-#[path = "stereo_dump_scope_contract.rs"]
-mod stereo_scope_contract;
+support_unit_tests! {
+    #[path = "stereo_dump_scope_contract.rs"]
+    mod stereo_scope_contract;
+}

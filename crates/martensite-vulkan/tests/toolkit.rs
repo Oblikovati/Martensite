@@ -1,5 +1,6 @@
 //! One executable per toolkit keeps repeated linkage out of Martensite tests.
 #![allow(clippy::module_inception, clippy::duplicate_mod)] // Preserve case identity and fixture isolation.
+include!("support/support_unit_tests_elsewhere.rs");
 include!("suites/cases_00.rs");
 
 #[path = "support/amd_spirv_control.rs"]
@@ -42,8 +43,6 @@ mod hatch_named_source_controls;
 
 #[path = "support/case_v3d_policy.rs"]
 mod case_v3d_policy;
-#[path = "support/case_v3d_policy_controls.rs"]
-mod case_v3d_policy_controls;
 #[path = "support/case_v3d_process_case.rs"]
 mod case_v3d_process_case;
 

@@ -1,0 +1,17 @@
+{
+  "finished": "2026-11-20T02:25:56.957249+00:00",
+  "removed_worktree": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/fix492-qa-impact",
+  "removed_branch": "fix/492-qa-impact",
+  "head": "b61a031d0bde0e21d283e0f94975f79b9ae15574",
+  "ahead_commits": 0,
+  "worktree_clean": true,
+  "active_processes": [],
+  "removed_prototypes": [
+    "probe.rs",
+    "probe",
+    "probe-supported",
+    "probe-macros",
+    "probe-calls"
+  ],
+  "retained_manifest_sha256": "aef3166d6eb6f85012132181811036b8d07a12153cfa3d38f400a5ca057173c9"
+}

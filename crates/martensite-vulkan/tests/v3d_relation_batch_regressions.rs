@@ -1,8 +1,6 @@
 //! Complete relation cases retain dynamic picked operands and source transitions.
 #![cfg(target_os = "linux")]
 include!("case_host/session_modules.rs");
-#[path = "support/case_v3d_policy_controls.rs"]
-mod case_v3d_policy_controls;
 #[path = "support/relation_fresh_session_contract.rs"]
 mod relation_fresh_session_contract;
 #[allow(dead_code, unused_imports)]

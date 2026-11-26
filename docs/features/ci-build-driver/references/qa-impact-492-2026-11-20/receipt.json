@@ -1,0 +1,24 @@
+{
+  "scope": "Exploratory traversal/macro-input diagnostics only; no owner-only acceptance",
+  "base": "b61a031d0bde0e21d283e0f94975f79b9ae15574",
+  "candidate_freeze": "/tmp/martensite-471-revival-source-freeze-v5.json",
+  "files": {
+    "probe.rs": "aff3165950f21e2401f608c62c34280fef4363f663b93ea171e6c4e89758c171",
+    "probe": "cb286f922dc9975977d3ae5233817564efdffafaa003acc1813f9de5e1ec91d5",
+    "output.txt": "1c0c1c3dcde08fcae0f6be06844babbdca1391fae76dae6f13435aa31ab4042e",
+    "output-supported.txt": "a08e47d80d1744918ef06ef05fa7e8d1a194a5ea7d3cad3d3346f1edbf6b98ee",
+    "output-macros.txt": "f18850fd48f3bd6d52f5569fd600beb21a8ea363f1cc045772750327046c5cfd",
+    "output-calls.txt": "1fccee232e2e61c959505a256efcc085d9df2179281a775ba9f726e9a74e8774"
+  },
+  "unknown_forms": [
+    "source-bound imported/aliased macro authority unresolved",
+    "cfg-test const referencing erased cfg-test macro definition retained conservatively",
+    "external QA input ownership not established"
+  ],
+  "remaining_obligations": [
+    "review before adding imported declarative macro resolution",
+    "all external consuming QA and production ownership",
+    "actual shared selector regression"
+  ],
+  "git_status": ""
+}

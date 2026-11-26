@@ -1,8 +1,6 @@
 //! Complete label-layout cases reuse the canonical two-view dimension programs.
 #![cfg(target_os = "linux")]
 include!("case_host/session_modules.rs");
-#[path = "support/case_v3d_policy_controls.rs"]
-mod case_v3d_policy_controls;
 #[allow(dead_code, unused_imports)]
 // Reuse the complete dimension tree without pruning other cases from shared modules.
 mod v3d_dimension_text_cases;

@@ -32,6 +32,10 @@ fn partial_layers_preserve_source_order_and_cover_empty_ranges() {
 }
 
 #[cfg(target_os = "linux")]
+macro_rules! support_unit_tests {
+    ($($tests:tt)*) => {};
+}
+#[cfg(target_os = "linux")]
 #[path = "../../examples/support/native_window.rs"]
 mod native_window;
 

@@ -1,8 +1,6 @@
 //! Isolate the complete priority-point original while retaining every shared control.
 #![cfg(target_os = "linux")]
 include!("case_host/session_modules.rs");
-#[path = "support/case_v3d_policy_controls.rs"]
-mod case_v3d_policy_controls;
 #[allow(dead_code, unused_imports)]
 // Retain the shared controls under their existing registry names.
 #[path = "vselect_bugs_cases/persistent_priority/mod.rs"]

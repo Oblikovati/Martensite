@@ -126,8 +126,10 @@ impl HatchSourceView {
 }
 
 #[cfg(test)]
-#[path = "hatch_source_clear_controls.rs"]
-mod source_clear_controls;
+support_unit_tests! {
+    #[path = "hatch_source_clear_controls.rs"]
+    mod source_clear_controls;
+}
 
 /// The black-background viewer every regression view belongs to; `source_viewer(&driver)?`.
 pub(super) fn source_viewer(

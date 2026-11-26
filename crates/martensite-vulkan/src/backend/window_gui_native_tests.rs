@@ -5,6 +5,9 @@ use crate::{
     PrimitiveDraw, RenderGuiSurfaceOutcome, RenderGuiSurfacePhase, RenderGuiSurfacePolicy,
     RenderLayer, RenderVertex, identity_clip,
 };
+macro_rules! support_unit_tests {
+    ($($tests:tt)*) => {};
+}
 #[path = "../../examples/support/native_window.rs"]
 mod native_window;
 use native_window::NativeWindow;

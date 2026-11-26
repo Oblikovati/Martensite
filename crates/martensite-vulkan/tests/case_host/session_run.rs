@@ -493,12 +493,16 @@ impl stereo_dump_scope::StereoDumpTarget for SessionRun {
 }
 
 #[cfg(test)]
-#[path = "checkpoint_report_tests.rs"]
-mod checkpoint_report_tests;
+support_unit_tests! {
+    #[path = "checkpoint_report_tests.rs"]
+    mod checkpoint_report_tests;
+}
 
 #[cfg(test)]
-#[path = "session_policy_tests.rs"]
-mod session_policy_tests;
+support_unit_tests! {
+    #[path = "session_policy_tests.rs"]
+    mod session_policy_tests;
+}
 
 #[path = "options_dump.rs"]
 mod options_dump;
@@ -519,8 +523,10 @@ pub(crate) fn capture_then_clear<T>(
 mod options_observation;
 
 #[cfg(test)]
-#[path = "selection_completion_controls.rs"]
-mod selection_completion_controls;
+support_unit_tests! {
+    #[path = "selection_completion_controls.rs"]
+    mod selection_completion_controls;
+}
 
 #[path = "session_dump_observation.rs"]
 mod dump_observation;
