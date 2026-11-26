@@ -305,3 +305,5 @@ fn shared_outer_only_capture_accepts_the_straight_curve_across_its_interior() {
             .all(|end| end.location == PlanarAttachmentLocation::Material)
     );
 }
+
+mod cubic;

@@ -17,20 +17,17 @@ use martensite_tkmath::{
     toploc::Location,
 };
 
-type CurveControls = ([[f64; 3]; 2], [[f64; 2]; 2]);
+type CurveControls<const N: usize> = ([[f64; 3]; N], [[f64; 2]; N]);
 
-pub(super) fn build(
+pub(in crate::brep::planar_attachment) fn build<const N: usize>(
     chart: PlanarSupport,
-    controls: CurveControls,
+    controls: CurveControls<N>,
     distance: f64,
     limit: f64,
 ) -> Result<(DetachedPlanarCurve, f64), Error> {
     let native = materialize(chart, controls, distance)?;
-    let actual = native.controls()?;
-    if actual.0.map(bits) != controls.0.map(bits) || actual.1.map(bits) != controls.1.map(bits) {
-        return Err(Error::Representation);
-    }
-    let tolerance = native.verify_boundary(controls.0, chart)?;
+    verify_controls(&native, controls)?;
+    let tolerance = native.verify_boundary(boundary(controls.0)?, chart)?;
     if tolerance > limit {
         return Err(Error::Tolerance {
             effective: tolerance,
@@ -40,9 +37,20 @@ pub(super) fn build(
     Ok((native, tolerance))
 }
 
-fn materialize(
+fn verify_controls<const N: usize>(
+    native: &DetachedPlanarCurve,
+    expected: CurveControls<N>,
+) -> Result<(), Error> {
+    let actual = native.controls::<N>()?;
+    if actual.0.map(bits) != expected.0.map(bits) || actual.1.map(bits) != expected.1.map(bits) {
+        return Err(Error::Representation);
+    }
+    Ok(())
+}
+
+fn materialize<const N: usize>(
     chart: PlanarSupport,
-    (world, uv): CurveControls,
+    (world, uv): CurveControls<N>,
     distance: f64,
 ) -> Result<DetachedPlanarCurve, Error> {
     let points = world.map(point);
@@ -59,7 +67,7 @@ fn materialize(
     builder.make_edge_with_curve(&mut edge, &curve, distance)?;
     builder.update_edge_pcurve_on_face(&edge, &pcurve, &support, distance)?;
     builder.range(&edge, 0., 1., false)?;
-    add_ends(&builder, &mut edge, points, distance)?;
+    add_ends(&builder, &mut edge, boundary(points)?, distance)?;
     Ok(DetachedPlanarCurve { edge, support })
 }
 
@@ -95,7 +103,7 @@ fn add_ends(
 }
 
 impl DetachedPlanarCurve {
-    pub(super) fn controls(&self) -> Result<CurveControls, Error> {
+    pub(super) fn controls<const N: usize>(&self) -> Result<CurveControls<N>, Error> {
         let world = BRepTool::curve_with_location(&self.edge)?;
         let planar = BRepTool::curve_on_face(&self.edge, &self.support)?;
         if !world.location.is_identity()
@@ -105,23 +113,28 @@ impl DetachedPlanarCurve {
         {
             return Err(Error::Representation);
         }
+        let degree = N
+            .checked_sub(1)
+            .and_then(|degree| i32::try_from(degree).ok())
+            .ok_or(Error::Representation)?;
         let curve = world.curve.downcast::<GeomBezierCurve>();
         let pcurve = planar.pcurve.downcast::<Geom2dBezierCurve>();
         let curve = curve
             .get()
-            .filter(|c| c.degree() == 1 && !c.is_rational())
+            .filter(|c| c.degree() == degree && !c.is_rational())
             .ok_or(Error::Representation)?;
         let pcurve = pcurve
             .get()
-            .filter(|c| c.degree() == 1 && !c.is_rational())
+            .filter(|c| c.degree() == degree && !c.is_rational())
             .ok_or(Error::Representation)?;
-        Ok((
-            [*curve.pole(1)?.coordinates(), *curve.pole(2)?.coordinates()],
-            [
-                *pcurve.pole(1)?.xy().coordinates(),
-                *pcurve.pole(2)?.xy().coordinates(),
-            ],
-        ))
+        let mut world = [[0.; 3]; N];
+        let mut uv = [[0.; 2]; N];
+        for (i, (xyz, xy)) in world.iter_mut().zip(&mut uv).enumerate() {
+            let pole = i32::try_from(i + 1).map_err(|_| Error::Representation)?;
+            *xyz = *curve.pole(pole)?.coordinates();
+            *xy = *pcurve.pole(pole)?.xy().coordinates();
+        }
+        Ok((world, uv))
     }
 
     fn verify_boundary(&self, world: [[f64; 3]; 2], chart: PlanarSupport) -> Result<f64, Error> {
@@ -161,6 +174,12 @@ impl DetachedPlanarCurve {
     }
 }
 
+fn boundary<T: Copy, const N: usize>(controls: [T; N]) -> Result<[T; 2], Error> {
+    let first = controls.first().ok_or(Error::Representation)?;
+    let last = controls.last().ok_or(Error::Representation)?;
+    Ok([*first, *last])
+}
+
 fn vertices(edge: &Edge) -> [Vertex; 2] {
     let (first, last) = topexp::vertices(edge, true);
     [first, last]
@@ -189,4 +208,47 @@ fn placement_bits(position: martensite_tkmath::gp::Transform3) -> Result<[[u64; 
         .checked_unit_placement_rows()
         .map(|rows| rows.map(bits))
         .map_err(|_| Error::Representation)
+}
+
+#[cfg(test)]
+mod cubic_tests {
+    use super::*;
+    use martensite_tkmath::gp::{Axis3, Transform3};
+
+    const UV: [[f64; 2]; 4] = [[-3., 2.75], [-1., 0.75], [1., 0.75], [3., 2.75]];
+
+    fn attached() -> (DetachedPlanarCurve, CurveControls<4>) {
+        let chart = PlanarSupport {
+            frame: Axis3::default(),
+            position: Transform3::default(),
+        };
+        let controls = (UV.map(|[u, v]| [u, v, 0.]), UV);
+        let (result, _) = build(chart, controls, 0., 1e-6).unwrap();
+        (result, controls)
+    }
+
+    #[test]
+    fn retained_cubic_control_and_range_witness_are_independent() {
+        let (cubic, controls) = attached();
+        let trace = BRepTool::curve_on_face(&cubic.edge, &cubic.support).unwrap();
+        let trace = trace.pcurve.downcast::<Geom2dBezierCurve>();
+        trace
+            .get()
+            .unwrap()
+            .set_pole(2, Point2::new(-1., 0.))
+            .unwrap();
+        assert!(matches!(
+            verify_controls(&cubic, controls),
+            Err(Error::Representation)
+        ));
+
+        let (cubic, controls) = attached();
+        BRepBuilder::new()
+            .range(&cubic.edge, 0., 0.5, false)
+            .unwrap();
+        assert!(matches!(
+            verify_controls(&cubic, controls),
+            Err(Error::Representation)
+        ));
+    }
 }

@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Freeze the actual planar attachment domain of one selected native face.
 pub(super) mod capture;
+mod cubic;
 mod curve;
+pub use cubic::{FaceAttachmentCubic, FaceAttachmentCubicError};
 
 use curve::PlanarSupport;
 pub use curve::{DetachedPlanarCurve, FaceAttachmentCurve, FaceAttachmentCurveError};
@@ -18,7 +20,8 @@ use martensite_tkmath::gp::UnitPlacementError;
 use martensite_tkmath::predicates::roots::metric_bounds::planar_attachment::CertifiedPlanarAttachment;
 pub use martensite_tkmath::predicates::roots::metric_bounds::planar_attachment::{
     PlanarAttachmentChart, PlanarAttachmentError, PlanarAttachmentLocation, PlanarAttachmentQuery,
-    PlanarCurveCertificate, PlanarCurvePath, PlanarCurveProofFailure, PlanarSegmentContact,
+    PlanarCubicCertificate, PlanarCubicOptions, PlanarCubicProofFailure, PlanarCurveCertificate,
+    PlanarCurvePath, PlanarCurveProofFailure, PlanarMonotoneAxis, PlanarSegmentContact,
 };
 use std::{error::Error, fmt, num::NonZeroU64};
 

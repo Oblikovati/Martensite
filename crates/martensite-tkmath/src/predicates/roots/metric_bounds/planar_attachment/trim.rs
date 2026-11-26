@@ -112,6 +112,40 @@ impl Loop {
         }
     }
 
+    pub(super) fn bernstein_contains(
+        &self,
+        net: &[Uv; 4],
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<bool, Error> {
+        for (a, b) in segments(&self.points) {
+            poll(cancelled)?;
+            if net
+                .iter()
+                .any(|pole| self.inside_measure(a, b, pole).sign() == Ordering::Less)
+            {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
+
+    pub(super) fn bernstein_excludes_open(
+        &self,
+        net: &[Uv; 4],
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<bool, Error> {
+        for (a, b) in segments(&self.points) {
+            poll(cancelled)?;
+            if net
+                .iter()
+                .all(|pole| self.inside_measure(a, b, pole).sign() != Ordering::Greater)
+            {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
+
     pub(super) fn position(
         &self,
         point: &Uv,

@@ -5,6 +5,7 @@ mod cylinder;
 mod drag;
 mod equation;
 mod failure;
+mod spline;
 
 use super::{
     ConstrainedSketch, ConstraintRank, Program, Relation, RelationId, adopt::verify_relations, poll,
@@ -24,6 +25,10 @@ pub use drag::PlanarFaceDragUpdate;
 pub(in crate::constraints) use equation::{AttachmentEquation, PlanarEquation};
 pub use failure::PlanarFaceConstraintFailure;
 use failure::PlanarFaceConstraintFailure as Failure;
+pub use spline::{
+    PlanarFaceSpline, PlanarFaceSplineEdit, PlanarFaceSplineFailure, PlanarFaceSplineRecipe,
+    PlanarFaceSplineStation,
+};
 
 /// Host-authoritative identity and version of a captured native face.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

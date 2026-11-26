@@ -39,6 +39,8 @@ pub use on_face::{
     CylindricalFaceFailure, CylindricalFaceRelation, FaceAttachmentRevision, PlanarAttachedSketch,
     PlanarFaceBinding, PlanarFaceConstraintFailure, PlanarFaceCurve, PlanarFaceCurveFailure,
     PlanarFaceCurveRecipe, PlanarFaceDragUpdate, PlanarFaceRelation, PlanarFaceRevision,
+    PlanarFaceSpline, PlanarFaceSplineEdit, PlanarFaceSplineFailure, PlanarFaceSplineRecipe,
+    PlanarFaceSplineStation,
 };
 pub use preferred::{PreferenceReport, PreferenceSettlement, PreferredDragUpdate};
 use program::Program;

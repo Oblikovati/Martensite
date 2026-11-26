@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Exact queries on a located affine chart with a strictly convex outer trim.
 mod chart;
+mod cubic;
 mod curve;
+pub use cubic::{
+    PlanarCubicCertificate, PlanarCubicOptions, PlanarCubicProofFailure, PlanarMonotoneAxis,
+};
 mod segment;
 pub use curve::{PlanarCurveCertificate, PlanarCurvePath, PlanarCurveProofFailure};
 mod trim;

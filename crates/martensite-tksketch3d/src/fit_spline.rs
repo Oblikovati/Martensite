@@ -185,6 +185,15 @@ impl FitSplineGeometry {
         self.operator.operator.endpoint_tangent(end)
     }
 
+    pub(crate) fn shared_uv_poles(
+        &self,
+        stations: [[f64; 2]; 4],
+    ) -> Result<[[f64; 2]; 4], CubicFitNumericError> {
+        let padded = stations.map(|[u, v]| [u, v, 0.]);
+        let control = self.operator.operator.materialize(padded)?;
+        Ok(control.poles.map(|[u, v, _]| [u, v]))
+    }
+
     fn endpoint_values(&self) -> [Point3; 2] {
         [self.stations[0], self.stations[3]]
     }

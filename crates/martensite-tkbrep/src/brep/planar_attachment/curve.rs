@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Freeze the paired degree-one BRep representations on a detached original chart.
-mod native;
+pub(super) mod native;
 
 use super::{
     AttachmentSource, FaceAttachment, FaceAttachmentError, PlanarCurveCertificate,
@@ -19,7 +19,7 @@ pub(super) struct PlanarSupport {
 
 /// An independently owned native edge and the located support of its stored pcurve.
 pub struct DetachedPlanarCurve {
-    /// Degree-one 3D and 2D Bézier representations use the same [0, 1] parameter.
+    /// The 3D and 2D Bézier representations share the same [0, 1] parameter.
     pub edge: Edge,
     /// An untrimmed, isolated copy of the accepted original support chart.
     pub support: Face,
@@ -54,7 +54,7 @@ impl FaceAttachmentCurve {
     /// Export fresh native ownership whose edits cannot affect the retained result.
     /// Example: `let edge = curve.to_native()?.edge;`.
     pub fn to_native(&self) -> Result<DetachedPlanarCurve, FaceAttachmentCurveError> {
-        let controls = self.native.controls()?;
+        let controls = self.native.controls::<2>()?;
         native::build(
             self.support,
             controls,
