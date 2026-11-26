@@ -24,13 +24,37 @@ fn specs(selection: PackageSelection) -> Vec<CommandSpec> {
     runner.command_specs()
 }
 fn package_spec(name: &str) -> CommandSpec {
-    CommandSpec::new("cargo", Path::new("/repo")).args([
+    let base = CommandSpec::new("cargo", Path::new("/repo")).args([
         "test",
         "--locked",
         "--package",
         name,
         "--no-fail-fast",
-    ])
+    ]);
+    apply_ci_artifact_defaults(base, |key| std::env::var_os(key).is_some())
+}
+
+#[test]
+fn bounded_artifact_defaults_apply_unless_caller_overrides() {
+    let base = CommandSpec::new("cargo", Path::new("/repo")).args(["test"]);
+    let with_defaults = apply_ci_artifact_defaults(base.clone(), |_| false);
+    let expected_all = base
+        .clone()
+        .environment("CARGO_INCREMENTAL", Some("0"))
+        .environment("CARGO_PROFILE_DEV_DEBUG", Some("0"))
+        .environment("CARGO_PROFILE_TEST_DEBUG", Some("0"))
+        .environment("CARGO_PROFILE_DEV_STRIP", Some("debuginfo"))
+        .environment("CARGO_PROFILE_TEST_STRIP", Some("debuginfo"));
+    assert_eq!(with_defaults, expected_all);
+
+    let with_override =
+        apply_ci_artifact_defaults(base.clone(), |key| key == "CARGO_PROFILE_DEV_DEBUG");
+    let expected_override = base
+        .environment("CARGO_INCREMENTAL", Some("0"))
+        .environment("CARGO_PROFILE_TEST_DEBUG", Some("0"))
+        .environment("CARGO_PROFILE_DEV_STRIP", Some("debuginfo"))
+        .environment("CARGO_PROFILE_TEST_STRIP", Some("debuginfo"));
+    assert_eq!(with_override, expected_override);
 }
 fn optimized(spec: CommandSpec) -> CommandSpec {
     spec.environment("CARGO_PROFILE_DEV_OPT_LEVEL", Some("1"))

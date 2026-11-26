@@ -262,8 +262,30 @@ impl<'a> CargoTasks<'a> {
     }
 
     fn cargo(&self, args: &[&str]) -> CommandSpec {
-        CommandSpec::new("cargo", self.root).args(args.iter().copied())
+        let spec = CommandSpec::new("cargo", self.root).args(args.iter().copied());
+        apply_ci_artifact_defaults(spec, |key| std::env::var_os(key).is_some())
     }
+}
+
+/// Bounded build-artifact defaults matching `.github/workflows/martensite.yml` (#506).
+pub(super) const CI_ARTIFACT_ENV_DEFAULTS: [(&str, &str); 5] = [
+    ("CARGO_INCREMENTAL", "0"),
+    ("CARGO_PROFILE_DEV_DEBUG", "0"),
+    ("CARGO_PROFILE_TEST_DEBUG", "0"),
+    ("CARGO_PROFILE_DEV_STRIP", "debuginfo"),
+    ("CARGO_PROFILE_TEST_STRIP", "debuginfo"),
+];
+
+pub(super) fn apply_ci_artifact_defaults(
+    mut spec: CommandSpec,
+    has_override: impl Fn(&str) -> bool,
+) -> CommandSpec {
+    for (key, default_value) in CI_ARTIFACT_ENV_DEFAULTS {
+        if !has_override(key) {
+            spec = spec.environment(key, Some(default_value));
+        }
+    }
+    spec
 }
 
 // Native image references were recorded with this system-font configuration (#433).
