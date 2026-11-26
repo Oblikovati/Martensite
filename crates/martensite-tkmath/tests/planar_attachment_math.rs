@@ -306,4 +306,5 @@ fn shared_outer_only_capture_accepts_the_straight_curve_across_its_interior() {
     );
 }
 
+#[path = "planar_attachment_math/cubic.rs"]
 mod cubic;
