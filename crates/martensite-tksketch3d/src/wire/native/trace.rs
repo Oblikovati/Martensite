@@ -26,20 +26,24 @@ pub(super) fn validate(
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<NativeWireValidation, WireFailure> {
     poll(cancelled, WirePhase::VerifyNative)?;
-    let closed = recipe.closure() == WireClosure::Closed;
-    let native_closed = native_result(BRepTool::is_closed(wire), WirePhase::VerifyNative, None)?;
-    let flag = native_result(wire.closed(), WirePhase::VerifyNative, None)?;
-    require(
-        closed == native_closed && closed == flag,
-        None,
-        "wire closure",
-    )?;
+    check_root(wire, recipe.closure())?;
     let bound = check_occurrences(wire, recipe.segments(), edges, points, cancelled)?;
     poll(cancelled, WirePhase::VerifyNative)?;
     Ok(NativeWireValidation {
         stored_tolerance: precision::confusion(),
         curve_error_bound: bound,
     })
+}
+
+pub(in crate::wire) fn check_root(wire: &Wire, closure: WireClosure) -> Result<(), WireFailure> {
+    let closed = closure == WireClosure::Closed;
+    let native_closed = native_result(BRepTool::is_closed(wire), WirePhase::VerifyNative, None)?;
+    let flag = native_result(wire.closed(), WirePhase::VerifyNative, None)?;
+    require(
+        closed == native_closed && closed == flag,
+        None,
+        "wire closure",
+    )
 }
 
 fn check_occurrences(
@@ -77,22 +81,36 @@ fn check_vertices(
     edge: &Edge,
     points: &BTreeMap<PointId, Vertex>,
 ) -> Result<(), WireFailure> {
-    let line = Some(EntityId::Line(source.source.line));
-    let sense = match source.source.direction {
+    check_bound_vertices(
+        EntityId::Line(source.source.line),
+        source.source.direction,
+        source.authored.line.endpoints,
+        source.authored.points,
+        edge,
+        points,
+    )
+}
+
+pub(in crate::wire) fn check_bound_vertices(
+    entity: EntityId,
+    direction: LineDirection,
+    endpoint_ids: [PointId; 2],
+    endpoint_points: [Point3; 2],
+    edge: &Edge,
+    points: &BTreeMap<PointId, Vertex>,
+) -> Result<(), WireFailure> {
+    let sense = match direction {
         LineDirection::Forward => Orientation::Forward,
         LineDirection::Reversed => Orientation::Reversed,
     };
-    require(edge.orientation() == sense, line, "authored orientation")?;
+    require(
+        edge.orientation() == sense,
+        Some(entity),
+        "authored orientation",
+    )?;
     let (first, last) = topexp::vertices(edge, false);
     let actual = [first, last];
-    for ((id, at), vertex) in source
-        .authored
-        .line
-        .endpoints
-        .into_iter()
-        .zip(source.authored.points)
-        .zip(actual)
-    {
+    for ((id, at), vertex) in endpoint_ids.into_iter().zip(endpoint_points).zip(actual) {
         check_vertex(id, at, &vertex, points.get(&id))?;
     }
     Ok(())
@@ -176,7 +194,7 @@ fn check_carrier(source: &WireSegment, edge: &Edge) -> Result<f64, WireFailure> 
     Ok(bound)
 }
 
-fn require(
+pub(in crate::wire) fn require(
     passed: bool,
     entity: Option<EntityId>,
     expected: &'static str,

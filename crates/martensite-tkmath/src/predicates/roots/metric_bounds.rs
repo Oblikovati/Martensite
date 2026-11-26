@@ -349,7 +349,7 @@ pub use segment_plane::{
 mod cardinal_bend;
 pub use cardinal_bend::{
     BINARY64_QUARTER_ANGLE_ERROR, CardinalBendFailure, CardinalBendPlacement, CardinalLegCut,
-    cardinal_bend_placement,
+    cardinal_bend_placement, cardinal_quarter_terminal_bound,
 };
 mod directed_line;
 pub use directed_line::{

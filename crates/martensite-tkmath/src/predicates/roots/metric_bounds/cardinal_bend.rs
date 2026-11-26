@@ -102,8 +102,19 @@ impl Error for CardinalBendFailure {
     }
 }
 
-/// The binary64 `FRAC_PI_2` differs from the real quarter angle by less than 2^-52 radians.
+/// The binary64 `FRAC_PI_2` undershoots the real quarter angle by less than 2^-52 radians.
+/// The real quarter lies between 1.570796326794896619 and 1.570796326794896620.
 pub const BINARY64_QUARTER_ANGLE_ERROR: f64 = f64::EPSILON;
+
+/// Enclose the arc length from the stored binary64 quarter parameter to the real quarter.
+/// Example: `cardinal_quarter_terminal_bound(5.0)?`.
+pub fn cardinal_quarter_terminal_bound(radius: f64) -> Result<f64, CardinalBendFailure> {
+    if !radius.is_finite() || radius <= 0. {
+        return Err(CardinalBendFailure::InvalidRadius(radius));
+    }
+    let angle = ExactRatio::from_finite(BINARY64_QUARTER_ANGLE_ERROR);
+    Ok(enclosure(&ExactRatio::from_finite(radius).multiply(&angle))?[1])
+}
 
 /// Place the actual common-radius quarter-circle, rounding each changed coordinate once.
 /// Example: `cardinal_bend_placement([0.; 3], [[1., 0., 0.], [0., 1., 0.]], 0.25)?`.
@@ -240,8 +251,7 @@ fn assemble(
     let position_error_upper =
         outward_sqrt(&squared_error).ok_or(CardinalBendFailure::Unrepresentable)?;
     let radius_error_upper = enclosure(&absolute(first.radius.subtract(requested)))?[1];
-    let angle = ExactRatio::from_finite(BINARY64_QUARTER_ANGLE_ERROR);
-    let terminal_error_upper = enclosure(&first.radius.multiply(&angle))?[1];
+    let terminal_error_upper = cardinal_quarter_terminal_bound(radius)?;
     let radial_axes = [b.inward(), a.inward()];
     let mut normal = [0.; 3];
     let handedness = if (b.axis + 1) % 3 == a.axis { 1. } else { -1. };

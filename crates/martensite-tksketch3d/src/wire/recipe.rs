@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
-use super::{DirectedLineUse, WireClosure, WireFailure, WirePhase, poll};
+use super::{
+    DirectedLineUse, WireClosure, WireFailure, WirePhase,
+    ordered::{Adjacency, check_chain, check_pairs},
+    poll,
+};
 use crate::{CurveId, LineGeometry, PointId, Snapshot};
 use martensite_tkmath::predicates::{SegmentContact3d, exact_segment_contact_3d};
 use std::collections::BTreeSet;
@@ -51,8 +55,27 @@ impl Snapshot {
     ) -> Result<WireRecipe, WireFailure> {
         poll(&mut cancelled, WirePhase::Resolve)?;
         let segments = resolve(self, uses, &mut cancelled)?;
-        check_connectivity(&segments, closure, &mut cancelled)?;
-        let pair_checks = check_incidence(&segments, closure, max_pair_checks, &mut cancelled)?;
+        check_chain(
+            &segments,
+            closure,
+            WireSegment::endpoints,
+            |pair, points| WireFailure::DisjointUses {
+                lines: pair.map(|segment| segment.source.line),
+                points,
+            },
+            &mut cancelled,
+        )?;
+        let pair_checks = check_pairs(
+            &segments,
+            closure,
+            max_pair_checks,
+            &mut cancelled,
+            |pair, adjacent| check_segment_pair(pair, adjacent != Adjacency::Separate),
+            |pair| WireFailure::PairLimit {
+                lines: pair.map(|segment| segment.source.line),
+                limit: max_pair_checks,
+            },
+        )?;
         Ok(WireRecipe {
             closure,
             segments,
@@ -93,74 +116,29 @@ fn resolve(
         if !seen.insert(source.line) {
             return Err(WireFailure::RepeatedLine(source.line));
         }
-        let authored = snapshot
-            .line(source.line)
-            .ok_or(WireFailure::MissingLine(source.line))?;
-        if snapshot.construction.contains(&CurveId::Line(source.line)) {
-            return Err(WireFailure::ConstructionLine(source.line));
-        }
-        segments.push(WireSegment { source, authored });
+        segments.push(resolve_line(snapshot, source)?);
     }
     Ok(segments)
 }
 
-fn check_connectivity(
-    segments: &[WireSegment],
-    closure: WireClosure,
-    cancelled: &mut impl FnMut() -> bool,
-) -> Result<(), WireFailure> {
-    let Some((first, last)) = segments.first().zip(segments.last()) else {
-        return Err(WireFailure::Empty);
-    };
-    for pair in segments.windows(2) {
-        poll(cancelled, WirePhase::Resolve)?;
-        let points = [pair[0].endpoints()[1], pair[1].endpoints()[0]];
-        if points[0] != points[1] {
-            return Err(WireFailure::DisjointUses {
-                lines: [pair[0].source.line, pair[1].source.line],
-                points,
-            });
-        }
+pub(super) fn resolve_line(
+    snapshot: &Snapshot,
+    source: DirectedLineUse,
+) -> Result<WireSegment, WireFailure> {
+    let authored = snapshot
+        .line(source.line)
+        .ok_or(WireFailure::MissingLine(source.line))?;
+    if snapshot.construction.contains(&CurveId::Line(source.line)) {
+        return Err(WireFailure::ConstructionLine(source.line));
     }
-    let points = [first.endpoints()[0], last.endpoints()[1]];
-    if (points[0] == points[1]) != (closure == WireClosure::Closed) {
-        return Err(WireFailure::WrongClosure {
-            expected: closure,
-            points,
-        });
-    }
-    Ok(())
+    Ok(WireSegment { source, authored })
 }
 
-fn check_incidence(
-    segments: &[WireSegment],
-    closure: WireClosure,
-    limit: usize,
-    cancelled: &mut impl FnMut() -> bool,
-) -> Result<usize, WireFailure> {
-    let mut checks = 0;
-    for (left, first) in segments.iter().enumerate() {
-        for (right, second) in segments.iter().enumerate().skip(left + 1) {
-            poll(cancelled, WirePhase::Incidence)?;
-            let lines = [first.source.line, second.source.line];
-            if checks == limit {
-                return Err(WireFailure::PairLimit { lines, limit });
-            }
-            let neighbors = right == left + 1
-                || (left == 0 && right + 1 == segments.len() && closure == WireClosure::Closed);
-            check_segment_pair([first, second], lines, neighbors)?;
-            checks += 1;
-        }
-    }
-    poll(cancelled, WirePhase::Incidence)?;
-    Ok(checks)
-}
-
-fn check_segment_pair(
+pub(super) fn check_segment_pair(
     segments: [&WireSegment; 2],
-    lines: [crate::LineId; 2],
     adjacent: bool,
 ) -> Result<(), WireFailure> {
+    let lines = segments.map(|segment| segment.source.line);
     let [first, second] =
         segments.map(|segment| segment.authored.points.map(|point| *point.coordinates()));
     let contact = exact_segment_contact_3d(first, second)

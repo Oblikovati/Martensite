@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Materialize exact recipe connectivity into a private, analytic BRep wire.
-mod trace;
+pub(super) mod trace;
 
 use super::{
     DirectedLineUse, LineDirection, WireClosure, WireFailure, WirePhase, WireRecipe, WireSegment,
@@ -97,7 +97,7 @@ impl WireRecipe {
     }
 }
 
-fn point_bindings(
+pub(super) fn point_bindings(
     points: BTreeMap<PointId, Vertex>,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<Vec<NativePointBinding>, WireFailure> {
@@ -136,12 +136,12 @@ fn build_edge(
     segment: &WireSegment,
     points: &mut BTreeMap<PointId, Vertex>,
 ) -> Result<Edge, WireFailure> {
-    let [a, b] = segment.authored.line.endpoints;
-    let [pa, pb] = segment.authored.points;
-    let mut first = vertex(builder, points, a, pa)?;
-    let mut last = vertex(builder, points, b, pb)?;
-    first.set_orientation(Orientation::Forward);
-    last.set_orientation(Orientation::Reversed);
+    let [first, last] = edge_vertices(
+        builder,
+        points,
+        segment.authored.line.endpoints,
+        segment.authored.points,
+    )?;
     let mut edge = make_line_edge(builder, segment, [&first, &last])?;
     if segment.source.direction == LineDirection::Reversed {
         edge.reverse();
@@ -149,18 +149,33 @@ fn build_edge(
     Ok(edge)
 }
 
-fn make_line_edge(
+pub(super) fn make_line_edge(
     builder: &BRepBuilder,
     segment: &WireSegment,
     [first, last]: [&Vertex; 2],
 ) -> Result<Edge, WireFailure> {
+    let curve = Handle::new(GeomLine::from_lin(segment.authored.carrier)).into_upcast();
+    make_curve_edge(
+        builder,
+        &curve,
+        [0., segment.authored.length_estimate],
+        EntityId::Line(segment.source.line),
+        [first, last],
+    )
+}
+
+pub(super) fn make_curve_edge(
+    builder: &BRepBuilder,
+    curve: &Handle<dyn GeomCurve>,
+    range: [f64; 2],
+    entity: EntityId,
+    [first, last]: [&Vertex; 2],
+) -> Result<Edge, WireFailure> {
     let mut edge = Edge::default();
-    let curve: Handle<dyn GeomCurve> =
-        Handle::new(GeomLine::from_lin(segment.authored.carrier)).into_upcast();
-    let entity = Some(EntityId::Line(segment.source.line));
+    let entity = Some(entity);
     // BRepLib's edge maker reads a mutable process precision. This export owns its tolerance.
     native_result(
-        builder.make_edge_with_curve(&mut edge, &curve, precision::confusion()),
+        builder.make_edge_with_curve(&mut edge, curve, precision::confusion()),
         WirePhase::Materialize,
         entity,
     )?;
@@ -171,14 +186,27 @@ fn make_line_edge(
     )?;
     native_result(builder.add(&mut edge, last), WirePhase::Materialize, entity)?;
     native_result(
-        builder.range(&edge, 0.0, segment.authored.length_estimate, true),
+        builder.range(&edge, range[0], range[1], true),
         WirePhase::Materialize,
         entity,
     )?;
     Ok(edge)
 }
 
-fn vertex(
+pub(super) fn edge_vertices(
+    builder: &BRepBuilder,
+    points: &mut BTreeMap<PointId, Vertex>,
+    [a, b]: [PointId; 2],
+    [pa, pb]: [Point3; 2],
+) -> Result<[Vertex; 2], WireFailure> {
+    let mut first = vertex(builder, points, a, pa)?;
+    let mut last = vertex(builder, points, b, pb)?;
+    first.set_orientation(Orientation::Forward);
+    last.set_orientation(Orientation::Reversed);
+    Ok([first, last])
+}
+
+pub(super) fn vertex(
     builder: &BRepBuilder,
     points: &mut BTreeMap<PointId, Vertex>,
     point: PointId,
@@ -198,7 +226,7 @@ fn vertex(
     Ok(entry.insert(vertex).clone())
 }
 
-fn native_result<T>(
+pub(super) fn native_result<T>(
     result: Result<T, Failure>,
     phase: WirePhase,
     entity: Option<EntityId>,

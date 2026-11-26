@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
-//! Ordered straight-line wire recipes and detached native consumer exports.
+//! Ordered wire recipes and detached native consumer exports.
 mod failure;
 mod native;
+mod ordered;
 mod recipe;
 
 pub use failure::{WireFailure, WirePhase};
@@ -10,7 +11,7 @@ pub use recipe::{WireRecipe, WireRecipeValidation, WireSegment};
 
 use crate::{LineId, PointId};
 
-/// Direction of a use relative to the line's authored order.
+/// Direction of a use relative to its authored curve order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LineDirection {
     /// Ascending parameter from the authored first point.

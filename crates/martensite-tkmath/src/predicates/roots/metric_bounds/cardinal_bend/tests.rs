@@ -92,3 +92,22 @@ fn input_scope_and_radius_limit_refuse_independently() {
         }))
     ));
 }
+
+#[test]
+fn stored_quarter_angle_undershoots_the_decimal_enclosure() {
+    let real_lower = ExactRatio::new(
+        1_570_796_326_794_896_619_i64.into(),
+        1_000_000_000_000_000_000_i64.into(),
+    );
+    let real_upper = ExactRatio::new(
+        1_570_796_326_794_896_620_i64.into(),
+        1_000_000_000_000_000_000_i64.into(),
+    );
+    let stored = ExactRatio::from_finite(std::f64::consts::FRAC_PI_2);
+    assert!(stored < real_lower);
+    assert!(real_upper.subtract(&stored) < ExactRatio::from_finite(BINARY64_QUARTER_ANGLE_ERROR));
+    assert_eq!(
+        cardinal_quarter_terminal_bound(5.).unwrap(),
+        5. * f64::EPSILON
+    );
+}
