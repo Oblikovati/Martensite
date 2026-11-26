@@ -5,11 +5,14 @@ use crate::bop_algo::{
     BOPAlgoBuilder, BOPAlgoPaveFiller, GeneralFuseAlgorithm, Glue, SectionAttribute,
 };
 use martensite_tkbrep::brep_tools::History;
+use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::Shape;
-use martensite_tkbrep::toptools::MapOfShape;
+use martensite_tkbrep::toptools::{IndexedMapOfShape, MapOfShape};
 use martensite_tkernel::ncollection::List;
 use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkshhealing::shape_upgrade::ShapeUpgradeUnifySameDomain;
+use martensite_tktopalgo::brep_builder_api::{BRepBuilderAPICopy, BRepBuilderAPIMakeShape};
 use std::ops::{Deref, DerefMut};
 
 #[path = "builder_algo_progress.rs"]
@@ -48,7 +51,7 @@ impl BRepAlgoAPIBuilderAlgo {
         Self {
             algo: BRepAlgoAPIAlgo::new(),
             arguments: List::default(),
-            non_destructive: false,
+            non_destructive: true,
             glue: Glue::Off,
             check_inverted: true,
             fill_history: true,
@@ -254,7 +257,46 @@ impl BRepAlgoAPIBuilderAlgo {
             }
             self.history = Handle::new(history);
         }
+        if self.non_destructive && !self.algo.base.my_shape.is_null() {
+            self.detach_non_destructive_result()?;
+        }
         Ok(())
+    }
+
+    /// Deep-copy the published non-destructive Boolean result and compose its copy history
+    /// so later mutations to source vertices, edges, curves, pcurves, tolerances, or meshes
+    /// cannot invalidate the completed result (#457).
+    fn detach_non_destructive_result(&mut self) -> Result<(), Failure> {
+        let mut copy = BRepBuilderAPICopy::with_shape(&self.algo.base.my_shape, true, true)?;
+        if !copy.is_done() {
+            return Ok(());
+        }
+        let old_shape = self.algo.base.my_shape.clone();
+        self.algo.base.my_shape = copy.shape()?.clone();
+        let Some(history) = self.history.get() else {
+            return Ok(());
+        };
+        let copy_history = History::new();
+        for kind in [
+            ShapeEnum::Vertex,
+            ShapeEnum::Edge,
+            ShapeEnum::Face,
+            ShapeEnum::Solid,
+        ] {
+            let mut seen = IndexedMapOfShape::default();
+            let mut explorer = Explorer::new(&old_shape, kind, ShapeEnum::Shape)?;
+            while explorer.more() {
+                let entity = explorer.current().clone();
+                if seen.add(entity.clone()) > 0
+                    && let Ok(mapped) = copy.modified_shape(&entity)
+                    && !mapped.is_same(&entity)
+                {
+                    copy_history.add_modified(&entity, &mapped)?;
+                }
+                explorer.next()?;
+            }
+        }
+        history.merge(&copy_history)
     }
 
     /// Unifies the tangent edges and faces of the result within the fuzzy value and

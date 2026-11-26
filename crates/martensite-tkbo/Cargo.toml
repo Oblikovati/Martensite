@@ -48,6 +48,10 @@ path = "tests/thread_safety_contract.rs"
 name = "two_process_determinism"
 path = "tests/two_process_determinism.rs"
 
+[[test]]
+name = "deep_isolation"
+path = "tests/deep_isolation.rs"
+
 # The boolean case scripts: one child process, one memory raster and one graded stream per case.
 [[test]]
 name = "perf_modalg_bug26542"
