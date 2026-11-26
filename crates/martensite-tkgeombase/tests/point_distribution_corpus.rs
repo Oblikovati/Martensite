@@ -63,11 +63,11 @@ fn gcp_quabs_complete_family() {
 }
 #[test]
 fn gcp_udefl_complete_family() {
-    super::replay_family(CHUNKS, "gcp_udefl", 35);
+    replay_deflection_family(CHUNKS, "gcp_udefl", 35);
 }
 #[test]
 fn gcp_qudefl_complete_family() {
-    super::replay_family(CHUNKS, "gcp_qudefl", 35);
+    replay_deflection_family(CHUNKS, "gcp_qudefl", 35);
 }
 #[test]
 fn gcp_tdefl_complete_family() {
@@ -109,4 +109,75 @@ fn spatial_line_lengths_match_independent_parameter_differences() {
     assert_unit_speed_lengths(&[
         3.0, 1.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 3.0, 1e-6,
     ]);
+}
+
+// #530: `perform_circular` anchors exact endpoints instead of leaving OCCT's accumulated
+// `u += angle` final sample drifted from `u2` (which could step outside `[u1, u2]`).
+// Keep the frozen OCCT fixture files untouched and verify that non-circular requests match
+// bit-for-bit while circular requests differ only by sub-1e-11 endpoint anchoring deltas.
+fn is_circular_deflection_request(values: &[f64]) -> bool {
+    let trimmed = values.get(1).copied() == Some(1.0);
+    let kind_index = if trimmed { 4 } else { 2 };
+    match values.get(kind_index).copied() {
+        Some(1.0) => true,
+        Some(7.0) => values.get(kind_index + 3).copied() == Some(1.0),
+        _ => false,
+    }
+}
+
+fn tokens_match_within_circular_endpoint_anchor(expected: &str, actual: &str) -> Result<(), String> {
+    let exp: Vec<&str> = expected.split_whitespace().collect();
+    let act: Vec<&str> = actual.split_whitespace().collect();
+    if exp.len() != act.len() {
+        return Err(format!("token count differs: {} vs {}", exp.len(), act.len()));
+    }
+    for (idx, (left, right)) in exp.iter().zip(act.iter()).enumerate() {
+        if left != right {
+            check_anchored_token(idx, left, right)?;
+        }
+    }
+    Ok(())
+}
+
+fn check_anchored_token(idx: usize, left: &str, right: &str) -> Result<(), String> {
+    let (Ok(l_bits), Ok(r_bits)) = (left.parse::<u64>(), right.parse::<u64>()) else {
+        return Err(format!("non-numeric token {idx} differs: {left} vs {right}"));
+    };
+    let (l_val, r_val) = (f64::from_bits(l_bits), f64::from_bits(r_bits));
+    let limit = 1e-11 * l_val.abs().max(r_val.abs()).max(1.0);
+    if !(l_val.is_finite() && r_val.is_finite()) || (l_val - r_val).abs() > limit {
+        return Err(format!("token {idx} exceeds #530 anchor bound: {l_val:?} vs {r_val:?}"));
+    }
+    Ok(())
+}
+
+fn check_deflection_request(request: &str, expected: &str, family: &str) -> bool {
+    let mut fields = request.split_whitespace();
+    if fields.next() != Some(family) {
+        return false;
+    }
+    let values: Vec<f64> = fields.map(|field| field.parse().unwrap()).collect();
+    let actual = super::construction_corpus::run_values(family, &values).expect("owned family");
+    if super::construction_corpus::policy::equivalent(expected, &actual) {
+        return true;
+    }
+    assert!(
+        is_circular_deflection_request(&values),
+        "{request}: non-circular request diverged: {}",
+        super::construction_corpus::policy::difference(expected, &actual)
+    );
+    tokens_match_within_circular_endpoint_anchor(expected, &actual)
+        .unwrap_or_else(|reason| panic!("{request}: {reason}"));
+    true
+}
+
+fn replay_deflection_family(chunks: &[(&str, &str)], family: &str, expected_count: usize) {
+    let mut count = 0;
+    for (requests, answers) in chunks {
+        assert_eq!(requests.lines().count(), answers.lines().count());
+        for (request, expected) in requests.lines().zip(answers.split_inclusive('\n')) {
+            count += usize::from(check_deflection_request(request, expected, family));
+        }
+    }
+    assert_eq!(count, expected_count, "Every original {family} request must run");
 }

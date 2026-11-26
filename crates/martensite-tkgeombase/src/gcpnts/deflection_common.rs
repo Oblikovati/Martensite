@@ -72,17 +72,19 @@ pub(super) fn perform_circular(
     nb_points = nb_points.wrapping_add(2);
     angle = (u2 - u1) / f64::from(nb_points.wrapping_sub(1));
     let (lo, hi) = if u1 <= u2 { (u1, u2) } else { (u2, u1) };
+    let mut u: f64 = u1;
     for step in 0..nb_points {
-        // #530: anchor exact endpoints and clamp interior samples to [lo, hi] so
-        // floating-point accumulation never steps outside the requested range.
-        let u = if step == 0 {
+        // #530: anchor exact endpoints and preserve OCCT's interior accumulation
+        // clamped to [lo, hi] so rounding never steps outside requested bounds.
+        let sample = if step == 0 {
             u1
         } else if step + 1 == nb_points {
             u2
         } else {
-            (u1 + f64::from(step) * angle).clamp(lo, hi)
+            u.clamp(lo, hi)
         };
-        sequence.append(u, curve.lifted_d0(u)?);
+        sequence.append(sample, curve.lifted_d0(sample)?);
+        u += angle;
     }
     Ok(true)
 }
