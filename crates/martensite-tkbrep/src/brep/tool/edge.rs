@@ -1,7 +1,6 @@
 //! The edge flag, range and UV point queries of `BRep_Tool`.
 use super::BRepTool;
 use super::curve_on_plane::plane_of;
-use super::curves::representations;
 use super::face::floored_tolerance;
 use crate::brep::access::edge_tshape;
 use crate::brep::builder::update_curves::as_gcurve;
@@ -77,19 +76,21 @@ impl BRepTool {
     /// `Range(E, First, Last)`: the range of the first non-null 3D curve or curve on
     /// surface, `0, 0` without one; `let (first, last) = BRepTool::range(&edge)?;`.
     pub fn range(edge: &EdgeView<'_>) -> Result<(f64, f64), Failure> {
-        for representation in representations(edge, "BRep_Tool::Range")? {
-            let Some(r) = representation.get() else {
-                continue;
-            };
-            let gcurve = as_gcurve(&representation);
-            let Some(gcurve) = gcurve.get() else { continue };
-            if r.is_curve3d() && r.curve3d()?.is_some()
-                || !r.is_curve3d() && r.is_curve_on_surface()
-            {
-                return Ok(gcurve.range());
+        edge_tshape(edge, "BRep_Tool::Range")?.with_curves(|curves| {
+            for representation in curves {
+                let Some(r) = representation.get() else {
+                    continue;
+                };
+                let gcurve = as_gcurve(representation);
+                let Some(gcurve) = gcurve.get() else { continue };
+                if r.is_curve3d() && r.curve3d()?.is_some()
+                    || !r.is_curve3d() && r.is_curve_on_surface()
+                {
+                    return Ok(gcurve.range());
+                }
             }
-        }
-        Ok((0.0, 0.0))
+            Ok((0.0, 0.0))
+        })
     }
 
     /// `Range(E, S, L, First, Last)`: the range of the p-curve on (`surface`,
@@ -101,16 +102,24 @@ impl BRepTool {
         location: &Location,
     ) -> Result<(f64, f64), Failure> {
         let relative = location.predivided(edge.location())?;
-        let list = representations(edge, "BRep_Tool::Range")?;
-        let found = list.iter().find(|r| {
-            r.get()
-                .is_some_and(|r| r.is_curve_on_surface_at(surface, &relative))
+        let tedge = edge_tshape(edge, "BRep_Tool::Range")?;
+        let found_range = tedge.with_curves(|curves| {
+            curves
+                .iter()
+                .find(|r| {
+                    r.get()
+                        .is_some_and(|r| r.is_curve_on_surface_at(surface, &relative))
+                })
+                .map(|r| {
+                    let gcurve = as_gcurve(r);
+                    gcurve.get().map_or((0.0, 0.0), |g| g.range())
+                })
         });
-        let range = match found.map(as_gcurve) {
-            Some(gcurve) => gcurve.get().map_or((0.0, 0.0), |g| g.range()),
+        let range = match found_range {
+            Some(r) => r,
             None => Self::range(edge)?,
         };
-        edge_tshape(edge, "BRep_Tool::Range")?.set_modified(true);
+        tedge.set_modified(true);
         Ok(range)
     }
 
@@ -132,12 +141,17 @@ impl BRepTool {
     ) -> Result<(Point2, Point2), Failure> {
         let relative = location.predivided(edge.location())?;
         let reversed = edge.orientation() == Orientation::Reversed;
-        let list = representations(edge, "BRep_Tool::UVPoints")?;
-        if let Some(found) = list.iter().find(|r| {
-            r.get()
-                .is_some_and(|r| r.is_curve_on_surface_at(surface, &relative))
-        }) {
-            return Ok(stored_uv_points(found, reversed));
+        let stored = edge_tshape(edge, "BRep_Tool::UVPoints")?.with_curves(|curves| {
+            curves
+                .iter()
+                .find(|r| {
+                    r.get()
+                        .is_some_and(|r| r.is_curve_on_surface_at(surface, &relative))
+                })
+                .map(|found| stored_uv_points(found, reversed))
+        });
+        if let Some(uv) = stored {
+            return Ok(uv);
         }
         let plane = plane_of(surface);
         let Some(plane) = plane.get() else {
@@ -174,19 +188,21 @@ impl BRepTool {
     ) -> Result<(), Failure> {
         let relative = location.predivided(edge.location())?;
         let reversed = edge.orientation() == Orientation::Reversed;
-        for representation in representations(edge, "BRep_Tool::SetUVPoints")? {
-            if !representation
-                .get()
-                .is_some_and(|r| r.is_curve_on_surface_at(surface, &relative))
-            {
-                continue;
+        edge_tshape(edge, "BRep_Tool::SetUVPoints")?.with_curves(|curves| {
+            for representation in curves {
+                if !representation
+                    .get()
+                    .is_some_and(|r| r.is_curve_on_surface_at(surface, &relative))
+                {
+                    continue;
+                }
+                let closed = representation.downcast_ref::<BRepCurveOnClosedSurface>();
+                match closed.filter(|_| reversed) {
+                    Some(closed) => closed.set_uv_points2(first, last),
+                    None => set_first_uv_points(representation, first, last),
+                }
             }
-            let closed = representation.downcast_ref::<BRepCurveOnClosedSurface>();
-            match closed.filter(|_| reversed) {
-                Some(closed) => closed.set_uv_points2(first, last),
-                None => set_first_uv_points(&representation, first, last),
-            }
-        }
+        });
         Ok(())
     }
 

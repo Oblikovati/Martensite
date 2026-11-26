@@ -5,8 +5,18 @@ impl<I: CellGeometry> CellFilter<I> {
     pub fn try_inspect_with<E>(
         &mut self,
         point: &I::CellPoint,
-        inspect: impl FnMut(&I::CellTarget) -> Result<CellAction, E>,
+        mut inspect: impl FnMut(&I::CellTarget) -> Result<CellAction, E>,
     ) -> Result<(), E> {
+        if self.sizes.len() == 2 {
+            let sizes = self.sizes.as_slice();
+            let coords = [
+                super::indices::cell_coordinate(I::cell_coordinate(0, point) / sizes[0]),
+                super::indices::cell_coordinate(I::cell_coordinate(1, point) / sizes[1]),
+            ];
+            return self.cells.try_retain_index(&coords, |stored| {
+                inspect(stored).map(|action| action == CellAction::Keep)
+            });
+        }
         self.try_inspect_with_cell(&self.indices(point), inspect)
     }
     /// Visit a range in axis order, stopping at failure; `filter.try_inspect_range_with(&min,&max, |target| Ok::<_, ()>(CellAction::Purge))?`.

@@ -84,19 +84,23 @@ impl BRepMeshVertexInspector {
     }
     /// Count storage including deleted slots; `inspector.nb_vertices()`.
     pub fn nb_vertices(&self) -> i32 {
-        self.vertices().read().length()
+        self.vertices.read().read().length()
     }
     /// Read a one-based vertex slot; `inspector.get_vertex(1)?`.
+    #[inline]
     pub fn get_vertex(&self, index: i32) -> Result<BRepMeshVertex, Failure> {
-        read_initialized_vertex(&self.vertices(), index)
+        let collection = self.vertices.read();
+        read_initialized_vertex(&collection, index)
     }
     /// Retain the mutable stored slot without copying its value; `inspector.get_vertex_reference(1)?`.
     pub fn get_vertex_reference(&self, index: i32) -> Result<super::VertexSlotWrite, Failure> {
         super::VertexSlotWrite::new(&self.vertices(), index)
     }
     /// Write the native mutable vertex slot; `inspector.set_vertex(1,vertex)?`.
+    #[inline]
     pub fn set_vertex(&self, index: i32, vertex: BRepMeshVertex) -> Result<(), Failure> {
-        write_initialized_vertex(&self.vertices(), index, vertex)
+        let collection = self.vertices.read();
+        write_initialized_vertex(&collection, index, vertex)
     }
     /// Reset query state before candidate inspection; `inspector.set_point(Xy::default())`.
     pub fn set_point(&mut self, point: Xy) {

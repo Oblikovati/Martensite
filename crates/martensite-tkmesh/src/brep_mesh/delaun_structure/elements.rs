@@ -53,14 +53,15 @@ impl BRepMeshDataStructureOfDelaun {
     }
     /// Derive nodes solely from the first and third oriented edges; `mesh.element_nodes(&triangle)?`.
     pub fn element_nodes(&self, element: &BRepMeshTriangle) -> Result<[i32; 3], Failure> {
-        let first = self.get_link(element.edges[0])?;
-        let third = self.get_link(element.edges[2])?;
-        let mut nodes = [first.first_node(), first.last_node(), third.last_node()];
+        let state = self.connectivity.read();
+        let first = state.links.find_key(element.edges[0] as usize)?;
+        let third = state.links.find_key(element.edges[2] as usize)?;
+        let mut nodes = [first.first_node, first.last_node, third.last_node];
         if !element.orientations[0] {
             nodes.swap(0, 1);
         }
         if element.orientations[2] {
-            nodes[2] = third.first_node();
+            nodes[2] = third.first_node;
         }
         Ok(nodes)
     }

@@ -28,21 +28,28 @@ impl<T> CellMap<T> {
         self.storage.clear_with_allocator(requested);
     }
     /// The slot of the cell with `index`, if any.
+    #[inline]
     fn lookup_index(&self, index: &[i32]) -> Option<usize> {
-        let probe = CellRecord::from_coordinates(index);
+        let hash = super::CellHash::hash_coordinates(index);
         self.storage
-            .lookup(&probe, &CellMapHash)
+            .lookup_by(hash, |cell| cell.index.as_slice() == index)
             .map(|(_, slot)| slot)
     }
-    // Grow first, construct the lookup cell, then hash it once.
+    // Grow first, then hash once and only build a CellRecord on insertion.
+    #[inline]
     fn prepare_cell(&mut self, index: &[i32]) -> &mut CellRecord<T> {
         let size = self.storage.size();
         if size == 0 || size > self.storage.nb_buckets() {
             self.storage.resize(size, &CellMapHash);
         }
-        let cell = CellRecord::from_coordinates(index);
-        let (bucket, existing) = self.storage.lookup_with_bucket(&cell, &CellMapHash);
-        let slot = existing.unwrap_or_else(|| self.storage.insert(bucket, || cell, || ()));
+        let hash = super::CellHash::hash_coordinates(index);
+        let (bucket, existing) = self
+            .storage
+            .lookup_with_bucket_by(hash, |cell| cell.index.as_slice() == index);
+        let slot = existing.unwrap_or_else(|| {
+            self.storage
+                .insert(bucket, || CellRecord::from_coordinates(index), || ())
+        });
         self.storage.payload_mut().key_mut(slot)
     }
     // Removes a cell whose target list became empty.

@@ -75,9 +75,29 @@ impl<I: CellGeometry> CellFilter<I> {
     }
     /// Add an independent copy to every covered cell; `filter.add_range(&target, &min, &max)`.
     pub fn add_range(&mut self, target: &I::CellTarget, min: &I::CellPoint, max: &I::CellPoint) {
-        for index in self.range(min, max) {
-            self.add_cell(index, target);
+        if self.dimension == 2 && self.sizes.len() == 2 {
+            let sizes = self.sizes.as_slice();
+            let min0 = indices::cell_coordinate(I::cell_coordinate(0, min) / sizes[0]);
+            let max0 = indices::cell_coordinate(I::cell_coordinate(0, max) / sizes[0]);
+            if min0 > max0 {
+                return;
+            }
+            let min1 = indices::cell_coordinate(I::cell_coordinate(1, min) / sizes[1]);
+            let max1 = indices::cell_coordinate(I::cell_coordinate(1, max) / sizes[1]);
+            if min1 > max1 {
+                return;
+            }
+            for c1 in min1..=max1 {
+                for c0 in min0..=max0 {
+                    self.cells.add_index(&[c0, c1], target);
+                }
+            }
+            return;
         }
+        let mut range = self.range(min, max);
+        range.for_each_slice(|coords| {
+            self.cells.add_index(coords, target);
+        });
     }
     /// Remove all equal targets in one cell; `filter.remove(&target, &point)`.
     #[cfg(test)]
@@ -88,9 +108,29 @@ impl<I: CellGeometry> CellFilter<I> {
     }
     /// Remove equal targets throughout an inclusive range; `filter.remove_range(&target, &min, &max)`.
     pub fn remove_range(&mut self, target: &I::CellTarget, min: &I::CellPoint, max: &I::CellPoint) {
-        for index in self.range(min, max) {
-            self.retain_cell(&index, |stored| !I::targets_equal(stored, target));
+        if self.dimension == 2 && self.sizes.len() == 2 {
+            let sizes = self.sizes.as_slice();
+            let min0 = indices::cell_coordinate(I::cell_coordinate(0, min) / sizes[0]);
+            let max0 = indices::cell_coordinate(I::cell_coordinate(0, max) / sizes[0]);
+            if min0 > max0 {
+                return;
+            }
+            let min1 = indices::cell_coordinate(I::cell_coordinate(1, min) / sizes[1]);
+            let max1 = indices::cell_coordinate(I::cell_coordinate(1, max) / sizes[1]);
+            if min1 > max1 {
+                return;
+            }
+            for c1 in min1..=max1 {
+                for c0 in min0..=max0 {
+                    self.retain_index(&[c0, c1], |stored| !I::targets_equal(stored, target));
+                }
+            }
+            return;
         }
+        let mut range = self.range(min, max);
+        range.for_each_slice(|coords| {
+            self.retain_index(coords, |stored| !I::targets_equal(stored, target));
+        });
     }
     fn indices(&self, point: &I::CellPoint) -> CellIndex {
         CellIndex::from_point::<I>(point, &self.sizes)
@@ -118,11 +158,12 @@ impl<I: CellInspector> CellFilter<I> {
     }
     /// Visit cells with axis zero varying fastest; `filter.inspect_range(&min, &max, &mut inspector)`.
     pub fn inspect_range(&mut self, min: &I::Point, max: &I::Point, inspector: &mut I) {
-        for index in self.range(min, max) {
-            self.retain_cell(&index, |stored| {
+        let mut range = self.range(min, max);
+        range.for_each_slice(|coords| {
+            self.retain_index(coords, |stored| {
                 inspector.inspect(stored) == CellAction::Keep
             });
-        }
+        });
     }
 }
 

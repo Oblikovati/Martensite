@@ -19,6 +19,7 @@ pub(super) struct CellIndices {
     current: Option<CellIndex>,
 }
 impl CellIndices {
+    #[inline]
     pub(super) fn new(min: CellIndex, max: CellIndex, axes: usize) -> Self {
         let reversed: bool = (0..axes).any(|axis| min.as_slice()[axis] > max.as_slice()[axis]);
         let current: Option<CellIndex> = (!reversed).then(|| min.clone());
@@ -29,20 +30,25 @@ impl CellIndices {
             current,
         }
     }
+    #[inline]
+    pub(super) fn for_each_slice(&mut self, mut visit: impl FnMut(&[i32])) {
+        while let Some(current) = self.current.as_ref() {
+            visit(current.as_slice());
+            self.advance();
+        }
+    }
+    #[inline]
     fn advance(&mut self) {
         let current: &mut CellIndex = self.current.as_mut().unwrap();
-        let bounds = self.min.as_slice().iter().zip(self.max.as_slice());
-        for (value, (lower, upper)) in current
-            .as_mut_slice()
-            .iter_mut()
-            .zip(bounds)
-            .take(self.axes)
-        {
-            if *value < *upper {
-                *value += 1;
+        let min_slice = self.min.as_slice();
+        let max_slice = self.max.as_slice();
+        let cur_slice = current.as_mut_slice();
+        for axis in 0..self.axes {
+            if cur_slice[axis] < max_slice[axis] {
+                cur_slice[axis] += 1;
                 return;
             }
-            *value = *lower;
+            cur_slice[axis] = min_slice[axis];
         }
         self.current = None;
     }

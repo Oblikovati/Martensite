@@ -53,13 +53,7 @@ impl DelaunConnectivity {
     }
     fn trim_deleted_links(&mut self, mut last: i32) -> Result<i32, Failure> {
         while last > 0
-            && self
-                .links
-                .find_key(last as usize)?
-                .0
-                .snapshot()
-                .movability()
-                == DegreeOfFreedom::Deleted
+            && self.links.find_key(last as usize)?.movability() == DegreeOfFreedom::Deleted
         {
             self.links.remove_last()?;
             last -= 1;
@@ -67,7 +61,7 @@ impl DelaunConnectivity {
         Ok(last)
     }
     fn move_last_link(&mut self, index: i32, last: i32) -> Result<(), Failure> {
-        let edge = self.links.find_key(last as usize)?.0.snapshot();
+        let edge = self.links.find_key(last as usize)?.to_edge();
         // The native arena keeps the removed pair's bytes alive after RemoveLast.
         let pair = *self.links.find_from_index(last as usize)?;
         self.links.remove_last()?;
@@ -101,7 +95,7 @@ impl DelaunConnectivity {
         self.write_native_replacement(index, element)
     }
     fn replace_node_in_link(&mut self, index: i32, old: i32, new: i32) -> Result<(), Failure> {
-        let edge = self.links.find_key(index as usize)?.0.snapshot();
+        let edge = self.links.find_key(index as usize)?.to_edge();
         let pair = *self.links.find_from_index(index as usize)?;
         let mut first = edge.first_node();
         let mut last = edge.last_node();
