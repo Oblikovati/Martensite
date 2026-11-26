@@ -159,3 +159,52 @@ fn invalid_resolution_message_names_the_value_and_required_domain() {
     assert!(message.contains("finite strictly positive"));
     assert_eq!(error.class(), AttachmentFailureClass::InvalidInput);
 }
+
+#[test]
+fn restore_accepts_nonfatal_report_cap_above_tolerance() {
+    let mut record = capture().record().clone();
+    record.resolution.cap = martensite_tkbo::profile_extrusion::ToleranceCap::Report(1e-12);
+    let restored = CylinderFaceAttachment::restore(record).unwrap();
+    assert_eq!(
+        restored.record().resolution.cap,
+        martensite_tkbo::profile_extrusion::ToleranceCap::Report(1e-12)
+    );
+    assert_eq!(restored.validation().tolerance_budget, Some(1e-12));
+    assert!(
+        !restored.validation().stages[3].findings.is_empty(),
+        "expected nonfatal ToleranceAboveBudget findings under Report(1e-12)"
+    );
+}
+
+#[test]
+fn capture_refuses_raw_nan_before_serialization() {
+    let (body, face) = body(10.0);
+    let explorer = martensite_tkbrep::topexp::Explorer::new(
+        &body,
+        martensite_tkg3d::top_abs::ShapeEnum::Vertex,
+        martensite_tkg3d::top_abs::ShapeEnum::Shape,
+    )
+    .unwrap();
+    let vertex = explorer.current().clone();
+    martensite_tkbrep::brep::access::vertex_tshape(&vertex, "test")
+        .unwrap()
+        .set_tolerance(f64::NAN);
+    let resolution = capture().record().resolution;
+    let error = CylinderFaceAttachment::capture(
+        FaceAttachmentId(7),
+        SupportRevision(3),
+        &body,
+        &face,
+        resolution,
+    )
+    .err()
+    .unwrap();
+    assert_eq!(error.operation, AttachmentOperation::Capture);
+    assert!(matches!(
+        error.cause,
+        AttachmentFailureCause::Resolution {
+            field: "raw_tolerance",
+            value
+        } if value.is_nan()
+    ));
+}
