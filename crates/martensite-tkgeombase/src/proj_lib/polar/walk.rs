@@ -8,7 +8,7 @@ use super::ComputeApproxOnPolarSurface;
 use super::function::nearest;
 use super::initial::Sampling;
 use super::start_point::WalkStart;
-use crate::extrema::{ExtAlgo, ExtFlag, ExtPS, GenLocateExtPS};
+use crate::extrema::GenLocateExtPS;
 use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::real::is_equal;
 use martensite_tkmath::gp::{Point2, Point3};
@@ -104,22 +104,26 @@ fn local_then_global(
         w.record(s, i, uv);
         return Ok(true);
     }
-    let global = ExtPS::with_surface(point, s.surf, s.tol_u, s.tol_v, ExtFlag::Min, ExtAlgo::Grad)?;
-    if !global.is_done() {
-        return Ok(false);
-    }
-    let (mut local_min, mut imin): (f64, i32) = (f64::MAX, 0);
-    for isol in 1..=global.nb_ext()? {
-        let sq: f64 = global.square_distance(isol)?;
-        if sq < local_min {
-            (local_min, imin) = (sq, isol);
+    let (local_min, local_u, local_v) = {
+        let dist_tol3d2 = s.dist_tol3d2;
+        let global = s.global_extrema(point)?;
+        if !global.is_done() {
+            return Ok(false);
         }
-    }
-    if !(local_min < s.dist_tol3d2) {
-        return Ok(false);
-    }
+        let (mut local_min, mut imin): (f64, i32) = (f64::MAX, 0);
+        for isol in 1..=global.nb_ext()? {
+            let sq: f64 = global.square_distance(isol)?;
+            if sq < local_min {
+                (local_min, imin) = (sq, isol);
+            }
+        }
+        if !(local_min < dist_tol3d2) {
+            return Ok(false);
+        }
+        let (local_u, local_v) = global.point(imin)?.parameter();
+        (local_min, local_u, local_v)
+    };
     w.keep_distance(local_min);
-    let (local_u, local_v) = global.point(imin)?.parameter();
     if s.uperiod > 0. && (w.u0 - local_u).abs() >= s.uperiod / 2. {
         w.usens = if local_u > w.u0 { -1 } else { 1 };
     }
@@ -216,18 +220,22 @@ fn mirrored_search(
 // branch.
 #[allow(clippy::neg_cmp_op_on_partial_ord)]
 fn last_global(w: &mut Walk, s: &mut Sampling<'_>, i: i32, point: Point3) -> Result<bool, Failure> {
-    let ext = ExtPS::with_surface(point, s.surf, s.tol_u, s.tol_v, ExtFlag::Min, ExtAlgo::Grad)?;
-    if !ext.is_done() {
-        return Ok(false);
-    }
-    // Natively SquareDistance(1) is read even without extrema (index-range failure).
-    let good: i32 = nearest(&ext)?;
-    let dist2_min: f64 = ext.square_distance(good)?;
-    if !(dist2_min < s.dist_tol3d2) {
-        return Ok(false);
-    }
+    let (dist2_min, u, v) = {
+        let dist_tol3d2 = s.dist_tol3d2;
+        let ext = s.global_extrema(point)?;
+        if !ext.is_done() {
+            return Ok(false);
+        }
+        // Natively SquareDistance(1) is read even without extrema (index-range failure).
+        let good: i32 = nearest(ext)?;
+        let dist2_min: f64 = ext.square_distance(good)?;
+        if !(dist2_min < dist_tol3d2) {
+            return Ok(false);
+        }
+        let (u, v) = ext.point(good)?.parameter();
+        (dist2_min, u, v)
+    };
     w.keep_distance(dist2_min);
-    let (u, v) = ext.point(good)?.parameter();
     if s.uperiod != 0. {
         if (w.u0 - u) > (2. * s.uperiod / 3.) {
             w.usens += 1;

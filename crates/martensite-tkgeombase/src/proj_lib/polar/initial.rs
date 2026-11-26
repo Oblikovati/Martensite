@@ -5,6 +5,7 @@
 //! unwrapped across the seams; the others a chain of extremum searches.
 use super::ComputeApproxOnPolarSurface;
 use super::function::{compute_periodicity, surface_bounds};
+use crate::extrema::{ExtAlgo, ExtFlag, ExtPS};
 use crate::gcpnts::QuasiUniformAbscissa;
 use crate::native_failure::failure;
 use crate::proj_lib::new_array;
@@ -33,6 +34,37 @@ pub(super) struct Sampling<'a> {
     pub(super) uperiod: f64,
     pub(super) vperiod: f64,
     pub(super) bounds: [f64; 4],
+    /// Operation-local global extrema solver reused across samples on `surf` (#253).
+    pub(super) ext_ps: Option<ExtPS<'a>>,
+}
+
+impl<'a> Sampling<'a> {
+    /// Runs global minimum extrema on `surf`, reusing the precomputed surface sampling grid
+    /// across samples in this operation (#253).
+    pub(super) fn global_extrema(&mut self, point: Point3) -> Result<&ExtPS<'a>, Failure> {
+        if self.ext_ps.is_none() {
+            let mut ext = ExtPS::new();
+            ext.set_flag(ExtFlag::Min);
+            ext.set_algo(ExtAlgo::Grad);
+            let [uinf, usup, vinf, vsup] = self.bounds;
+            ext.initialize(
+                self.surf,
+                (uinf, usup),
+                (vinf, vsup),
+                (self.tol_u, self.tol_v),
+            )?;
+            self.ext_ps = Some(ext);
+        }
+        let ext = self.ext_ps.as_mut().expect("ext_ps initialized above");
+        ext.perform(point)?;
+        Ok(ext)
+    }
+
+    /// Re-initializes the operation-local global extrema solver after tolerance reduction (#253).
+    pub(super) fn reinit_global_extrema(&mut self, point: Point3) -> Result<&ExtPS<'a>, Failure> {
+        self.ext_ps = None;
+        self.global_extrema(point)
+    }
 }
 
 impl ComputeApproxOnPolarSurface {
@@ -99,6 +131,7 @@ impl ComputeApproxOnPolarSurface {
             uperiod,
             vperiod,
             bounds: surface_bounds(surf)?,
+            ext_ps: None,
         })
     }
 
