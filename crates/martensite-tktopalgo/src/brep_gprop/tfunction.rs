@@ -36,6 +36,10 @@ pub struct BRepGPropTFunction {
     #[allow(dead_code)]
     nb_pnt_outer: i32,
     absolute_floor: f64,
+    max_inner_iterations: i32,
+    max_evaluations: Option<usize>,
+    evaluations: usize,
+    exhausted: bool,
     failure: Option<Failure>,
 }
 
@@ -66,6 +70,10 @@ impl BRepGPropTFunction {
             is_by_point,
             nb_pnt_outer: 3,
             absolute_floor: 0.,
+            max_inner_iterations: 1000,
+            max_evaluations: None,
+            evaluations: 0,
+            exhausted: false,
             failure: None,
         }
     }
@@ -75,6 +83,8 @@ impl BRepGPropTFunction {
         self.tol_reached = 0.;
         self.err_reached = 0.;
         self.abs_error = 0.;
+        self.evaluations = 0;
+        self.exhausted = false;
     }
 
     /// `SetNbKronrodPoints(theNbPoints)`: the outer point count, made odd;
@@ -102,6 +112,21 @@ impl BRepGPropTFunction {
     /// `f.set_absolute_floor(1e-9)`.
     pub fn set_absolute_floor(&mut self, floor: f64) {
         self.absolute_floor = floor;
+    }
+
+    /// Limits inner U-span adaptive subdivisions (#424); `f.set_max_inner_iterations(256)`.
+    pub fn set_max_inner_iterations(&mut self, limit: i32) {
+        self.max_inner_iterations = limit.max(1);
+    }
+
+    /// Limits total outer T-integrand evaluations since `init` (#424); `f.set_max_evaluations(Some(12_000))`.
+    pub fn set_max_evaluations(&mut self, limit: Option<usize>) {
+        self.max_evaluations = limit;
+    }
+
+    /// Reports whether the evaluation budget was exhausted since `init` (#424).
+    pub fn is_exhausted(&self) -> bool {
+        self.exhausted
     }
 
     /// `ErrorReached()`: the largest relative error since `init`; `f.error_reached()`.
@@ -142,6 +167,14 @@ impl BRepGPropTFunction {
 
     /// The body of `Value(X, F)`: `None` where the native member returns false.
     fn integral(&mut self, x: f64) -> Result<Option<f64>, Failure> {
+        self.evaluations += 1;
+        if self
+            .max_evaluations
+            .is_some_and(|limit| self.evaluations > limit)
+        {
+            self.exhausted = true;
+            return Ok(None);
+        }
         let (p2d, v2d) = self.surface.d12d(x)?;
         let u_max = p2d.x();
         // #386: a narrow trim still has measure; quadrature owns its error budget.
@@ -185,7 +218,7 @@ impl BRepGPropTFunction {
                 span[1],
                 start,
                 self.tolerance,
-                1000,
+                self.max_inner_iterations,
             );
             if let Some(failure) = self.u_function.take_failure() {
                 return Err(failure);

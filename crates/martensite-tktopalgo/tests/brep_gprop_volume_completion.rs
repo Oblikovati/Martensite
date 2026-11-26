@@ -6,8 +6,8 @@ use martensite_tkbrep::topods::{Compound, Face, Shape, Wire};
 use martensite_tkernel::standard::Handle;
 use martensite_tkg3d::geom::{GeomPlane, GeomRectangularTrimmedSurface, GeomSurface};
 use martensite_tkgeombase::gprop::GProps;
-use martensite_tkmath::gp::{Plane3, Point3};
-use martensite_tktopalgo::brep_gprop::{BRepGProp, VolumeGKFlags};
+use martensite_tkmath::gp::{Direction3, Plane3, Point3};
+use martensite_tktopalgo::brep_gprop::{BRepGProp, VolumeGKFlags, VolumeGKLimits};
 
 fn unit_box() -> Shape {
     let planar = cube(&[0, 1, 2, 3, 4, 5]);
@@ -167,4 +167,71 @@ fn explicit_plane_numeric_status_contract_is_preserved() {
     )
     .unwrap();
     assert_eq!(status, -1.);
+}
+
+#[test]
+fn bounded_gk_work_limit_returns_incomplete_status_when_exhausted() {
+    let mut props = sentinel();
+    let exhausted_limits = VolumeGKLimits {
+        max_outer_iterations: 1000,
+        max_inner_iterations: 1000,
+        max_t_evaluations: Some(1),
+    };
+    let status = BRepGProp::volume_properties_gk_bounded(
+        &unit_box(),
+        &mut props,
+        1e-9,
+        false,
+        VolumeGKFlags::default(),
+        exhausted_limits,
+    )
+    .unwrap();
+    assert!(
+        status < 0.,
+        "expected negative incomplete status, got {status}"
+    );
+}
+
+#[test]
+fn bounded_gk_and_plane_routes_converge_with_honest_error() {
+    let flags = VolumeGKFlags {
+        is_use_span: false,
+        cg_flag: true,
+        i_flag: true,
+        skip_shared: false,
+    };
+    let mut props = sentinel();
+    let err = BRepGProp::volume_properties_gk_bounded(
+        &unit_box(),
+        &mut props,
+        1e-9,
+        false,
+        flags,
+        VolumeGKLimits::default(),
+    )
+    .unwrap();
+    assert!((0.0..=1e-9).contains(&err), "unexpected error {err}");
+    assert_unit_box(&props);
+
+    let plane = Plane3::new(
+        Point3::new(0., 0., -10.),
+        Direction3::new(0., 0., 1.).unwrap(),
+    )
+    .unwrap();
+    let mut plane_props = sentinel();
+    let plane_err = BRepGProp::volume_properties_gk_plane_bounded(
+        &unit_box(),
+        &mut plane_props,
+        plane,
+        1e-9,
+        false,
+        flags,
+        VolumeGKLimits::default(),
+    )
+    .unwrap();
+    assert!(
+        (0.0..=1e-9).contains(&plane_err),
+        "unexpected plane error {plane_err}"
+    );
+    assert!((plane_props.mass() - 1.0).abs() < 1e-12);
 }

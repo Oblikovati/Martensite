@@ -2,7 +2,7 @@
 use super::domain::BRepGPropDomain;
 use super::face::BRepGPropFace;
 use super::tfunction::BRepGPropTFunction;
-use super::vinert_gk::{BRepGPropVinertGK, VinertGKOptions};
+use super::vinert_gk::{BRepGPropVinertGK, VinertGKOptions, VolumeGKLimits};
 use martensite_cmath::powi;
 use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::real::epsilon;
@@ -48,6 +48,7 @@ struct GkRun<'a> {
     coeffs: &'a [f64],
     options: VinertGKOptions,
     round_off_length: f64,
+    limits: VolumeGKLimits,
 }
 
 impl BRepGPropVinertGK {
@@ -153,6 +154,7 @@ impl BRepGPropVinertGK {
             coeffs,
             options,
             round_off_length: self.round_off_length,
+            limits: self.limits,
         };
         if run.count_curves()? == 0 {
             self.error_reached = -1.;
@@ -292,6 +294,8 @@ impl GkRun<'_> {
             u_min,
             crv_tol,
         );
+        t_func.set_max_inner_iterations(self.limits.max_inner_iterations);
+        t_func.set_max_evaluations(self.limits.max_t_evaluations);
         let knots: Vec<f64> = self
             .surface
             .get_t_knots(t_min, t_max)?
@@ -312,7 +316,13 @@ impl GkRun<'_> {
                 &mut t_func,
                 &mut integral,
                 &knots,
-                (nb_pnts, crv_tol, self.options.tolerance, floor),
+                (
+                    nb_pnts,
+                    crv_tol,
+                    self.options.tolerance,
+                    floor,
+                    self.limits.max_outer_iterations.max(1),
+                ),
             )?
             else {
                 return Ok(false);
@@ -339,7 +349,7 @@ fn spans_integral(
     t_func: &mut BRepGPropTFunction,
     integral: &mut KronrodSingleIntegration,
     knots: &[f64],
-    (nb_pnts, crv_tol, tolerance, floor): (i32, f64, f64, f64),
+    (nb_pnts, crv_tol, tolerance, floor, max_outer_iterations): (i32, f64, f64, f64, i32),
 ) -> Result<Option<(f64, f64)>, Failure> {
     let tol_span = 0.9 * tolerance;
     let (mut value, mut tol_reached) = (0., 0.);
@@ -353,11 +363,11 @@ fn spans_integral(
         t_func.init();
         t_func.set_tolerance(crv_tol / (t2 - t1));
         t_func.set_absolute_floor(floor / (t2 - t1));
-        integral.perform_with_tolerance(t_func, t1, t2, nb_pnts, tol_span, 1000);
+        integral.perform_with_tolerance(t_func, t1, t2, nb_pnts, tol_span, max_outer_iterations);
         if let Some(failure) = t_func.take_failure() {
             return Err(failure);
         }
-        if !integral.is_done() {
+        if !integral.is_done() || t_func.is_exhausted() {
             return Ok(None);
         }
         value += integral.value()?;

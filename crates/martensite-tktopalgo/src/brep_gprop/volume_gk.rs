@@ -2,7 +2,7 @@
 use super::domain::BRepGPropDomain;
 use super::face::BRepGPropFace;
 use super::package::{BRepGProp, located_origin, rough_bary_center};
-use super::vinert_gk::{BRepGPropVinertGK, VinertGKOptions};
+use super::vinert_gk::{BRepGPropVinertGK, VinertGKOptions, VolumeGKLimits};
 use super::volume::{OrientedFaces, is_oriented};
 use crate::brep_bnd_lib::BRepBndLib;
 use crate::brep_check::BRepCheckShell;
@@ -45,7 +45,27 @@ impl BRepGProp {
         only_closed: bool,
         flags: VolumeGKFlags,
     ) -> Result<f64, Failure> {
-        gk_by_shells(shape, props, (eps, only_closed, flags), None, false)
+        gk_by_shells(
+            shape,
+            props,
+            (eps, only_closed, flags, VolumeGKLimits::default()),
+            None,
+            false,
+        )
+    }
+
+    /// Bounded `VolumePropertiesGK` with caller-supplied work limits (#424).
+    /// Returns a negative status when any face exhausts its work limit before converging.
+    /// Example: `BRepGProp::volume_properties_gk_bounded(&shape, &mut props, 1e-9, false, flags, limits)?`.
+    pub fn volume_properties_gk_bounded(
+        shape: &Shape,
+        props: &mut GProps,
+        eps: f64,
+        only_closed: bool,
+        flags: VolumeGKFlags,
+        limits: VolumeGKLimits,
+    ) -> Result<f64, Failure> {
+        gk_by_shells(shape, props, (eps, only_closed, flags, limits), None, false)
     }
 
     /// `VolumePropertiesGK(S, VProps, thePln, Eps, OnlyClosed, IsUseSpan, CGFlag, IFlag,
@@ -59,7 +79,33 @@ impl BRepGProp {
         only_closed: bool,
         flags: VolumeGKFlags,
     ) -> Result<f64, Failure> {
-        gk_by_shells(shape, props, (eps, only_closed, flags), Some(plane), false)
+        gk_by_shells(
+            shape,
+            props,
+            (eps, only_closed, flags, VolumeGKLimits::default()),
+            Some(plane),
+            false,
+        )
+    }
+
+    /// Bounded plane-reference `VolumePropertiesGK` with caller-supplied work limits (#424).
+    /// Example: `BRepGProp::volume_properties_gk_plane_bounded(&shape, &mut props, plane, 1e-9, false, flags, limits)?`.
+    pub fn volume_properties_gk_plane_bounded(
+        shape: &Shape,
+        props: &mut GProps,
+        plane: Plane3,
+        eps: f64,
+        only_closed: bool,
+        flags: VolumeGKFlags,
+        limits: VolumeGKLimits,
+    ) -> Result<f64, Failure> {
+        gk_by_shells(
+            shape,
+            props,
+            (eps, only_closed, flags, limits),
+            Some(plane),
+            false,
+        )
     }
 }
 
@@ -72,7 +118,13 @@ pub(super) fn complete_volume_gk(
     flags: VolumeGKFlags,
 ) -> Result<(), Failure> {
     let mut completed = GProps::new();
-    gk_by_shells(shape, &mut completed, (eps, only_closed, flags), None, true)?;
+    gk_by_shells(
+        shape,
+        &mut completed,
+        (eps, only_closed, flags, VolumeGKLimits::default()),
+        None,
+        true,
+    )?;
     *props = completed;
     Ok(())
 }
@@ -82,7 +134,7 @@ pub(super) fn complete_volume_gk(
 fn gk_by_shells(
     shape: &Shape,
     props: &mut GProps,
-    (eps, only_closed, flags): (f64, bool, VolumeGKFlags),
+    (eps, only_closed, flags, limits): (f64, bool, VolumeGKFlags, VolumeGKLimits),
     plane: Option<Plane3>,
     reject_incomplete: bool,
 ) -> Result<f64, Failure> {
@@ -94,7 +146,7 @@ fn gk_by_shells(
         }
         let mut error = 0.;
         for shell in &shells {
-            let local = volume_gk(shell, props, plane, eps, flags, reject_incomplete)?;
+            let local = volume_gk(shell, props, plane, eps, flags, limits, reject_incomplete)?;
             if local < 0. {
                 return Ok(local);
             }
@@ -102,7 +154,7 @@ fn gk_by_shells(
         }
         error
     } else {
-        volume_gk(shape, props, plane, eps, flags, reject_incomplete)?
+        volume_gk(shape, props, plane, eps, flags, limits, reject_incomplete)?
     };
     let volume = props.mass();
     Ok(if volume > epsilon(1.) {
@@ -150,10 +202,12 @@ fn volume_gk(
     plane: Option<Plane3>,
     tolerance: f64,
     flags: VolumeGKFlags,
+    limits: VolumeGKLimits,
     reject_incomplete: bool,
 ) -> Result<f64, Failure> {
     let mut volume = BRepGPropVinertGK::new();
     volume.set_location(rough_bary_center(shape)?);
+    volume.set_limits(limits);
     // The explicit `volume_properties_gk` keeps the purely relative stop.
     if reject_incomplete {
         volume.round_off_length = model_length(shape);

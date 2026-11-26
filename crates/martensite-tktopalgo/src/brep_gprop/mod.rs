@@ -48,7 +48,7 @@ pub use sinert::BRepGPropSinert;
 pub use tfunction::BRepGPropTFunction;
 pub use ufunction::BRepGPropUFunction;
 pub use vinert::BRepGPropVinert;
-pub use vinert_gk::{BRepGPropVinertGK, VinertGKOptions};
+pub use vinert_gk::{BRepGPropVinertGK, VinertGKOptions, VolumeGKLimits};
 pub use volume_gk::VolumeGKFlags;
 
 pub use surface_policy::{
