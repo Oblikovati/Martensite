@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Ordered wire recipes and detached native consumer exports.
 mod failure;
+pub mod mixed;
 mod native;
 mod ordered;
 mod recipe;

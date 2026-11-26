@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
-use super::WireClosure;
-use crate::{EntityId, LineId, PointId};
+use super::{WireClosure, mixed::WireArcScope};
+use crate::{ArcId, CurveId, EntityId, LineId, PointId};
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::predicates::{NonFiniteCoordinate, SegmentContact3d};
 use std::{error::Error, fmt};
@@ -92,6 +92,53 @@ pub enum WireFailure {
         /// Native tolerance limit applied to the edge and vertices.
         limit: f64,
     },
+    /// A selected circular arc is absent.
+    MissingArc(ArcId),
+    /// A selected arc is construction geometry.
+    ConstructionArc(ArcId),
+    /// An authored curve can supply only one directed occurrence in the mixed recipe.
+    RepeatedCurve(CurveId),
+    /// The curve family has no admitted mixed-wire proof.
+    UnsupportedCurve(CurveId),
+    /// A source or stored straight span cannot supply an exact affine trim.
+    MixedLineTrace(LineId),
+    /// The selected arc did not qualify for the exact cardinal quarter domain.
+    ArcDomain {
+        /// Original arc.
+        arc: ArcId,
+        /// Missing domain evidence.
+        cause: WireArcScope,
+    },
+    /// Consecutive mixed occurrences do not share their directed point identity.
+    DisjointCurveUses {
+        /// Original pair in wire order.
+        curves: [CurveId; 2],
+        /// Terminal and initial identities.
+        points: [PointId; 2],
+    },
+    /// Another mixed pair exceeds the caller's work grant.
+    MixedPairLimit {
+        /// Next pair in request order.
+        curves: [CurveId; 2],
+        /// Maximum number of pair checks.
+        limit: usize,
+    },
+    /// No certificate establishes the required global separation or tangent join.
+    UnprovedCurvePair {
+        /// Original pair in request order.
+        curves: [CurveId; 2],
+        /// Whether the pair requires a unique directed tangent join.
+        adjacent: bool,
+    },
+    /// Binary64 angular trim discrepancy exceeds the original fit or native tolerance.
+    NativeArcErrorBound {
+        /// Original arc.
+        arc: ArcId,
+        /// Outward full-interval spatial difference.
+        bound: f64,
+        /// Effective original spatial cap.
+        limit: f64,
+    },
     /// A caller cancellation was observed.
     Cancelled(WirePhase),
 }
@@ -161,6 +208,41 @@ impl fmt::Display for WireFailure {
                     "native wire line {line:?} error bound {bound} must fit tolerance {limit}"
                 )
             }
+            Self::MissingArc(arc) => write!(f, "wire arc {arc:?} must exist in the snapshot"),
+            Self::ConstructionArc(arc) => write!(f, "wire arc {arc:?} must have the model role"),
+            Self::RepeatedCurve(curve) => write!(f, "wire curve {curve:?} must occur once"),
+            Self::UnsupportedCurve(curve) => write!(
+                f,
+                "wire curve {curve:?} needs admitted line or cardinal circular geometry"
+            ),
+            Self::MixedLineTrace(line) => write!(
+                f,
+                "mixed wire line {line:?} needs exact affine trim endpoints"
+            ),
+            Self::ArcDomain { arc, cause } => write!(
+                f,
+                "wire arc {arc:?} needs a checked cardinal quarter ({cause:?})"
+            ),
+            Self::DisjointCurveUses { curves, points } => write!(
+                f,
+                "wire curves {curves:?} must share a directed point identity, got {points:?}"
+            ),
+            Self::MixedPairLimit { curves, limit } => write!(
+                f,
+                "wire curve pair {curves:?} requires another check beyond {limit}"
+            ),
+            Self::UnprovedCurvePair { curves, adjacent } => {
+                let required = if *adjacent {
+                    "one directed tangent join"
+                } else {
+                    "strict separation across both trims"
+                };
+                write!(f, "wire curve pair {curves:?} needs {required}")
+            }
+            Self::NativeArcErrorBound { arc, bound, limit } => write!(
+                f,
+                "wire arc {arc:?} error bound {bound} must fit tolerance {limit}"
+            ),
             Self::Cancelled(phase) => write!(f, "wire operation cancelled at {phase:?}"),
         }
     }

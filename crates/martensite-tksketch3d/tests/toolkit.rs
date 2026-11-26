@@ -18,6 +18,7 @@ mod line_incidence;
 mod line_relations;
 mod line_seed;
 mod mirror;
+mod mixed_wire;
 mod motion;
 mod on_face;
 mod preferred_drag;
