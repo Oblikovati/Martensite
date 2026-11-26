@@ -8,6 +8,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added the two-process byte-for-byte determinism gate (`two_process_determinism`) and `HashMap`/`HashSet` determinism audit (`docs/features/determinism/hashmap-audit.md`) (#53).
+
+- Added the written thread-safety contract, public type classification manifest (`docs/architecture/thread-safety-manifest.tsv`), compile-time `Send`/`Sync` assertions, and CI manifest check in `cargo xtask` (#61).
+
 - Added an opt-in `sanitizer` workflow dispatch mode and `ToolkitBorrowedJobs` ThreadSanitizer control in the CI planner for `martensite-tkernel` borrowed-job migration and thread lifecycle tests (#110).
 
 - Added native three-station planar Curve On Face with a matched quadratic edge and pcurve (#611).
