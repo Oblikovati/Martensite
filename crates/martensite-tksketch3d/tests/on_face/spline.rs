@@ -62,13 +62,15 @@ fn empty() -> Snapshot {
     Snapshot::empty(MinimumLength::new(1e-3).unwrap())
 }
 
-fn create(binding: &PlanarFaceBinding, minimum_y: f64) -> Result<PlanarFaceSplineEdit, Failure> {
-    binding.create_fitted_curve(
-        &empty(),
-        recipe(binding, minimum_y),
-        || binding.revision(),
-        || false,
-    )
+fn create(binding: &PlanarFaceBinding, minimum_y: f64) -> PlanarFaceSplineEdit {
+    binding
+        .create_fitted_curve(
+            &empty(),
+            recipe(binding, minimum_y),
+            || binding.revision(),
+            || false,
+        )
+        .unwrap()
 }
 
 fn assert_near<const N: usize>(actual: [f64; N], expected: [f64; N]) {
@@ -80,7 +82,7 @@ fn assert_near<const N: usize>(actual: [f64; N], expected: [f64; N]) {
 #[test]
 fn actual_native_cubic_clears_the_hole_even_when_its_control_hull_does_not() {
     let binding = proof(5, 0., 9);
-    let result = create(&binding, 1.25).unwrap();
+    let result = create(&binding, 1.25);
     let spline = result
         .snapshot
         .fit_spline(result.curve.recipe().spline)
@@ -242,7 +244,7 @@ fn both_native_exports_are_mutation_isolated_and_final_source_is_checked() {
             if checks == 1 { input.source } else { stale }
         }, || false), Err(Failure::StaleSource { actual, .. }) if actual == stale
     ));
-    let result = create(&binding, 1.25).unwrap();
+    let result = create(&binding, 1.25);
     let export = result.curve.to_native().unwrap();
     let untouched = result.curve.to_native().unwrap();
     let expected = crate::wire::archive(&untouched.edge);
@@ -280,7 +282,7 @@ fn original_located_chart_reports_positive_pair_error_without_losing_source() {
     let body = topods::solid(&body.moved(&location, false).unwrap()).unwrap();
     let face = topods::face(&face.moved(&location, false).unwrap()).unwrap();
     let binding = captured(&body, &face, 7, 11);
-    let result = create(&binding, 1.25).unwrap();
+    let result = create(&binding, 1.25);
     let error = result.curve.certificate().distance_bound;
     assert!(error > 0. && error < 1e-12);
     let curve = result.curve.to_native().unwrap();
@@ -317,7 +319,7 @@ fn cancellation_during_the_last_host_source_read_prevents_publication() {
 #[test]
 fn point_and_pcurve_exports_replay_across_workers_and_fresh_processes() {
     let binding = proof(5, 0., 9);
-    let result = create(&binding, 1.25).unwrap();
+    let result = create(&binding, 1.25);
     let expected = crate::wire::archive(&result.curve.to_native().unwrap().edge);
     std::thread::scope(|scope| {
         for _ in 0..4 {
@@ -362,7 +364,7 @@ fn emit_native_fit_receipt() {
     shared::<PlanarFaceSplineEdit>();
     shared::<Failure>();
     let binding = proof(5, 0., 9);
-    let result = create(&binding, 1.25).unwrap();
+    let result = create(&binding, 1.25);
     let source = result.curve.recipe();
     let proof = result.curve.certificate();
     let bytes = crate::wire::archive(&result.curve.to_native().unwrap().edge);
