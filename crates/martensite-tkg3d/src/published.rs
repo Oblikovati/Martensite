@@ -263,9 +263,7 @@ impl PublishedSurface {
     pub fn d0(&self, u: f64, v: f64) -> Point3 {
         match &*self.inner {
             ImmutableSurface::Plane(s) => elslib::plane_value(u, v, s.position()),
-            ImmutableSurface::Cylinder(s) => {
-                elslib::cylinder_value(u, v, s.position(), s.radius())
-            }
+            ImmutableSurface::Cylinder(s) => elslib::cylinder_value(u, v, s.position(), s.radius()),
             ImmutableSurface::Cone(s) => {
                 elslib::cone_value(u, v, s.position(), s.ref_radius(), s.semi_angle())
             }

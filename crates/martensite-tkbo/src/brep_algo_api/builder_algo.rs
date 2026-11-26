@@ -160,10 +160,8 @@ impl BRepAlgoAPIBuilderAlgo {
     > {
         use martensite_tkbrep::operation::{HistoryGraph, OperationError, OperationResult};
         if self.has_errors() {
-            let mut err = OperationError::kernel_failure(
-                operation,
-                "Boolean builder completed with errors",
-            );
+            let mut err =
+                OperationError::kernel_failure(operation, "Boolean builder completed with errors");
             for arg in self.arguments.iter() {
                 err = err.with_entity(arg.clone());
             }

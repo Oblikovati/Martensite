@@ -22,8 +22,7 @@ impl BaseAllocator {
         match &*self.fields.inner {
             AllocatorKind::Common | AllocatorKind::Heap => Some(layout),
             AllocatorKind::Aligned(alignment) => {
-                let min_align =
-                    crate::standard::memory::raw_heap::mm_malloc_alignment(*alignment)?;
+                let min_align = crate::standard::memory::raw_heap::mm_malloc_alignment(*alignment)?;
                 Layout::from_size_align(layout.size(), layout.align().max(min_align)).ok()
             }
             _ => None,

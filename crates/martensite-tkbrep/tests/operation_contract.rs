@@ -42,12 +42,19 @@ fn operation_error_covers_every_failure_class_entity_and_cause() {
         ),
     ];
     for (err, expected_class) in cases {
-        let err = err.with_entity(entity.clone()).with_cause(root_cause.clone());
+        let err = err
+            .with_entity(entity.clone())
+            .with_cause(root_cause.clone());
         assert_eq!(err.failure_class(), expected_class);
         assert_eq!(err.affected_entities().len(), 1);
         assert!(err.affected_entities()[0].is_same(&entity));
         assert!(err.source().is_some());
-        assert!(err.source().unwrap().to_string().contains("invalid input face"));
+        assert!(
+            err.source()
+                .unwrap()
+                .to_string()
+                .contains("invalid input face")
+        );
     }
 }
 
@@ -71,10 +78,18 @@ fn history_graph_preserves_all_five_relations_and_non_unique_markers() {
     brep_history.add_modified(&p_split, &q_s2).unwrap();
     brep_history.remove(&p_del).unwrap();
     brep_history.add_generated(&p_gen, &q_gen).unwrap();
-    brep_history.add_generated(&Shape::default(), &q_created).unwrap();
+    brep_history
+        .add_generated(&Shape::default(), &q_created)
+        .unwrap();
 
     let graph = HistoryGraph::from_brep_history(
-        &[p1.clone(), p2.clone(), p_split.clone(), p_del.clone(), p_gen.clone()],
+        &[
+            p1.clone(),
+            p2.clone(),
+            p_split.clone(),
+            p_del.clone(),
+            p_gen.clone(),
+        ],
         &brep_history,
     )
     .unwrap();
@@ -101,10 +116,27 @@ fn operation_result_is_send_sync_sealed_and_monotonic() {
     assert_send_sync::<OperationError>();
     assert_send_sync::<HistoryGraph>();
 
-    assert!(OperationResult::seal(OperationKind::Prism, Shape::default(), HistoryGraph::empty()).is_err());
+    assert!(
+        OperationResult::seal(
+            OperationKind::Prism,
+            Shape::default(),
+            HistoryGraph::empty()
+        )
+        .is_err()
+    );
 
-    let r1 = OperationResult::seal(OperationKind::Prism, make_vertex(1.0), HistoryGraph::empty()).unwrap();
-    let r2 = OperationResult::seal(OperationKind::Boolean, make_vertex(2.0), HistoryGraph::empty()).unwrap();
+    let r1 = OperationResult::seal(
+        OperationKind::Prism,
+        make_vertex(1.0),
+        HistoryGraph::empty(),
+    )
+    .unwrap();
+    let r2 = OperationResult::seal(
+        OperationKind::Boolean,
+        make_vertex(2.0),
+        HistoryGraph::empty(),
+    )
+    .unwrap();
     assert!(r2.revision() > r1.revision());
     assert_eq!(r1.owner_thread(), std::thread::current().id());
 }

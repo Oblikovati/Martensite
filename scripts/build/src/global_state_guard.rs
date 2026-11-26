@@ -81,7 +81,9 @@ mod tests {
     #[test]
     fn rejects_new_thread_local_in_kernel_source() {
         let dir = tempfile::tempdir().unwrap();
-        let file = dir.path().join("crates/martensite-tkfillet/src/new_algo.rs");
+        let file = dir
+            .path()
+            .join("crates/martensite-tkfillet/src/new_algo.rs");
         fs::create_dir_all(file.parent().unwrap()).unwrap();
         fs::write(&file, "thread_local! { static BAD: usize = 0; }\n").unwrap();
         let changed = vec![ChangedFile {

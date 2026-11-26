@@ -45,20 +45,22 @@ fn general_fuse_assembles_valid_filleted_box_with_exact_volume_and_history() {
         (0.0, std::f64::consts::FRAC_PI_2, 0.0, 10.0),
         1e-7,
     )
-            .unwrap()
-            .face()
-            .unwrap()
-            .into_shape();
+    .unwrap()
+    .face()
+    .unwrap()
+    .into_shape();
 
-    let result = GeneralFuseBlendAssembler::assemble_solid(
-        OperationKind::Fillet,
-        &source,
-        &[fillet_face],
-    )
-    .unwrap();
+    let result =
+        GeneralFuseBlendAssembler::assemble_solid(OperationKind::Fillet, &source, &[fillet_face])
+            .unwrap();
 
     assert_eq!(result.operation(), OperationKind::Fillet);
-    assert!(BRepCheckAnalyzer::new(result.shape(), true, false, false).unwrap().is_valid().unwrap());
+    assert!(
+        BRepCheckAnalyzer::new(result.shape(), true, false, false)
+            .unwrap()
+            .is_valid()
+            .unwrap()
+    );
     assert_eq!(face_count(result.shape()), 7);
     let expected_volume = 1000.0 - (1.0 - FRAC_PI_4) * 4.0 * 10.0;
     assert!(
@@ -77,8 +79,7 @@ fn general_fuse_assembles_valid_chamfered_box_with_exact_volume_and_history() {
     let source = box_maker.shape().unwrap().clone();
     let normal = Direction3::new(1.0, 1.0, 0.0).unwrap();
     let plane_axis = Axis3::new(Point3::new(9.0, 9.0, 5.0), normal, Direction3::Z).unwrap();
-    let plane_surf: Handle<dyn GeomSurface> =
-        Handle::new(GeomPlane::new(plane_axis)).cast();
+    let plane_surf: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(plane_axis)).cast();
     let chamfer_face =
         BRepBuilderAPIMakeFace::from_surface_bounds(&plane_surf, (-8.0, 8.0, -8.0, 8.0), 1e-7)
             .unwrap()
@@ -86,15 +87,17 @@ fn general_fuse_assembles_valid_chamfered_box_with_exact_volume_and_history() {
             .unwrap()
             .into_shape();
 
-    let result = GeneralFuseBlendAssembler::assemble_solid(
-        OperationKind::Chamfer,
-        &source,
-        &[chamfer_face],
-    )
-    .unwrap();
+    let result =
+        GeneralFuseBlendAssembler::assemble_solid(OperationKind::Chamfer, &source, &[chamfer_face])
+            .unwrap();
 
     assert_eq!(result.operation(), OperationKind::Chamfer);
-    assert!(BRepCheckAnalyzer::new(result.shape(), true, false, false).unwrap().is_valid().unwrap());
+    assert!(
+        BRepCheckAnalyzer::new(result.shape(), true, false, false)
+            .unwrap()
+            .is_valid()
+            .unwrap()
+    );
     assert_eq!(face_count(result.shape()), 7);
     let expected_volume = 1000.0 - 0.5 * 4.0 * 10.0;
     assert!(
@@ -107,12 +110,9 @@ fn general_fuse_assembles_valid_chamfered_box_with_exact_volume_and_history() {
 
 #[test]
 fn general_fuse_blend_assembler_rejects_bad_inputs_with_typed_error() {
-    let err = GeneralFuseBlendAssembler::assemble_solid(
-        OperationKind::Fillet,
-        &Shape::default(),
-        &[],
-    )
-    .unwrap_err();
+    let err =
+        GeneralFuseBlendAssembler::assemble_solid(OperationKind::Fillet, &Shape::default(), &[])
+            .unwrap_err();
     assert_eq!(err.operation(), OperationKind::Fillet);
     assert_eq!(err.failure_class(), FailureClass::BadInput);
 }

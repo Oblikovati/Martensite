@@ -9,8 +9,8 @@ use martensite_tkbrep::operation::{HistoryGraph, OperationError, OperationKind, 
 use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::ncollection::List;
-use martensite_tkgeombase::gprop::GProps;
 use martensite_tkg3d::top_abs::ShapeEnum;
+use martensite_tkgeombase::gprop::GProps;
 use martensite_tktopalgo::brep_gprop::BRepGProp;
 
 /// Assembles a blended solid by splitting `source` with `blend_faces` via General Fuse
@@ -32,10 +32,11 @@ impl GeneralFuseBlendAssembler {
             ));
         }
         if blend_faces.is_empty() || blend_faces.iter().any(Shape::is_null) {
-            return Err(
-                OperationError::bad_input(operation, "blend faces must be non-empty and non-null")
-                    .with_entity(source.clone()),
-            );
+            return Err(OperationError::bad_input(
+                operation,
+                "blend faces must be non-empty and non-null",
+            )
+            .with_entity(source.clone()));
         }
         let mut args = List::default();
         args.append(source.clone());
@@ -79,13 +80,12 @@ fn select_kept_solid(
     source: &Shape,
     split_compound: &Shape,
 ) -> Result<Shape, OperationError> {
-    let mut explorer = Explorer::new(split_compound, ShapeEnum::Solid, ShapeEnum::Shape).map_err(
-        |err| {
+    let mut explorer =
+        Explorer::new(split_compound, ShapeEnum::Solid, ShapeEnum::Shape).map_err(|err| {
             OperationError::kernel_failure(operation, err.to_string())
                 .with_entity(source.clone())
                 .with_cause(err)
-        },
-    )?;
+        })?;
     let mut best: Option<(f64, Shape)> = None;
     while explorer.more() {
         let candidate = explorer.current().clone();

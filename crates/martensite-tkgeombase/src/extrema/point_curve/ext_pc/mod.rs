@@ -8,13 +8,13 @@ mod owned;
 mod spline_roots;
 
 use super::gen_ext_pc::GGenExtPC;
-use crate::extrema::{PointCurveClassification, StationaryNature};
 use crate::extrema::curve_reference::CurveReference;
 use crate::extrema::curve_tool::ExtremaCurveTool;
 use crate::extrema::elementary_point_curve::ElementaryPointCurve;
 use crate::extrema::failures::{extremum_index, not_done, null_object, sequence_value};
 use crate::extrema::gp_space::GpPoint;
 use crate::extrema::pon::POnCurve;
+use crate::extrema::{PointCurveClassification, StationaryNature};
 use crate::gcpnts::PoleCurve;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::Failure;

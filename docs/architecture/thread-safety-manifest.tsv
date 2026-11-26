@@ -5991,3 +5991,21 @@ martensite-vulkan	VertexOutputRequest	shareable	immutable value or Send + Sync h
 martensite-vulkan	VulkanDriverFactory	shareable	immutable value or Send + Sync handle/builder contract
 martensite-vulkan	VulkanOptions	shareable	immutable value or Send + Sync handle/builder contract
 martensite-vulkan	VulkanRenderer	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbrep	FailureClass	shareable	
+martensite-tkbrep	HistoryGraph	shareable	
+martensite-tkbrep	HistoryGraphBuilder	shareable	
+martensite-tkbrep	HistoryRelation	shareable	
+martensite-tkbrep	HistoryRelationKind	shareable	
+martensite-tkbrep	OperationError	shareable	
+martensite-tkbrep	OperationKind	shareable	
+martensite-tkbrep	OperationResult	shareable	
+martensite-tkfillet	GeneralFuseBlendAssembler	shareable	
+martensite-tkg2d	Curve2dBuilder	shareable	
+martensite-tkg2d	PublishedCurve2d	shareable	
+martensite-tkg3d	Curve3dBuilder	shareable	
+martensite-tkg3d	PublishedCurve3d	shareable	
+martensite-tkg3d	PublishedSurface	shareable	
+martensite-tkg3d	SurfaceBuilder	shareable	
+martensite-tkgeombase	PointCurveClassification	shareable	
+martensite-tkgeombase	StationaryNature	shareable	
+martensite-tkmath	DistanceJetCertificate	shareable	

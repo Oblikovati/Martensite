@@ -107,7 +107,9 @@ impl BRepPrimAPIMakePrism {
         martensite_tkbrep::operation::OperationError,
     > {
         use martensite_tkbrep::brep_tools::History;
-        use martensite_tkbrep::operation::{HistoryGraph, OperationError, OperationKind, OperationResult};
+        use martensite_tkbrep::operation::{
+            HistoryGraph, OperationError, OperationKind, OperationResult,
+        };
         use martensite_tkbrep::topexp;
         use martensite_tkbrep::toptools::IndexedMapOfShape;
         if shape.is_null() {
@@ -117,13 +119,11 @@ impl BRepPrimAPIMakePrism {
             ));
         }
         if vector.magnitude() <= martensite_tkernel::precision::confusion() {
-            return Err(
-                OperationError::bad_input(
-                    OperationKind::Prism,
-                    "prism extrusion vector magnitude is within Precision::Confusion()",
-                )
-                .with_entity(shape.clone()),
-            );
+            return Err(OperationError::bad_input(
+                OperationKind::Prism,
+                "prism extrusion vector magnitude is within Precision::Confusion()",
+            )
+            .with_entity(shape.clone()));
         }
         let mut maker = Self::new(shape, vector, true, canonize).map_err(|err| {
             OperationError::kernel_failure(OperationKind::Prism, err.to_string())
@@ -155,9 +155,11 @@ impl BRepPrimAPIMakePrism {
                 }
             }
         }
-        let graph = HistoryGraph::from_brep_history(&[shape.clone()], &history).map_err(|err| {
-            OperationError::kernel_failure(OperationKind::Prism, err.to_string()).with_cause(err)
-        })?;
+        let graph = HistoryGraph::from_brep_history(std::slice::from_ref(shape), &history)
+            .map_err(|err| {
+                OperationError::kernel_failure(OperationKind::Prism, err.to_string())
+                    .with_cause(err)
+            })?;
         OperationResult::seal(OperationKind::Prism, result_shape, graph)
     }
 }

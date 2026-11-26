@@ -8,6 +8,20 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added `OperationError`, `HistoryGraph`, and sealed `OperationResult` in `martensite-tkbrep::operation`, wired into `BRepPrimAPIMakePrism::execute_operation` and `BRepAlgoAPIBuilderAlgo::seal_result` (#6, #18, #27).
+
+- Added immutable, lock-free published geometry (`PublishedCurve2d`, `PublishedCurve3d`, `PublishedSurface`) and copy-on-write builders in `martensite-tkg2d` and `martensite-tkg3d` (#65).
+
+- Added `GeneralFuseBlendAssembler` in `martensite-tkfillet` to assemble filleted and chamfered solids through `BRepAlgoAPIBuilderAlgo` with unified history and sealed results (#44).
+
+- Added `Graphic3dRenderView::try_present` and `capture_color` for checked interactive presentation without mandatory per-frame CPU readback (#501).
+
+- Added certified Bernstein orthogonality root isolation for B-spline and Bézier point-to-curve extrema so interior minima are never silently omitted (#462).
+
+- Added the `global_state_guard` CI check in `martensite-build` and moved `BlendFunc` scratch state out of `thread_local!` into per-instance fields (#62).
+
+- Added built-in allocator fast-path dispatch with direct `std::alloc` provenance in `martensite-tkernel` (#584).
+
 - Added the deep isolation test suite (`deep_isolation`) covering source vertex, tolerance, and location mutations after Boolean success, failure, and cancellation (#25).
 
 - Added the two-process byte-for-byte determinism gate (`two_process_determinism`) and `HashMap`/`HashSet` determinism audit (`docs/features/determinism/hashmap-audit.md`) (#53).

@@ -2,7 +2,9 @@
 //! Concurrent lock-free read and copy-on-write builder tests for published geometry (#65).
 use martensite_tkg2d::published::PublishedCurve2d;
 use martensite_tkg3d::published::{PublishedCurve3d, PublishedSurface};
-use martensite_tkmath::gp::{Axis2, Axis3, Circle3, Cylinder3, Direction3, Point3, Transform3, Vector3};
+use martensite_tkmath::gp::{
+    Axis2, Axis3, Circle3, Cylinder3, Direction3, Point3, Transform3, Vector3,
+};
 use std::sync::Barrier;
 use std::thread;
 
@@ -17,11 +19,13 @@ fn published_geometry_types_are_send_sync_without_locks() {
 #[test]
 fn concurrent_readers_see_consistent_values_while_writer_builds_edited_copy() {
     let circle = PublishedCurve3d::circle(
-        Circle3::new(Axis2::new(Point3::new(0.0, 0.0, 0.0), Direction3::Z).unwrap(), 10.0).unwrap(),
+        Circle3::new(
+            Axis2::new(Point3::new(0.0, 0.0, 0.0), Direction3::Z).unwrap(),
+            10.0,
+        )
+        .unwrap(),
     );
-    let cylinder = PublishedSurface::cylinder(
-        Cylinder3::new(Axis3::default(), 5.0).unwrap(),
-    );
+    let cylinder = PublishedSurface::cylinder(Cylinder3::new(Axis3::default(), 5.0).unwrap());
 
     let barrier = std::sync::Arc::new(Barrier::new(5));
     let mut readers = Vec::new();

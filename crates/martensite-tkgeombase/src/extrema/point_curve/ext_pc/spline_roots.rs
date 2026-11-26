@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Certified Bernstein orthogonality root isolation for B-spline and Bézier spans (#462).
 use super::GGExtPC;
+use crate::extrema::StationaryNature;
 use crate::extrema::conic_classification::certified_minimum;
 use crate::extrema::curve_tool::{BezierPoles, ExtremaCurveTool, SplineKnots};
 use crate::extrema::gp_space::{GpPoint, GpVector};
-use crate::extrema::StationaryNature;
 use crate::gcpnts::PoleCurve;
 use martensite_tkernel::standard::Failure;
 
@@ -110,12 +110,7 @@ fn extract_bspline_span_bezier(
     Ok(ctrl)
 }
 
-fn find_flat_span_index(
-    flat_knots: &[f64],
-    degree: usize,
-    u_lo: f64,
-    tol: f64,
-) -> Option<usize> {
+fn find_flat_span_index(flat_knots: &[f64], degree: usize, u_lo: f64, tol: f64) -> Option<usize> {
     let limit = flat_knots.len().checked_sub(degree + 1)?;
     let mut best = None;
     for i in degree..limit {
@@ -200,8 +195,16 @@ fn isolate_segment_roots<P: GpPoint>(
 ) -> Result<Vec<(f64, f64)>, Failure> {
     let q = [
         query.coordinate(0),
-        if P::DIMENSION > 1 { query.coordinate(1) } else { 0.0 },
-        if P::DIMENSION > 2 { query.coordinate(2) } else { 0.0 },
+        if P::DIMENSION > 1 {
+            query.coordinate(1)
+        } else {
+            0.0
+        },
+        if P::DIMENSION > 2 {
+            query.coordinate(2)
+        } else {
+            0.0
+        },
     ];
     let poly = if rational {
         rational_orthogonality_bernstein(weighted, q)?
@@ -217,7 +220,9 @@ fn polynomial_orthogonality_bernstein(
 ) -> Result<Vec<f64>, Failure> {
     let d = weighted.len().saturating_sub(1);
     if d == 0 || 2 * d - 1 > MAX_BERNSTEIN_DEGREE {
-        return Err(incomplete_failure("spline degree exceeds certified Bernstein bound"));
+        return Err(incomplete_failure(
+            "spline degree exceeds certified Bernstein bound",
+        ));
     }
     let diff: Vec<[f64; 3]> = weighted
         .iter()
@@ -241,7 +246,9 @@ fn rational_orthogonality_bernstein(
 ) -> Result<Vec<f64>, Failure> {
     let d = weighted.len().saturating_sub(1);
     if d == 0 || 3 * d - 1 > MAX_BERNSTEIN_DEGREE {
-        return Err(incomplete_failure("rational spline degree exceeds certified Bernstein bound"));
+        return Err(incomplete_failure(
+            "rational spline degree exceeds certified Bernstein bound",
+        ));
     }
     let num: Vec<[f64; 3]> = weighted.iter().map(|&[x, y, z, _]| [x, y, z]).collect();
     let w: Vec<f64> = weighted.iter().map(|&[_, _, _, w]| w).collect();
@@ -330,7 +337,7 @@ fn isolate_bernstein_roots(coeffs: &[f64]) -> Result<Vec<(f64, f64)>, Failure> {
             ));
         }
         let variations = count_sign_variations(&poly);
-        let has_zero = poly.iter().any(|&c| c == 0.0);
+        let has_zero = poly.contains(&0.0);
         if variations == 0 && !has_zero {
             continue;
         }

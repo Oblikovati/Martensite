@@ -97,12 +97,12 @@ fn reversed_orientation_and_split_knots_preserve_all_interior_minima() {
     ]);
     let knots = array1_from_slice(&[0.0, 1.0]);
     let mults = array1_from_slice(&[3, 3]);
-    let reversed: Handle<dyn Geom2dCurve> = Handle::new(
-        Geom2dBSplineCurve::new(&reversed_poles, &knots, &mults, 2, false).unwrap(),
-    )
-    .cast();
+    let reversed: Handle<dyn Geom2dCurve> =
+        Handle::new(Geom2dBSplineCurve::new(&reversed_poles, &knots, &mults, 2, false).unwrap())
+            .cast();
     let adaptor = Geom2dAdaptorCurve::with_curve(&reversed).unwrap();
-    let extrema = ExtPC2d::with_range(Point2::new(0.025, 0.0054), &adaptor, 0.0, 1.0, 1e-7).unwrap();
+    let extrema =
+        ExtPC2d::with_range(Point2::new(0.025, 0.0054), &adaptor, 0.0, 1.0, 1e-7).unwrap();
     let roots = collect_extrema_2d(&extrema);
     assert_eq!(roots.len(), 3);
     assert!((roots[0].0 - 0.973).abs() < 1e-10 && roots[0].2);
@@ -129,9 +129,18 @@ fn reversed_orientation_and_split_knots_preserve_all_interior_minima() {
         ExtPC2d::with_range(Point2::new(0.025, 0.0054), &split_adaptor, 0.0, 1.0, 1e-7).unwrap();
     let split_roots = collect_extrema_2d(&split_ext);
     assert_eq!(split_roots.len(), 3, "split_roots={split_roots:?}");
-    assert!((split_roots[0].0 - 0.023).abs() < 1e-10 && split_roots[0].2, "split_roots={split_roots:?}");
-    assert!((split_roots[1].0 - 0.025).abs() < 1e-10 && !split_roots[1].2, "split_roots={split_roots:?}");
-    assert!((split_roots[2].0 - 0.027).abs() < 1e-10 && split_roots[2].2, "split_roots={split_roots:?}");
+    assert!(
+        (split_roots[0].0 - 0.023).abs() < 1e-10 && split_roots[0].2,
+        "split_roots={split_roots:?}"
+    );
+    assert!(
+        (split_roots[1].0 - 0.025).abs() < 1e-10 && !split_roots[1].2,
+        "split_roots={split_roots:?}"
+    );
+    assert!(
+        (split_roots[2].0 - 0.027).abs() < 1e-10 && split_roots[2].2,
+        "split_roots={split_roots:?}"
+    );
 }
 
 #[test]

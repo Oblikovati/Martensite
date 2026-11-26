@@ -7,8 +7,8 @@ use crate::gcpnts::{PoleCurve, TCurveTypes, TangentialCriteria, TangentialDeflec
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
-use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dBezierCurve, Geom2dCurve};
 use martensite_tkg2d::geom2d::native::std_max;
+use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dBezierCurve, Geom2dCurve};
 use martensite_tkg3d::geom::{GeomBSplineCurve, GeomBezierCurve, GeomCurve};
 use martensite_tkmath::geom_abs::{CurveType, Shape};
 use std::f64::consts::PI;
