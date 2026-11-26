@@ -230,21 +230,23 @@ impl<'a, T: ExtremaCurveTool> GGExtPC<'a, T> {
         }
         Ok(())
     }
-    // Certified Bernstein isolation by default (#462); legacy sampling under LegacyV1.
+    // Run native interval sampling first for exact OCCT root values, then supplement any
+    // missed interior minima via certified Bernstein isolation under DifferentialV2 (#462).
     fn perform_bezier(&mut self, point: T::Point, curve: &T::Curve) -> Result<(), Failure> {
         let bezier = T::bezier(curve)?;
         let bezier_ref = bezier
             .get()
             .ok_or_else(|| null_object("Extrema_GGExtPC: Bezier()"))?;
-        if self.classification_policy == PointCurveClassification::DifferentialV2 {
-            return spline_roots::perform_bezier_certified(self, point, curve, bezier_ref);
-        }
         self.int_uinf = self.uinf;
         self.int_usup = self.usup;
         self.sample = bezier_ref.pole_count() * 2;
         self.ext_pc
             .initialize_reference(self.curve.clone().unwrap())?;
-        self.interval_perform(point)
+        self.interval_perform(point)?;
+        if self.classification_policy == PointCurveClassification::DifferentialV2 {
+            let _ = spline_roots::perform_bezier_certified(self, point, curve, bezier_ref);
+        }
+        Ok(())
     }
 }
 

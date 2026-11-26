@@ -137,7 +137,7 @@ impl AdaptiveRun<'_, '_> {
         for inertia in &self.l.inertia[..j] {
             ddim += inertia.mass;
         }
-        ddim = (ddim * self.input.epsilon).abs();
+        ddim = (ddim * self.input.epsilon).abs().max(1e-12);
         if ddim > self.state.eps {
             self.state.eps = ddim;
             self.state.eps_l = 0.9 * self.state.eps;

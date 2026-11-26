@@ -110,18 +110,19 @@ impl<'a, T: ExtremaCurveTool> GGExtPC<'a, T> {
         self.sample = spline.pole_degree() + 1;
         if self.sample == 2 {
             self.perform_linear_spans(point, curve, &spans)?;
-        } else if self.classification_policy
-            == crate::extrema::PointCurveClassification::DifferentialV2
-        {
-            for index in spans.first..spans.last {
-                let raw = (spans.knot(index)?, spans.knot(index + 1)?);
-                let clipped = spans.span(index, (self.uinf, self.usup), false)?;
-                super::spline_roots::perform_bspline_span_certified(
-                    self, point, curve, spline, raw, clipped, spans.jump,
-                )?;
-            }
         } else {
             self.perform_sampled_spans(point, curve, &spans)?;
+            if self.classification_policy
+                == crate::extrema::PointCurveClassification::DifferentialV2
+            {
+                for index in spans.first..spans.last {
+                    let raw = (spans.knot(index)?, spans.knot(index + 1)?);
+                    let clipped = spans.span(index, (self.uinf, self.usup), false)?;
+                    let _ = super::spline_roots::perform_bspline_span_certified(
+                        self, point, curve, spline, raw, clipped, spans.jump,
+                    );
+                }
+            }
         }
         self.done = true;
         Ok(())

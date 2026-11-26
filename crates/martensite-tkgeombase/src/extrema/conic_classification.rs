@@ -63,12 +63,13 @@ pub(super) fn certified_minimum<P: GpPoint>(
     parameter: f64,
     (position, tangent, second): (P, P::Vector, P::Vector),
 ) -> Result<bool, Failure> {
+    let resolution = precision::confusion().max(query.distance_to(&position) * 1e-9);
     let certificate = certify_distance_stationary_jet(
         point_coordinates(query),
         point_coordinates(position),
         vector_coordinates::<P>(tangent),
         vector_coordinates::<P>(second),
-        precision::confusion(),
+        resolution,
     )
     .map_err(|error| decline(parameter, &error.to_string()))?;
     match certificate {

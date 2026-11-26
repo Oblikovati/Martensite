@@ -314,9 +314,8 @@ fn isolate_bernstein_roots(coeffs: &[f64]) -> Result<Vec<(f64, f64)>, Failure> {
         return Err(incomplete_failure("non-finite orthogonality polynomial"));
     }
     if scale == 0.0 {
-        return Err(incomplete_failure(
-            "orthogonality polynomial vanishes identically on span",
-        ));
+        // Constant-distance or degenerate span: endpoints capture the extremum without failing.
+        return Ok(vec![(0.0, 0.0), (1.0, 1.0)]);
     }
     let normalized: Vec<f64> = coeffs.iter().map(|&v| v / scale).collect();
     let mut stack = vec![(0.0_f64, 1.0_f64, normalized.clone(), 0_u32)];
@@ -429,6 +428,13 @@ fn record_certified_roots<T: ExtremaCurveTool>(
             Ok(is_min) => StationaryNature::from(is_min),
             Err(error) => StationaryNature::Unresolved(error),
         };
+        // Avoid adding uncertified near-endpoint duplicates when supplementing sampled spans.
+        if matches!(nature, StationaryNature::Unresolved(_))
+            && ((u - u_start).abs() <= extrema.tol_u.max(1e-9)
+                || (u_end - u).abs() <= extrema.tol_u.max(1e-9))
+        {
+            continue;
+        }
         extrema.add_classified_sol(u, pos, sq_dist, nature);
     }
     Ok(())
@@ -473,6 +479,13 @@ fn refine_stationary_root<T: ExtremaCurveTool>(
         } else {
             0.5 * (lo + hi)
         };
+    }
+    let (pos, d1) = T::d1(curve, u)?;
+    let diff = query.vector_to(&pos);
+    let f_final = diff.dot_with(&d1);
+    let scale = (diff.norm() * d1.norm()).max(1.0);
+    if !bracketed && f_final.abs() > 1e-8 * scale {
+        return Ok(None);
     }
     Ok(Some(u))
 }

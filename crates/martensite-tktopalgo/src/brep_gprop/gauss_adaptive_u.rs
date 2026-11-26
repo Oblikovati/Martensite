@@ -33,8 +33,9 @@ impl AdaptiveRun<'_, '_> {
                 k_end = 2;
             }
             let mass: f64 = self.u.inertia[..j].iter().map(|part| part.mass).sum();
-            // #407: reserve ten percent of the relative target for the inner integral.
-            self.state.eps_u = 0.1 * self.input.epsilon * mass.abs();
+            // #407: reserve ten percent of the relative target for the inner integral, with
+            // a machine-noise floor so near-zero integrals do not fail at roundoff (~1e-15).
+            self.state.eps_u = (0.1 * self.input.epsilon * mass.abs()).max(1e-12);
             self.state.error_u = self.u.error[..j].iter().sum();
             let refine = self.is_verify && self.state.error_u > self.state.eps_u;
             if !(refine || k_end == 1) {
