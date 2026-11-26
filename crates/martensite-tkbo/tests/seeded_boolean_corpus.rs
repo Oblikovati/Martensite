@@ -144,3 +144,41 @@ fn seeded_boolean_corpus_satisfies_per_face_and_volume_invariants() {
         );
     }
 }
+
+#[test]
+fn seeded_boolean_corpus_measures_tolerance_growth_per_operation() {
+    use martensite_tkbrep::brep::BRepTool;
+
+    let max_tol = |shape: &Shape| -> f64 {
+        let v = BRepTool::max_tolerance(shape, ShapeEnum::Vertex).expect("v tol");
+        let e = BRepTool::max_tolerance(shape, ShapeEnum::Edge).expect("e tol");
+        let f = BRepTool::max_tolerance(shape, ShapeEnum::Face).expect("f tol");
+        v.max(e).max(f)
+    };
+
+    let mut rng = XorShift64(CORPUS_SEED);
+    let mut max_fuse_growth = 0.0_f64;
+    let mut max_cut_growth = 0.0_f64;
+    let mut max_common_growth = 0.0_f64;
+
+    for _case in 0..5 {
+        let a_size = [rng.range(1.5, 3.0), rng.range(1.5, 3.0), rng.range(1.5, 3.0)];
+        let b_min = [rng.range(0.3, 1.0), rng.range(0.3, 1.0), rng.range(0.3, 1.0)];
+        let b_size = [rng.range(1.2, 2.5), rng.range(1.2, 2.5), rng.range(1.2, 2.5)];
+        let a = make_box([0.0, 0.0, 0.0], a_size);
+        let b = make_box(b_min, b_size);
+        let in_tol = max_tol(&a).max(max_tol(&b));
+
+        let fuse = BRepAlgoAPIFuse::from_shapes(&a, &b).expect("fuse");
+        let cut = BRepAlgoAPICut::from_shapes(&a, &b).expect("cut");
+        let common = BRepAlgoAPICommon::from_shapes(&a, &b).expect("common");
+
+        max_fuse_growth = max_fuse_growth.max((max_tol(fuse.shape()) - in_tol).max(0.0));
+        max_cut_growth = max_cut_growth.max((max_tol(cut.shape()) - in_tol).max(0.0));
+        max_common_growth = max_common_growth.max((max_tol(common.shape()) - in_tol).max(0.0));
+    }
+
+    assert!(max_fuse_growth < 1e-4, "fuse tolerance growth {max_fuse_growth}");
+    assert!(max_cut_growth < 1e-4, "cut tolerance growth {max_cut_growth}");
+    assert!(max_common_growth < 1e-4, "common tolerance growth {max_common_growth}");
+}
