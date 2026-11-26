@@ -32,6 +32,8 @@ Use `ConstrainedSketch::drag_preferred` when a pointer can move off a rail or
 circle. The returned sketch satisfies the same geometry checks as `drag`.
 The preference report tells whether the point reached the cursor or settled
 at a first-order stationary pose within the caller's scaled tangent tolerance.
+Hard checks and chart updates share the tick's work budget. Keep the accepted
+sketch when a tick is refused so the gesture can continue from it.
 
 Spatial line relations include signed axis parallelism, plane parallelism,
 perpendicularity, equal length and driving angle. A plane-parallel relation
@@ -48,12 +50,6 @@ with that tolerance using exact arithmetic. As a drag approaches a frame
 boundary, the toolkit can prepare a new reference on an accepted step.
 The replacement reuses the existing solver layout and counts against the
 current tick. A refused step keeps the last accepted sketch.
-
-Use `ConstrainedSketch::drag_preferred` when the cursor can leave the feasible
-motion of a point. The result reports whether the stored point reaches the
-target or settles locally in the feasible directions. Hard checks and chart
-updates share the tick's work budget. Keep the accepted sketch when a tick is
-refused so the gesture can continue from it.
 
 Use `ConstrainedSketch::transform_points` for a rigid translation or rotation of
 owned points. The operation checks the resulting geometry and existing hard
@@ -84,8 +80,14 @@ chooses the plane at a semicircle. A three-point arc uses the snapshot minimum
 for chord length and witness altitude. Center placement uses it for chord and
 radius lengths. Supply an `ArcFitTolerance` to limit the deviation at authored
 placement points. The output preserves their original coordinates and reports
-the sampled deviation separately from the nominal circle. The point and line
-solver refuses arc-bearing snapshots until it has an arc layout.
+the sampled deviation separately from the nominal circle.
+
+The constrained sketch accepts through-point arcs whose witness lies within the
+sketch's length tolerance of the chord's perpendicular bisector plane.
+These arcs support Fix Arc, Radius and Equal Radius within their checked
+domains. With a free chord, Radius can continue through an exact half turn.
+Center-defined arcs and other witnesses remain available for standalone
+geometry.
 
 `Edit::SetCurveRole` marks a line or arc as construction geometry without
 changing its ID or placement. A construction line stays available to
