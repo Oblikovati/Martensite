@@ -125,11 +125,18 @@ fn is_circular_deflection_request(values: &[f64]) -> bool {
     }
 }
 
-fn tokens_match_within_circular_endpoint_anchor(expected: &str, actual: &str) -> Result<(), String> {
+fn tokens_match_within_circular_endpoint_anchor(
+    expected: &str,
+    actual: &str,
+) -> Result<(), String> {
     let exp: Vec<&str> = expected.split_whitespace().collect();
     let act: Vec<&str> = actual.split_whitespace().collect();
     if exp.len() != act.len() {
-        return Err(format!("token count differs: {} vs {}", exp.len(), act.len()));
+        return Err(format!(
+            "token count differs: {} vs {}",
+            exp.len(),
+            act.len()
+        ));
     }
     for (idx, (left, right)) in exp.iter().zip(act.iter()).enumerate() {
         if left != right {
@@ -141,12 +148,16 @@ fn tokens_match_within_circular_endpoint_anchor(expected: &str, actual: &str) ->
 
 fn check_anchored_token(idx: usize, left: &str, right: &str) -> Result<(), String> {
     let (Ok(l_bits), Ok(r_bits)) = (left.parse::<u64>(), right.parse::<u64>()) else {
-        return Err(format!("non-numeric token {idx} differs: {left} vs {right}"));
+        return Err(format!(
+            "non-numeric token {idx} differs: {left} vs {right}"
+        ));
     };
     let (l_val, r_val) = (f64::from_bits(l_bits), f64::from_bits(r_bits));
     let limit = 1e-11 * l_val.abs().max(r_val.abs()).max(1.0);
     if !(l_val.is_finite() && r_val.is_finite()) || (l_val - r_val).abs() > limit {
-        return Err(format!("token {idx} exceeds #530 anchor bound: {l_val:?} vs {r_val:?}"));
+        return Err(format!(
+            "token {idx} exceeds #530 anchor bound: {l_val:?} vs {r_val:?}"
+        ));
     }
     Ok(())
 }
@@ -179,5 +190,8 @@ fn replay_deflection_family(chunks: &[(&str, &str)], family: &str, expected_coun
             count += usize::from(check_deflection_request(request, expected, family));
         }
     }
-    assert_eq!(count, expected_count, "Every original {family} request must run");
+    assert_eq!(
+        count, expected_count,
+        "Every original {family} request must run"
+    );
 }
