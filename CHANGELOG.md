@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added an explicit Radius continuation for supported free sketch arcs through an exact half turn (#611).
+
 - Added native four-station Curve On Face on bounded planar trims and Point On Face on full non-pole spherical bands (#611).
 
 - Added directed line-to-arc tangency at a shared endpoint with separate authored and retained circular-jet checks (#611).

@@ -330,3 +330,20 @@ world point on a nonzero rim is refused when its trim side cannot be
 resolved. Partial bands and polar mounts have separate typed refusals.
 The combined planar, spherical and arc stage passed 6,972 tests and
 strict Rust 1.98.1 all-target Clippy. Nine opt-in tests were skipped.
+
+## E57. Radius continuation through an exact half turn
+
+The authored Radius record can explicitly allow a free midpoint-witness arc
+to cross a half turn. The supported family keeps the witness free and at
+least one chord endpoint movable, with at most one axis constraint on the
+chord. Publication independently reads the actual native circle and sweep.
+The two existing hard rows retain their rank through the half turn. Ordinary
+Minor and Major branch rules and rigid-edit preservation still apply.
+
+The owned family crosses from Minor to Major and back after reopen. It
+retains one fixed endpoint and a chord axis, with rank 7 and two degrees of
+freedom. Direct endpoint locks and other coupled relations receive typed
+refusals. A native planar attachment control verifies the same refusal on an
+arc point and independently accepts attachment of an unrelated point.
+The composed stage passed 360 tests and strict Rust 1.98.1 Clippy. Nine
+opt-in cases were skipped.
