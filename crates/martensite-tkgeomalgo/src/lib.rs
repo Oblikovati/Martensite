@@ -50,3 +50,4 @@ mod sequence_failures;
 
 /// Coherent owned sufficient embeddings on declared rational surface query domains.
 pub mod surface_query;
+pub mod wave4_contracts;
