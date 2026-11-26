@@ -59,6 +59,7 @@ impl CacheState {
 
     /// Tests whether `parameter` lies in the cached span (`IsCacheValid`);
     /// `cache.is_cache_valid(0.5)`.
+    #[inline]
     pub fn is_cache_valid(&self, parameter: f64) -> bool {
         self.params.is_cache_valid(parameter)
     }
@@ -97,17 +98,20 @@ impl CacheState {
         )
     }
 
+    #[inline]
     fn local_parameter(&self, parameter: f64) -> f64 {
         let normalized: f64 = self.params.periodic_normalization(parameter);
         (normalized - self.params.span_start) / self.params.span_length
     }
 
     /// Point at `parameter` (`D0`); `cache.d0::<Point3>(0.5)?`.
+    #[inline]
     pub fn d0<P: CurvePoint>(&self, parameter: f64) -> Result<P, Failure> {
         self.d0_local(self.local_parameter(parameter))
     }
 
     /// Point at a normalized span parameter (`D0Local`); `cache.d0_local::<Point3>(0.5)?`.
+    #[inline]
     pub fn d0_local<P: CurvePoint>(&self, local_param: f64) -> Result<P, Failure> {
         let mut point: [f64; 4] = [0.0; 4];
         let degree: i32 = self.params.degree;
@@ -132,12 +136,32 @@ impl CacheState {
     }
 
     /// Point and tangent (`D1`); `cache.d1::<Point3>(0.5)?`.
+    #[inline]
     pub fn d1<P: CurvePoint>(&self, parameter: f64) -> Result<(P, P::Vector), Failure> {
         self.d1_local(self.local_parameter(parameter))
     }
 
     /// Point and tangent at a normalized parameter (`D1Local`); `cache.d1_local::<Point3>(0.5)?`.
+    #[inline]
     pub fn d1_local<P: CurvePoint>(&self, local_param: f64) -> Result<(P, P::Vector), Failure> {
+        let degree: i32 = self.params.degree;
+        if !self.is_rational && degree >= 1 {
+            let dim: usize = self.row_length;
+            let mut out: [f64; 6] = [0.0; 6];
+            eval_polynomial(
+                local_param,
+                1,
+                degree,
+                dim as i32,
+                &self.poles_weights,
+                &mut out[..2 * dim],
+            )?;
+            let inv_span: f64 = 1.0 / self.params.span_length;
+            for v in &mut out[dim..2 * dim] {
+                *v *= inv_span;
+            }
+            return Ok((P::point_from(&out), P::vector_from(&out[dim..])));
+        }
         let derivatives: [f64; 16] = self.derivatives_local(local_param, 1)?;
         let dim: usize = self.derivative_stride();
         Ok((

@@ -26,7 +26,22 @@ impl BSplineCurveToBezierCurve {
     pub fn new(basis_curve: &Handle<GeomBSplineCurve>) -> Result<Self, Failure> {
         let my_curve: Handle<GeomBSplineCurve> = copy_bspline(live_bspline(basis_curve)?)?;
         let curve: &GeomBSplineCurve = live_bspline(&my_curve)?;
-        split_at_knots(curve, curve.first_parameter(), curve.last_parameter())?;
+        let deg: i32 = curve.degree();
+        let first_idx: i32 = curve.first_u_knot_index()?;
+        let last_idx: i32 = curve.last_u_knot_index()?;
+        // For a non-periodic curve whose end knots already have multiplicity >= degree,
+        // segmenting over [first_parameter, last_parameter] is a no-op; go straight to
+        // raising interior knot multiplicities.
+        if !curve.is_periodic()
+            && first_idx == 1
+            && last_idx == curve.nb_knots()
+            && curve.multiplicity(1)? >= deg
+            && curve.multiplicity(last_idx)? >= deg
+        {
+            curve.increase_multiplicity_range(first_idx, last_idx, deg)?;
+        } else {
+            split_at_knots(curve, curve.first_parameter(), curve.last_parameter())?;
+        }
         Ok(Self { my_curve })
     }
 

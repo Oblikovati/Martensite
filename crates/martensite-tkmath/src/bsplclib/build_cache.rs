@@ -118,11 +118,14 @@ pub fn build_cache<P: CurvePoint>(
     let mut value: f64 = 1.0e0;
     for ii in 1..=degree + 1 {
         let row: usize = (ii - 1) as usize * stride;
-        let scaled: Vec<f64> = local.poles[row..row + P::DIMENSION]
-            .iter()
-            .map(|c| c * value)
-            .collect();
-        *array_cell(cache_poles, ii)? = P::point_from(&scaled);
+        let mut scaled: [f64; 3] = [0.0; 3];
+        for (dst, &c) in scaled[..P::DIMENSION]
+            .iter_mut()
+            .zip(&local.poles[row..row + P::DIMENSION])
+        {
+            *dst = c * value;
+        }
+        *array_cell(cache_poles, ii)? = P::point_from(&scaled[..P::DIMENSION]);
         value *= span_domain / f64::from(ii);
     }
     if weights.is_none() {

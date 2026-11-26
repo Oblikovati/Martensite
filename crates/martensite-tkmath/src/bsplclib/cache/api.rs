@@ -26,6 +26,42 @@ impl Cache {
             .build_cache(parameter, flat, poles, weights)
     }
 
+    /// Evaluates a point if `parameter` lies in the cached span under a single lock;
+    /// `cache.try_d0::<Point3>(0.5)`.
+    #[inline]
+    pub fn try_d0<P: CurvePoint>(&self, parameter: f64) -> Option<Result<P, Failure>> {
+        let state = self.lock_state();
+        state.is_cache_valid(parameter).then(|| state.d0(parameter))
+    }
+
+    /// Evaluates point and tangent if `parameter` lies in the cached span under a single lock;
+    /// `cache.try_d1::<Point3>(0.5)`.
+    #[inline]
+    pub fn try_d1<P: CurvePoint>(&self, parameter: f64) -> Option<Result<(P, P::Vector), Failure>> {
+        let state = self.lock_state();
+        state.is_cache_valid(parameter).then(|| state.d1(parameter))
+    }
+
+    /// Evaluates point and two derivatives if `parameter` lies in the cached span under a single lock;
+    /// `cache.try_d2::<Point3>(0.5)`.
+    #[allow(clippy::type_complexity)]
+    #[inline]
+    pub fn try_d2<P: CurvePoint>(
+        &self,
+        parameter: f64,
+    ) -> Option<Result<(P, P::Vector, P::Vector), Failure>> {
+        let state = self.lock_state();
+        state.is_cache_valid(parameter).then(|| state.d2(parameter))
+    }
+
+    /// Evaluates point through third derivative if `parameter` lies in the cached span under a single lock;
+    /// `cache.try_d3::<Point3>(0.5)`.
+    #[inline]
+    pub fn try_d3<P: CurvePoint>(&self, parameter: f64) -> Option<Result<CurveD3<P>, Failure>> {
+        let state = self.lock_state();
+        state.is_cache_valid(parameter).then(|| state.d3(parameter))
+    }
+
     /// Evaluates a point; `cache.d0::<Point3>(0.5)?`.
     pub fn d0<P: CurvePoint>(&self, parameter: f64) -> Result<P, Failure> {
         self.lock_state().d0(parameter)

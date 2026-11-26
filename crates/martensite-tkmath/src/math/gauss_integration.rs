@@ -1,5 +1,5 @@
 //! Gauss quadrature and uniform subdivision convergence.
-use super::{Function, Vector, gauss_points, gauss_weights, stream_real};
+use super::{Function, quadrature_tables::fill_gauss_half_tables, stream_real};
 use martensite_tkernel::standard::Failure;
 use std::fmt;
 /// Single-variable Gauss integral; `GaussSingleIntegration::new(&mut f,0.0,1.0,10)`.
@@ -14,7 +14,14 @@ impl GaussSingleIntegration {
     /// Caps order at 61; `GaussSingleIntegration::new(&mut f,0.0,1.0,10)`.
     pub fn new(f: &mut impl Function, lower: f64, upper: f64, order: i32) -> Self {
         let mut result: Self = Self::default();
-        result.perform(f, lower, upper, order.min(61));
+        let order: i32 = order.min(61);
+        if order < 1 {
+            return result;
+        }
+        let mut points: [f64; 61] = [0.0; 61];
+        let mut weights: [f64; 61] = [0.0; 61];
+        fill_gauss_half_tables(order, &mut points, &mut weights);
+        result.perform_with_tables(f, lower, upper, order, &points, &weights);
         result
     }
     /// Subdivides at least once, up to iteration limit; `GaussSingleIntegration::with_tolerance(&mut f,0.0,1.0,5,1e-8)`.
@@ -26,7 +33,14 @@ impl GaussSingleIntegration {
         tolerance: f64,
     ) -> Self {
         let order: i32 = order.min(61);
-        let mut result: Self = Self::new(f, lower, upper, order);
+        let mut result: Self = Self::default();
+        if order < 1 {
+            return result;
+        }
+        let mut points: [f64; 61] = [0.0; 61];
+        let mut weights: [f64; 61] = [0.0; 61];
+        fill_gauss_half_tables(order, &mut points, &mut weights);
+        result.perform_with_tables(f, lower, upper, order, &points, &weights);
         let mut sum: f64 = result.value;
         let mut count: i32 = 1;
         let mut iteration: i32 = 1;
@@ -36,11 +50,13 @@ impl GaussSingleIntegration {
             count *= 2;
             let step: f64 = (upper - lower) / f64::from(count);
             for i in 1..=count {
-                result.perform(
+                result.perform_with_tables(
                     f,
                     lower + f64::from(i - 1) * step,
                     lower + f64::from(i) * step,
                     order,
+                    &points,
+                    &weights,
                 );
                 if !result.done {
                     return result;
@@ -57,25 +73,28 @@ impl GaussSingleIntegration {
         result.value = sum;
         result
     }
-    fn perform(&mut self, f: &mut impl Function, lower: f64, upper: f64, order: i32) {
+    fn perform_with_tables(
+        &mut self,
+        f: &mut impl Function,
+        lower: f64,
+        upper: f64,
+        order: i32,
+        points: &[f64; 61],
+        weights: &[f64; 61],
+    ) {
         self.done = false;
-        let Ok(mut points) = Vector::with_bounds(1, order) else {
-            return;
-        };
-        let mut weights: Vector<'static> = Vector::with_bounds(1, order).unwrap();
-        gauss_points(order, &mut points);
-        gauss_weights(order, &mut weights);
         let middle: f64 = 0.5 * (upper + lower);
         let radius: f64 = 0.5 * (upper - lower);
         self.value = 0.0;
-        if (order + 1) / 2 > order / 2 {
+        let half_floor: usize = (order / 2) as usize;
+        if (order & 1) == 1 {
             if !f.value(middle, &mut self.value) {
                 return;
             }
-            self.value *= weights[(order + 1) / 2];
+            self.value *= weights[half_floor];
         }
         let (mut first, mut second): (f64, f64) = (0.0, 0.0);
-        for index in 1..=order / 2 {
+        for index in 0..half_floor {
             let offset: f64 = radius * points[index];
             if !f.value(middle - offset, &mut first) || !f.value(middle + offset, &mut second) {
                 return;
