@@ -203,3 +203,7 @@ path = "tests/modeling_fixture_box_cut.rs"
 [[test]]
 name = "surface_projection"
 path = "tests/surface_projection.rs"
+
+[[test]]
+name = "seeded_boolean_corpus"
+path = "tests/seeded_boolean_corpus.rs"
