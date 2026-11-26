@@ -3,9 +3,14 @@ use super::redraw_completion::{RedrawPublicationTarget, RedrawTargetStamp, Retir
 use super::*;
 use crate::backend::CapturePlanes;
 impl Graphic3dRenderView {
-    /// Read the last frame or its error; `render_view.capture()?` never conceals a failed redraw.
+    /// Read the last frame (color and depth) or its error; `render_view.capture()?` never conceals a failed redraw.
     pub fn capture(&self) -> Result<FrameCapture, RenderError> {
         self.with_capture(CapturePlanes::ColorAndDepth, FrameCapture::clone)
+    }
+    /// Read only the color plane of the last frame on demand, skipping depth readback (#501);
+    /// `render_view.capture_color()?`.
+    pub fn capture_color(&self) -> Result<FrameCapture, RenderError> {
+        self.with_capture(CapturePlanes::Color, FrameCapture::clone)
     }
     /// Borrow the last frame's `planes` without copying them;
     /// `view.with_capture(CapturePlanes::Color, |frame| frame.width)?`.
@@ -122,8 +127,19 @@ impl Graphic3dRenderView {
         Ok(copied)
     }
     /// Render the current view and retain errors for void Graphic3d callbacks; `render_view.try_redraw()?`.
+    /// Ordinary window frames use deferred readback tickets (`#594`, `#501`) and do not perform
+    /// CPU color/depth capture unless [`Self::capture`] or [`Self::capture_color`] is called.
     pub fn try_redraw(&self) -> Result<(), RenderError> {
         self.try_redraw_mode(false)
+    }
+    /// Present one checked interactive frame without mandatory CPU color/depth readback (#501);
+    /// `render_view.try_present()?`.
+    ///
+    /// Preserves `RenderGuiSurfacePolicy::CheckedV2` surface/GUI generation validation and
+    /// error reporting; call [`Self::capture_color`] or [`Self::capture`] when a fresh-frame
+    /// screenshot or depth readback is explicitly requested.
+    pub fn try_present(&self) -> Result<(), RenderError> {
+        self.try_redraw()
     }
     pub(super) fn try_redraw_mode(&self, immediate: bool) -> Result<(), RenderError> {
         if !immediate {

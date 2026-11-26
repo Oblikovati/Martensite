@@ -116,3 +116,17 @@ fn gui_validation_refuses_stale_extent_without_cloning_the_packet() {
     view.try_redraw().unwrap();
     assert!(view.check_redraw_since(&before).is_ok());
 }
+
+#[test]
+fn checked_gui_present_and_color_only_capture_preserve_validation() {
+    let (view, _) = super::super::view_binding_tests::binding_fixture_for_policy(
+        crate::RenderGuiSurfacePolicy::CheckedV2,
+    );
+    super::super::view_binding_tests::attach_binding_gui(&view);
+    let before = view.redraw_cursor().unwrap();
+    view.try_present().unwrap();
+    let after = view.check_redraw_since(&before).unwrap();
+    assert_eq!(after.publication(), before.publication() + 1);
+    assert_eq!(view.capture_color().unwrap().rgba, vec![0, 255, 0, 255]);
+    assert_eq!(view.capture().unwrap().rgba, vec![0, 255, 0, 255]);
+}
