@@ -73,3 +73,77 @@ fn chord_spread_respects_exact_parameter_intervals_and_zero_chords() {
         Err(CubicFitNumericError::ZeroChord(0))
     );
 }
+
+#[test]
+fn dyadic_fit_values_keep_the_prior_exact_ratio_rounding() {
+    use super::{CubicFitEnd, nearest_binary64, upper};
+
+    let rows = [[0.25, 0.25, 0.25], [0.125, 0.25, 0.25]];
+    let operator = CubicFitOperator::new(rows).unwrap();
+    let tiny = f64::from_bits(1);
+    let far = (1_u64 << 60) as f64;
+    for stations in [
+        [[-0., 0., 1.], [1., 0., -1.], [-2., 1., 0.], [2., -0., 0.]],
+        [
+            [far, -far, -0.],
+            [far + 1024., 1., tiny],
+            [far + 2304., 2., 0.],
+            [far + 3072., 4., -tiny],
+        ],
+        [
+            [f64::MAX, 0., -0.],
+            [-f64::MAX, 0., 0.],
+            [f64::MAX, tiny, -tiny],
+            [0., 0., 0.],
+        ],
+    ] {
+        let material = operator.materialize(stations).unwrap();
+        let values = stations.map(|point| point.map(ExactRatio::from_finite));
+        let mut max_error = ExactRatio::from_finite(0.);
+        for (k, row) in rows.into_iter().enumerate() {
+            let pole = [0, 1, 2].map(|axis| ratio_affine(&values, row, axis));
+            let stored = pole
+                .each_ref()
+                .map(|value| nearest_binary64(value).unwrap());
+            assert_eq!(
+                material.poles[k + 1].map(f64::to_bits),
+                stored.map(f64::to_bits)
+            );
+            let axis_error =
+                [0, 1, 2].map(|axis| pole[axis].subtract(&ExactRatio::from_finite(stored[axis])));
+            max_error = max_error.max(super::l1(axis_error));
+            let (end, index) = if k == 0 {
+                (CubicFitEnd::Start, 0)
+            } else {
+                (CubicFitEnd::End, 3)
+            };
+            let expected = [0, 1, 2].map(|axis| {
+                let derivative = pole[axis]
+                    .subtract(&values[index][axis])
+                    .multiply(&ExactRatio::from_finite(3.));
+                nearest_binary64(&derivative).ok_or(CubicFitNumericError::Unbounded)
+            });
+            let [x, y, z] = expected;
+            let expected = x.and_then(|x| y.and_then(|y| z.map(|z| [x, y, z])));
+            assert_eq!(operator.endpoint_tangent(end).velocity(stations), expected);
+        }
+        assert_eq!(material.pole_rounding_upper, upper(&max_error).unwrap());
+        assert_eq!(
+            material.poles[0].map(f64::to_bits),
+            stations[0].map(f64::to_bits)
+        );
+        assert_eq!(
+            material.poles[3].map(f64::to_bits),
+            stations[3].map(f64::to_bits)
+        );
+    }
+}
+
+fn ratio_affine(stations: &[[ExactRatio; 3]; 4], row: [f64; 3], axis: usize) -> ExactRatio {
+    let origin = &stations[0][axis];
+    row.into_iter()
+        .zip(&stations[1..])
+        .fold(origin.clone(), |sum, (weight, station)| {
+            sum.add(&ExactRatio::from_finite(weight).multiply(&station[axis].subtract(origin)))
+        })
+}

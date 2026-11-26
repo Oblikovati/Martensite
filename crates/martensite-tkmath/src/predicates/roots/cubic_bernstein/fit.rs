@@ -2,7 +2,7 @@
 //! Exact use and independent measurement of a fixed four-station affine operator.
 use super::{
     CubicBernsteinFailure, DyadicBound, ExactCubicBernstein3, ExactRatio, ExactRows,
-    NonFiniteCoordinate, binary64_parts, nearest_binary64,
+    NonFiniteCoordinate, nearest_binary64,
 };
 use crate::predicates::roots::certificate_arithmetic::rounding::{outward_binary64, outward_sqrt};
 use std::{cmp::Ordering, fmt};
@@ -95,13 +95,13 @@ impl CubicFitOperator {
         &self,
         stations: [[f64; 3]; 4],
     ) -> Result<CubicFitMaterialization, CubicFitNumericError> {
-        let station_values = exact_stations(stations)?;
-        let [first, second] = self.interiors.map(|row| row.map(ExactRatio::from_finite));
-        let (first, first_error) = materialize_pole(&station_values, &first, 1)?;
-        let (second, second_error) = materialize_pole(&station_values, &second, 2)?;
+        let station_values = dyadic_stations(stations)?;
+        let [first, second] = self.interiors.map(|row| dyadic_point(row, 0));
+        let (first, first_error) = materialize_pole(&station_values, &first?, 1)?;
+        let (second, second_error) = materialize_pole(&station_values, &second?, 2)?;
         Ok(CubicFitMaterialization {
             poles: [stations[0], first, second, stations[3]],
-            pole_rounding_upper: upper(&first_error.max(second_error))?,
+            pole_rounding_upper: upper(&ExactRatio::from_dyadic(&first_error.max(second_error)))?,
         })
     }
 
@@ -242,26 +242,35 @@ fn exact_parameters(parameters: [f64; 4]) -> Result<[ExactRatio; 4], CubicFitNum
 }
 
 fn materialize_pole(
-    stations: &[[ExactRatio; 3]; 4],
-    row: &[ExactRatio; 3],
+    stations: &[[DyadicBound; 3]; 4],
+    row: &[DyadicBound; 3],
     pole: usize,
-) -> Result<([f64; 3], ExactRatio), CubicFitNumericError> {
+) -> Result<([f64; 3], DyadicBound), CubicFitNumericError> {
     let [x, y, z] = [0, 1, 2].map(|axis| {
-        let origin = &stations[0][axis];
-        let value = row
-            .iter()
-            .zip(&stations[1..])
-            .fold(origin.clone(), |sum, (weight, station)| {
-                sum.add(&weight.multiply(&station[axis].subtract(origin)))
-            });
-        let rounded =
-            nearest_binary64(&value).ok_or(CubicFitNumericError::PoleRange { pole, axis })?;
-        Ok((rounded, value.subtract(&ExactRatio::from_finite(rounded))))
+        let position = stations[0][axis].sum(&affine_displacement(stations, row, axis));
+        let rounded = nearest_binary64(&ExactRatio::from_dyadic(&position))
+            .ok_or(CubicFitNumericError::PoleRange { pole, axis })?;
+        let stored = dyadic_coordinate(rounded, pole, axis)?;
+        Ok((rounded, position.difference(&stored).absolute()))
     });
     let (x, dx) = x?;
     let (y, dy) = y?;
     let (z, dz) = z?;
-    Ok(([x, y, z], l1([dx, dy, dz])))
+    Ok(([x, y, z], dx.sum(&dy).sum(&dz)))
+}
+
+fn affine_displacement(
+    stations: &[[DyadicBound; 3]; 4],
+    weights: &[DyadicBound; 3],
+    axis: usize,
+) -> DyadicBound {
+    let origin = &stations[0][axis];
+    weights
+        .iter()
+        .zip(&stations[1..])
+        .fold(DyadicBound::new(0.into(), 0), |sum, (weight, station)| {
+            sum.sum(&weight.product(&station[axis].difference(origin)))
+        })
 }
 
 fn exact_stations(stations: [[f64; 3]; 4]) -> Result<[[ExactRatio; 3]; 4], CubicFitNumericError> {
@@ -270,12 +279,31 @@ fn exact_stations(stations: [[f64; 3]; 4]) -> Result<[[ExactRatio; 3]; 4], Cubic
 }
 
 fn exact_point(position: [f64; 3], point: usize) -> Result<[ExactRatio; 3], CubicFitNumericError> {
-    let [x, y, z] = [0, 1, 2].map(|axis| {
-        let value = position[axis];
-        binary64_parts(value, point, axis).map_err(CubicFitNumericError::NonFinite)?;
-        Ok(ExactRatio::from_finite(value))
-    });
+    Ok(dyadic_point(position, point)?
+        .each_ref()
+        .map(ExactRatio::from_dyadic))
+}
+
+fn dyadic_stations(stations: [[f64; 3]; 4]) -> Result<[[DyadicBound; 3]; 4], CubicFitNumericError> {
+    let [a, b, c, d] = [0, 1, 2, 3].map(|point| dyadic_point(stations[point], point));
+    Ok([a?, b?, c?, d?])
+}
+
+fn dyadic_point(
+    position: [f64; 3],
+    point: usize,
+) -> Result<[DyadicBound; 3], CubicFitNumericError> {
+    let [x, y, z] = [0, 1, 2].map(|axis| dyadic_coordinate(position[axis], point, axis));
     Ok([x?, y?, z?])
+}
+
+fn dyadic_coordinate(
+    value: f64,
+    point: usize,
+    axis: usize,
+) -> Result<DyadicBound, CubicFitNumericError> {
+    DyadicBound::from_f64(value)
+        .map_err(|_| CubicFitNumericError::NonFinite(NonFiniteCoordinate { point, axis, value }))
 }
 
 fn exact_weights(values: &[ExactRows; 3], order: usize) -> [ExactRatio; 4] {

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Directed D1 of the immutable affine interpolation model.
 use super::{
-    CubicFitNumericError, CubicFitOperator, ExactRatio, complete_weights, exact_stations,
-    nearest_binary64, round_weights,
+    CubicFitNumericError, CubicFitOperator, DyadicBound, ExactRatio, affine_displacement,
+    complete_weights, dyadic_point, dyadic_stations, nearest_binary64, round_weights,
 };
 
 /// End of the authored normalized cubic span. A tangent points into the curve.
@@ -42,17 +42,12 @@ impl CubicFitTangent {
     /// Evaluate the real affine endpoint velocity, with one rounding per component.
     /// Stations use the original directed fit order. Example: `tangent.velocity(stations)?`.
     pub fn velocity(self, stations: [[f64; 3]; 4]) -> Result<[f64; 3], CubicFitNumericError> {
-        let stations = exact_stations(stations)?;
-        let coefficients = self.coefficients();
+        let stations = dyadic_stations(stations)?;
+        let coefficients = self.coefficients()?;
         let [x, y, z] = [0, 1, 2].map(|axis| {
-            let origin = &stations[0][axis];
-            let value = coefficients
-                .iter()
-                .zip(&stations[1..])
-                .fold(ExactRatio::from_finite(0.), |sum, (weight, station)| {
-                    sum.add(&weight.multiply(&station[axis].subtract(origin)))
-                });
-            nearest_binary64(&value).ok_or(CubicFitNumericError::Unbounded)
+            let value = affine_displacement(&stations, &coefficients, axis);
+            nearest_binary64(&ExactRatio::from_dyadic(&value))
+                .ok_or(CubicFitNumericError::Unbounded)
         });
         Ok([x?, y?, z?])
     }
@@ -60,18 +55,17 @@ impl CubicFitTangent {
     /// Round the four D1 sensitivity coefficients independently in authored station order.
     /// Example: `tangent.station_weights()?[1]`.
     pub fn station_weights(self) -> Result<[f64; 4], CubicFitNumericError> {
-        round_weights(complete_weights(self.coefficients(), 1))
+        let weights = self.coefficients()?.each_ref().map(ExactRatio::from_dyadic);
+        round_weights(complete_weights(weights, 1))
     }
 
-    fn coefficients(self) -> [ExactRatio; 3] {
-        let three = ExactRatio::from_finite(3.);
-        let mut coefficients = self
-            .interior
-            .map(|weight| ExactRatio::from_finite(weight).multiply(&three));
+    fn coefficients(self) -> Result<[DyadicBound; 3], CubicFitNumericError> {
+        let three = DyadicBound::new(3.into(), 0);
+        let mut coefficients = dyadic_point(self.interior, 0)?.map(|weight| weight.product(&three));
         if self.end == CubicFitEnd::End {
-            coefficients[2] = coefficients[2].subtract(&three);
+            coefficients[2] = coefficients[2].difference(&three);
         }
-        coefficients
+        Ok(coefficients)
     }
 }
 

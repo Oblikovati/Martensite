@@ -97,6 +97,22 @@ impl DyadicBound {
         let (left, right, exponent) = self.aligned(other);
         Self::new(left + right, exponent - 1)
     }
+    pub(super) fn sum(&self, other: &Self) -> Self {
+        let (left, right, exponent) = self.aligned(other);
+        Self::new(left + right, exponent)
+    }
+    pub(super) fn product(&self, other: &Self) -> Self {
+        Self::new(
+            &self.significand * &other.significand,
+            self.exponent + other.exponent,
+        )
+    }
+    pub(super) fn absolute(&self) -> Self {
+        Self {
+            significand: self.significand.magnitude().clone().into(),
+            exponent: self.exponent,
+        }
+    }
     /// Subtract dyadics without intermediate binary64 rounding.
     /// Use `total.difference(&reserved)` to check the exact remaining width.
     pub fn difference(&self, other: &Self) -> Self {
