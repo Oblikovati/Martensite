@@ -97,10 +97,6 @@ impl DyadicBound {
         let (left, right, exponent) = self.aligned(other);
         Self::new(left + right, exponent - 1)
     }
-    pub(super) fn sum(&self, other: &Self) -> Self {
-        let (left, right, exponent) = self.aligned(other);
-        Self::new(left + right, exponent)
-    }
     pub(super) fn product(&self, other: &Self) -> Self {
         Self::new(
             &self.significand * &other.significand,
