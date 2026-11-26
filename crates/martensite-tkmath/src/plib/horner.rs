@@ -48,6 +48,7 @@ pub fn eval_polynomial(
 /// Evaluates only the value, reading the top coefficient at `DegreeDimension`
 /// (`plib::no_derivative_eval_polynomial`);
 /// `plib::no_derivative_eval_polynomial(2.0, 2, 1, 2, &[1.0, 2.0, 3.0], &mut out)?`.
+#[inline]
 pub fn no_derivative_eval_polynomial(
     u: f64,
     degree: i32,

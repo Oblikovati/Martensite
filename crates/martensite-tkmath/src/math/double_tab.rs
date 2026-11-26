@@ -96,10 +96,12 @@ impl<'a> DoubleTab<'a> {
         self.col_size() as i32
     }
     /// Reads zero-based offsets, independently of bounds; `table.at(0,0)?`.
+    #[inline]
     pub fn at(&self, row: usize, col: usize) -> Result<&f64, ArrayError> {
         Ok(&self.storage.slice()[self.shape.offset(row, col)?])
     }
     /// Mutates zero-based offsets; `*table.change_at(0,0)? = 2.0`.
+    #[inline]
     pub fn change_at(&mut self, row: usize, col: usize) -> Result<&mut f64, ArrayError> {
         let offset = self.shape.offset(row, col)?;
         Ok(&mut self.storage.slice_mut()[offset])

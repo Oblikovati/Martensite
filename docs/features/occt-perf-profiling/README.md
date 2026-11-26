@@ -19,5 +19,6 @@ Systematic toolkit-by-toolkit p95 profiling and optimization against OCCT 8.0.0 
 | 9 | `martensite-tkprim`, `martensite-tkmesh` | prebuilt | **Done** (11 APIs; up to 1.26x speedup via lock-free MeshLinkKey, batched node reads, zero-copy CellFilter) | [tkprim_tkmesh.md](tkprim_tkmesh.md) |
 | 9 | `martensite-tkshhealing`, `martensite-tkhlr` | prebuilt | **Done** (7 APIs; up to 1.76x speedup via lazy ReShape::empty_copied & single-lock TEdge copy) | [tkshhealing_tkhlr.md](tkshhealing_tkhlr.md) |
 | 9 | `martensite-tkhelix` | prebuilt | Pending | |
-| 10+ | `martensite-tkbo`, `martensite-tkbool`, `martensite-tkfeat`, `martensite-tkfillet`, `martensite-tkoffset`, `martensite-tkv3d`, `martensite-tkxmesh`, `martensite-tkmeshvs` | prebuilt | Pending | |
+| 10 | `martensite-tkbo` | prebuilt | **Done** (8 APIs; up to 1.34x speedup on Fuse/Cut/Common/Section via stack Bernstein/LeastSquare, inlined PLib/VectorBase, zero-alloc empty FailureText) | [tkbo.md](tkbo.md) |
+| 10+ | `martensite-tkbool`, `martensite-tkfeat`, `martensite-tkfillet`, `martensite-tkoffset`, `martensite-tkv3d`, `martensite-tkxmesh`, `martensite-tkmeshvs` | prebuilt | Pending | |
 | AF/DE | `tkcdf`, `tklcaf`, `tktobj`, `tkcaf`, `tkvcaf`, `tkxcaf`, `tkde`, `tkxsbase`, `tkrwmesh`, `tkdestl`, `tkdeiges`, `tkdestep`, `tkdeobj`, `tkdeply` | build from `../OCCT` | Pending | |

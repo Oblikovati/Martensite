@@ -42,15 +42,34 @@ pub(crate) fn grid_cell<'b, T>(
     grid.change_value(row, col).map_err(index_failure)
 }
 
+#[cold]
+#[inline(never)]
+fn non_negative_err(function: &str, name: &str, value: i32) -> Failure {
+    Failure::out_of_range(&format!("{function}: {name} = {value}; expected >= 0"))
+}
+
 /// Rejects a negative count that would make pointer arithmetic undefined;
 /// `non_negative("plib::eval_polynomial", "Degree", degree)?`.
+#[inline]
 pub(crate) fn non_negative(function: &str, name: &str, value: i32) -> Result<usize, Failure> {
-    usize::try_from(value)
-        .map_err(|_| Failure::out_of_range(&format!("{function}: {name} = {value}; expected >= 0")))
+    if value >= 0 {
+        Ok(value as usize)
+    } else {
+        Err(non_negative_err(function, name, value))
+    }
+}
+
+#[cold]
+#[inline(never)]
+fn require_length_err(function: &str, name: &str, length: usize, needed: usize) -> Failure {
+    Failure::out_of_range(&format!(
+        "{function}: {name} holds {length} values; expected at least {needed}"
+    ))
 }
 
 /// Rejects a raw buffer shorter than the access pattern reads or writes;
 /// `require_length("plib::eval_polynomial", "Results", results.len(), 3)?`.
+#[inline]
 pub(crate) fn require_length(
     function: &str,
     name: &str,
@@ -60,9 +79,7 @@ pub(crate) fn require_length(
     if length >= needed {
         return Ok(());
     }
-    Err(Failure::out_of_range(&format!(
-        "{function}: {name} holds {length} values; expected at least {needed}"
-    )))
+    Err(require_length_err(function, name, length, needed))
 }
 
 /// Rejects derivative counts outside the D0–D3 protected contract.
