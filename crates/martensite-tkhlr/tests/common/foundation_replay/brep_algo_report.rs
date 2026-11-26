@@ -3,7 +3,9 @@ use super::common::{Sink, attempt, flag, int};
 use super::{brep_record_print::compound, hlr_algo::print_minmax};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::{Failure, Handle};
-use martensite_tkhlr::hlr_brep::{Algo, HLRToShape, TypeOfResultingEdge};
+use martensite_tkhlr::hlr_brep::{
+    Algo, HLRToShape, OutlineClassificationBehavior, TypeOfResultingEdge,
+};
 const RESULT_TYPES: [TypeOfResultingEdge; 5] = [
     TypeOfResultingEdge::IsoLine,
     TypeOfResultingEdge::OutLine,
@@ -42,7 +44,10 @@ fn shape_bounds(
 }
 
 pub(super) fn results(tokens: &mut Sink, handle: &Handle<Algo>, first: &Shape) {
-    let extraction = HLRToShape::new(handle);
+    let extraction = HLRToShape::with_outline_behavior(
+        handle,
+        OutlineClassificationBehavior::LegacyPlanarRestrictionsV1,
+    );
     for kind in RESULT_TYPES {
         for visible in [true, false] {
             attempt(tokens, |tokens| {
