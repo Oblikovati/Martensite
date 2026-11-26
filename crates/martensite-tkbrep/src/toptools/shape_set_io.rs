@@ -41,21 +41,40 @@ fn unlocated_index(data: &ShapeSetData, shape: &Shape) -> Result<i32, Failure> {
 
 /// The eight flags of `Dump` (seven, without Locked, for `Write`), as digits.
 fn write_flags(stream: &mut IoStream, shape: &Shape, with_locked: bool) -> Result<(), Failure> {
-    let mut flags = vec![
-        shape.free()?,
-        shape.modified()?,
-        shape.checked()?,
-        shape.orientable()?,
-        shape.closed()?,
-        shape.infinite()?,
-        shape.convex()?,
+    let Some(tshape) = shape.tshape().get() else {
+        // Trigger the exact same null-shape error as shape.free()?.
+        let _ = shape.free()?;
+        return Ok(());
+    };
+    let state: u16 = tshape.tshape_base().state();
+    let mut buf: [u8; 8] = [b'0'; 8];
+    use crate::topods::bit_layout::{
+        BIT_CHECKED, BIT_CLOSED, BIT_CONVEX, BIT_FREE, BIT_INFINITE, BIT_LOCKED, BIT_MODIFIED,
+        BIT_ORIENTABLE,
+    };
+    const WRITE_MASKS: [u16; 7] = [
+        BIT_FREE,
+        BIT_MODIFIED,
+        BIT_CHECKED,
+        BIT_ORIENTABLE,
+        BIT_CLOSED,
+        BIT_INFINITE,
+        BIT_CONVEX,
     ];
-    if with_locked {
-        flags.push(shape.locked()?);
+    for (dst, mask) in buf[..7].iter_mut().zip(WRITE_MASKS) {
+        if state & mask != 0 {
+            *dst = b'1';
+        }
     }
-    for flag in flags {
-        stream.insert_bytes(if flag { b"1" } else { b"0" });
-    }
+    let len = if with_locked {
+        if state & BIT_LOCKED != 0 {
+            buf[7] = b'1';
+        }
+        8
+    } else {
+        7
+    };
+    stream.insert_bytes(&buf[..len]);
     Ok(())
 }
 

@@ -4,7 +4,7 @@ use crate::brep::access::edge_tshape;
 use crate::brep::builder::update_curves::as_gcurve;
 use crate::brep::{BRepCurve3D, BRepCurveRepresentation, BRepGCurve};
 use crate::topods::{EdgeView, FaceView};
-use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkernel::standard::{Failure, Handle, project_concrete, project_interface};
 use martensite_tkg3d::geom::{GeomCurve, GeomSurface};
 use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkmath::poly::Polygon3D;
@@ -24,26 +24,51 @@ pub(super) fn first_gcurve(
     member: &str,
     matches: impl Fn(&dyn BRepCurveRepresentation) -> bool,
 ) -> Result<Option<Handle<dyn BRepGCurve>>, Failure> {
-    let found = representations(edge, member)?
-        .into_iter()
-        .find(|representation| representation.get().is_some_and(&matches));
-    Ok(found.map(|representation| as_gcurve(&representation)))
+    let found = edge_tshape(edge, member)?.with_curves(|curves| {
+        curves
+            .iter()
+            .find(|representation| representation.get().is_some_and(&matches))
+            .map(as_gcurve)
+    });
+    Ok(found)
 }
 
 impl BRepTool {
     /// `Curve(E, L, First, Last)`: the first 3D curve representation, with the edge
     /// location composed with its location; `BRepTool::curve_with_location(&edge)?`.
     pub fn curve_with_location(edge: &EdgeView<'_>) -> Result<EdgeCurve3D, Failure> {
-        let found = first_gcurve(edge, "BRep_Tool::Curve", |r| r.is_curve3d())?;
-        let Some(gcurve) = found.as_ref().and_then(|g| g.get()) else {
-            return Ok(EdgeCurve3D::default());
-        };
-        let (first, last) = gcurve.range();
-        Ok(EdgeCurve3D {
-            curve: gcurve.curve3d()?,
-            location: (edge.location() * &gcurve.location())?,
-            first,
-            last,
+        let tedge = edge_tshape(edge, "BRep_Tool::Curve")?;
+        tedge.with_curves(|curves| -> Result<EdgeCurve3D, Failure> {
+            for representation in curves {
+                let Some(r) = representation.get() else {
+                    continue;
+                };
+                if !r.is_curve3d() {
+                    continue;
+                }
+                let (curve, rep_loc, (first, last)) =
+                    if let Some(c3d) = project_concrete::<BRepCurve3D>(r) {
+                        (c3d.curve3d()?, c3d.location(), c3d.range())
+                    } else if let Some(gcurve) = project_interface::<dyn BRepGCurve>(r) {
+                        (gcurve.curve3d()?, gcurve.location(), gcurve.range())
+                    } else {
+                        return Ok(EdgeCurve3D::default());
+                    };
+                let location = if edge.location().is_identity() {
+                    rep_loc
+                } else if rep_loc.is_identity() {
+                    edge.location().clone()
+                } else {
+                    (edge.location() * &rep_loc)?
+                };
+                return Ok(EdgeCurve3D {
+                    curve,
+                    location,
+                    first,
+                    last,
+                });
+            }
+            Ok(EdgeCurve3D::default())
         })
     }
 
@@ -65,32 +90,40 @@ impl BRepTool {
     /// search stops at the first of the two kinds that answers yes);
     /// `BRepTool::is_geometric_edge(&edge)?`.
     pub fn is_geometric_edge(edge: &EdgeView<'_>) -> Result<bool, Failure> {
-        for representation in representations(edge, "BRep_Tool::IsGeometric")? {
-            let Some(r) = representation.get() else {
-                continue;
-            };
-            if r.is_curve3d() {
-                let curve3d = representation.downcast::<BRepCurve3D>();
-                if curve3d
-                    .get()
-                    .is_some_and(|c| c.curve3d().is_ok_and(|c| c.is_some()))
-                {
-                    return Ok(true);
+        let found = edge_tshape(edge, "BRep_Tool::IsGeometric")?.with_curves(|curves| {
+            for representation in curves {
+                let Some(r) = representation.get() else {
+                    continue;
+                };
+                if r.is_curve3d() {
+                    let curve3d = representation.downcast::<BRepCurve3D>();
+                    if curve3d
+                        .get()
+                        .is_some_and(|c| c.curve3d().is_ok_and(|c| c.is_some()))
+                    {
+                        return true;
+                    }
+                } else if r.is_curve_on_surface() {
+                    return true;
                 }
-            } else if r.is_curve_on_surface() {
-                return Ok(true);
             }
-        }
-        Ok(false)
+            false
+        });
+        Ok(found)
     }
 
     /// `Polygon3D(E, L)`: the first 3D polygon and the composed location, or a null
     /// polygon at the identity; `BRepTool::polygon3d(&edge)?`.
     pub fn polygon3d(edge: &EdgeView<'_>) -> Result<(Handle<Polygon3D>, Location), Failure> {
-        for representation in representations(edge, "BRep_Tool::Polygon3D")? {
-            let Some(r) = representation.get().filter(|r| r.is_polygon3d()) else {
-                continue;
-            };
+        let found = edge_tshape(edge, "BRep_Tool::Polygon3D")?.with_curves(|curves| {
+            curves
+                .iter()
+                .find(|r| r.get().is_some_and(|r| r.is_polygon3d()))
+                .cloned()
+        });
+        if let Some(representation) = found
+            && let Some(r) = representation.get()
+        {
             return Ok((r.polygon3d()?, (edge.location() * &r.location())?));
         }
         Ok((Handle::default(), Location::default()))
@@ -117,16 +150,24 @@ impl BRepTool {
         surface: &Handle<dyn GeomSurface>,
         location: &Location,
     ) -> Result<EdgePCurve, Failure> {
-        let list = representations(edge, "BRep_Tool::CurveOnSurface")?;
-        if !list.is_empty() {
-            let relative = location.predivided(edge.location())?;
-            let found = list.iter().find(|r| {
-                r.get()
-                    .is_some_and(|r| r.is_curve_on_surface_at(surface, &relative))
-            });
-            if let Some(representation) = found {
-                return stored_pcurve(representation, edge.orientation() == Orientation::Reversed);
-            }
+        let tedge = edge_tshape(edge, "BRep_Tool::CurveOnSurface")?;
+        let found: Option<Handle<dyn BRepCurveRepresentation>> = tedge.with_curves(
+            |curves| -> Result<Option<Handle<dyn BRepCurveRepresentation>>, Failure> {
+                if curves.is_empty() {
+                    return Ok(None);
+                }
+                let relative = location.predivided(edge.location())?;
+                Ok(curves
+                    .iter()
+                    .find(|r| {
+                        r.get()
+                            .is_some_and(|r| r.is_curve_on_surface_at(surface, &relative))
+                    })
+                    .cloned())
+            },
+        )?;
+        if let Some(representation) = found {
+            return stored_pcurve(&representation, edge.orientation() == Orientation::Reversed);
         }
         let (pcurve, first, last) = Self::curve_on_plane(edge, surface, location)?;
         Ok(EdgePCurve {

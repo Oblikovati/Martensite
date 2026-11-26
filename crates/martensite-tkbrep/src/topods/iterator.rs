@@ -24,6 +24,7 @@ pub struct ShapeIterator {
     shape: Shape,
     tshape: Handle<dyn TShape>,
     index: usize,
+    has_current: bool,
     orientation: Orientation,
     location: Location,
 }
@@ -35,6 +36,7 @@ impl Default for ShapeIterator {
             shape: Shape::default(),
             tshape: Handle::default(),
             index: 0,
+            has_current: false,
             orientation: Orientation::Forward,
             location: Location::default(),
         }
@@ -69,16 +71,16 @@ impl ShapeIterator {
     }
 
     /// `More()`: true while a sub-shape remains; `iterator.more()`.
+    #[inline]
     pub fn more(&self) -> bool {
-        self.tshape
-            .get()
-            .is_some_and(|tshape| self.index < tshape.nb_children() as usize)
+        self.has_current
     }
 
     /// `Next()`: moves to the next sub-shape; past the end it does nothing, as the
     /// native list iterator; `iterator.next()`.
+    #[inline]
     pub fn next(&mut self) {
-        if !self.more() {
+        if !self.has_current {
             return;
         }
         self.index += 1;
@@ -87,8 +89,9 @@ impl ShapeIterator {
 
     /// `Value()`: the current composed sub-shape; Standard_NoSuchObject when there is
     /// none; `iterator.value()?`.
+    #[inline]
     pub fn value(&self) -> Result<&Shape, Failure> {
-        if !self.more() {
+        if !self.has_current {
             return Err(Failure::with_type(
                 "Standard_NoSuchObject",
                 &format!(
@@ -102,6 +105,7 @@ impl ShapeIterator {
     }
 
     /// Borrow actual inline current storage even after reset; `iterator.reference_shape()`.
+    #[inline]
     pub fn reference_shape(&self) -> &Shape {
         // Native const references access myShape directly, not Value's More precondition.
         &self.shape
@@ -115,8 +119,10 @@ impl ShapeIterator {
             .get()
             .and_then(|t| t.tshape_base().child(self.index))
         else {
+            self.has_current = false;
             return;
         };
+        self.has_current = true;
         self.shape = child;
         let orientation = top_abs::compose(self.orientation, self.shape.orientation());
         self.shape.set_orientation(orientation);

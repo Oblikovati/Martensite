@@ -52,12 +52,21 @@ pub fn uv_bounds_of_edge(face: &FaceView<'_>, edge: &EdgeView<'_>) -> Result<UVB
 /// face has no surface); `add_uv_bounds(&face, &mut bounds)?`.
 pub fn add_uv_bounds(face: &FaceView<'_>, bounds: &mut BoundingBox2) -> Result<(), Failure> {
     let forward = topods::face(&face.oriented(Orientation::Forward))?;
+    let (surface, location) = BRepTool::surface_with_location(&forward)?;
     let mut face_box = BoundingBox2::default();
-    for edge in Explorer::new(&forward, ShapeEnum::Edge, ShapeEnum::Shape)? {
-        add_uv_bounds_of_edge(&forward, &topods::edge(&edge)?, &mut face_box)?;
+    let mut explorer = Explorer::new(&forward, ShapeEnum::Edge, ShapeEnum::Shape)?;
+    while explorer.more() {
+        let edge = topods::edge(explorer.current())?;
+        add_uv_bounds_of_edge_on_surface(
+            &edge,
+            &surface,
+            &location,
+            Orientation::Forward,
+            &mut face_box,
+        )?;
+        explorer.next()?;
     }
     if face_box.is_void() {
-        let (surface, _) = BRepTool::surface_with_location(&forward)?;
         let Some(surface) = surface.get() else {
             return Ok(());
         };
@@ -75,8 +84,13 @@ pub fn add_uv_bounds_of_wire(
     wire: &Wire,
     bounds: &mut BoundingBox2,
 ) -> Result<(), Failure> {
-    for edge in Explorer::new(wire, ShapeEnum::Edge, ShapeEnum::Shape)? {
-        add_uv_bounds_of_edge(face, &topods::edge(&edge)?, bounds)?;
+    let (surface, location) = BRepTool::surface_with_location(face)?;
+    let face_ori = face.orientation();
+    let mut explorer = Explorer::new(wire, ShapeEnum::Edge, ShapeEnum::Shape)?;
+    while explorer.more() {
+        let edge = topods::edge(explorer.current())?;
+        add_uv_bounds_of_edge_on_surface(&edge, &surface, &location, face_ori, bounds)?;
+        explorer.next()?;
     }
     Ok(())
 }
@@ -90,7 +104,24 @@ pub fn add_uv_bounds_of_edge(
     edge: &EdgeView<'_>,
     bounds: &mut BoundingBox2,
 ) -> Result<(), Failure> {
-    let found = BRepTool::curve_on_face(edge, face)?;
+    let (surface, location) = BRepTool::surface_with_location(face)?;
+    add_uv_bounds_of_edge_on_surface(edge, &surface, &location, face.orientation(), bounds)
+}
+
+fn add_uv_bounds_of_edge_on_surface(
+    edge: &EdgeView<'_>,
+    surface: &Handle<dyn GeomSurface>,
+    location: &martensite_tkmath::toploc::Location,
+    face_orientation: Orientation,
+    bounds: &mut BoundingBox2,
+) -> Result<(), Failure> {
+    let found = if face_orientation == Orientation::Reversed {
+        let mut local = edge.to_edge();
+        local.reverse();
+        BRepTool::curve_on_surface(&local, surface, location)?
+    } else {
+        BRepTool::curve_on_surface(edge, surface, location)?
+    };
     if found.pcurve.is_null() {
         return Ok(());
     }
@@ -101,7 +132,7 @@ pub fn add_uv_bounds_of_edge(
     } else {
         curve_box.get()?
     };
-    let edge_box = clamped_edge_box(face, EdgeBox::new(xmin, ymin, xmax, ymax))?;
+    let edge_box = clamped_edge_box_on_surface(surface, EdgeBox::new(xmin, ymin, xmax, ymax))?;
     let mut surface_box = BoundingBox2::default();
     surface_box.update_bounds(
         [edge_box.xmin, edge_box.ymin],
@@ -111,17 +142,19 @@ pub fn add_uv_bounds_of_edge(
     Ok(())
 }
 
-/// The p-curve box clamped to the bounds of the face's surface (its basis for a
+/// The p-curve box clamped to the bounds of `surface` (its basis for a
 /// rectangular trimmed surface, whose bounds are read before the unwrap).
-fn clamped_edge_box(face: &FaceView<'_>, mut edge_box: EdgeBox) -> Result<EdgeBox, Failure> {
-    let (surface, _) = BRepTool::surface_with_location(face)?;
+fn clamped_edge_box_on_surface(
+    surface: &Handle<dyn GeomSurface>,
+    mut edge_box: EdgeBox,
+) -> Result<EdgeBox, Failure> {
     let Some(stored) = surface.get() else {
         return Err(null_object(
             "BRepTools::AddUVBounds: the face has no surface (a null dereference natively)",
         ));
     };
     let surface_bounds = stored.bounds();
-    let basis = trimmed_basis(&surface);
+    let basis = trimmed_basis(surface);
     let Some(basis_ref) = basis.get() else {
         return Err(null_object("BRepTools::AddUVBounds: null basis surface"));
     };

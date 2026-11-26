@@ -13,7 +13,7 @@ Systematic toolkit-by-toolkit p95 profiling and optimization against OCCT 8.0.0 
 | 3 | `martensite-tkservice` | prebuilt | Pending | |
 | 4 | `martensite-tkg3d` | prebuilt | **Done** (12 APIs; up to 1.44x speedup on B-spline surfaces) | [tkg3d.md](tkg3d.md) |
 | 5 | `martensite-tkgeombase` | prebuilt | **Done** (10 APIs; up to 1.40x speedup across BndLib, GCPnts, GeomConvert, ExtremaPC) | [tkgeombase.md](tkgeombase.md) |
-| 6 | `martensite-tkbrep` | prebuilt | Pending | |
+| 6 | `martensite-tkbrep` | prebuilt | **Done** (10 APIs; up to 2.85x speedup on TopExp_Explorer, BRepTools, BRep_Tool) | [tkbrep.md](tkbrep.md) |
 | 7 | `martensite-tkgeomalgo` | prebuilt | Pending | |
 | 8 | `martensite-tktopalgo` | prebuilt | Pending | |
 | 9 | `martensite-tkhelix`, `martensite-tkhlr`, `martensite-tkprim`, `martensite-tkshhealing`, `martensite-tkmesh` | prebuilt | Pending | |

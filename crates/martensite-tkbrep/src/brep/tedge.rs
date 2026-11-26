@@ -107,6 +107,15 @@ impl BRepTEdge {
     pub fn curves(&self) -> Vec<Handle<dyn BRepCurveRepresentation>> {
         self.fields.read().curves.clone()
     }
+    /// Borrows the stored curve representations under the read lock without cloning the list;
+    /// `edge.with_curves(|curves| curves.len())`.
+    #[inline]
+    pub fn with_curves<R>(
+        &self,
+        read: impl FnOnce(&[Handle<dyn BRepCurveRepresentation>]) -> R,
+    ) -> R {
+        read(&self.fields.read().curves)
+    }
     /// Copy the curve records only when their count is within the supplied limit.
     /// Returns the actual count when it exceeds `maximum`.
     /// Example: `let records = edge.curves_within_limit(16)?;`.

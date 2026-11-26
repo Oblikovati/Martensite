@@ -55,8 +55,8 @@ pub fn map_shapes(
 ) {
     map.add(shape.to_shape());
     let mut iterator = ShapeIterator::new(shape, cum_ori, cum_loc);
-    while let Ok(child) = iterator.value() {
-        map_shapes(child, map, true, true);
+    while iterator.more() {
+        map_shapes(iterator.reference_shape(), map, true, true);
         iterator.next();
     }
 }
@@ -71,8 +71,8 @@ pub fn map_shapes_into_map(
 ) {
     map.add(shape.to_shape());
     let mut iterator = ShapeIterator::new(shape, cum_ori, cum_loc);
-    while let Ok(child) = iterator.value() {
-        map_shapes_into_map(child, map, true, true);
+    while iterator.more() {
+        map_shapes_into_map(iterator.reference_shape(), map, true, true);
         iterator.next();
     }
 }
