@@ -40,7 +40,8 @@ pub use on_face::{
     PlanarFaceBinding, PlanarFaceConstraintFailure, PlanarFaceCurve, PlanarFaceCurveFailure,
     PlanarFaceCurveRecipe, PlanarFaceDragUpdate, PlanarFaceRelation, PlanarFaceRevision,
     PlanarFaceSpline, PlanarFaceSplineEdit, PlanarFaceSplineFailure, PlanarFaceSplineRecipe,
-    PlanarFaceSplineStation,
+    PlanarFaceSplineStation, SphericalAttachedSketch, SphericalFaceBinding,
+    SphericalFaceDragUpdate, SphericalFaceFailure, SphericalFaceRelation,
 };
 pub use preferred::{PreferenceReport, PreferenceSettlement, PreferredDragUpdate};
 use program::Program;

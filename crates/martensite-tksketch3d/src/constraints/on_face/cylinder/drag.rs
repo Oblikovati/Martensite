@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Preferred motion on the original lifted chart, followed by complete trim and solver replay.
+use super::super::periodic::replay;
 use super::{
     ConstraintRank, CylindricalAttachedSketch, CylindricalFaceRelation, FaceAttachmentRevision,
     Failure, point_xyz, poll, require_same, require_trim,
 };
 use crate::{
     PointId,
-    constraints::{ConstrainedSketch, PreferenceReport, PreferenceSettlement, residual},
+    constraints::{PreferenceReport, PreferenceSettlement},
 };
 use martensite_tkbrep::brep::cylindrical_split::{CylinderPointQuery, CylinderWallPlace};
 use martensite_tkmath::gp::Point3;
-use std::sync::Arc;
 
 /// One accepted immutable cylinder drag and its solver and native evidence.
 pub struct CylindricalFaceDragUpdate {
@@ -98,40 +98,24 @@ impl CylindricalAttachedSketch {
         let equation = self
             .binding
             .equation(uv, sketch.policy.length_scale.value(), cancelled)?;
-        let next = sketch.program.reframe_attachment(
-            &geometry,
-            uv,
-            equation,
-            sketch.policy,
-            output.work,
+        let replayed = replay(
+            sketch,
+            (geometry, uv),
+            (equation, output),
+            (cursor, tangent_tolerance),
             cancelled,
         )?;
-        output.work = next.work;
-        output.values = next.program.values_with_uv(&geometry, Some(uv))?;
-        let observed = output.hard_error.max(next.hard_error);
-        let (output, preference) = next.program.recheck_preferred(
-            &geometry,
-            cursor,
-            output,
-            tangent_tolerance,
-            cancelled,
-        )?;
-        let rank = next.program.rank_report(output.rank, output.dof);
         Ok(CylindricalFaceDragUpdate {
             sketch: Self {
-                sketch: ConstrainedSketch {
-                    geometry: Arc::new(geometry),
-                    program: next.program,
-                    ..sketch.clone()
-                },
+                sketch: replayed.sketch,
                 binding: self.binding.clone(),
                 record: CylindricalFaceRelation { uv, ..self.record },
             },
-            rank,
-            hard_error: output.hard_error.max(observed),
-            preference,
+            rank: replayed.rank,
+            hard_error: replayed.hard_error,
+            preference: replayed.preference,
             attachment,
-            residual_work_bound: residual::work_bound(output.work.work),
+            residual_work_bound: replayed.residual_work_bound,
         })
     }
 

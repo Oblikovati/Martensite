@@ -4,8 +4,11 @@ mod drag;
 mod failure;
 
 use super::{
-    AttachmentEquation, ConstrainedSketch, ConstraintRank, FaceAttachmentRevision, Program,
-    Relation, RelationId, equation::CylindricalEquation, poll, verify_relations,
+    AttachmentEquation, ConstrainedSketch, ConstraintRank, FaceAttachmentRevision, Relation,
+    RelationId,
+    equation::CylindricalEquation,
+    periodic::{detach, point_xyz, prepare},
+    poll,
 };
 use crate::{PointId, Snapshot};
 use martensite_tkbrep::brep::cylindrical_split::{
@@ -147,7 +150,14 @@ impl CylindricalAttachedSketch {
             sketch.policy.length_tolerance.value(),
             cancelled,
         )?;
-        let program = build_program(sketch, &binding, record, cancelled)?;
+        let equation =
+            binding.equation(record.uv, sketch.policy.length_scale.value(), cancelled)?;
+        let program = prepare(
+            sketch,
+            (record.id, record.point, record.uv),
+            equation,
+            cancelled,
+        )?;
         poll(cancelled)?;
         Ok(Self {
             sketch: ConstrainedSketch {
@@ -219,51 +229,8 @@ impl CylindricalAttachedSketch {
         &self,
         mut cancelled: impl FnMut() -> bool,
     ) -> Result<ConstrainedSketch, Failure> {
-        poll(&mut cancelled)?;
-        let program = Arc::new(Program::new(
-            &self.sketch.geometry,
-            &self.sketch.relations,
-            self.sketch.policy,
-            &mut cancelled,
-        )?);
-        poll(&mut cancelled)?;
-        Ok(ConstrainedSketch {
-            program,
-            ..self.sketch.clone()
-        })
+        Ok(detach(&self.sketch, &mut cancelled)?)
     }
-}
-
-fn build_program(
-    sketch: &ConstrainedSketch,
-    binding: &CylindricalFaceBinding,
-    record: CylindricalFaceRelation,
-    cancelled: &mut (impl FnMut() -> bool + Send),
-) -> Result<Arc<Program>, Failure> {
-    let equation = binding.equation(record.uv, sketch.policy.length_scale.value(), cancelled)?;
-    verify_relations(
-        &sketch.geometry,
-        &sketch.relations,
-        sketch.policy,
-        cancelled,
-    )?;
-    let program = Arc::new(Program::compile(
-        &sketch.geometry,
-        &sketch.relations,
-        sketch.policy,
-        Some((record.id, record.point, equation)),
-        cancelled,
-    )?);
-    program.verify_attachment_state(&sketch.geometry, record.uv, cancelled)?;
-    Ok(program)
-}
-
-fn point_xyz(geometry: &Snapshot, point: PointId) -> Result<[f64; 3], Failure> {
-    Ok(*geometry
-        .point(point)
-        .ok_or(super::super::ConstraintFailure::MissingPoint(point))?
-        .position
-        .coordinates())
 }
 
 fn require_trim(place: CylinderWallPlace) -> Result<(), Failure> {

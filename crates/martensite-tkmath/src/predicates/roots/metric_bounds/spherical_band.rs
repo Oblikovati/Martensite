@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Exact placed spherical chart and bounded full-period non-pole trim evidence.
+mod point;
 mod trace;
+pub use point::{
+    SphericalBandPlace, SphericalPointChart, SphericalPointQuery, require_spherical_lift,
+};
 
 use super::{
     BoundedArithmeticFailure, CylindricalProfileFailure,
     cylindrical_profile::trigonometric,
-    placed_plane::{ExactPlacement, ExactVector, exact_point, exact_vector},
+    placed_plane::{ExactPlacement, ExactVector, exact_point, exact_vector, inverse_columns},
 };
 use crate::{
     gp::{Axis3, Circle3, Sphere3},
@@ -52,9 +56,12 @@ pub struct SphericalBandTraceInput {
 pub struct SphericalBand {
     origin: ExactVector,
     axes: [ExactVector; 3],
+    inverse: [ExactVector; 3],
     radius: R,
     latitude: [f64; 2],
     trace: f64,
+    sine_rims: [[R; 2]; 2],
+    relative_area_lower: f64,
 }
 
 /// Why the bounded spherical band or point could not be certified.
@@ -71,6 +78,26 @@ pub enum SphericalBandError {
     Latitude([f64; 2]),
     /// Actual seam parameter and latitude intervals do not bind exactly.
     Meridian,
+    /// No finite longitude or regular tangent exists at a pole or the center.
+    Pole,
+    /// The longitude hint or step has no uniquely admitted nearby lift.
+    Lift {
+        /// Prior or requested angular reference.
+        prior: f64,
+        /// Proposed angular coordinate.
+        next: f64,
+    },
+    /// The actual world-ray latitude could not be compared to a retained rim.
+    TrimUnresolved,
+    /// A finite nominal chart component could not be established.
+    Unrepresentable,
+    /// The actual world-lift discrepancy could not be admitted under the requested cap.
+    Distance {
+        /// Certified outward model-space upper bound, when representable.
+        bound: Option<f64>,
+        /// Original requested inclusive maximum.
+        limit: f64,
+    },
     /// A model cap requires a finite nonnegative value.
     Limit(f64),
     /// The actual trim error exceeds the original model cap.
@@ -100,6 +127,21 @@ impl fmt::Display for SphericalBandError {
             ),
             Self::Meridian => out
                 .write_str("the original meridian parameter must map exactly onto the band limits"),
+            Self::Pole => out.write_str("spherical point requires a non-pole regular chart"),
+            Self::Lift { prior, next } => write!(
+                out,
+                "angles {prior} and {next} require a unique lift within a half turn"
+            ),
+            Self::TrimUnresolved => out.write_str(
+                "the certified world latitude could not be ordered against the actual rim",
+            ),
+            Self::Unrepresentable => {
+                out.write_str("a spherical point needs finite nominal or outward components")
+            }
+            Self::Distance { bound, limit } => write!(
+                out,
+                "world lift upper bound {bound:?} exceeds or cannot establish {limit}"
+            ),
             Self::Limit(limit) => write!(
                 out,
                 "spherical band limit {limit} must be finite and nonnegative"
@@ -167,6 +209,9 @@ impl SphericalBand {
                 limit,
             });
         }
+        let (rims, area) = point::admit(&band, &mut arithmetic)?;
+        band.sine_rims = rims;
+        band.relative_area_lower = area;
         poll(&mut cancelled)?;
         Ok(band)
     }
@@ -186,19 +231,18 @@ impl SphericalBand {
             place.vector(exact_vector(*directions[1].coordinates(), 2)?),
             place.vector(exact_vector(*directions[2].coordinates(), 3)?),
         ];
-        let determinant =
-            super::placed_plane::dot(&axes[0], &super::placed_plane::cross(&axes[1], &axes[2]));
-        if determinant.sign().is_eq() {
-            return Err(SphericalBandError::Frame);
-        }
+        let inverse = inverse_columns(&axes).ok_or(SphericalBandError::Frame)?;
         let radius = positive_radius(sphere.radius())?;
         let origin = place.point(exact_point(frame.location(), 0)?);
         Ok(Self {
             origin,
             axes,
+            inverse,
             radius,
             latitude,
             trace: 0.,
+            sine_rims: std::array::from_fn(|_| std::array::from_fn(|_| R::from_finite(0.))),
+            relative_area_lower: 0.,
         })
     }
 

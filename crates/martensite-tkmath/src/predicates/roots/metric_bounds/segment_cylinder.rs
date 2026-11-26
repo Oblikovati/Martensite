@@ -12,7 +12,9 @@ pub use trace::{
 
 use super::super::certificate_arithmetic::ExactRatio as Ratio;
 use super::CylindricalProfileFailure;
-use super::placed_plane::{ExactPlacement, ExactVector, cross, dot, exact_point, exact_vector};
+use super::placed_plane::{
+    ExactPlacement, ExactVector, cross, dot, exact_point, exact_vector, inverse_columns,
+};
 pub use super::segment_plane::SegmentPlaneCut as SegmentCylinderCut;
 use crate::{gp::Cylinder3, predicates::NonFiniteCoordinate};
 use hole::Hole;
@@ -226,7 +228,7 @@ impl SegmentCylinderWall {
         let v = place.vector(exact_vector(*frame.y_direction().coordinates(), 2)?);
         let axis = place.vector(exact_vector(*frame.direction().coordinates(), 3)?);
         let axes = [u, v, axis];
-        let inverse = invert(axes.clone())?;
+        let inverse = inverse_columns(&axes).ok_or(CylinderSegmentError::Frame)?;
         Ok(Self {
             origin,
             inverse,
@@ -431,15 +433,6 @@ impl LocalSegment {
             .subtract(&radius.multiply(radius));
         [a, b, c]
     }
-}
-
-fn invert([u, v, w]: [ExactVector; 3]) -> Result<[ExactVector; 3], CylinderSegmentError> {
-    let cofactor = [cross(&v, &w), cross(&w, &u), cross(&u, &v)];
-    let determinant = dot(&u, &cofactor[0]);
-    if determinant.sign() == Ordering::Equal {
-        return Err(CylinderSegmentError::Frame);
-    }
-    Ok(cofactor.map(|row| row.map(|entry| entry.divide(&determinant))))
 }
 
 fn classify_line(root: &Root) -> Option<CylinderLinePlace> {

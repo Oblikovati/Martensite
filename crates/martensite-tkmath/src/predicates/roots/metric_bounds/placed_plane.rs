@@ -170,6 +170,16 @@ pub(super) fn dot(a: &ExactVector, b: &ExactVector) -> ExactRatio {
         })
 }
 
+// The supplied vectors are the original affine chart columns.
+pub(super) fn inverse_columns([u, v, w]: &[ExactVector; 3]) -> Option<[ExactVector; 3]> {
+    let cofactor = [cross(v, w), cross(w, u), cross(u, v)];
+    let determinant = dot(u, &cofactor[0]);
+    if determinant.sign().is_eq() {
+        return None;
+    }
+    Some(cofactor.map(|row| row.map(|entry| entry.divide(&determinant))))
+}
+
 pub(super) fn triple(a: &ExactVector, b: &ExactVector, c: &ExactVector) -> ExactRatio {
     dot(a, &cross(b, c))
 }

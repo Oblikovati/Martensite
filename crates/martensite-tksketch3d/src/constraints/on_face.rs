@@ -5,7 +5,13 @@ mod cylinder;
 mod drag;
 mod equation;
 mod failure;
+mod periodic;
+mod sphere;
 mod spline;
+pub use sphere::{
+    SphericalAttachedSketch, SphericalFaceBinding, SphericalFaceDragUpdate, SphericalFaceFailure,
+    SphericalFaceRelation,
+};
 
 use super::{
     ConstrainedSketch, ConstraintRank, Program, Relation, RelationId, adopt::verify_relations, poll,

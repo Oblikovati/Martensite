@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Source-bound original native full-period spherical band without pole coedges.
+mod point;
+pub use point::{SphericalBandPlace, SphericalPointChart, SphericalPointQuery};
+
 use super::{
     cylindrical_split::{CylindricalFaceError, capture::sphere},
     face_input_capture::{FaceCaptureLimits, capture_spherical_input},
@@ -76,6 +79,8 @@ impl Error for SphericalFaceError {
 }
 
 /// Bind the uniquely selected native full non-pole band under the host's source transaction.
+/// The selected face has one rectangular periodic wire and two nondegenerate circular rims.
+/// The retained original rim, meridian and vertex trace must meet the submitted finite model cap.
 /// Example: `capture_spherical_band(&body, &face, source, limits, 1e-8, || false)?`.
 pub fn capture_spherical_band(
     body: &Solid,

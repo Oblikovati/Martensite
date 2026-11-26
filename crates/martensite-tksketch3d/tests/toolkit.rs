@@ -23,6 +23,7 @@ mod motion;
 mod on_face;
 mod preferred_drag;
 mod restore;
+mod spherical_on_face;
 mod split_cylinder;
 mod split_face;
 mod split_plane;
