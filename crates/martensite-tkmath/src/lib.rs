@@ -38,3 +38,6 @@ pub mod plib;
 
 /// Exact signs for extension topology; the metric predicates are unchanged.
 pub mod predicates;
+
+/// Transitive coincidence equivalence classes with bounded cluster diameter (#34).
+pub mod coincidence;

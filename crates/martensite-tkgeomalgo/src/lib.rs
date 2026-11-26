@@ -9,6 +9,9 @@
 pub mod app_blend;
 pub mod approx_int;
 pub mod completeness;
+pub mod rational_bounds;
+#[cfg(test)]
+mod ssi_corpus;
 pub mod fair_curve;
 pub mod gcc_ana;
 pub mod gcc_ent;
