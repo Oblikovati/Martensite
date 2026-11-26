@@ -15,4 +15,5 @@ pub mod geom_adaptor;
 pub mod geom_eval;
 pub mod geom_grid_eval;
 pub mod geom_hash;
+pub mod published;
 pub mod top_abs;
