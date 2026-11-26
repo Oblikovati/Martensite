@@ -2,6 +2,7 @@
 mod ais;
 mod frames;
 mod geometry;
+include!("../../../tests/support/support_unit_tests_elsewhere.rs");
 #[path = "../../../examples/support/native_window.rs"]
 mod native_window;
 mod stage;
