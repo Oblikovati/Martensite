@@ -5,6 +5,7 @@ use crate::ncollection::map_payload::construct_value_then_key;
 impl<K, V> ChainedSlots<K, V> {
     /// Constructs the value, then the key, and prepends the entry to `bucket`; returns its slot.
     /// A constructor panic leaves the map unchanged. The caller prepared a table.
+    #[inline]
     pub(in crate::ncollection) fn insert(
         &mut self,
         bucket: usize,

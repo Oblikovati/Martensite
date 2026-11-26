@@ -8,6 +8,8 @@ pub struct DynamicArray<T> {
     blocks: LinearVector<AllocVec<T, BaseAllocator>>,
     allocator: Option<BaseAllocator>,
     increment: usize,
+    increment_shift: u32,
+    increment_mask: usize,
     used: usize,
     // False proves canonical registered prefixes; uncertain states retain the exact scan.
     needs_tail_scan: bool,
@@ -115,8 +117,11 @@ impl<T> DynamicArray<T> {
         }
         // Allocated blocks are kept when changing the stride of an empty array.
         self.increment = DynamicArrayStorageExtension::<T>::round_up_pow2(increment);
+        self.increment_shift = self.increment.trailing_zeros();
+        self.increment_mask = self.increment.wrapping_sub(1);
     }
     /// Appends without moving existing elements; `array.append(42)`.
+    #[inline]
     pub fn append(&mut self, value: T) -> &mut T {
         self.emplace_append(|| value)
     }
@@ -145,6 +150,7 @@ impl<T> DynamicArray<T> {
         self.reserve_block_count(index / self.increment + 1);
     }
     /// Reads an initialized slot with either i32 or usize indexing; `array.value(0_usize)?`.
+    #[inline]
     pub fn value<I: TryInto<usize> + Copy + Debug>(&self, index: I) -> Result<&T, ArrayError> {
         let index = checked_index(index)?;
         let (block_index, offset) = self.element_coordinates(index);
@@ -155,6 +161,7 @@ impl<T> DynamicArray<T> {
             .ok_or_else(|| self.index_error(index))
     }
     /// Mutates an initialized slot; `*array.change_value(0)? = 42`.
+    #[inline]
     pub fn change_value<I: TryInto<usize> + Copy + Debug>(
         &mut self,
         index: I,

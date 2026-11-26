@@ -6,6 +6,7 @@ impl ProgressScope<'_> {
     /// Advances the local value by `step` and returns the range covering it; an
     /// inactive scope, a non-positive step or a step mapping to no global advance
     /// returns an unbound range; `func(scope.next(1.))`.
+    #[inline]
     pub fn next(&self, step: f64) -> ProgressRange<'_> {
         if self.is_active() && step > 0. {
             let value = self.local_value();
@@ -25,6 +26,7 @@ impl ProgressScope<'_> {
     ///
     /// A parent that is no longer armed is not
     /// checked.
+    #[inline]
     pub fn close(&self) {
         if !self.is_active() {
             return;

@@ -46,6 +46,8 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
             self.array.allocator = source.allocator.clone();
         }
         self.array.increment = source.increment;
+        self.array.increment_shift = source.increment_shift;
+        self.array.increment_mask = source.increment_mask;
         self.array.used = 0;
         self.array.needs_tail_scan = false;
     }

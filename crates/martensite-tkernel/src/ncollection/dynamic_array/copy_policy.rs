@@ -60,6 +60,8 @@ impl<T> DynamicArray<T> {
     ) -> Result<&mut Self, DynamicArrayCopyFailure<T>> {
         self.clear(true);
         self.increment = source.increment;
+        self.increment_shift = source.increment_shift;
+        self.increment_mask = source.increment_mask;
         if !own_allocator {
             self.allocator = source.allocator.clone();
         }

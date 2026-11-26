@@ -39,20 +39,31 @@ impl<'a> ProgressRange<'a> {
         }
     }
     /// True when the indicator signals a user break; `range.user_break()`.
+    #[inline]
     pub fn user_break(&self) -> bool {
         self.parent.is_some_and(ProgressScope::indicator_break)
     }
     /// False when the indicator signals a user break; `while range.more() {}`.
+    #[inline]
     pub fn more(&self) -> bool {
         !self.user_break()
     }
     /// True while unused and bound to an indicator; `range.is_active()`.
+    #[inline]
     pub fn is_active(&self) -> bool {
-        !self.was_used.get() && self.parent.is_some_and(ProgressScope::has_indicator)
+        self.parent.is_some()
+            && !self.was_used.get()
+            && self.parent.is_some_and(ProgressScope::has_indicator)
+    }
+    /// True when this range is unbound to any parent scope (null range fast path, #590).
+    #[inline]
+    pub(super) fn is_unbound(&self) -> bool {
+        self.parent.is_none()
     }
     /// Advances the indicator by `delta` once, then detaches; `range.close()`.
+    #[inline]
     pub fn close(&mut self) {
-        if !self.is_active() {
+        if self.parent.is_none() || !self.is_active() {
             return;
         }
         if let Some(parent) = self.parent.take() {
@@ -62,7 +73,11 @@ impl<'a> ProgressRange<'a> {
     }
     /// Consumes the range for a new scope: returns `(parent, start, delta, was_used)`
     /// and disarms it.
+    #[inline]
     pub(super) fn disarm_for_scope(&self) -> (Option<&'a ProgressScope<'a>>, f64, f64, bool) {
+        if self.parent.is_none() {
+            return (None, 0., 0., false);
+        }
         let used = self.was_used.replace(true);
         (self.parent, self.start, self.delta, used)
     }
