@@ -150,6 +150,160 @@ impl HistoryGraph {
             .filter(|r| r.products.iter().any(|q| q.is_same(product)))
             .collect()
     }
+
+    /// Composes two sequential operation history graphs (`first` followed by `second`)
+    /// into a single deterministic many-to-many history graph (#19).
+    pub fn compose(first: &Self, second: &Self) -> Self {
+        let mut builder = HistoryGraphBuilder::default();
+        for relation in &first.relations {
+            match relation.kind {
+                HistoryRelationKind::Deleted => {
+                    for parent in &relation.parents {
+                        builder.record_deleted(parent.clone());
+                    }
+                }
+                _ => {
+                    let mut final_products = Vec::new();
+                    let mut any_deleted = false;
+                    for mid in &relation.products {
+                        let next_rels = second.relations_for_parent(mid);
+                        if next_rels.is_empty() {
+                            push_unique(&mut final_products, mid.clone());
+                        } else {
+                            for next in next_rels {
+                                if next.kind == HistoryRelationKind::Deleted {
+                                    any_deleted = true;
+                                } else {
+                                    for prod in &next.products {
+                                        push_unique(&mut final_products, prod.clone());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if final_products.is_empty() && any_deleted {
+                        for parent in &relation.parents {
+                            builder.record_deleted(parent.clone());
+                        }
+                    } else if !final_products.is_empty() {
+                        if relation.parents.is_empty() {
+                            for prod in final_products {
+                                builder.record_created(prod);
+                            }
+                        } else if relation.parents.len() == 1 && final_products.len() > 1 {
+                            builder.record_split(relation.parents[0].clone(), final_products);
+                        } else if relation.parents.len() > 1 && final_products.len() == 1 {
+                            builder.record_merged(
+                                relation.parents.clone(),
+                                final_products.remove(0),
+                            );
+                        } else {
+                            let non_unique =
+                                relation.parents.len() > 1 || final_products.len() > 1;
+                            builder.record_derived(
+                                relation.parents.clone(),
+                                final_products,
+                                non_unique,
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        // Carry over newly created entities from `second` that have no parent in `first`.
+        for relation in &second.relations {
+            if relation.kind == HistoryRelationKind::Created {
+                for prod in &relation.products {
+                    builder.record_created(prod.clone());
+                }
+            }
+        }
+        builder.build()
+    }
+
+    /// Evaluates whether every supported topological entity in `result_shape` is covered
+    /// by at least one product entry in this history graph (#19).
+    pub fn coverage_report(&self, result_shape: &Shape) -> Result<HistoryCoverageReport, Failure> {
+        let mut entities = IndexedMapOfShape::default();
+        if !result_shape.is_null() {
+            topexp::map_shapes(result_shape, &mut entities, true, true);
+        }
+        let mut total_result_entities = 0usize;
+        let mut covered_entities = 0usize;
+        let mut uncovered_entities = Vec::new();
+        for index in 1..=entities.extent() {
+            let entity = entities.find_key(index)?.clone();
+            if !History::is_supported_type(&entity)? {
+                continue;
+            }
+            total_result_entities += 1;
+            if self.relations_for_product(&entity).is_empty() {
+                uncovered_entities.push(entity);
+            } else {
+                covered_entities += 1;
+            }
+        }
+        Ok(HistoryCoverageReport {
+            total_result_entities,
+            covered_entities,
+            uncovered_entities,
+        })
+    }
+}
+
+/// Strict coverage audit of a [`HistoryGraph`] against a result shape (#19).
+#[derive(Clone, Debug)]
+pub struct HistoryCoverageReport {
+    total_result_entities: usize,
+    covered_entities: usize,
+    uncovered_entities: Vec<Shape>,
+}
+
+impl HistoryCoverageReport {
+    /// Total supported entities inspected on the result shape.
+    pub fn total_result_entities(&self) -> usize {
+        self.total_result_entities
+    }
+
+    /// Count of result entities with at least one provenance relation.
+    pub fn covered_entities(&self) -> usize {
+        self.covered_entities
+    }
+
+    /// Result entities missing provenance coverage.
+    pub fn uncovered_entities(&self) -> &[Shape] {
+        &self.uncovered_entities
+    }
+
+    /// True when every supported result entity is covered.
+    pub fn is_complete(&self) -> bool {
+        self.uncovered_entities.is_empty()
+    }
+
+    /// Refuses incomplete history coverage with a structured [`super::OperationError`] (#19).
+    pub fn require_complete(
+        self,
+        operation: super::OperationKind,
+    ) -> Result<(), super::OperationError> {
+        if self.is_complete() {
+            return Ok(());
+        }
+        Err(super::OperationError::kernel_failure(
+            operation,
+            format!(
+                "incomplete history coverage: {}/{} entities covered ({} uncovered)",
+                self.covered_entities,
+                self.total_result_entities,
+                self.uncovered_entities.len()
+            ),
+        ))
+    }
+}
+
+fn push_unique(list: &mut Vec<Shape>, shape: Shape) {
+    if !list.iter().any(|existing| existing.is_same(&shape)) {
+        list.push(shape);
+    }
 }
 
 /// Operation-local builder for [`HistoryGraph`] (#18).
@@ -279,5 +433,48 @@ fn classify_modifications(builder: &mut HistoryGraphBuilder, entries: &[(Shape, 
 fn classify_generations(builder: &mut HistoryGraphBuilder, entries: &[(Shape, Vec<Shape>)]) {
     for (parent, products) in entries {
         builder.record_derived(vec![parent.clone()], products.clone(), products.len() > 1);
+    }
+}
+
+#[cfg(test)]
+mod compose_and_coverage_tests {
+    use super::*;
+    use crate::brep::BRepBuilder;
+    use crate::operation::OperationKind;
+    use crate::topods::Vertex;
+
+    fn make_v() -> Shape {
+        let mut v = Vertex::default();
+        BRepBuilder::default().make_vertex(&mut v);
+        v.into_shape()
+    }
+
+    #[test]
+    fn compose_chains_split_and_delete_and_strict_coverage_refuses_gaps() {
+        let a = make_v();
+        let b1 = make_v();
+        let b2 = make_v();
+        let c1 = make_v();
+        let uncovered = make_v();
+
+        let mut g1 = HistoryGraph::builder();
+        g1.record_split(a.clone(), vec![b1.clone(), b2.clone()]);
+        let mut g2 = HistoryGraph::builder();
+        g2.record_derived(vec![b1], vec![c1.clone()], false);
+        g2.record_deleted(b2);
+
+        let composed = HistoryGraph::compose(&g1.build(), &g2.build());
+        assert_eq!(composed.relations_for_product(&c1).len(), 1);
+        assert!(composed.relations_for_product(&c1)[0].parents()[0].is_same(&a));
+
+        let covered_report = composed.coverage_report(&c1).expect("coverage report");
+        assert!(covered_report.is_complete());
+        covered_report
+            .require_complete(OperationKind::Boolean)
+            .expect("complete coverage accepted");
+
+        let gap_report = composed.coverage_report(&uncovered).expect("gap report");
+        assert!(!gap_report.is_complete());
+        assert!(gap_report.require_complete(OperationKind::Boolean).is_err());
     }
 }

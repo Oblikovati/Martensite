@@ -1,6 +1,7 @@
 //! Boolean operations: the general fuse and its builders, the intersection tools of [`int_tools`],
 //! splitting, defeaturing and the checks of their results.
 pub mod body_check;
+pub mod boolean_context;
 pub mod bop_algo;
 pub mod bop_ds;
 pub mod bop_tools;
