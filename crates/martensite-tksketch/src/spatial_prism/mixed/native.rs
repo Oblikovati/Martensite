@@ -123,7 +123,7 @@ pub(super) fn vertex(vertex: &Vertex, expected: Xyz, subject: Subject) -> Result
     .pnt();
     let actual = place_point(
         *stored.coordinates(),
-        checked_rows(&vertex.location(), subject)?,
+        checked_rows(vertex.location(), subject)?,
         subject,
     )?;
     subject.require(

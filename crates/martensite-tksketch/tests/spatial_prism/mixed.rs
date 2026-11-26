@@ -364,13 +364,6 @@ fn mixed_prism_exports_detach_curves_and_parallel_receipts() {
             }
         }
     });
-    let checksum = bytes.iter().fold(0xcbf29ce484222325_u64, |sum, byte| {
-        (sum ^ u64::from(*byte)).wrapping_mul(0x100000001b3)
-    });
-    println!(
-        "mixed-prism receipt {checksum:016x} {:?}",
-        result.history().collect::<Vec<_>>()
-    );
 }
 
 #[test]
@@ -396,5 +389,65 @@ fn cancelled_mixed_sweep_never_publishes_a_partial_result() {
             .unwrap()
             .volume()
             .encloses(VOLUME)
+    );
+}
+
+#[test]
+fn mixed_archive_and_history_are_process_and_legacy_precision_independent() {
+    let plain = recorded_mixed_prism("0");
+    assert_eq!(plain, recorded_mixed_prism("0"));
+    assert_eq!(plain, recorded_mixed_prism("1"));
+}
+
+fn recorded_mixed_prism(altered_precision: &str) -> String {
+    let output = std::process::Command::new(std::env::current_exe().unwrap())
+        .env(
+            "MARTENSITE_TEST_MIXED_PRISM_LEGACY_PRECISION",
+            altered_precision,
+        )
+        .args([
+            "--exact",
+            "mixed::emit_mixed_prism_archive",
+            "--nocapture",
+            "--test-threads=1",
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    stdout
+        .split_once("MIXED_PRISM_ARCHIVE=")
+        .unwrap()
+        .1
+        .lines()
+        .take(2)
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+#[test]
+fn emit_mixed_prism_archive() {
+    use std::fmt::Write;
+    let Ok(mode) = std::env::var("MARTENSITE_TEST_MIXED_PRISM_LEGACY_PRECISION") else {
+        return;
+    };
+    if mode == "1" {
+        martensite_tktopalgo::brep_lib::set_precision(0.5);
+    }
+    let source = rounded_wire(|p| p, false, false);
+    let result = extrude_mixed_wire(&source, [0., 0., 3.], options(), || false).unwrap();
+    let bytes = archive(&result.export_brep(|| false).unwrap().solid);
+    let mut hex = String::with_capacity(bytes.len() * 2);
+    for byte in bytes {
+        write!(hex, "{byte:02x}").unwrap();
+    }
+    println!("MIXED_PRISM_ARCHIVE={hex}");
+    println!(
+        "MIXED_PRISM_HISTORY={:?}",
+        result.history().collect::<Vec<_>>()
     );
 }
