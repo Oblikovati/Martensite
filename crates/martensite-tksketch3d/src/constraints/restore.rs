@@ -24,7 +24,7 @@ impl ConstrainedSketch {
     ) -> Result<Self, ConstraintFailure> {
         poll(&mut cancelled)?;
         let values = staged_relations(&geometry, relations, policy, &mut cancelled)?;
-        let program = Program::new(&geometry, &values, policy)?;
+        let program = Program::new(&geometry, &values, policy, &mut cancelled)?;
         verify_relations(&geometry, &values, policy, &mut cancelled)?;
         Ok(Self {
             geometry: Arc::new(geometry),
@@ -55,7 +55,7 @@ fn staged_relations(
         let Entry::Vacant(entry) = values.entry(id) else {
             return Err(ConstraintFailure::DuplicateId(id));
         };
-        capture(geometry, id, spec(relation))?;
+        capture(geometry, id, spec(relation), policy)?;
         // Capture validates operands and dimensional limits. The persisted value owns the Fix anchors.
         entry.insert(relation);
     }
@@ -71,6 +71,7 @@ fn spec(relation: Relation) -> RelationSpec {
         Relation::Colinear(lines, direction) => RelationSpec::Colinear(lines, direction),
         Relation::Parallel(lines, direction) => RelationSpec::Parallel(lines, direction),
         Relation::Length(line, length) => RelationSpec::Length(line, length),
+        Relation::Radius(arc, target, _) => RelationSpec::Radius(arc, target),
         Relation::ParallelToAxis(line, axis, direction) => {
             RelationSpec::ParallelToAxis(line, axis, direction)
         }

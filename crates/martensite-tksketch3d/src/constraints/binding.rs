@@ -2,20 +2,37 @@
 //! Bind authored relations to solver columns and exact fixed coordinates.
 use super::{
     ConstraintFailure as Failure, ConstraintPolicy, ContinuityJoin, LineAngle, Relation,
-    RelationId, RelationSpec, continuity,
+    RelationId, RelationSpec,
+    arc_layout::{self, ArcLayout},
+    continuity,
     incidence::{SharedEnds, shared_ends},
-    metric,
+    metric, poll,
     residual::{Equation, FrameReference, axis_branch},
 };
-use crate::{EntityId, LineGeometry, LineId, PointId, Snapshot};
+use crate::{ArcId, EntityId, LineGeometry, LineId, PointId, Snapshot};
 use martensite_tkmath::gp::Point3;
 use std::{collections::BTreeMap, sync::Arc};
 
+#[derive(Clone, Copy)]
+pub(super) enum BlockOwner {
+    Relation(RelationId),
+    IntrinsicArc(ArcId),
+}
+
 #[derive(Clone)]
 pub(super) struct EquationBlock {
-    pub(super) id: RelationId,
+    pub(super) owner: BlockOwner,
     pub(super) source: Arc<Equation>,
     pub(super) variables: Arc<[usize]>,
+}
+
+impl EquationBlock {
+    pub(super) fn relation_id(&self) -> Option<RelationId> {
+        match self.owner {
+            BlockOwner::Relation(id) => Some(id),
+            BlockOwner::IntrinsicArc(_) => None,
+        }
+    }
 }
 
 pub(super) struct Binding {
@@ -30,8 +47,18 @@ pub(super) fn bind(
     relations: &BTreeMap<RelationId, Relation>,
     point_columns: &BTreeMap<PointId, usize>,
     policy: ConstraintPolicy,
+    cancelled: &mut impl FnMut() -> bool,
 ) -> Result<Binding, Failure> {
+    let arcs = geometry
+        .arcs
+        .iter()
+        .map(|(&id, &arc)| {
+            poll(cancelled)?;
+            Ok((id, ArcLayout::capture(arc, policy)?))
+        })
+        .collect::<Result<BTreeMap<_, _>, Failure>>()?;
     let mut builder = Layout {
+        arcs,
         geometry,
         point_columns,
         fixed: BTreeMap::new(),
@@ -53,6 +80,7 @@ pub(super) fn bind(
     for (&id, &relation) in relations {
         builder.bind(id, relation)?;
     }
+    builder.arc_intrinsics()?;
     let (blocks, authored_rows) = (builder.blocks, builder.authored_rows);
     let fixed = builder.fixed.into_iter().collect::<Vec<_>>();
     Ok(Binding {
@@ -64,6 +92,7 @@ pub(super) fn bind(
 }
 
 struct Layout<'a> {
+    arcs: BTreeMap<ArcId, ArcLayout>,
     geometry: &'a Snapshot,
     point_columns: &'a BTreeMap<PointId, usize>,
     fixed: BTreeMap<usize, f64>,
@@ -124,6 +153,22 @@ impl Layout<'_> {
                     Equation::Length {
                         scale: self.scale,
                         target: target.value(),
+                    },
+                )
+            }
+            Relation::Radius(arc, target, branch) => {
+                let layout = *self
+                    .arcs
+                    .get(&arc)
+                    .ok_or(Failure::MissingOperand(id, EntityId::Arc(arc)))?;
+                layout.require_branch(branch)?;
+                self.equation(
+                    id,
+                    &layout.points,
+                    Equation::Radius {
+                        branch,
+                        target: target.value(),
+                        scale: self.scale,
                     },
                 )
             }
@@ -228,20 +273,40 @@ impl Layout<'_> {
         Ok(())
     }
 
+    fn arc_intrinsics(&mut self) -> Result<(), Failure> {
+        for arc in self.arcs.values() {
+            let variables = slots(&arc.points, |point| {
+                self.point_columns
+                    .get(&point)
+                    .copied()
+                    .ok_or(Failure::MissingPoint(point))
+            })?;
+            // A fully fixed arc has no intrinsic variable direction. Its exact points are
+            // checked against the midpoint and branch gates before publication.
+            if !variables.iter().all(|slot| self.fixed.contains_key(slot)) {
+                self.blocks.push(EquationBlock {
+                    owner: BlockOwner::IntrinsicArc(arc.id),
+                    source: Arc::new(Equation::ArcIntrinsic {
+                        branch: arc.branch,
+                        scale: self.scale,
+                    }),
+                    variables: variables.into(),
+                });
+            }
+        }
+        Ok(())
+    }
+
     fn equation(
         &mut self,
         id: RelationId,
         points: &[PointId],
         source: Equation,
     ) -> Result<(), Failure> {
-        let mut variables = Vec::with_capacity(3 * points.len());
-        for &point in points {
-            let start = self.start(id, point)?;
-            variables.extend(start..start + 3);
-        }
+        let variables = slots(points, |point| self.start(id, point))?;
         self.authored_rows += source.rows();
         self.blocks.push(EquationBlock {
-            id,
+            owner: BlockOwner::Relation(id),
             source: Arc::new(source),
             variables: variables.into(),
         });
@@ -256,10 +321,23 @@ impl Layout<'_> {
     }
 }
 
+fn slots(
+    points: &[PointId],
+    mut start: impl FnMut(PointId) -> Result<usize, Failure>,
+) -> Result<Vec<usize>, Failure> {
+    let mut variables = Vec::with_capacity(3 * points.len());
+    for &point in points {
+        let base = start(point)?;
+        variables.extend(base..base + 3);
+    }
+    Ok(variables)
+}
+
 pub(super) fn capture(
     geometry: &Snapshot,
     id: RelationId,
     spec: RelationSpec,
+    policy: ConstraintPolicy,
 ) -> Result<Relation, Failure> {
     let point = |key| {
         geometry
@@ -301,6 +379,14 @@ pub(super) fn capture(
                 return Err(Failure::LengthBelowMinimum(id, target.value()));
             }
             Ok(Relation::Length(key, target))
+        }
+        RelationSpec::Radius(key, target) => {
+            let arc = arc_layout::operand(geometry, id, key)?;
+            if target.value() < geometry.minimum.value() {
+                return Err(Failure::RadiusBelowMinimum(id, key, target.value()));
+            }
+            let layout = ArcLayout::capture(arc, policy)?;
+            Ok(Relation::Radius(key, target, layout.branch))
         }
         RelationSpec::ParallelToAxis(key, axis, direction) => {
             let [start, end] = line(key)?.points;

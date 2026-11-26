@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
+mod relations;
+
 use crate::fixture::{lid, line, pid, point, seed};
 use martensite_tkmath::gp::Direction3;
 use martensite_tksketch3d::{
@@ -301,17 +303,6 @@ fn finite_endpoints_with_overflowing_displacement_refuse() {
             arc: aid(),
             source: ArcFailure::UnrepresentableCarrier
         }),
-    );
-}
-
-#[test]
-fn point_and_line_solver_refuses_an_arc_layout_it_cannot_rank() {
-    use martensite_tksketch3d::constraints::{ConstrainedSketch, ConstraintFailure};
-
-    let geometry = create([[0.; 3], [10., 0., 0.], [5., 5., 0.]], through(), 1e-9).unwrap();
-    let result = ConstrainedSketch::new(geometry, crate::constraints::policy());
-    assert!(
-        matches!(result, Err(ConstraintFailure::UnsupportedEntity(EntityId::Arc(id))) if id == aid())
     );
 }
 

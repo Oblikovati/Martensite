@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::{
-    AxisDirection, ContinuityFailure, CoordinateAxis, LineAngle, ParallelDirection, Relation,
-    RelationId,
+    ArcConstraintFailure, AxisDirection, ContinuityFailure, CoordinateAxis, LineAngle,
+    ParallelDirection, Relation, RelationId,
 };
-use crate::{EditFailure, EntityId, FrozenPointSource, LineId, PointId};
+use crate::{ArcId, EditFailure, EntityId, FrozenPointSource, LineId, PointId};
 use martensite_tksolve::{
     nonlinear::{SolveError, SolveTermination},
     preview::PreviewError,
@@ -45,6 +45,8 @@ pub enum ConstraintFailure {
     MissingRelation(RelationId),
     /// The constraint evaluator has no layout for this sketch entity.
     UnsupportedEntity(EntityId),
+    /// An arc could not retain its checked midpoint-witness layout.
+    Arc(ArcId, ArcConstraintFailure),
     /// A relation references a point or line outside this sketch.
     MissingOperand(RelationId, EntityId),
     /// A relation uses the same identity for both operands.
@@ -65,6 +67,8 @@ pub enum ConstraintFailure {
     InvalidTarget(PointId, [f64; 3]),
     /// A driving length lies below the sketch's minimum constructible length.
     LengthBelowMinimum(RelationId, f64),
+    /// A driving radius lies below the sketch's minimum length.
+    RadiusBelowMinimum(RelationId, ArcId, f64),
     /// The authored line has a zero or opposite signed component along the requested axis.
     AxisSeedBranch(RelationId, LineId, CoordinateAxis, AxisDirection),
     /// The supplied plane normal is nonfinite or vanishes.
@@ -77,6 +81,10 @@ pub enum ConstraintFailure {
     Preview(Option<RelationId>, PreviewError),
     /// The noninteractive solve encountered a typed numerical refusal.
     Solve(Option<RelationId>, SolveError),
+    /// A preview trial failed inside the arc's intrinsic row.
+    ArcPreview(ArcId, PreviewError),
+    /// A noninteractive trial failed inside the arc's intrinsic row.
+    ArcSolve(ArcId, SolveError),
     /// The noninteractive solve could not establish hard feasibility.
     Unsettled(SolveTermination, Vec<RelationId>),
     /// The completed coordinates failed ordinary sketch geometry admission.
@@ -113,6 +121,9 @@ impl fmt::Display for ConstraintFailure {
             ),
             Self::Preview(id, cause) => write!(output, "constraint preview for {id:?}: {cause}"),
             Self::Solve(id, cause) => write!(output, "constraint solve for {id:?}: {cause}"),
+            Self::ArcPreview(id, cause) => write!(output, "arc preview for {id:?}: {cause}"),
+            Self::ArcSolve(id, cause) => write!(output, "arc solve for {id:?}: {cause}"),
+            Self::Arc(id, cause) => write!(output, "arc {id:?}: {cause}"),
             Self::Continuity(id, cause) => write!(output, "continuity relation {id:?}: {cause}"),
             Self::Geometry(cause) => cause.fmt(output),
             _ => write!(output, "spatial constraint operation declined: {self:?}"),
@@ -123,10 +134,11 @@ impl fmt::Display for ConstraintFailure {
 impl Error for ConstraintFailure {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
-            Self::Preview(_, cause) => Some(cause),
-            Self::Solve(_, cause) => Some(cause),
+            Self::Preview(_, cause) | Self::ArcPreview(_, cause) => Some(cause),
+            Self::Solve(_, cause) | Self::ArcSolve(_, cause) => Some(cause),
             Self::Geometry(cause) => Some(cause),
             Self::Continuity(_, cause) => Some(cause),
+            Self::Arc(_, cause) => Some(cause),
             _ => None,
         }
     }

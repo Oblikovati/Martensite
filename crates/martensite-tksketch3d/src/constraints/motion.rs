@@ -131,7 +131,7 @@ impl ConstrainedSketch {
             &mut cancelled,
         )?;
         // A rotated reference can require a different stable frame for the next drag.
-        let program = Program::new(&geometry, &self.relations, self.policy)?;
+        let program = Program::new(&geometry, &self.relations, self.policy, &mut cancelled)?;
         poll(&mut cancelled)?;
         Ok(Self {
             geometry: Arc::new(geometry),

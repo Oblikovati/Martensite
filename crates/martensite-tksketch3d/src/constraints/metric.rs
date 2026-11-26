@@ -4,7 +4,10 @@ pub(super) mod angle;
 mod incidence;
 pub(super) use incidence::line_branch;
 
-use super::{AxisDirection, ConstraintPolicy, ParallelDirection, Relation, RelationId, continuity};
+use super::{
+    AxisDirection, ConstraintPolicy, ParallelDirection, Relation, RelationId, arc_layout,
+    continuity,
+};
 use crate::{LineGeometry, LineId, Snapshot};
 use martensite_tkmath::{
     gp::Point3,
@@ -43,6 +46,9 @@ pub(super) fn feasible(
         Relation::Length(line, target) => snapshot.line(line).is_some_and(|line| {
             length_band(line.points, target.value(), policy.length_tolerance.value())
         }),
+        Relation::Radius(arc, target, branch) => snapshot
+            .arc(arc)
+            .is_some_and(|arc| arc_layout::radius_matches(arc, target, branch, policy)),
         Relation::Parallel(lines, direction) => pair(snapshot, lines)
             .and_then(|[a, b]| {
                 parallel(

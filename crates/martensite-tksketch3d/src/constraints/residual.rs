@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::{
-    AxisDirection, CoordinateAxis, LineAngle, ParallelDirection, metric, on_face::PlanarEquation,
+    ArcBranch, AxisDirection, CoordinateAxis, LineAngle, ParallelDirection, metric, on_face::PlanarEquation,
 };
 use martensite_tkmath::gp::Point3;
 use martensite_tksolve::{
@@ -8,6 +8,7 @@ use martensite_tksolve::{
     residual::{ResidualError, ResidualSource, ResidualTolerance},
 };
 
+mod arc;
 mod continuity;
 mod frame;
 pub(super) use frame::FrameReference;
@@ -38,6 +39,15 @@ pub(super) enum Equation {
     Length {
         scale: f64,
         target: f64,
+    },
+    ArcIntrinsic {
+        branch: ArcBranch,
+        scale: f64,
+    },
+    Radius {
+        branch: ArcBranch,
+        target: f64,
+        scale: f64,
     },
     PointOnLine {
         scale: f64,
@@ -108,6 +118,8 @@ impl Equation {
             Self::Coincident { .. } | Self::PlanarAttachment(_) => 3,
             Self::Length { .. }
             | Self::Plane(_)
+            | Self::ArcIntrinsic { .. }
+            | Self::Radius { .. }
             | Self::Perpendicular
             | Self::EqualLength { .. }
             | Self::Angle { .. } => 1,
@@ -143,7 +155,10 @@ impl Equation {
                 curvature_scale: Some(_),
                 ..
             } => 12,
-            Self::PointOnLine { .. } | Self::Continuity { .. } => 9,
+            Self::ArcIntrinsic { .. }
+            | Self::Radius { .. }
+            | Self::PointOnLine { .. }
+            | Self::Continuity { .. } => 9,
             Self::PlanarAttachment(_) => 5,
             _ => 6,
         }
@@ -170,6 +185,18 @@ impl ResidualSource for Equation {
             Self::Length { scale, target } => Ok(vec![
                 checked_length(&first()?)?.shifted(-target)?.scaled(scale)?,
             ]),
+            Self::ArcIntrinsic { branch, scale } => {
+                let chart = arc::Sagitta::new(v, 0, first, branch)?;
+                Ok(vec![chart.intrinsic()?.scaled(scale)?])
+            }
+            Self::Radius {
+                branch,
+                target,
+                scale,
+            } => {
+                let chart = arc::Sagitta::new(v, 0, first, branch)?;
+                Ok(vec![chart.radius()?.shifted(-target)?.scaled(scale)?])
+            }
             Self::PointOnLine { scale, reference } => {
                 let basis = reference.basis(&unit(&first()?)?, "point-on-line")?;
                 let offset = vector(v, 6)?.minus(&vector(v, 0)?)?;

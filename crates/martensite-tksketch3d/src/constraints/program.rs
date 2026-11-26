@@ -3,7 +3,7 @@ use super::{
     ConstraintFailure as Failure, ConstraintPolicy, ConstraintRank, PolicyQuantity, Relation,
     RelationId,
     adopt::apply_checked,
-    binding::{Binding, EquationBlock},
+    binding::{Binding, BlockOwner, EquationBlock},
     continuity::JoinReference,
     poll, residual,
 };
@@ -24,7 +24,7 @@ pub(super) struct Program {
     point_columns: Arc<BTreeMap<PointId, usize>>,
     fixed: Arc<[(usize, f64)]>,
     blocks: Arc<[EquationBlock]>,
-    chart_sources: Arc<[(usize, JoinReference)]>,
+    chart_sources: Arc<[(usize, RelationId, JoinReference)]>,
     authored_rows: usize,
     frozen_coordinates: usize,
     prepared: Prepared,
@@ -36,6 +36,7 @@ impl Program {
         geometry: &Snapshot,
         relations: &BTreeMap<RelationId, Relation>,
         policy: ConstraintPolicy,
+        cancelled: &mut impl FnMut() -> bool,
     ) -> Result<Self, Failure> {
         Self::compile(geometry, relations, policy, None)
     }
@@ -67,7 +68,7 @@ impl Program {
             mut blocks,
             mut authored_rows,
             frozen_coordinates,
-        } = super::binding::bind(geometry, relations, &point_columns, policy)?;
+        } = super::binding::bind(geometry, relations, &point_columns, policy, cancelled)?;
         let mut domains = vec![Domain::Length(policy.length_scale.value()); 3 * points.len()];
         if let Some((id, point, equation)) = planar {
             let start = *point_columns
@@ -146,7 +147,7 @@ impl Program {
             })
             .collect::<Vec<_>>();
         let result = solve_constraints_with_constants(&values, &blocks, &fixed, options, cancelled)
-            .map_err(|cause| Failure::Solve(failure_relation(&self.blocks, &cause), cause))?;
+            .map_err(|cause| solve_failure(&self.blocks, cause))?;
         match result.termination {
             SolveTermination::Converged => Ok(result.values),
             SolveTermination::Cancelled => Err(Failure::Cancelled),
@@ -155,7 +156,7 @@ impl Program {
                 result
                     .conflicts
                     .into_iter()
-                    .filter_map(|i| self.blocks.get(i).map(|block| block.id))
+                    .filter_map(|i| self.blocks.get(i).and_then(EquationBlock::relation_id))
                     .collect(),
             )),
         }
@@ -453,9 +454,6 @@ fn admit(
             .saturating_add(usize::from(planar)),
         policy.validation_items,
     )?;
-    if let Some(&arc) = geometry.arcs.keys().next() {
-        return Err(Failure::UnsupportedEntity(EntityId::Arc(arc)));
-    }
     if let Some(&spline) = geometry.fit_splines.keys().next() {
         return Err(Failure::UnsupportedEntity(EntityId::FitSpline(spline)));
     }
@@ -483,17 +481,29 @@ fn bound(quantity: PolicyQuantity, requested: usize, maximum: usize) -> Result<(
     Ok(())
 }
 
-fn failure_relation(blocks: &[EquationBlock], error: &SolveError) -> Option<RelationId> {
+fn failure_owner(blocks: &[EquationBlock], error: &SolveError) -> Option<BlockOwner> {
     let SolveError::Evaluation(EvaluationError::Source { block, .. }) = error else {
         return None;
     };
-    blocks.get(*block).map(|block| block.id)
+    blocks.get(*block).map(|block| block.owner)
+}
+
+fn solve_failure(blocks: &[EquationBlock], cause: SolveError) -> Failure {
+    match failure_owner(blocks, &cause) {
+        Some(BlockOwner::IntrinsicArc(arc)) => Failure::ArcSolve(arc, cause),
+        Some(BlockOwner::Relation(id)) => Failure::Solve(Some(id), cause),
+        None => Failure::Solve(None, cause),
+    }
 }
 
 fn preview_failure(blocks: &[EquationBlock], error: PreviewError) -> Failure {
     match error {
         PreviewError::Incomplete(Incomplete::Cancelled) => Failure::Cancelled,
-        PreviewError::Solve(ref cause) => Failure::Preview(failure_relation(blocks, cause), error),
+        PreviewError::Solve(ref cause) => match failure_owner(blocks, cause) {
+            Some(BlockOwner::IntrinsicArc(arc)) => Failure::ArcPreview(arc, error),
+            Some(BlockOwner::Relation(id)) => Failure::Preview(Some(id), error),
+            None => Failure::Preview(None, error),
+        },
         error => Failure::Preview(None, error),
     }
 }

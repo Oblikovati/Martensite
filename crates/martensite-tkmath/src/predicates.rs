@@ -5,6 +5,7 @@
 mod affine_point;
 /// Exact injectivity certificates for supported bilinear patches.
 pub mod bilinear_patch;
+mod circular_arc;
 mod compare;
 mod direction_band;
 mod homothety;
@@ -17,6 +18,7 @@ mod segment_contact;
 mod triangle;
 mod triple_product;
 pub use affine_point::compare_affine_point_error_3d;
+pub use circular_arc::{ArcTripleFailure, ArcTripleMetrics};
 pub use compare::{
     compare_length_difference_3d, compare_line_projections_2d, compare_squared_distances_2d,
     compare_squared_length_3d,

@@ -2,6 +2,7 @@
 //! Immutable spatial sketch constraints with separate apply and drag paths.
 mod adopt;
 mod angle;
+mod arc_layout;
 mod binding;
 mod continuity;
 mod error;
@@ -16,7 +17,7 @@ mod program;
 mod residual;
 mod restore;
 
-use crate::{LineId, MinimumLength, PointId, Snapshot};
+use crate::{ArcId, LineId, MinimumLength, PointId, Snapshot};
 use martensite_tkmath::gp::{Direction3, Point3};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -25,6 +26,7 @@ use std::{
 };
 
 pub use angle::{InvalidLineAngle, LineAngle};
+pub use arc_layout::{ArcBranch, ArcConstraintFailure};
 pub use continuity::{
     ContinuityFailure, ContinuityJoin, CubicCubicJoin, CurvatureTolerance, LineCubicJoin,
 };
@@ -110,6 +112,8 @@ pub enum RelationSpec {
     Parallel([LineId; 2], ParallelDirection),
     /// Drive the length of one line in model-space units.
     Length(LineId, MinimumLength),
+    /// Drive the radius of a midpoint-witness arc and retain its sweep branch.
+    Radius(ArcId, MinimumLength),
     /// Constrain a line to the chosen coordinate axis and direction sign.
     ParallelToAxis(LineId, CoordinateAxis, AxisDirection),
     /// Keep a line parallel to every plane with this normal, leaving its offset free.
@@ -144,6 +148,8 @@ pub enum Relation {
     Parallel([LineId; 2], ParallelDirection),
     /// A line identity and its target model-space length.
     Length(LineId, MinimumLength),
+    /// An arc identity, target radius in model units and captured sweep branch.
+    Radius(ArcId, MinimumLength, ArcBranch),
     /// Line identity, coordinate axis, and stored direction sign.
     ParallelToAxis(LineId, CoordinateAxis, AxisDirection),
     /// Line identity and the model-space plane normal.
@@ -192,7 +198,7 @@ pub struct ConstraintPolicy {
 /// Numerical rank and remaining variable directions at an accepted sketch state.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ConstraintRank {
-    /// Number of independent hard equations, including distinct fixed coordinates.
+    /// Number of independent hard equations, including fixed coordinates and intrinsic rows.
     pub rank: usize,
     /// Remaining numerical coordinate directions.
     pub degrees_of_freedom: usize,
@@ -229,7 +235,7 @@ impl ConstrainedSketch {
     /// Example: `ConstrainedSketch::new(snapshot, policy)?`.
     pub fn new(geometry: Snapshot, policy: ConstraintPolicy) -> Result<Self, ConstraintFailure> {
         let relations = BTreeMap::new();
-        let program = Program::new(&geometry, &relations, policy)?;
+        let program = Program::new(&geometry, &relations, policy, &mut || false)?;
         Ok(Self {
             geometry: Arc::new(geometry),
             relations: Arc::new(relations),
@@ -258,7 +264,12 @@ impl ConstrainedSketch {
     ) -> Result<Self, ConstraintFailure> {
         poll(&mut cancelled)?;
         let relations = self.stage(edits, &mut cancelled)?;
-        let program = Arc::new(Program::new(&self.geometry, &relations, self.policy)?);
+        let program = Arc::new(Program::new(
+            &self.geometry,
+            &relations,
+            self.policy,
+            &mut cancelled,
+        )?);
         let references = edits.iter().filter_map(|edit| match edit {
             RelationEdit::Insert(id, _) => match relations.get(id)? {
                 Relation::Tangent(join) | Relation::G2(join, _) => Some((*id, join.reference())),
@@ -360,7 +371,7 @@ impl ConstrainedSketch {
                     return Err(ConstraintFailure::DuplicateId(id));
                 }
                 RelationEdit::Insert(id, spec) => {
-                    relations.insert(id, binding::capture(&self.geometry, id, spec)?);
+                    relations.insert(id, binding::capture(&self.geometry, id, spec, self.policy)?);
                 }
                 RelationEdit::Remove(id) => {
                     relations

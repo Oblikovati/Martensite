@@ -58,10 +58,10 @@ impl Program {
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<Vec<(usize, Arc<residual::Equation>)>, Failure> {
         let mut updates = Vec::new();
-        for &(index, reference) in self.chart_sources.iter() {
+        for &(index, id, reference) in self.chart_sources.iter() {
             poll(cancelled)?;
             let block = &self.blocks[index];
-            let direction = reference.chart_direction(geometry, block.id)?;
+            let direction = reference.chart_direction(geometry, id)?;
             if let Some(next) = block.source.refreshed_chart(direction) {
                 updates.push((index, Arc::new(next)));
             }
@@ -116,16 +116,20 @@ impl Program {
 pub(super) fn indexed(
     blocks: &[EquationBlock],
     relations: &BTreeMap<RelationId, Relation>,
-) -> Arc<[(usize, JoinReference)]> {
+) -> Arc<[(usize, RelationId, JoinReference)]> {
     blocks
         .iter()
         .enumerate()
-        .filter_map(|(index, block)| match *relations.get(&block.id)? {
-            Relation::PointOnLine(_, line) | Relation::Colinear([line, _], _) => {
-                Some((index, JoinReference::Line(line)))
-            }
-            Relation::Tangent(join) | Relation::G2(join, _) => Some((index, join.reference())),
-            _ => None,
+        .filter_map(|(index, block)| {
+            let id = block.relation_id()?;
+            let reference = match *relations.get(&id)? {
+                Relation::PointOnLine(_, line) | Relation::Colinear([line, _], _) => {
+                    JoinReference::Line(line)
+                }
+                Relation::Tangent(join) | Relation::G2(join, _) => join.reference(),
+                _ => return None,
+            };
+            Some((index, id, reference))
         })
         .collect()
 }
