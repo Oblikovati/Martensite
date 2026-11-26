@@ -5103,6 +5103,7 @@ martensite-tktopalgo	ValidRange	shareable	immutable value or Send + Sync handle/
 martensite-tktopalgo	VertParam	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tktopalgo	VinertGKOptions	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tktopalgo	VolumeGKFlags	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tktopalgo	VolumeGKLimits	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkv3d	Ais	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkv3d	AisAnimation	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkv3d	AisAnimationAxisRotation	shareable	immutable value or Send + Sync handle/builder contract
