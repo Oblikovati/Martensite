@@ -112,9 +112,9 @@ impl Loop {
         }
     }
 
-    pub(super) fn bernstein_contains(
+    pub(super) fn bernstein_contains<const N: usize>(
         &self,
-        net: &[Uv; 4],
+        net: &[Uv; N],
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<bool, Error> {
         for (a, b) in segments(&self.points) {
@@ -129,9 +129,9 @@ impl Loop {
         Ok(true)
     }
 
-    pub(super) fn bernstein_excludes_open(
+    pub(super) fn bernstein_excludes_open<const N: usize>(
         &self,
-        net: &[Uv; 4],
+        net: &[Uv; N],
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<bool, Error> {
         for (a, b) in segments(&self.points) {

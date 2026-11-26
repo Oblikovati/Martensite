@@ -2,6 +2,7 @@
 mod arc_composition;
 mod curve;
 mod spline;
+mod three_station;
 
 use crate::{
     constraints::{length, policy, rid},

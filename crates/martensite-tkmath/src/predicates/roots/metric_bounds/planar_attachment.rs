@@ -5,6 +5,7 @@ mod cubic;
 mod curve;
 pub use cubic::{
     PlanarCubicCertificate, PlanarCubicOptions, PlanarCubicProofFailure, PlanarMonotoneAxis,
+    PlanarQuadraticCertificate,
 };
 mod segment;
 pub use curve::{PlanarCurveCertificate, PlanarCurvePath, PlanarCurveProofFailure};

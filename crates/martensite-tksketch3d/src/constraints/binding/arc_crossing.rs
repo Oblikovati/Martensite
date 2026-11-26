@@ -139,6 +139,9 @@ impl CrossingScope {
             Entity::FitSpline(curve) => {
                 self.require_unshared(&curve.stations, EntityId::FitSpline(curve.id))
             }
+            Entity::QuadraticFitSpline(curve) => {
+                self.require_unshared(&curve.stations, EntityId::FitSpline(curve.id))
+            }
         }
     }
 

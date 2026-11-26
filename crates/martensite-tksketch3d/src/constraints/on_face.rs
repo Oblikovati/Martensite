@@ -32,6 +32,7 @@ pub(in crate::constraints) use equation::{AttachmentEquation, PlanarEquation};
 pub use failure::PlanarFaceConstraintFailure;
 use failure::PlanarFaceConstraintFailure as Failure;
 pub use spline::{
+    PlanarFaceQuadraticSpline, PlanarFaceQuadraticSplineEdit, PlanarFaceQuadraticSplineRecipe,
     PlanarFaceSpline, PlanarFaceSplineEdit, PlanarFaceSplineFailure, PlanarFaceSplineRecipe,
     PlanarFaceSplineStation,
 };

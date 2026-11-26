@@ -7,7 +7,12 @@ use super::{
 use crate::predicates::roots::certificate_arithmetic::rounding::{outward_binary64, outward_sqrt};
 use std::{cmp::Ordering, fmt};
 
+mod quadratic;
 mod tangent;
+pub use quadratic::{
+    QuadraticFitMaterialization, evaluate_fit_quadratic, materialize_fit_quadratic,
+    quadratic_fit_chord_distortion,
+};
 pub use tangent::{CubicFitEnd, CubicFitTangent};
 
 /// A finite four-station map with two derived Bernstein controls.
@@ -165,7 +170,7 @@ impl ExactCubicBernstein3 {
     }
 }
 
-/// Full chord-per-parameter spread for the three adjacent station chords.
+/// Full chord-per-parameter spread for the adjacent station chords.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CubicChordDistortion {
     /// Zero-based adjacent chord index attaining the least speed.
@@ -185,8 +190,11 @@ pub fn cubic_chord_distortion(
     let stations = exact_stations(stations)?;
     let parameters = exact_parameters(parameters)?;
     let [a, b, c] = [0, 1, 2].map(|index| squared_speed(&stations, &parameters, index));
-    let speeds = [a?, b?, c?];
-    let (slowest, fastest) = extrema(&speeds);
+    chord_distortion(&[a?, b?, c?])
+}
+
+fn chord_distortion(speeds: &[ExactRatio]) -> Result<CubicChordDistortion, CubicFitNumericError> {
+    let (slowest, fastest) = extrema(speeds);
     let squared = speeds[fastest].divide(&speeds[slowest]);
     let ratio_upper = outward_sqrt(&squared).ok_or(CubicFitNumericError::Unbounded)?;
     Ok(CubicChordDistortion {
@@ -196,10 +204,10 @@ pub fn cubic_chord_distortion(
     })
 }
 
-fn extrema(speeds: &[ExactRatio; 3]) -> (usize, usize) {
+fn extrema(speeds: &[ExactRatio]) -> (usize, usize) {
     let mut slowest = 0;
     let mut fastest = 0;
-    for index in [1, 2] {
+    for index in 1..speeds.len() {
         if speeds[index] < speeds[slowest] {
             slowest = index;
         }
@@ -211,8 +219,8 @@ fn extrema(speeds: &[ExactRatio; 3]) -> (usize, usize) {
 }
 
 fn squared_speed(
-    stations: &[[ExactRatio; 3]; 4],
-    parameters: &[ExactRatio; 4],
+    stations: &[[ExactRatio; 3]],
+    parameters: &[ExactRatio],
     index: usize,
 ) -> Result<ExactRatio, CubicFitNumericError> {
     let step = parameters[index + 1].subtract(&parameters[index]);

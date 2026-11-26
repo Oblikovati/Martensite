@@ -13,7 +13,8 @@ use std::{cmp::Ordering, error::Error, fmt};
 mod fit;
 pub use fit::{
     CubicChordDistortion, CubicFitEnd, CubicFitMaterialization, CubicFitNumericError,
-    CubicFitOperator, CubicFitTangent, cubic_chord_distortion,
+    CubicFitOperator, CubicFitTangent, QuadraticFitMaterialization, cubic_chord_distortion,
+    evaluate_fit_quadratic, materialize_fit_quadratic, quadratic_fit_chord_distortion,
 };
 
 mod endpoint;

@@ -165,6 +165,13 @@ pub enum EditFailure {
         /// Specific station, numeric or regularity refusal.
         source: FitSplineFailure,
     },
+    /// An open three-station quadratic could not be admitted.
+    QuadraticFitSpline {
+        /// Spline being validated.
+        spline: FitSplineId,
+        /// Original station, numeric or regularity refusal.
+        source: FitSplineFailure,
+    },
     /// The operation observed cancellation at this stage.
     Cancelled(BatchPhase),
 }
@@ -260,6 +267,9 @@ impl fmt::Display for EditFailure {
                 write!(f, "control spline {spline:?}: {source}")
             }
             Self::FitSpline { spline, source } => write!(f, "fit spline {spline:?}: {source}"),
+            Self::QuadraticFitSpline { spline, source } => {
+                write!(f, "quadratic fit spline {spline:?} refused: {source:?}")
+            }
             Self::Cancelled(phase) => write!(f, "spatial sketch edit cancelled at {phase:?}"),
         }
     }
@@ -271,7 +281,9 @@ impl Error for EditFailure {
             Self::MetricInput { source, .. } => Some(source),
             Self::Arc { source, .. } => Some(source),
             Self::ControlSpline { source, .. } => Some(source),
-            Self::FitSpline { source, .. } => Some(source),
+            Self::FitSpline { source, .. } | Self::QuadraticFitSpline { source, .. } => {
+                Some(source)
+            }
             _ => None,
         }
     }

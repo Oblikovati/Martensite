@@ -3,7 +3,8 @@
 use crate::{
     ArcGeometry, ArcId, BatchPhase, ControlSplineGeometry, ControlSplineId, CurveId, CurveRole,
     Edit, EditFailure, Entity, EntityId, FitSplineGeometry, FitSplineId, LineId, PointId,
-    PointRole, SketchLine, SketchPoint, Snapshot, admission, arc, control_spline, fit_spline,
+    PointRole, QuadraticFitSplineGeometry, SketchLine, SketchPoint, Snapshot, admission, arc,
+    control_spline, fit_spline, quadratic_fit_spline,
 };
 use martensite_tkmath::gp::Point3;
 use std::{
@@ -63,6 +64,7 @@ impl Snapshot {
             arcs: Default::default(),
             control_splines: Default::default(),
             fit_splines: Default::default(),
+            quadratic_fit_splines: Default::default(),
             construction: self.construction.clone(),
             frozen: self.frozen.clone(),
             included: self.included.clone(),
@@ -96,6 +98,14 @@ impl Snapshot {
         {
             draft.fit_splines = draft.check_fit_splines(&self.fit_splines, cancelled)?;
         }
+        if !self.quadratic_fit_splines.is_empty()
+            || edits
+                .iter()
+                .any(|edit| matches!(edit, Edit::InsertQuadraticFitSpline(_)))
+        {
+            draft.quadratic_fit_splines =
+                draft.check_quadratic_fit_splines(&self.quadratic_fit_splines, cancelled)?;
+        }
         poll(cancelled, BatchPhase::Completion)?;
         Ok(draft)
     }
@@ -119,6 +129,9 @@ impl Snapshot {
                 self.insert(Entity::ControlSpline(spline), retired)
             }
             Edit::InsertFitSpline(spline) => self.insert(Entity::FitSpline(spline), retired),
+            Edit::InsertQuadraticFitSpline(spline) => {
+                self.insert(Entity::QuadraticFitSpline(spline), retired)
+            }
             Edit::SetCurveRole { curve, role } => self.set_curve_role(curve, role),
             Edit::MovePoint { point, position } => self.move_point(point, position),
             Edit::DetachFrozenPoint(point) => self.detach_frozen_point(point),
@@ -244,6 +257,9 @@ impl Snapshot {
                 Entity::FitSpline(spline) if spline.stations.contains(&point) => {
                     incident.push(EntityId::FitSpline(spline.id));
                 }
+                Entity::QuadraticFitSpline(spline) if spline.stations.contains(&point) => {
+                    incident.push(EntityId::FitSpline(spline.id));
+                }
                 _ => {}
             }
         }
@@ -322,6 +338,7 @@ impl Snapshot {
                 Entity::Arc(arc) => used.extend(arc.points()),
                 Entity::ControlSpline(spline) => used.extend(spline.poles),
                 Entity::FitSpline(spline) => used.extend(spline.stations),
+                Entity::QuadraticFitSpline(spline) => used.extend(spline.stations),
                 Entity::Point(_) => {}
             }
         }
@@ -401,6 +418,25 @@ impl Snapshot {
                 let geometry =
                     fit_spline::admit(self, recipe, previous.get(&recipe.id), cancelled)?;
                 Ok((recipe.id, geometry))
+            })
+            .collect()
+    }
+    fn check_quadratic_fit_splines(
+        &self,
+        previous: &BTreeMap<FitSplineId, QuadraticFitSplineGeometry>,
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<BTreeMap<FitSplineId, QuadraticFitSplineGeometry>, EditFailure> {
+        self.entities
+            .values()
+            .filter_map(|entity| match entity {
+                Entity::QuadraticFitSpline(spline) => Some(*spline),
+                _ => None,
+            })
+            .map(|recipe| {
+                poll(cancelled, BatchPhase::Validation)?;
+                let curve =
+                    quadratic_fit_spline::admit(self, recipe, previous.get(&recipe.id), cancelled)?;
+                Ok((recipe.id, curve))
             })
             .collect()
     }

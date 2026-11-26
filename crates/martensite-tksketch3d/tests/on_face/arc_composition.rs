@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::*;
 use martensite_tksketch3d::{
-    ArcDefinition, ArcFitTolerance, ArcId, Edit, SketchArc,
-    constraints::{ArcBranch, ArcConstraintFailure, ConstraintFailure, Relation},
+    ArcDefinition, ArcFitTolerance, ArcId, Edit, EntityId, SketchArc,
+    constraints::{
+        ArcBranch, ArcConstraintFailure, ConstraintFailure, PlanarFaceSplineStation, Relation,
+    },
 };
 
 #[test]
@@ -63,13 +65,7 @@ fn arc_edits(arc: ArcId) -> [Edit; 4] {
 #[test]
 fn a_face_attachment_cannot_couple_to_a_crossing_radius_arc() {
     let arc = ArcId::new(key(80));
-    let mut edits = arc_edits(arc);
-    edits[..3].clone_from_slice(&[
-        seed(10, [-3., 0., 0.], PointRole::Defining),
-        seed(11, [-1., 0., 0.], PointRole::Defining),
-        seed(12, [-2., 1., 0.], PointRole::SketchMarker),
-    ]);
-    let geometry = ordinary(false).geometry().apply(&edits, || false).unwrap();
+    let geometry = half_turn_geometry(arc);
     let sketch = ConstrainedSketch::new(geometry.clone(), policy())
         .unwrap()
         .apply(
@@ -95,4 +91,47 @@ fn a_face_attachment_cannot_couple_to_a_crossing_radius_arc() {
         independent.ordinary_relations().next(),
         Some((rid(81), expected))
     );
+}
+
+#[test]
+fn a_three_station_face_curve_cannot_share_a_crossing_radius_operand() {
+    let arc = ArcId::new(key(80));
+    let geometry = half_turn_geometry(arc);
+    let binding = proof(1, 0., 70);
+    let mut recipe =
+        super::three_station::source_recipe(&binding, [[-3., 0.], [-2.5, 0.25], [-2., 0.]]);
+    recipe.stations[0] = PlanarFaceSplineStation::Reuse {
+        point: pid(10),
+        uv: [-3., 0.],
+    };
+    recipe.stations[2] = PlanarFaceSplineStation::Create {
+        point: pid(21),
+        uv: [-2., 0.],
+    };
+    let fit = binding
+        .create_three_station_curve(&geometry, recipe, || recipe.source, || false)
+        .unwrap();
+    let sketch = ConstrainedSketch::new(fit.snapshot, policy()).unwrap();
+    let result = sketch.apply(
+        &[RelationEdit::Insert(
+            rid(81),
+            RelationSpec::Radius(arc, length(1.)),
+        )],
+        || false,
+    );
+    assert!(matches!(
+        result,
+        Err(ConstraintFailure::Arc(id, ArcConstraintFailure::CrossingSharedEntity(
+            EntityId::FitSpline(spline)))) if id == arc && spline == recipe.spline
+    ));
+}
+
+fn half_turn_geometry(arc: ArcId) -> Snapshot {
+    let mut edits = arc_edits(arc);
+    edits[..3].clone_from_slice(&[
+        seed(10, [-3., 0., 0.], PointRole::Defining),
+        seed(11, [-1., 0., 0.], PointRole::Defining),
+        seed(12, [-2., 1., 0.], PointRole::SketchMarker),
+    ]);
+    ordinary(false).geometry().apply(&edits, || false).unwrap()
 }

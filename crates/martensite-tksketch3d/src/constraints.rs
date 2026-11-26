@@ -38,9 +38,10 @@ pub use on_face::{
     CylindricalAttachedSketch, CylindricalFaceBinding, CylindricalFaceDragUpdate,
     CylindricalFaceFailure, CylindricalFaceRelation, FaceAttachmentRevision, PlanarAttachedSketch,
     PlanarFaceBinding, PlanarFaceConstraintFailure, PlanarFaceCurve, PlanarFaceCurveFailure,
-    PlanarFaceCurveRecipe, PlanarFaceDragUpdate, PlanarFaceRelation, PlanarFaceRevision,
-    PlanarFaceSpline, PlanarFaceSplineEdit, PlanarFaceSplineFailure, PlanarFaceSplineRecipe,
-    PlanarFaceSplineStation, SphericalAttachedSketch, SphericalFaceBinding,
+    PlanarFaceCurveRecipe, PlanarFaceDragUpdate, PlanarFaceQuadraticSpline,
+    PlanarFaceQuadraticSplineEdit, PlanarFaceQuadraticSplineRecipe, PlanarFaceRelation,
+    PlanarFaceRevision, PlanarFaceSpline, PlanarFaceSplineEdit, PlanarFaceSplineFailure,
+    PlanarFaceSplineRecipe, PlanarFaceSplineStation, SphericalAttachedSketch, SphericalFaceBinding,
     SphericalFaceDragUpdate, SphericalFaceFailure, SphericalFaceRelation,
 };
 pub use preferred::{PreferenceReport, PreferenceSettlement, PreferredDragUpdate};

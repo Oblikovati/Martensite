@@ -3,7 +3,10 @@
 pub(super) mod capture;
 mod cubic;
 mod curve;
-pub use cubic::{FaceAttachmentCubic, FaceAttachmentCubicError};
+pub use cubic::{
+    FaceAttachmentCubic, FaceAttachmentCubicError, FaceAttachmentPolynomial,
+    FaceAttachmentQuadratic,
+};
 
 use curve::PlanarSupport;
 pub use curve::{DetachedPlanarCurve, FaceAttachmentCurve, FaceAttachmentCurveError};
@@ -21,7 +24,8 @@ use martensite_tkmath::predicates::roots::metric_bounds::planar_attachment::Cert
 pub use martensite_tkmath::predicates::roots::metric_bounds::planar_attachment::{
     PlanarAttachmentChart, PlanarAttachmentError, PlanarAttachmentLocation, PlanarAttachmentQuery,
     PlanarCubicCertificate, PlanarCubicOptions, PlanarCubicProofFailure, PlanarCurveCertificate,
-    PlanarCurvePath, PlanarCurveProofFailure, PlanarMonotoneAxis, PlanarSegmentContact,
+    PlanarCurvePath, PlanarCurveProofFailure, PlanarMonotoneAxis, PlanarQuadraticCertificate,
+    PlanarSegmentContact,
 };
 use std::{error::Error, fmt, num::NonZeroU64};
 

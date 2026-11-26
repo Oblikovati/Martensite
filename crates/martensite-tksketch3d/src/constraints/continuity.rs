@@ -95,6 +95,8 @@ pub enum ContinuityFailure {
     Endpoint(CubicEndJetFailure),
     /// Curvature constraints on a fit cubic have no checked solver stencil.
     FitCurvatureUnsupported(FitSplineId),
+    /// The fixed four-station solver has no stencil for a three-station fit.
+    QuadraticFitUnsupported(FitSplineId),
     /// The retained station-to-pole derivative could not supply finite sensitivities.
     FitSensitivity(FitSplineId, CubicFitNumericError),
     /// The rebuilt stored endpoint does not retain the authored point's coordinate bits.

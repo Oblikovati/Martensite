@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-//! Bounded exact Bernstein trim evidence for two synchronized planar cubic paths.
+//! Bounded exact Bernstein trim evidence for synchronized planar polynomial paths.
 use super::{
     CertifiedPlanarAttachment, ExactRatio as R, PlanarAttachmentError as Attachment,
     PlanarAttachmentLocation as Location, PlanarCurvePath as Path,
@@ -46,6 +46,9 @@ pub struct PlanarCubicCertificate {
     /// Whole-span Euclidean error between the actual spatial curve and lifted pcurve.
     pub distance_bound: f64,
 }
+
+/// The same exact trim and synchronized-pair evidence for a stored quadratic.
+pub type PlanarQuadraticCertificate = PlanarCubicCertificate;
 
 /// Why the bounded whole-trim cubic certificate could not complete.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -121,7 +124,9 @@ impl From<Attachment> for PlanarCubicProofFailure {
 }
 
 type Failure = PlanarCubicProofFailure;
-type Net = [Uv; 4];
+type Net<const N: usize> = [Uv; N];
+type ProjectionCollector<const N: usize> =
+    fn([Result<Projection, Attachment>; N]) -> Result<[Projection; N], Attachment>;
 
 impl CertifiedPlanarAttachment {
     /// Prove two original unweighted cubic nets over the common closed [0, 1] span.
@@ -133,18 +138,42 @@ impl CertifiedPlanarAttachment {
         options: PlanarCubicOptions,
         mut cancelled: impl FnMut() -> bool,
     ) -> Result<PlanarCubicCertificate, Failure> {
-        poll(&mut cancelled)?;
+        self.certify_polynomial(world, uv, options, &mut cancelled, cubic_projection)
+    }
+
+    /// Prove two original unweighted quadratic nets over the common closed interval.
+    /// Example: `face.certify_quadratic_curve(world_poles, uv_poles, limits, || false)?`.
+    pub fn certify_quadratic_curve(
+        &self,
+        world: [[f64; 3]; 3],
+        uv: [[f64; 2]; 3],
+        options: PlanarCubicOptions,
+        mut cancelled: impl FnMut() -> bool,
+    ) -> Result<PlanarQuadraticCertificate, Failure> {
+        self.certify_polynomial(world, uv, options, &mut cancelled, quadratic_projection)
+    }
+
+    fn certify_polynomial<const N: usize>(
+        &self,
+        world: [[f64; 3]; N],
+        uv: [[f64; 2]; N],
+        options: PlanarCubicOptions,
+        cancelled: &mut impl FnMut() -> bool,
+        collect: ProjectionCollector<N>,
+    ) -> Result<PlanarCubicCertificate, Failure> {
+        poll(cancelled)?;
         check_options(options)?;
-        let (projected, lifted, bound) = self.cubic_nets(world, uv, options.distance_limit)?;
+        let (projected, lifted, bound) =
+            self.polynomial_nets(world, uv, options.distance_limit, collect)?;
         let monotone = common_monotone(&projected, &lifted).ok_or(Failure::Monotone)?;
         let certify = |net, path, cancelled: &mut _| {
-            self.certify_cubic_path(net, path, options.max_subdivisions, cancelled)
+            self.certify_polynomial_path(net, path, options.max_subdivisions, cancelled)
         };
         let subdivisions = [
-            certify(projected, Path::WorldProjection, &mut cancelled)?,
-            certify(lifted, Path::UvLift, &mut cancelled)?,
+            certify(projected, Path::WorldProjection, cancelled)?,
+            certify(lifted, Path::UvLift, cancelled)?,
         ];
-        poll(&mut cancelled)?;
+        poll(cancelled)?;
         Ok(PlanarCubicCertificate {
             options,
             monotone,
@@ -153,14 +182,15 @@ impl CertifiedPlanarAttachment {
         })
     }
 
-    fn cubic_nets(
+    fn polynomial_nets<const N: usize>(
         &self,
-        world: [[f64; 3]; 4],
-        uv: [[f64; 2]; 4],
+        world: [[f64; 3]; N],
+        uv: [[f64; 2]; N],
         limit: f64,
-    ) -> Result<(Net, Net, f64), Attachment> {
-        let projected = array_result(world.map(|pole| self.world.project(pole)))?;
-        let lifted = array_result(std::array::from_fn(|i| {
+        collect: ProjectionCollector<N>,
+    ) -> Result<(Net<N>, Net<N>, f64), Attachment> {
+        let projected = collect(world.map(|pole| self.world.project(pole)))?;
+        let lifted = collect(std::array::from_fn(|i| {
             self.world.proposed(uv[i], world[i])
         }))?;
         // Distance to the plane cannot exceed distance to this same-chart lift.
@@ -168,9 +198,9 @@ impl CertifiedPlanarAttachment {
         Ok((projected.map(|p| p.uv), lifted.map(|p| p.uv), pair_bound))
     }
 
-    fn certify_cubic_path(
+    fn certify_polynomial_path<const N: usize>(
         &self,
-        controls: Net,
+        controls: Net<N>,
         path: Path,
         limit: u32,
         cancelled: &mut impl FnMut() -> bool,
@@ -201,9 +231,9 @@ impl CertifiedPlanarAttachment {
         Ok(subdivisions)
     }
 
-    fn contains_cubic_span(
+    fn contains_cubic_span<const N: usize>(
         &self,
-        controls: &Net,
+        controls: &Net<N>,
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<bool, Attachment> {
         if !self.outer.bernstein_contains(controls, cancelled)? {
@@ -215,13 +245,13 @@ impl CertifiedPlanarAttachment {
         }
     }
 
-    fn reject_cubic_ends(
+    fn reject_cubic_ends<const N: usize>(
         &self,
-        span: &Span,
+        span: &Span<N>,
         path: Path,
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<(), Failure> {
-        for (i, parameter) in [0, 3].into_iter().zip(span.parameter) {
+        for (i, parameter) in [0, N - 1].into_iter().zip(span.parameter) {
             let location = trim::locate(
                 &self.outer,
                 self.hole.as_ref(),
@@ -250,11 +280,19 @@ fn check_options(options: PlanarCubicOptions) -> Result<(), Failure> {
     Ok(())
 }
 
-fn array_result<T>([a, b, c, d]: [Result<T, Attachment>; 4]) -> Result<[T; 4], Attachment> {
+fn cubic_projection(
+    [a, b, c, d]: [Result<Projection, Attachment>; 4],
+) -> Result<[Projection; 4], Attachment> {
     Ok([a?, b?, c?, d?])
 }
 
-fn distance_bound(controls: &[Projection; 4], limit: f64) -> Result<f64, Attachment> {
+fn quadratic_projection(
+    [a, b, c]: [Result<Projection, Attachment>; 3],
+) -> Result<[Projection; 3], Attachment> {
+    Ok([a?, b?, c?])
+}
+
+fn distance_bound(controls: &[Projection], limit: f64) -> Result<f64, Attachment> {
     let cap = R::from_finite(limit);
     let mut maximum = R::from_finite(0.);
     for control in controls {
@@ -273,15 +311,18 @@ fn distance_bound(controls: &[Projection; 4], limit: f64) -> Result<f64, Attachm
     bound.ok_or(Attachment::Unrepresentable)
 }
 
-fn common_monotone(projected: &Net, lifted: &Net) -> Option<PlanarMonotoneAxis> {
+fn common_monotone<const N: usize>(
+    projected: &Net<N>,
+    lifted: &Net<N>,
+) -> Option<PlanarMonotoneAxis> {
     use PlanarMonotoneAxis::*;
     for (axis, signs) in [[IncreasingU, DecreasingU], [IncreasingV, DecreasingV]]
         .into_iter()
         .enumerate()
     {
-        let sign = |net: &Net| net[1][axis].cmp(&net[0][axis]);
+        let sign = |net: &Net<N>| net[1][axis].cmp(&net[0][axis]);
         let direction = sign(projected);
-        let directed = |net: &Net| {
+        let directed = |net: &Net<N>| {
             net.windows(2)
                 .all(|pair| pair[1][axis].cmp(&pair[0][axis]) == direction)
         };
@@ -292,34 +333,44 @@ fn common_monotone(projected: &Net, lifted: &Net) -> Option<PlanarMonotoneAxis> 
     None
 }
 
-struct Span {
-    controls: Net,
+struct Span<const N: usize> {
+    controls: Net<N>,
     parameter: [f64; 2],
     depth: u8,
 }
 
-impl Span {
+impl<const N: usize> Span<N> {
     fn split(self) -> [Self; 2] {
-        let [a, b, c, d] = self.controls;
-        let [ab, bc, cd] = [midpoint(&a, &b), midpoint(&b, &c), midpoint(&c, &d)];
-        let [abc, bcd] = [midpoint(&ab, &bc), midpoint(&bc, &cd)];
-        let middle = midpoint(&abc, &bcd);
+        let [left, right] = bisect(self.controls);
         let [lo, hi] = self.parameter;
         let mid = (lo + hi) * 0.5;
         let depth = self.depth + 1;
         [
             Self {
-                controls: [a, ab, abc, middle.clone()],
+                controls: left,
                 parameter: [lo, mid],
                 depth,
             },
             Self {
-                controls: [middle, bcd, cd, d],
+                controls: right,
                 parameter: [mid, hi],
                 depth,
             },
         ]
     }
+}
+
+fn bisect<const N: usize>(mut work: Net<N>) -> [Net<N>; 2] {
+    let mut left = work.clone();
+    let mut right = work.clone();
+    for i in 1..N {
+        for start in 0..(N - i) {
+            work[start] = midpoint(&work[start], &work[start + 1]);
+        }
+        left[i] = work[0].clone();
+        right[N - 1 - i] = work[N - 1 - i].clone();
+    }
+    [left, right]
 }
 
 fn midpoint(a: &Uv, b: &Uv) -> Uv {

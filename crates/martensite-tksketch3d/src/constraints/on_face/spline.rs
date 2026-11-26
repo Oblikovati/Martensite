@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Atomic source-qualified creation and replay of one fitted Curve On Face cubic.
 mod failure;
+mod quadratic;
 pub use failure::PlanarFaceSplineFailure;
+pub use quadratic::{
+    PlanarFaceQuadraticSpline, PlanarFaceQuadraticSplineEdit, PlanarFaceQuadraticSplineRecipe,
+};
 
 use super::{PlanarFaceBinding, PlanarFaceRevision};
 use crate::{
@@ -123,9 +127,15 @@ impl PlanarFaceBinding {
         mut current: impl FnMut() -> PlanarFaceRevision,
         mut cancelled: impl FnMut() -> bool,
     ) -> Result<PlanarFaceSplineEdit, Failure> {
-        self.begin_spline(recipe, &mut current, &mut cancelled)?;
-        let positions = self.spline_stations(recipe, &mut cancelled)?;
-        let edits = self.spline_edits(source, recipe, positions)?;
+        self.begin_spline(recipe.source, &mut current, &mut cancelled)?;
+        let positions = self.spline_stations(
+            recipe.source,
+            recipe.stations,
+            recipe.native_options.distance_limit,
+            &mut cancelled,
+        )?;
+        let mut edits = self.station_edits(source, recipe.stations, positions)?;
+        edits.push(Edit::InsertFitSpline(recipe.fit()));
         let snapshot = source
             .apply_targeted_edit_batch(&edits, &mut cancelled)
             .map_err(failure::edit_failure)?;
@@ -143,30 +153,35 @@ impl PlanarFaceBinding {
         mut current: impl FnMut() -> PlanarFaceRevision,
         mut cancelled: impl FnMut() -> bool,
     ) -> Result<PlanarFaceSpline, Failure> {
-        self.begin_spline(recipe, &mut current, &mut cancelled)?;
-        let positions = self.spline_stations(recipe, &mut cancelled)?;
+        self.begin_spline(recipe.source, &mut current, &mut cancelled)?;
+        let positions = self.spline_stations(
+            recipe.source,
+            recipe.stations,
+            recipe.native_options.distance_limit,
+            &mut cancelled,
+        )?;
         self.bound_spline(source, recipe, positions, &mut current, &mut cancelled)
     }
 
     fn begin_spline(
         &self,
-        recipe: PlanarFaceSplineRecipe,
+        source: PlanarFaceRevision,
         current: &mut impl FnMut() -> PlanarFaceRevision,
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<(), Failure> {
         poll(cancelled)?;
-        require_source(recipe.source, self.revision)?;
-        require_source(recipe.source, current())
+        require_source(source, self.revision)?;
+        require_source(source, current())
     }
 
-    fn spline_edits(
+    fn station_edits<const N: usize>(
         &self,
         snapshot: &Snapshot,
-        recipe: PlanarFaceSplineRecipe,
-        positions: [Point3; 4],
+        stations: [PlanarFaceSplineStation; N],
+        positions: [Point3; N],
     ) -> Result<Vec<Edit>, Failure> {
-        let mut edits = Vec::with_capacity(5);
-        for (station, position) in recipe.stations.into_iter().zip(positions) {
+        let mut edits = Vec::with_capacity(N + 1);
+        for (station, position) in stations.into_iter().zip(positions) {
             let (id, _) = station.operands();
             match station {
                 PlanarFaceSplineStation::Create { .. } => {
@@ -179,32 +194,34 @@ impl PlanarFaceBinding {
                 PlanarFaceSplineStation::Reuse { .. } => require_point(snapshot, id, position)?,
             }
         }
-        edits.push(Edit::InsertFitSpline(recipe.fit()));
         Ok(edits)
     }
 
-    fn spline_stations(
+    fn spline_stations<const N: usize>(
         &self,
-        recipe: PlanarFaceSplineRecipe,
+        source: PlanarFaceRevision,
+        stations: [PlanarFaceSplineStation; N],
+        distance_limit: f64,
         cancelled: &mut impl FnMut() -> bool,
-    ) -> Result<[Point3; 4], Failure> {
-        let mut positions = [Point3::default(); 4];
-        for (station, position) in recipe.stations.into_iter().zip(&mut positions) {
+    ) -> Result<[Point3; N], Failure> {
+        let mut positions = [Point3::default(); N];
+        for (station, position) in stations.into_iter().zip(&mut positions) {
             let (id, uv) = station.operands();
-            *position = self.chart_station(recipe, id, uv, cancelled)?;
+            *position = self.chart_station(source, id, uv, distance_limit, cancelled)?;
         }
         Ok(positions)
     }
 
     fn chart_station(
         &self,
-        recipe: PlanarFaceSplineRecipe,
+        source: PlanarFaceRevision,
         point: PointId,
         uv: [f64; 2],
+        distance_limit: f64,
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<Point3, Failure> {
         poll(cancelled)?;
-        let face = recipe.source.face;
+        let face = source.face;
         let world = self
             .proof
             .solver_chart(face, uv)
@@ -212,13 +229,7 @@ impl PlanarFaceBinding {
             .world;
         let query = self
             .proof
-            .classify_uv(
-                face,
-                uv,
-                world,
-                recipe.native_options.distance_limit,
-                cancelled,
-            )
+            .classify_uv(face, uv, world, distance_limit, cancelled)
             .map_err(capture_failure)?;
         match query.location {
             PlanarAttachmentLocation::OutsideOuter | PlanarAttachmentLocation::HoleInterior => {
@@ -241,9 +252,13 @@ impl PlanarFaceBinding {
         current: &mut impl FnMut() -> PlanarFaceRevision,
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<PlanarFaceSpline, Failure> {
-        let stored = snapshot
-            .fit_spline(recipe.spline)
-            .ok_or(Failure::MissingSpline(recipe.spline))?;
+        let stored = snapshot.fit_spline(recipe.spline).ok_or_else(|| {
+            if snapshot.quadratic_fit_spline(recipe.spline).is_some() {
+                Failure::SplineRecipe(recipe.spline)
+            } else {
+                Failure::MissingSpline(recipe.spline)
+            }
+        })?;
         if stored.recipe() != recipe.fit() {
             return Err(Failure::SplineRecipe(recipe.spline));
         }

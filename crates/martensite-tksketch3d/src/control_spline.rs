@@ -286,10 +286,10 @@ fn check_chord(poles: [Point3; 4], minimum: MinimumLength) -> Result<(), Control
     Ok(())
 }
 
-fn certify(
+pub(super) fn certify(
     source_id: u64,
     proof: ControlSplineProofPolicy,
-    coefficients: &[[f64; 3]; 4],
+    coefficients: &[[f64; 3]],
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<BezierRegularityReport, CubicEvidenceFailure> {
     let query = BezierRegularityQuery::new(source_id, coefficients, proof.options());

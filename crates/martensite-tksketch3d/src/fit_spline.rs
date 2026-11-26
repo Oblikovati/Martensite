@@ -2,6 +2,7 @@
 //! Fixed-station interpolation of one open clamped cubic.
 mod prepare;
 mod validation;
+pub(crate) use validation::{check_limit, check_minimum_chords, check_policy, read_station_points};
 
 use crate::{
     BatchPhase, ControlSplineFailure, ControlSplineJet, ControlSplineJetFailure,

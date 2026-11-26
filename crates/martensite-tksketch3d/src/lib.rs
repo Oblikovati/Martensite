@@ -12,6 +12,7 @@ pub mod import;
 pub mod include_geometry;
 pub mod line_edit;
 mod mirror;
+mod quadratic_fit_spline;
 mod source;
 pub mod split_cylinder;
 pub mod split_face;
@@ -30,6 +31,7 @@ pub use fit_spline::{
 };
 use martensite_tkmath::gp::{Line3, Point3};
 pub use mirror::{MirrorDerivation, MirrorFailure, MirrorResult};
+pub use quadratic_fit_spline::{QuadraticFitSplineGeometry, SketchQuadraticFitSpline};
 pub use source::{FrozenPointSource, FrozenSourceRevision};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -79,7 +81,7 @@ pub enum EntityId {
     Arc(ArcId),
     /// Open cubic control spline identity.
     ControlSpline(ControlSplineId),
-    /// Fixed four-station fit spline identity.
+    /// Owned fit spline identity.
     FitSpline(FitSplineId),
 }
 
@@ -219,6 +221,8 @@ pub enum Edit {
     InsertControlSpline(SketchControlSpline),
     /// Add an open fit cubic. Its station points must exist by the end of the batch.
     InsertFitSpline(SketchFitSpline),
+    /// Add an open quadratic interpolating exactly three authored station identities.
+    InsertQuadraticFitSpline(SketchQuadraticFitSpline),
     /// Change a curve's modelling participation while retaining its authored geometry.
     SetCurveRole {
         /// Existing curve identity.
@@ -247,6 +251,7 @@ enum Entity {
     Arc(SketchArc),
     ControlSpline(SketchControlSpline),
     FitSpline(SketchFitSpline),
+    QuadraticFitSpline(SketchQuadraticFitSpline),
 }
 
 impl Entity {
@@ -257,6 +262,7 @@ impl Entity {
             Self::Arc(arc) => EntityId::Arc(arc.id),
             Self::ControlSpline(spline) => EntityId::ControlSpline(spline.id),
             Self::FitSpline(spline) => EntityId::FitSpline(spline.id),
+            Self::QuadraticFitSpline(spline) => EntityId::FitSpline(spline.id),
         }
     }
     fn curve(self) -> Option<CurveId> {
@@ -266,6 +272,7 @@ impl Entity {
             Self::Arc(arc) => Some(CurveId::Arc(arc.id)),
             Self::ControlSpline(spline) => Some(CurveId::ControlSpline(spline.id)),
             Self::FitSpline(spline) => Some(CurveId::FitSpline(spline.id)),
+            Self::QuadraticFitSpline(spline) => Some(CurveId::FitSpline(spline.id)),
         }
     }
 }
@@ -294,6 +301,7 @@ pub struct Snapshot {
     arcs: BTreeMap<ArcId, ArcGeometry>,
     control_splines: BTreeMap<ControlSplineId, ControlSplineGeometry>,
     fit_splines: BTreeMap<FitSplineId, FitSplineGeometry>,
+    quadratic_fit_splines: BTreeMap<FitSplineId, QuadraticFitSplineGeometry>,
     construction: BTreeSet<CurveId>,
     frozen: BTreeMap<PointId, FrozenPointSource>,
     included: include_geometry::IncludedLines,
@@ -309,6 +317,7 @@ impl Snapshot {
             arcs: BTreeMap::new(),
             control_splines: BTreeMap::new(),
             fit_splines: BTreeMap::new(),
+            quadratic_fit_splines: BTreeMap::new(),
             construction: BTreeSet::new(),
             frozen: BTreeMap::new(),
             included: Default::default(),
@@ -343,9 +352,15 @@ impl Snapshot {
         self.control_splines.get(&key)
     }
 
-    /// Borrow validated fixed-station geometry. Example: `snapshot.fit_spline(spline_id)`.
+    /// Borrow validated four-station geometry. Example: `snapshot.fit_spline(spline_id)`.
     pub fn fit_spline(&self, key: FitSplineId) -> Option<&FitSplineGeometry> {
         self.fit_splines.get(&key)
+    }
+
+    /// Borrow a validated three-station quadratic under the shared fit identity namespace.
+    /// Example: `snapshot.quadratic_fit_spline(fit_id)`.
+    pub fn quadratic_fit_spline(&self, key: FitSplineId) -> Option<&QuadraticFitSplineGeometry> {
+        self.quadratic_fit_splines.get(&key)
     }
 
     /// Return the authored role of an existing curve. Example: `snapshot.curve_role(curve_id)`.

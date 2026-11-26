@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::{FitSplineFailure, FitSplinePolicy, FitSplineQuantity, SketchFitSpline, poll, refusal};
-use crate::{EditFailure, MinimumLength, Snapshot, control_spline::CubicEvidence};
+use crate::{EditFailure, MinimumLength, PointId, Snapshot, control_spline::CubicEvidence};
 use martensite_tkmath::{
     gp::Point3,
     predicates::{
@@ -14,9 +14,16 @@ pub(super) fn read_stations(
     snapshot: &Snapshot,
     recipe: SketchFitSpline,
 ) -> Result<[Point3; 4], FitSplineFailure> {
-    let mut stations = [Point3::default(); 4];
-    for (index, id) in recipe.stations.into_iter().enumerate() {
-        if recipe.stations[..index].contains(&id) {
+    read_station_points(snapshot, recipe.stations)
+}
+
+pub(crate) fn read_station_points<const N: usize>(
+    snapshot: &Snapshot,
+    ids: [PointId; N],
+) -> Result<[Point3; N], FitSplineFailure> {
+    let mut stations = [Point3::default(); N];
+    for (index, id) in ids.into_iter().enumerate() {
+        if ids[..index].contains(&id) {
             return Err(FitSplineFailure::RepeatedStation(id));
         }
         let current = snapshot
@@ -27,17 +34,14 @@ pub(super) fn read_stations(
             .iter()
             .position(|&position| position == current)
         {
-            return Err(FitSplineFailure::CoincidentStations([
-                recipe.stations[previous],
-                id,
-            ]));
+            return Err(FitSplineFailure::CoincidentStations([ids[previous], id]));
         }
         stations[index] = current;
     }
     Ok(stations)
 }
 
-pub(super) fn check_policy(policy: FitSplinePolicy) -> Result<(), FitSplineFailure> {
+pub(crate) fn check_policy(policy: FitSplinePolicy) -> Result<(), FitSplineFailure> {
     for (quantity, value) in [
         (FitSplineQuantity::Distortion, policy.max_distortion),
         (FitSplineQuantity::InverseGain, policy.max_inverse_gain),
@@ -61,19 +65,7 @@ pub(super) fn check_chords(
     minimum: MinimumLength,
 ) -> Result<CubicChordDistortion, FitSplineFailure> {
     let coordinates = stations.map(|point| *point.coordinates());
-    for [first, last] in [[0, 3], [0, 1], [1, 2], [2, 3]] {
-        let comparison =
-            compare_squared_length_3d(coordinates[first], coordinates[last], minimum.value())
-                .map_err(|source| {
-                    FitSplineFailure::Numeric(CubicFitNumericError::NonFinite(source))
-                })?;
-        if comparison == Ordering::Less {
-            return Err(FitSplineFailure::ShortChord {
-                stations: [recipe.stations[first], recipe.stations[last]],
-                minimum,
-            });
-        }
-    }
+    check_minimum_chords(recipe.stations, coordinates, minimum)?;
     let spread = cubic_chord_distortion(coordinates, recipe.parameters.values())
         .map_err(FitSplineFailure::Numeric)?;
     check_limit(
@@ -82,6 +74,39 @@ pub(super) fn check_chords(
         recipe.policy.max_distortion,
     )?;
     Ok(spread)
+}
+
+pub(crate) fn check_minimum_chords<const N: usize>(
+    ids: [PointId; N],
+    stations: [[f64; 3]; N],
+    minimum: MinimumLength,
+) -> Result<(), FitSplineFailure> {
+    let end = N - 1;
+    check_chord([ids[0], ids[end]], [stations[0], stations[end]], minimum)?;
+    for i in 0..end {
+        check_chord(
+            [ids[i], ids[i + 1]],
+            [stations[i], stations[i + 1]],
+            minimum,
+        )?;
+    }
+    Ok(())
+}
+
+fn check_chord(
+    ids: [PointId; 2],
+    [a, b]: [[f64; 3]; 2],
+    minimum: MinimumLength,
+) -> Result<(), FitSplineFailure> {
+    let comparison = compare_squared_length_3d(a, b, minimum.value())
+        .map_err(|cause| FitSplineFailure::Numeric(CubicFitNumericError::NonFinite(cause)))?;
+    if comparison == Ordering::Less {
+        return Err(FitSplineFailure::ShortChord {
+            stations: ids,
+            minimum,
+        });
+    }
+    Ok(())
 }
 
 pub(super) fn measure_stations(
@@ -111,7 +136,7 @@ pub(super) fn measure_stations(
     Ok(results)
 }
 
-pub(super) fn check_limit(
+pub(crate) fn check_limit(
     quantity: FitSplineQuantity,
     upper: f64,
     limit: f64,

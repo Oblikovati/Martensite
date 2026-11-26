@@ -35,7 +35,13 @@ pub(super) fn bind(
 ) -> Result<JoinStencil, Failure> {
     let refuse = |cause| Failure::Continuity(id, cause);
     if g2 {
-        return Err(refuse(ContinuityFailure::FitCurvatureUnsupported(join.fit)));
+        return Err(refuse(
+            if geometry.quadratic_fit_spline(join.fit).is_some() {
+                ContinuityFailure::QuadraticFitUnsupported(join.fit)
+            } else {
+                ContinuityFailure::FitCurvatureUnsupported(join.fit)
+            },
+        ));
     }
     let line = geometry
         .line(join.line)
@@ -110,7 +116,11 @@ fn fit_source(
     id: RelationId,
     fit: FitSplineId,
 ) -> Result<&FitSplineGeometry, Failure> {
-    geometry
-        .fit_spline(fit)
-        .ok_or(Failure::MissingOperand(id, EntityId::FitSpline(fit)))
+    geometry.fit_spline(fit).ok_or_else(|| {
+        if geometry.quadratic_fit_spline(fit).is_some() {
+            Failure::Continuity(id, ContinuityFailure::QuadraticFitUnsupported(fit))
+        } else {
+            Failure::MissingOperand(id, EntityId::FitSpline(fit))
+        }
+    })
 }

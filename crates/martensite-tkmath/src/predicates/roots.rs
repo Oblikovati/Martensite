@@ -27,7 +27,8 @@ pub use cubic_bernstein::{
     CubicBernsteinFailure, CubicBernsteinJet, CubicChordDistortion, CubicEndJet,
     CubicEndJetFailure, CubicEndStencil, CubicFitEnd, CubicFitMaterialization,
     CubicFitNumericError, CubicFitOperator, CubicFitTangent, ExactCubicBernstein3,
-    RoundedCubicEndJet, TangentDirectionBand, cubic_chord_distortion,
+    QuadraticFitMaterialization, RoundedCubicEndJet, TangentDirectionBand, cubic_chord_distortion,
+    evaluate_fit_quadratic, materialize_fit_quadratic, quadratic_fit_chord_distortion,
 };
 pub use dyadic::DyadicBound;
 pub use error::RootIsolationError;
