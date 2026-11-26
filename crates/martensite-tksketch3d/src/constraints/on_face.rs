@@ -265,6 +265,7 @@ impl PlanarAttachedSketch {
             &self.sketch.geometry,
             &self.sketch.relations,
             self.sketch.policy,
+            &mut cancelled,
         )?);
         poll(&mut cancelled)?;
         Ok(ConstrainedSketch {
@@ -294,6 +295,7 @@ fn build_program(
         &sketch.relations,
         sketch.policy,
         Some((record.id, record.point, equation)),
+        cancelled,
     )?);
     program.verify_attachment_state(&sketch.geometry, record.uv, cancelled)?;
     Ok(program)

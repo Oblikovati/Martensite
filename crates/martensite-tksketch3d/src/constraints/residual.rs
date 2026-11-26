@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::{
-    ArcBranch, AxisDirection, CoordinateAxis, LineAngle, ParallelDirection, metric, on_face::PlanarEquation,
+    ArcBranch, AxisDirection, CoordinateAxis, LineAngle, ParallelDirection, metric,
+    on_face::PlanarEquation,
 };
 use martensite_tkmath::gp::Point3;
 use martensite_tksolve::{

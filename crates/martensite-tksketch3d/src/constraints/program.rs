@@ -10,13 +10,15 @@ use super::{
 use crate::{Edit, EntityId, PointId, Snapshot};
 use martensite_tkmath::gp::Point3;
 use martensite_tksolve::{
-    nonlinear::{SolveError, SolveOptions, SolveTermination, solve_constraints_with_constants},
+    nonlinear::{SolveOptions, SolveTermination, solve_constraints_with_constants},
     preview::{Block, Domain, Incomplete, PreferenceReport, Prepared, PreviewError, Update},
-    residual::{EvaluationError, ResidualBlock},
+    residual::ResidualBlock,
 };
 use std::{borrow::Cow, collections::BTreeMap, sync::Arc};
 
 mod chart;
+mod failure;
+use failure::{preview_failure, solve_failure};
 
 #[derive(Clone)]
 pub(super) struct Program {
@@ -38,7 +40,7 @@ impl Program {
         policy: ConstraintPolicy,
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<Self, Failure> {
-        Self::compile(geometry, relations, policy, None)
+        Self::compile(geometry, relations, policy, None, cancelled)
     }
 
     pub(super) fn compile(
@@ -46,6 +48,7 @@ impl Program {
         relations: &BTreeMap<RelationId, Relation>,
         policy: ConstraintPolicy,
         planar: Option<(RelationId, PointId, super::on_face::PlanarEquation)>,
+        cancelled: &mut impl FnMut() -> bool,
     ) -> Result<Self, Failure> {
         admit(geometry, relations, policy, planar.is_some())?;
         let points = geometry
@@ -76,7 +79,7 @@ impl Program {
                 .ok_or(Failure::MissingPoint(point))?;
             let uv = domains.len();
             blocks.push(EquationBlock {
-                id,
+                owner: BlockOwner::Relation(id),
                 source: Arc::new(residual::Equation::PlanarAttachment(equation)),
                 variables: [start, start + 1, start + 2, uv, uv + 1].into(),
             });
@@ -479,33 +482,6 @@ fn bound(quantity: PolicyQuantity, requested: usize, maximum: usize) -> Result<(
         });
     }
     Ok(())
-}
-
-fn failure_owner(blocks: &[EquationBlock], error: &SolveError) -> Option<BlockOwner> {
-    let SolveError::Evaluation(EvaluationError::Source { block, .. }) = error else {
-        return None;
-    };
-    blocks.get(*block).map(|block| block.owner)
-}
-
-fn solve_failure(blocks: &[EquationBlock], cause: SolveError) -> Failure {
-    match failure_owner(blocks, &cause) {
-        Some(BlockOwner::IntrinsicArc(arc)) => Failure::ArcSolve(arc, cause),
-        Some(BlockOwner::Relation(id)) => Failure::Solve(Some(id), cause),
-        None => Failure::Solve(None, cause),
-    }
-}
-
-fn preview_failure(blocks: &[EquationBlock], error: PreviewError) -> Failure {
-    match error {
-        PreviewError::Incomplete(Incomplete::Cancelled) => Failure::Cancelled,
-        PreviewError::Solve(ref cause) => match failure_owner(blocks, cause) {
-            Some(BlockOwner::IntrinsicArc(arc)) => Failure::ArcPreview(arc, error),
-            Some(BlockOwner::Relation(id)) => Failure::Preview(Some(id), error),
-            None => Failure::Preview(None, error),
-        },
-        error => Failure::Preview(None, error),
-    }
 }
 
 fn read_only_drag(geometry: &Snapshot, point: PointId) -> Failure {
