@@ -13,6 +13,8 @@ use martensite_tkernel::standard::real::real_to_int;
 use martensite_tkmath::gp::Point3;
 use martensite_tkmath::math;
 
+/// The minimal range of an interval (`EPS_PARAM`) for legacy OCCT adaptive calls.
+pub(super) const EPS_PARAM: f64 = 1.0e-12;
 /// The ratio of the orders of the error estimate (`ERROR_ALGEBR_RATIO`).
 const ERROR_ALGEBR_RATIO: f64 = 2.0 / 3.0;
 /// The bisection depth per knot interval (`SUBS_POWER`).
@@ -130,6 +132,10 @@ impl Intervals {
     /// #407: parameter scale does not determine whether its physical area is negligible.
     pub(super) fn is_exhausted(&self, j: usize, max: usize) -> bool {
         j == max || self.second[j - 1] == self.first[j - 1]
+    }
+
+    pub(super) fn is_exhausted_legacy(&self, j: usize, max: usize) -> bool {
+        j == max || (self.second[j - 1] - self.first[j - 1]).abs() < EPS_PARAM
     }
 }
 
@@ -259,11 +265,19 @@ impl BRepGPropGauss {
         by_point: bool,
         out: &mut GaussProps,
     ) -> Result<f64, Failure> {
-        self.compute_adaptive_observed(surface, domain, location, eps, (coeff, by_point), out)
-            .map(|(error, _)| error)
+        self.compute_adaptive_mode(
+            surface,
+            domain,
+            location,
+            eps,
+            (coeff, by_point),
+            false,
+            out,
+        )
+        .map(|(error, _)| error)
     }
 
-    // Keep the arithmetic shared; the extra value records only exhausted work (#277).
+    // Keep the arithmetic shared; the extra value records only exhausted work (#277, #407).
     pub(super) fn compute_adaptive_observed(
         &mut self,
         surface: &mut BRepGPropFace,
@@ -273,6 +287,20 @@ impl BRepGPropGauss {
         (coeff, by_point): (&[f64], bool),
         out: &mut GaussProps,
     ) -> Result<(f64, bool), Failure> {
+        self.compute_adaptive_mode(surface, domain, location, eps, (coeff, by_point), true, out)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn compute_adaptive_mode(
+        &mut self,
+        surface: &mut BRepGPropFace,
+        domain: &mut BRepGPropDomain,
+        location: Point3,
+        eps: f64,
+        (coeff, by_point): (&[f64], bool),
+        strict_refinement: bool,
+        out: &mut GaussProps,
+    ) -> Result<(f64, bool), Failure> {
         let estimate = error_estimate_requested(eps);
         let is_verify = 0.0 < eps && eps < 0.001;
         let epsilon = eps.abs();
@@ -280,7 +308,7 @@ impl BRepGPropGauss {
         self.check_bounds(bounds);
         let context = (location, coeff, by_point);
         let input = AdaptiveInput::new(surface, context, (epsilon, estimate), bounds)?;
-        AdaptiveRun::new(self, input, is_verify).evaluate(surface, domain, out)
+        AdaptiveRun::new(self, input, is_verify, strict_refinement).evaluate(surface, domain, out)
     }
 
     /// `Compute(theSurface, theDomain, theLocation, theEps, Mass, G, I)`: the adaptive
@@ -327,6 +355,7 @@ pub(super) struct AdaptiveRun<'g, 'a> {
     pub(super) gauss: &'g BRepGPropGauss,
     pub(super) input: AdaptiveInput<'a>,
     pub(super) is_verify: bool,
+    pub(super) strict_refinement: bool,
     pub(super) state: AdaptiveState,
     pub(super) l: Intervals,
     pub(super) u: Intervals,
@@ -334,11 +363,17 @@ pub(super) struct AdaptiveRun<'g, 'a> {
 }
 
 impl<'g, 'a> AdaptiveRun<'g, 'a> {
-    fn new(gauss: &'g BRepGPropGauss, input: AdaptiveInput<'a>, is_verify: bool) -> Self {
+    fn new(
+        gauss: &'g BRepGPropGauss,
+        input: AdaptiveInput<'a>,
+        is_verify: bool,
+        strict_refinement: bool,
+    ) -> Self {
         Self {
             gauss,
             input,
             is_verify,
+            strict_refinement,
             state: AdaptiveState::default(),
             l: Intervals::new(),
             u: Intervals::new(),

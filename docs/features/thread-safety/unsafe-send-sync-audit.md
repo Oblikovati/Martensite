@@ -1,6 +1,6 @@
 # Unsafe `Send` and `Sync` Audit (#63)
 
-**Date:** 2026-11-26  
+**Date:** 2026-11-26
 **Scope:** All 64 `unsafe impl Send` / `unsafe impl Sync` implementations across the workspace (`51` in `martensite-tkernel`, `13` in `martensite-tkservice`, `0` in all other crates).
 
 ## Summary

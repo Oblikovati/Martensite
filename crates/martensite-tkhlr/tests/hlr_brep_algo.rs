@@ -106,7 +106,10 @@ fn box_sharp_edges_are_never_classified_as_smooth_3d_outlines() {
         a.set_projector(&Projector::with_frame(axis).unwrap());
         a.update().unwrap();
         a.hide().unwrap();
-        let to_shape = HLRToShape::new(&algo);
+        let to_shape = HLRToShape::with_outline_behavior(
+            &algo,
+            martensite_tkhlr::hlr_brep::OutlineClassificationBehavior::CurvedFaceOnlyV2,
+        );
         assert!(
             to_shape.out_line_v_compound_3d().unwrap().is_null(),
             "planar box must not produce smooth 3D outlines for direction ({dx}, {dy}, {dz})"

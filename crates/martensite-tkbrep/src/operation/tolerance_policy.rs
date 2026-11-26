@@ -170,7 +170,7 @@ mod tests {
 
     fn dummy_edge() -> Shape {
         let mut e = Edge::default();
-        BRepBuilder::default().make_edge(&mut e);
+        BRepBuilder::default().make_edge(&mut e).expect("make edge");
         e.into_shape()
     }
 

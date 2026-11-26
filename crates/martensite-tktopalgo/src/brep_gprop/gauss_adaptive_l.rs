@@ -3,7 +3,9 @@
 use super::domain::BRepGPropDomain;
 use super::face::BRepGPropFace;
 use super::gauss::Inertia;
-use super::gauss_adaptive::{AdaptiveRun, GaussRules, SUBS_POWER, knots_of, max_subs, sm};
+use super::gauss_adaptive::{
+    AdaptiveRun, EPS_PARAM, GaussRules, SUBS_POWER, knots_of, max_element, max_subs, sm,
+};
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::math;
 
@@ -91,7 +93,12 @@ impl AdaptiveRun<'_, '_> {
         total: &mut Inertia,
     ) -> Result<(), Failure> {
         let (l1, l2) = boundary.range;
-        if l2 == l1 {
+        if self.strict_refinement {
+            if l2 == l1 {
+                return Ok(());
+            }
+        } else if (l2 - l1).abs() <= EPS_PARAM {
+            self.state.refinement_exhausted |= l2 != l1;
             return Ok(());
         }
         let end = self.l.fill(l1, l2, &boundary.knots, Some(&mut self.err_ul));
@@ -102,9 +109,25 @@ impl AdaptiveRun<'_, '_> {
         loop {
             j += 1;
             let range = self.l.next_range(j, end);
-            if self.l.is_exhausted(j, max) {
-                if j == max || k_end != 1 {
-                    return Err(self.refinement_failure("boundary", j, max, error_l));
+            let exhausted = if self.strict_refinement {
+                self.l.is_exhausted(j, max)
+            } else {
+                self.l.is_exhausted_legacy(j, max)
+            };
+            if exhausted {
+                if self.strict_refinement {
+                    if j == max || k_end != 1 {
+                        return Err(self.refinement_failure("boundary", j, max, error_l));
+                    }
+                } else {
+                    self.state.refinement_exhausted |=
+                        k_end != 1 || self.l.first[j - 1] != self.l.second[j - 1];
+                    if k_end != 1 {
+                        j -= 1;
+                        self.state.eps_l = error_l;
+                        self.state.eps = self.state.eps_l / 0.9;
+                        break;
+                    }
                 }
                 self.l.inertia[j - 1] = Inertia::default();
                 self.l.error[j - 1] = 0.0;
@@ -118,7 +141,11 @@ impl AdaptiveRun<'_, '_> {
                 self.correct_epsilon(j);
             }
             if k_end == 2 {
-                error_l = self.l.error[..j].iter().sum();
+                error_l = if self.strict_refinement {
+                    self.l.error[..j].iter().sum()
+                } else {
+                    self.l.error[max_element(&self.l.error)]
+                };
             }
             if !((error_l - self.state.eps_l > 0.0 && self.is_verify) || k_end == 1) {
                 break;
@@ -127,7 +154,11 @@ impl AdaptiveRun<'_, '_> {
         for inertia in &self.l.inertia[..j] {
             self.gauss.add_inertia(inertia, total);
         }
-        self.state.error_l_total += error_l;
+        if self.strict_refinement {
+            self.state.error_l_total += error_l;
+        } else {
+            self.state.error_l_total = self.state.error_l_total.max(error_l);
+        }
         Ok(())
     }
 
@@ -137,7 +168,7 @@ impl AdaptiveRun<'_, '_> {
         for inertia in &self.l.inertia[..j] {
             ddim += inertia.mass;
         }
-        ddim = (ddim * self.input.epsilon).abs().max(1e-12);
+        ddim = (ddim * self.input.epsilon).abs();
         if ddim > self.state.eps {
             self.state.eps = ddim;
             self.state.eps_l = 0.9 * self.state.eps;

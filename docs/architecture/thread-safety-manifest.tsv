@@ -5991,79 +5991,79 @@ martensite-vulkan	VertexOutputRequest	shareable	immutable value or Send + Sync h
 martensite-vulkan	VulkanDriverFactory	shareable	immutable value or Send + Sync handle/builder contract
 martensite-vulkan	VulkanOptions	shareable	immutable value or Send + Sync handle/builder contract
 martensite-vulkan	VulkanRenderer	shareable	immutable value or Send + Sync handle/builder contract
-martensite-tkbrep	FailureClass	shareable	
-martensite-tkbrep	HistoryGraph	shareable	
-martensite-tkbrep	HistoryGraphBuilder	shareable	
-martensite-tkbrep	HistoryRelation	shareable	
-martensite-tkbrep	HistoryRelationKind	shareable	
-martensite-tkbrep	OperationError	shareable	
-martensite-tkbrep	OperationKind	shareable	
-martensite-tkbrep	OperationResult	shareable	
-martensite-tkfillet	GeneralFuseBlendAssembler	shareable	
-martensite-tkg2d	Curve2dBuilder	shareable	
-martensite-tkg2d	PublishedCurve2d	shareable	
-martensite-tkg3d	Curve3dBuilder	shareable	
-martensite-tkg3d	PublishedCurve3d	shareable	
-martensite-tkg3d	PublishedSurface	shareable	
-martensite-tkg3d	SurfaceBuilder	shareable	
-martensite-tkgeombase	PointCurveClassification	shareable	
-martensite-tkgeombase	StationaryNature	shareable	
-martensite-tkmath	DistanceJetCertificate	shareable	
-martensite-tkbo	BooleanContext	shareable	
-martensite-tkbo	BooleanDiagnostic	shareable	
-martensite-tkbo	ComposedTolerance	shareable	
-martensite-tkbo	IncidenceDecision	shareable	
-martensite-tkbo	InputUncertainty	shareable	
-martensite-tkbo	TaperedExtrudeOptions	shareable	
-martensite-tkbo	TaperedExtrudeResult	shareable	
-martensite-tkbo	UncertaintySource	shareable	
-martensite-tkbrep	GeometryRevision	shareable	
-martensite-tkbrep	HistoryCoverageReport	shareable	
-martensite-tkbrep	PersistentBodyArchive	shareable	
-martensite-tkbrep	PersistentEntityName	shareable	
-martensite-tkbrep	RaisedToleranceRecord	shareable	
-martensite-tkbrep	ToleranceCapMode	shareable	
-martensite-tkbrep	ToleranceCapPolicy	shareable	
-martensite-tkbrep	ToleranceCapReport	shareable	
-martensite-tkfillet	BlendEdgeFault	shareable	
-martensite-tkfillet	BlendOverflowStrategy	shareable	
-martensite-tkfillet	BlendStageReceipt	shareable	
-martensite-tkfillet	TwoStageBlendBuilder	shareable	
-martensite-tkgeomalgo	Curve2dIntersectionReceipt	shareable	
-martensite-tkgeomalgo	IntersectionCompleteness	shareable	
-martensite-tkgeomalgo	SsiCompletenessReceipt	shareable	
-martensite-tkgeomalgo	SsiCurveReceipt	shareable	
-martensite-tkoffset	GuidedLoftDecline	shareable	
-martensite-tkoffset	GuidedLoftResult	shareable	
-martensite-tkoffset	LoftGuideRail	shareable	
-martensite-tkoffset	LoftSectionStation	shareable	
-martensite-tkoffset	OffsetClassification	shareable	
-martensite-tkoffset	OffsetConfigurationClassifier	shareable	
-martensite-tkoffset	OffsetDeclineReason	shareable	
-martensite-tkoffset	OffsetDistanceReceipt	shareable	
-martensite-tkbo	CoincidenceHint	shareable	
-martensite-tkbo	ImprintGlueSelectPipeline	shareable	
-martensite-tkbo	LocalCheckReport	shareable	
-martensite-tkbo	ValidationScope	shareable	
-martensite-tkbo	VerifiedHintReport	shareable	
-martensite-tkdestep	ExchangeDiagnostic	shareable	
-martensite-tkdestep	ExchangeDirection	shareable	
-martensite-tkdestep	ExchangeFormat	shareable	
-martensite-tkdestep	ExchangeIdentityEntry	shareable	
-martensite-tkdestep	ExchangeResult	shareable	
-martensite-tkgeomalgo	RationalBezierPatch	shareable	
-martensite-tkgeomalgo	RationalPatchAabb	shareable	
-martensite-tkmath	CoincidenceClassId	shareable	
-martensite-tkmath	CoincidenceClassSet	shareable	
-martensite-tkmath	CoincidenceMergeError	shareable	
-martensite-tkmesh	AchievedDeflectionReport	shareable	
-martensite-tkmesh	MeshReuseCache	shareable	
-martensite-tkmesh	MeshReuseKey	shareable	
-martensite-tkmesh	RetainedSlotPool	shareable	
-martensite-tkshhealing	RepairOnCopyOptions	shareable	
-martensite-tkshhealing	RepairOnCopyResult	shareable	
-martensite-tkv3d	ChildViewComposition	shareable	
-martensite-tkv3d	ChildViewSlot	shareable	
-martensite-tkv3d	PreviewCapturePlan	shareable	
-martensite-tkv3d	PreviewRegion	shareable	
-martensite-tkv3d	ProjectedPixel	shareable	
+martensite-tkbrep	FailureClass	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbrep	HistoryGraph	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbrep	HistoryGraphBuilder	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbrep	HistoryRelation	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbrep	HistoryRelationKind	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbrep	OperationError	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbrep	OperationKind	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbrep	OperationResult	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkfillet	GeneralFuseBlendAssembler	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkg2d	Curve2dBuilder	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkg2d	PublishedCurve2d	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkg3d	Curve3dBuilder	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkg3d	PublishedCurve3d	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkg3d	PublishedSurface	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkg3d	SurfaceBuilder	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkgeombase	PointCurveClassification	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkgeombase	StationaryNature	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkmath	DistanceJetCertificate	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbo	BooleanContext	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbo	BooleanDiagnostic	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbo	ComposedTolerance	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbo	IncidenceDecision	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbo	InputUncertainty	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbo	TaperedExtrudeOptions	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbo	TaperedExtrudeResult	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbo	UncertaintySource	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbrep	GeometryRevision	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbrep	HistoryCoverageReport	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbrep	PersistentBodyArchive	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbrep	PersistentEntityName	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbrep	RaisedToleranceRecord	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbrep	ToleranceCapMode	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbrep	ToleranceCapPolicy	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbrep	ToleranceCapReport	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkfillet	BlendEdgeFault	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkfillet	BlendOverflowStrategy	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkfillet	BlendStageReceipt	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkfillet	TwoStageBlendBuilder	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkgeomalgo	Curve2dIntersectionReceipt	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkgeomalgo	IntersectionCompleteness	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkgeomalgo	SsiCompletenessReceipt	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkgeomalgo	SsiCurveReceipt	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkoffset	GuidedLoftDecline	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkoffset	GuidedLoftResult	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkoffset	LoftGuideRail	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkoffset	LoftSectionStation	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkoffset	OffsetClassification	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkoffset	OffsetConfigurationClassifier	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkoffset	OffsetDeclineReason	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkoffset	OffsetDistanceReceipt	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbo	CoincidenceHint	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbo	ImprintGlueSelectPipeline	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbo	LocalCheckReport	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbo	ValidationScope	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkbo	VerifiedHintReport	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkdestep	ExchangeDiagnostic	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkdestep	ExchangeDirection	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkdestep	ExchangeFormat	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkdestep	ExchangeIdentityEntry	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkdestep	ExchangeResult	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkgeomalgo	RationalBezierPatch	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkgeomalgo	RationalPatchAabb	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkmath	CoincidenceClassId	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkmath	CoincidenceClassSet	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkmath	CoincidenceMergeError	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkmesh	AchievedDeflectionReport	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkmesh	MeshReuseCache	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkmesh	MeshReuseKey	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkmesh	RetainedSlotPool	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkshhealing	RepairOnCopyOptions	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkshhealing	RepairOnCopyResult	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkv3d	ChildViewComposition	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkv3d	ChildViewSlot	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkv3d	PreviewCapturePlan	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkv3d	PreviewRegion	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkv3d	ProjectedPixel	shareable	immutable value or Send + Sync handle/builder contract

@@ -2,7 +2,7 @@
 //! point, from the U lower bound to the boundary's U, bisecting the U intervals.
 use super::face::BRepGPropFace;
 use super::gauss::{GaussType, Inertia, add_volume_part};
-use super::gauss_adaptive::{AdaptiveRun, SUBS_POWER, max_subs, sm};
+use super::gauss_adaptive::{AdaptiveRun, SUBS_POWER, max_element, max_subs, sm};
 use martensite_tkernel::standard::Failure;
 
 impl AdaptiveRun<'_, '_> {
@@ -18,9 +18,27 @@ impl AdaptiveRun<'_, '_> {
         loop {
             j += 1;
             let range = self.u.next_range(j, end);
-            if self.u.is_exhausted(j, max) {
-                if j == max || k_end != 1 {
-                    return Err(self.refinement_failure("U", j, max, self.state.error_u));
+            let exhausted = if self.strict_refinement {
+                self.u.is_exhausted(j, max)
+            } else {
+                self.u.is_exhausted_legacy(j, max)
+            };
+            if exhausted {
+                if self.strict_refinement {
+                    if j == max || k_end != 1 {
+                        return Err(self.refinement_failure("U", j, max, self.state.error_u));
+                    }
+                } else {
+                    self.state.refinement_exhausted |=
+                        k_end != 1 || self.u.first[j - 1] != self.u.second[j - 1];
+                    if k_end != 1 {
+                        j -= 1;
+                        self.state.eps_u = self.state.error_u;
+                        let span = ((u2 - u1) * self.state.dul).abs();
+                        self.state.eps = 10. * self.state.eps_u * span;
+                        self.state.eps_l = 0.9 * self.state.eps;
+                        break;
+                    }
                 }
                 self.u.error[j - 1] = 0.0;
                 self.u.inertia[j - 1] = Inertia::default();
@@ -32,14 +50,23 @@ impl AdaptiveRun<'_, '_> {
             if j == end {
                 k_end = 2;
             }
-            let mass: f64 = self.u.inertia[..j].iter().map(|part| part.mass).sum();
-            // #407: reserve ten percent of the relative target for the inner integral, with
-            // a machine-noise floor so near-zero integrals do not fail at roundoff (~1e-15).
-            self.state.eps_u = (0.1 * self.input.epsilon * mass.abs()).max(1e-12);
-            self.state.error_u = self.u.error[..j].iter().sum();
-            let refine = self.is_verify && self.state.error_u > self.state.eps_u;
-            if !(refine || k_end == 1) {
-                break;
+            if self.strict_refinement {
+                let mass: f64 = self.u.inertia[..j].iter().map(|part| part.mass).sum();
+                // #407: reserve ten percent of the relative target for the inner integral.
+                self.state.eps_u = 0.1 * self.input.epsilon * mass.abs();
+                self.state.error_u = self.u.error[..j].iter().sum();
+                let refine = self.is_verify && self.state.error_u > self.state.eps_u;
+                if !(refine || k_end == 1) {
+                    break;
+                }
+            } else {
+                if j == end {
+                    self.state.error_u = self.u.error[max_element(&self.u.error)];
+                }
+                let refine = self.state.error_u - self.state.eps_u > 0.0 && self.state.eps_u != 0.0;
+                if !(refine || k_end == 1) {
+                    break;
+                }
             }
         }
         Ok(j)

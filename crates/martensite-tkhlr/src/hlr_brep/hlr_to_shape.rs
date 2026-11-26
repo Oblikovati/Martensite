@@ -15,15 +15,15 @@ use martensite_tkg3d::top_abs::ShapeEnum;
 /// use martensite_tkhlr::hlr_brep::OutlineClassificationBehavior;
 /// assert_eq!(
 ///     OutlineClassificationBehavior::default(),
-///     OutlineClassificationBehavior::CurvedFaceOnlyV2
+///     OutlineClassificationBehavior::LegacyPlanarRestrictionsV1
 /// );
 /// ```
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum OutlineClassificationBehavior {
     /// Exclude planar-face restriction edges from smooth 3D outline compounds.
-    #[default]
     CurvedFaceOnlyV2,
     /// Preserve legacy OCCT restriction-outline inclusion on planar faces for replay.
+    #[default]
     LegacyPlanarRestrictionsV1,
 }
 
