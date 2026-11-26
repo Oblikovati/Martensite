@@ -5,5 +5,7 @@ pub mod imesh_data;
 pub mod imesh_tools;
 
 pub mod brep_mesh;
+pub mod mesh_reuse;
+pub mod retained_slot_pool;
 
 mod model_parallel;
