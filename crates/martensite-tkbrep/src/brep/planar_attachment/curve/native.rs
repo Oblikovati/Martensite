@@ -243,7 +243,7 @@ mod cubic_tests {
         ));
 
         let (cubic, controls) = attached();
-        BRepBuilder::new()
+        BRepBuilder::default()
             .range(&cubic.edge, 0., 0.5, false)
             .unwrap();
         assert!(matches!(
