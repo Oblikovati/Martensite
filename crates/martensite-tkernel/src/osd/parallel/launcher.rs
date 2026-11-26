@@ -23,6 +23,8 @@ pub struct Launcher<'a> {
     threads: Vec<Arc<Worker>>,
     self_thread: Arc<Worker>,
     nb_threads: i32,
+    // Serializes concurrent `&self` perform calls so borrowed JobRefs never overlap (#106).
+    perform_lock: Mutex<()>,
     pool: PhantomData<&'a ThreadPool>,
 }
 
@@ -63,6 +65,7 @@ impl<'a> Launcher<'a> {
             threads,
             self_thread,
             nb_threads,
+            perform_lock: Mutex::new(()),
             pool: PhantomData,
         }
     }
@@ -125,6 +128,10 @@ impl<'a> Launcher<'a> {
     }
     /// `perform` = `run` then `wait`; the job must outlive both, which this frame ensures.
     fn perform_job(&self, body: &JobBody<'_>) -> Result<(), Failure> {
+        let _guard = self
+            .perform_lock
+            .lock()
+            .unwrap_or_else(|poison| poison.into_inner());
         let job: JobRef = JobRef::erase(body);
         self.threads
             .iter()
@@ -167,5 +174,46 @@ impl Drop for Launcher<'_> {
     /// `~Launcher`: releases the locked workers.
     fn drop(&mut self) {
         self.release();
+    }
+}
+
+#[cfg(test)]
+mod concurrent_perform_tests {
+    use super::{Launcher, ThreadPool};
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    #[test]
+    fn shared_launcher_serializes_concurrent_borrowed_jobs() {
+        let pool = ThreadPool::new(4);
+        let launcher = Launcher::new(&pool, 4);
+        let first_hits = AtomicUsize::new(0);
+        let second_hits = AtomicUsize::new(0);
+
+        std::thread::scope(|scope| {
+            let launcher_ref = &launcher;
+            let first_ref = &first_hits;
+            let second_ref = &second_hits;
+            scope.spawn(move || {
+                for _ in 0..8 {
+                    launcher_ref
+                        .perform(0, 32, |_, _| {
+                            first_ref.fetch_add(1, Ordering::Relaxed);
+                        })
+                        .expect("first concurrent perform must succeed");
+                }
+            });
+            scope.spawn(move || {
+                for _ in 0..8 {
+                    launcher_ref
+                        .perform(0, 32, |_, _| {
+                            second_ref.fetch_add(1, Ordering::Relaxed);
+                        })
+                        .expect("second concurrent perform must succeed");
+                }
+            });
+        });
+
+        assert_eq!(first_hits.load(Ordering::Relaxed), 256);
+        assert_eq!(second_hits.load(Ordering::Relaxed), 256);
     }
 }

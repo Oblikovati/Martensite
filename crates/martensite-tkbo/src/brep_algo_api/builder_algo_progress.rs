@@ -75,11 +75,13 @@ impl BRepAlgoAPIBuilderAlgo {
         range: &ProgressRange<'_>,
     ) -> ProgressCompletion {
         self.configure_general_fuse();
+        let saved_free = self.capture_input_free_flags();
         let (Some(builder), Some(filler)) = (self.builder.as_mut(), self.ds_filler.as_mut()) else {
             return ProgressCompletion::Completed;
         };
         let built = builder.perform_with_filler_on_progress(filler, range);
         let retained = self.retain_general_fuse_result();
+        Self::restore_input_free_flags(&saved_free);
         match built.and_then(|completion| retained.map(|()| completion)) {
             Ok(completion) => completion,
             Err(cause) => ProgressCompletion::Failed {

@@ -210,7 +210,7 @@ impl BRepAlgoAPIBooleanOperation {
 
     /// The section on the filler arguments, or the Boolean operation of the arguments and
     /// the tools.
-    fn operation_builder(&self) -> Box<dyn GeneralFuseAlgorithm> {
+    fn operation_builder(&self) -> Box<dyn GeneralFuseAlgorithm + Send> {
         if self.operation == Operation::Section {
             let mut section = BOPAlgoSection::new();
             if let Some(filler) = self.builder_algo.ds_filler() {

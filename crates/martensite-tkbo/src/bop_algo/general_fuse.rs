@@ -16,7 +16,7 @@ use std::ops::{Deref, DerefMut};
 /// let builder = BOPAlgoBuilder::new();
 /// assert!(builder.general_fuse().arguments().is_empty());
 /// ```
-pub trait GeneralFuseAlgorithm {
+pub trait GeneralFuseAlgorithm: Send {
     /// The `BOPAlgoBuilder` base; `algorithm.general_fuse().images()`.
     fn general_fuse(&self) -> &BOPAlgoBuilder;
     /// The mutable `BOPAlgoBuilder` base; `algorithm.general_fuse_mut().clear()`.

@@ -1,5 +1,5 @@
 //! The narrow FFI boundary of the Unix host queries: `uname`, `gethostname`,
-//! `gethostbyname`. Other hosts answer empty names.
+//! `getaddrinfo`. Other hosts answer empty names.
 #![allow(unsafe_code)]
 use super::{HostSource, SystemNames};
 
@@ -21,11 +21,6 @@ mod unix {
     mod hostname;
     #[cfg(all(target_os = "linux", target_env = "gnu"))]
     pub(super) use hostname::host_name;
-
-    // gethostbyname is POSIX (glibc, macOS libSystem) but not bound by the libc crate.
-    unsafe extern "C" {
-        fn gethostbyname(name: *const libc::c_char) -> *mut libc::hostent;
-    }
 
     fn field(bytes: &[libc::c_char]) -> Vec<u8> {
         bytes
@@ -80,23 +75,61 @@ mod unix {
         Ok(field(&value))
     }
 
+    /// Thread-safe IPv4 lookup via POSIX `getaddrinfo` (#150).
     pub(super) fn resolve_ipv4(name: &[u8]) -> Option<[u8; 4]> {
         let name: CString = CString::new(name).ok()?;
-        // SAFETY: `name` is a valid C string; the static result is read before any other
-        // resolver call on this thread.
-        let entry: *mut libc::hostent = unsafe { gethostbyname(name.as_ptr()) };
-        if entry.is_null() {
+        let mut hints: libc::addrinfo = unsafe { std::mem::zeroed() };
+        hints.ai_family = libc::AF_INET;
+        hints.ai_socktype = libc::SOCK_STREAM;
+        let mut result: *mut libc::addrinfo = std::ptr::null_mut();
+        // SAFETY: `name` is NUL-terminated, `hints` is initialized for AF_INET,
+        // and `result` receives an owned linked list freed via `freeaddrinfo`.
+        let status = unsafe {
+            libc::getaddrinfo(name.as_ptr(), std::ptr::null(), &hints, &mut result)
+        };
+        if status != 0 || result.is_null() {
             return None;
         }
-        // SAFETY: a non-null hostent from gethostbyname has a null-terminated address list
-        // of AF_INET addresses, each h_length (4) bytes long.
+        let mut address: Option<[u8; 4]> = None;
+        let mut cursor = result;
+        // SAFETY: `cursor` walks the valid linked list returned by `getaddrinfo`
+        // before `freeaddrinfo(result)` releases it.
         unsafe {
-            let first: *mut libc::c_char = *(*entry).h_addr_list;
-            if first.is_null() {
-                return None;
+            while !cursor.is_null() {
+                let entry = &*cursor;
+                if entry.ai_family == libc::AF_INET
+                    && !entry.ai_addr.is_null()
+                    && (entry.ai_addrlen as usize) >= std::mem::size_of::<libc::sockaddr_in>()
+                {
+                    let sockaddr = &*(entry.ai_addr.cast::<libc::sockaddr_in>());
+                    address = Some(sockaddr.sin_addr.s_addr.to_ne_bytes());
+                    break;
+                }
+                cursor = entry.ai_next;
             }
-            let bytes: &[u8] = std::slice::from_raw_parts(first.cast::<u8>(), 4);
-            Some([bytes[0], bytes[1], bytes[2], bytes[3]])
+            libc::freeaddrinfo(result);
+        }
+        address
+    }
+
+    #[cfg(test)]
+    mod resolve_ipv4_tests {
+        use super::resolve_ipv4;
+
+        #[test]
+        fn resolve_ipv4_is_thread_safe_for_loopback() {
+            let handles: Vec<_> = (0..8)
+                .map(|_| {
+                    std::thread::spawn(|| {
+                        for _ in 0..8 {
+                            assert_eq!(resolve_ipv4(b"127.0.0.1"), Some([127, 0, 0, 1]));
+                        }
+                    })
+                })
+                .collect();
+            for handle in handles {
+                handle.join().expect("resolver thread must not panic");
+            }
         }
     }
 

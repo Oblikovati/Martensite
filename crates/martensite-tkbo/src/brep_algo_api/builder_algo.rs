@@ -35,7 +35,7 @@ pub struct BRepAlgoAPIBuilderAlgo {
     /// False when the filler was given at construction (`myIsIntersectionNeeded`).
     pub(crate) is_intersection_needed: bool,
     pub(crate) ds_filler: Option<BOPAlgoPaveFiller>,
-    pub(crate) builder: Option<Box<dyn GeneralFuseAlgorithm>>,
+    pub(crate) builder: Option<Box<dyn GeneralFuseAlgorithm + Send>>,
     history: Handle<History>,
     simplifier_history: Handle<History>,
     /// The face/face intersection options set by the section API, none for the others.
@@ -250,11 +250,47 @@ impl BRepAlgoAPIBuilderAlgo {
     /// its history (`BuildResult`).
     pub(crate) fn build_result(&mut self) -> Result<(), Failure> {
         self.configure_general_fuse();
+        let saved_free = self.capture_input_free_flags();
         let (Some(builder), Some(filler)) = (self.builder.as_mut(), self.ds_filler.as_mut()) else {
             return Ok(());
         };
         builder.perform_with_filler(filler);
-        self.retain_general_fuse_result()
+        let retained = self.retain_general_fuse_result();
+        Self::restore_input_free_flags(&saved_free);
+        retained
+    }
+
+    /// Captures the `Free` flag of every input shape (arguments and tools) before a
+    /// non-destructive build so adding untouched inputs to a temporary result compound
+    /// cannot leak flag mutation (#461).
+    pub(crate) fn capture_input_free_flags(&self) -> Vec<(Shape, bool)> {
+        if !self.non_destructive {
+            return Vec::new();
+        }
+        let mut saved = Vec::new();
+        if let Some(filler) = self.ds_filler.as_ref() {
+            for shape in filler.arguments().iter() {
+                if let Ok(is_free) = shape.free() {
+                    saved.push((shape.clone(), is_free));
+                }
+            }
+        }
+        if let Some(builder) = self.builder.as_ref() {
+            for shape in builder.general_fuse().arguments().iter() {
+                if let Ok(is_free) = shape.free() {
+                    saved.push((shape.clone(), is_free));
+                }
+            }
+        }
+        saved
+    }
+
+    /// Restores captured `Free` flags on original input shapes after non-destructive detachment (#461).
+    pub(crate) fn restore_input_free_flags(saved: &[(Shape, bool)]) {
+        for (shape, was_free) in saved {
+            let restored = shape.clone();
+            let _ = restored.set_free(*was_free);
+        }
     }
 
     fn configure_general_fuse(&mut self) {

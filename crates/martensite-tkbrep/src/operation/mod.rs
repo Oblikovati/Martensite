@@ -7,4 +7,4 @@ mod result;
 
 pub use error::{FailureClass, OperationError, OperationKind};
 pub use history::{HistoryGraph, HistoryGraphBuilder, HistoryRelation, HistoryRelationKind};
-pub use result::OperationResult;
+pub use result::{GeometryRevision, OperationResult};
