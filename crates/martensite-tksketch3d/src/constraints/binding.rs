@@ -2,8 +2,8 @@
 //! Bind authored relations to solver columns and exact fixed coordinates.
 mod arc;
 use super::{
-    ConstraintFailure as Failure, ConstraintPolicy, ContinuityJoin, LineAngle, Relation,
-    RelationId, RelationSpec,
+    ConstraintFailure as Failure, ConstraintPolicy, ContinuityFailure, ContinuityJoin, LineAngle,
+    Relation, RelationId, RelationSpec,
     arc_layout::ArcLayout,
     continuity,
     incidence::{SharedEnds, shared_ends},
@@ -200,16 +200,25 @@ impl Layout<'_> {
         g2: bool,
     ) -> Result<(), Failure> {
         let stencil = continuity::bind(self.geometry, id, join, g2)?;
-        let reference = join.reference().chart_direction(self.geometry, id)?;
-        self.equation(
-            id,
-            stencil.points(),
+        let direction = join.reference().chart_direction(self.geometry, id)?;
+        let reference = FrameReference::from_direction(direction);
+        let equation = if let Some((fit, tangent)) = stencil.fit_tangent() {
+            let weights = tangent.station_weights().map_err(|cause| {
+                Failure::Continuity(id, ContinuityFailure::FitSensitivity(fit, cause))
+            })?;
+            Equation::FitTangent {
+                reference,
+                tangent,
+                weights,
+            }
+        } else {
             Equation::Continuity {
-                reference: FrameReference::from_direction(reference),
+                reference,
                 cubic_reference: matches!(join, ContinuityJoin::CubicCubic(_)),
                 curvature_scale: g2.then_some(self.length_scale),
-            },
-        )
+            }
+        };
+        self.equation(id, stencil.points(), equation)
     }
 
     fn angle(

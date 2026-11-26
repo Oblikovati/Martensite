@@ -7,7 +7,7 @@ pub(super) fn admit(
     geometry: &Snapshot,
     relations: &BTreeMap<RelationId, Relation>,
     policy: ConstraintPolicy,
-    planar: bool,
+    with_attachment: bool,
 ) -> Result<(), Failure> {
     let sine = policy.parallel_sine_tolerance;
     if !(sine > 0. && sine < 1.) {
@@ -22,12 +22,9 @@ pub(super) fn admit(
             .entities
             .len()
             .saturating_add(relations.len())
-            .saturating_add(usize::from(planar)),
+            .saturating_add(usize::from(with_attachment)),
         policy.validation_items,
     )?;
-    if let Some(&spline) = geometry.fit_splines.keys().next() {
-        return Err(Failure::UnsupportedEntity(EntityId::FitSpline(spline)));
-    }
     let points = geometry
         .owned_ids()
         .filter(|entity| matches!(entity, EntityId::Point(_)))
@@ -36,7 +33,7 @@ pub(super) fn admit(
         PolicyQuantity::Coordinates,
         points
             .saturating_mul(3)
-            .saturating_add(2 * usize::from(planar)),
+            .saturating_add(2 * usize::from(with_attachment)),
         policy.preview.coordinates,
     )
 }

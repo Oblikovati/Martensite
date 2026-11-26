@@ -7,6 +7,9 @@ use super::{
 use crate::predicates::roots::certificate_arithmetic::rounding::{outward_binary64, outward_sqrt};
 use std::{cmp::Ordering, fmt};
 
+mod tangent;
+pub use tangent::{CubicFitEnd, CubicFitTangent};
+
 /// A finite four-station map with two derived Bernstein controls.
 ///
 /// Each retained interior row operates relative to station zero. Its implicit first

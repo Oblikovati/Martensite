@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Bind the reference and adjusted curves by their shared authored endpoint.
 use super::{ConstraintFailure, ConstraintPolicy, RelationId};
-use crate::{ControlSplineId, EntityId, LineId, PointId, Snapshot};
-use martensite_tkmath::predicates::roots::CubicEndJetFailure;
+use crate::{ControlSplineId, EntityId, FitSplineId, LineId, PointId, Snapshot};
+use martensite_tkmath::predicates::roots::{
+    CubicEndJetFailure, CubicFitNumericError, CubicFitTangent,
+};
 use std::{cmp::Ordering, fmt};
 
+mod fit;
 mod pair;
+pub use fit::LineFitCubicJoin;
 mod reference;
 pub use pair::CubicCubicJoin;
 pub(super) use reference::JoinReference;
@@ -15,6 +19,8 @@ pub(super) use reference::JoinReference;
 pub enum ContinuityJoin {
     /// An incoming line and an outgoing control cubic.
     LineCubic(LineCubicJoin),
+    /// An incoming line and an outgoing fixed four-station fit cubic. Tangent only.
+    LineFitCubic(LineFitCubicJoin),
     /// An incoming and an outgoing control cubic.
     CubicCubic(CubicCubicJoin),
 }
@@ -23,6 +29,7 @@ impl ContinuityJoin {
     pub(super) fn reference(self) -> JoinReference {
         match self {
             Self::LineCubic(join) => JoinReference::Line(join.line),
+            Self::LineFitCubic(join) => JoinReference::Line(join.line),
             Self::CubicCubic(join) => JoinReference::Cubic(join.reference, join.endpoint),
         }
     }
@@ -80,6 +87,12 @@ pub enum ContinuityFailure {
     ReferenceDirection(ControlSplineId, PointId),
     /// The exact endpoint stencil could not be evaluated.
     Endpoint(CubicEndJetFailure),
+    /// Curvature constraints on a fit cubic have no checked solver stencil.
+    FitCurvatureUnsupported(FitSplineId),
+    /// The retained station-to-pole derivative could not supply finite sensitivities.
+    FitSensitivity(FitSplineId, CubicFitNumericError),
+    /// The rebuilt stored endpoint does not retain the authored point's coordinate bits.
+    FitEndpointIdentity(FitSplineId, PointId),
     /// Curvature tolerance must be a finite nonnegative inverse length.
     InvalidCurvatureTolerance(f64),
 }
@@ -101,6 +114,7 @@ impl std::error::Error for ContinuityFailure {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::Endpoint(source) => Some(source),
+            Self::FitSensitivity(_, source) => Some(source),
             _ => None,
         }
     }
@@ -110,11 +124,16 @@ impl std::error::Error for ContinuityFailure {
 pub(super) struct JoinStencil {
     points: [PointId; 5],
     count: usize,
+    fit: Option<(FitSplineId, CubicFitTangent)>,
 }
 
 impl JoinStencil {
     pub(super) fn points(&self) -> &[PointId] {
         &self.points[..self.count]
+    }
+
+    pub(super) const fn fit_tangent(self) -> Option<(FitSplineId, CubicFitTangent)> {
+        self.fit
     }
 
     fn coordinates(self, geometry: &Snapshot) -> Option<[[f64; 3]; 5]> {
@@ -134,9 +153,14 @@ pub(super) fn bind(
 ) -> Result<JoinStencil, ConstraintFailure> {
     let (points, count) = match join {
         ContinuityJoin::LineCubic(join) => line_stencil(geometry, id, join, g2)?,
+        ContinuityJoin::LineFitCubic(join) => return fit::bind(geometry, id, join, g2),
         ContinuityJoin::CubicCubic(join) => pair::bind(geometry, id, join, g2)?,
     };
-    Ok(JoinStencil { points, count })
+    Ok(JoinStencil {
+        points,
+        count,
+        fit: None,
+    })
 }
 
 fn line_stencil(
@@ -203,8 +227,7 @@ pub(super) fn check_seed(
             id,
             EntityId::Point(stencil.points[1]),
         ))?;
-    let forward = measure(join, points, 1., None)
-        .map_err(|cause| ConstraintFailure::Continuity(id, cause))?;
+    let forward = measure(geometry, id, join, points, 1., None)?;
     if !forward {
         return Err(ConstraintFailure::Continuity(
             id,
@@ -228,6 +251,8 @@ pub(super) fn within(
         return false;
     };
     measure(
+        geometry,
+        id,
         join,
         points,
         policy.parallel_sine_tolerance,
@@ -237,15 +262,21 @@ pub(super) fn within(
 }
 
 fn measure(
+    geometry: &Snapshot,
+    id: RelationId,
     join: ContinuityJoin,
     points: [[f64; 3]; 5],
     limit: f64,
     curvature: Option<f64>,
-) -> Result<bool, ContinuityFailure> {
-    match join {
+) -> Result<bool, ConstraintFailure> {
+    let checked = match join {
         ContinuityJoin::LineCubic(_) => line_limits(points, limit, curvature),
+        ContinuityJoin::LineFitCubic(join) => {
+            return fit::limits(geometry, id, join, [points[0], points[1]], limit);
+        }
         ContinuityJoin::CubicCubic(_) => pair::limits(points, limit, curvature),
-    }
+    };
+    checked.map_err(|cause| ConstraintFailure::Continuity(id, cause))
 }
 
 fn line_limits(

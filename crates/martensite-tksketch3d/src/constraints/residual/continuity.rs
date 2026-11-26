@@ -4,7 +4,9 @@ use super::{
     DualNumber, FrameReference, ResidualError, Vector, checked_length, components, directed, unit,
 };
 use crate::constraints::ParallelDirection;
-use martensite_tkmath::predicates::roots::{CubicEndJet, CubicEndStencil};
+use martensite_tkmath::predicates::roots::{
+    CubicEndJet, CubicEndStencil, CubicFitEnd, CubicFitTangent,
+};
 
 pub(super) fn evaluate(
     inputs: &[DualNumber],
@@ -23,12 +25,7 @@ pub(super) fn evaluate(
             curvature: None,
         }
     };
-    directed(
-        &incoming.tangent,
-        &adjusted.tangent,
-        ParallelDirection::Same,
-    )?;
-    let basis = reference.basis(&incoming.tangent, "curve continuity")?;
+    let basis = tangent_basis(reference, &incoming.tangent, &adjusted.tangent)?;
     let mut rows = components(&basis, &adjusted.tangent)?.to_vec();
     if let (Some(scale), Some(mut curvature)) = (curvature_scale, adjusted.curvature) {
         if let Some(reference_curvature) = incoming.curvature {
@@ -38,6 +35,36 @@ pub(super) fn evaluate(
         rows.extend([a.scaled(scale)?, b.scaled(scale)?]);
     }
     Ok(rows)
+}
+
+pub(super) fn evaluate_fit(
+    inputs: &[DualNumber],
+    line: &Vector,
+    reference: FrameReference,
+    tangent: CubicFitTangent,
+    weights: [f64; 4],
+) -> Result<Vec<DualNumber>, ResidualError> {
+    let offsets = match tangent.end() {
+        CubicFitEnd::Start => [3, 6, 9, 12],
+        CubicFitEnd::End => [12, 9, 6, 3],
+    };
+    let points = offsets.map(|start| std::array::from_fn(|axis| inputs[start + axis].value()));
+    let value = tangent
+        .velocity(points)
+        .map_err(|cause| ResidualError::Domain(cause.to_string()))?;
+    let stencil = std::array::from_fn(|index| (offsets[index], weights[index]));
+    let adjusted = unit(&inject::<4>(value, inputs, stencil)?)?;
+    let basis = tangent_basis(reference, &unit(line)?, &adjusted)?;
+    Ok(components(&basis, &adjusted)?.into())
+}
+
+fn tangent_basis(
+    reference: FrameReference,
+    incoming: &Vector,
+    outgoing: &Vector,
+) -> Result<[Vector; 2], ResidualError> {
+    directed(incoming, outgoing, ParallelDirection::Same)?;
+    reference.basis(incoming, "curve continuity")
 }
 
 struct Endpoint {

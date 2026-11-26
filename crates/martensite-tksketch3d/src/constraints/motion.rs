@@ -132,6 +132,12 @@ impl ConstrainedSketch {
         )?;
         // A rotated reference can require a different stable frame for the next drag.
         let program = Program::new(&geometry, &self.relations, self.policy, &mut cancelled)?;
+        program.verify_fit_replay(
+            &geometry,
+            &self.relations,
+            self.policy.solve.relative_tolerance,
+            &mut cancelled,
+        )?;
         poll(&mut cancelled)?;
         Ok(Self {
             geometry: Arc::new(geometry),

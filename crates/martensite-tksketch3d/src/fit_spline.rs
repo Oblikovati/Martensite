@@ -11,7 +11,8 @@ use crate::{
 use martensite_tkmath::{
     gp::{Point3, Vector3},
     predicates::roots::{
-        CubicChordDistortion, CubicFitNumericError, metric_bounds::BezierRegularityReport,
+        CubicChordDistortion, CubicFitEnd, CubicFitNumericError, CubicFitTangent,
+        metric_bounds::BezierRegularityReport,
     },
 };
 use prepare::PreparedFit;
@@ -178,6 +179,10 @@ impl FitSplineGeometry {
     /// Example: `spline.station_weights(0.5)?[1][2]`.
     pub fn station_weights(&self, parameter: f64) -> Result<[[f64; 4]; 3], CubicFitNumericError> {
         self.operator.operator.weight_jet(parameter)
+    }
+
+    pub(crate) fn solver_tangent(&self, end: CubicFitEnd) -> CubicFitTangent {
+        self.operator.operator.endpoint_tangent(end)
     }
 
     fn endpoint_values(&self) -> [Point3; 2] {

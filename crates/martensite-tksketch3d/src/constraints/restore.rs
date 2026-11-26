@@ -26,6 +26,12 @@ impl ConstrainedSketch {
         let values = staged_relations(&geometry, relations, policy, &mut cancelled)?;
         let program = Program::new(&geometry, &values, policy, &mut cancelled)?;
         verify_relations(&geometry, &values, policy, &mut cancelled)?;
+        program.verify_fit_replay(
+            &geometry,
+            &values,
+            policy.solve.relative_tolerance,
+            &mut cancelled,
+        )?;
         Ok(Self {
             geometry: Arc::new(geometry),
             relations: Arc::new(values),

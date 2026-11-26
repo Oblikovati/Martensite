@@ -25,9 +25,9 @@ pub mod sketch_incidence;
 pub mod surface_query;
 pub use cubic_bernstein::{
     CubicBernsteinFailure, CubicBernsteinJet, CubicChordDistortion, CubicEndJet,
-    CubicEndJetFailure, CubicEndStencil, CubicFitMaterialization, CubicFitNumericError,
-    CubicFitOperator, ExactCubicBernstein3, RoundedCubicEndJet, TangentDirectionBand,
-    cubic_chord_distortion,
+    CubicEndJetFailure, CubicEndStencil, CubicFitEnd, CubicFitMaterialization,
+    CubicFitNumericError, CubicFitOperator, CubicFitTangent, ExactCubicBernstein3,
+    RoundedCubicEndJet, TangentDirectionBand, cubic_chord_distortion,
 };
 pub use dyadic::DyadicBound;
 pub use error::RootIsolationError;

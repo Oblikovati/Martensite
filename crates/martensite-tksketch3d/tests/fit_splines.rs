@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-only
 mod replay;
+mod tangent;
 
 use crate::fixture::{lid, line, pid, point, seed};
 use martensite_tksketch3d::{
     BatchPhase, ControlSplineFailure, ControlSplineProofPolicy, CurveId, CurveRole, Edit,
     EditFailure, EntityId, FitSplineFailure, FitSplineId, FitSplineParameters, FitSplinePolicy,
     FitSplineQuantity, MinimumLength, PointRole, SketchFitSpline, Snapshot,
-    constraints::{ConstrainedSketch, ConstraintFailure},
+    constraints::ConstrainedSketch,
 };
 use std::{num::NonZeroU64, ptr};
 
@@ -360,10 +361,13 @@ fn stations_cascade_once_and_shared_endpoint_survives_a_fit_deletion() {
         ]
     );
     assert!(source.fit_spline(fit_id()).is_some());
-    assert!(matches!(
-        ConstrainedSketch::new(source, crate::constraints::policy()),
-        Err(ConstraintFailure::UnsupportedEntity(EntityId::FitSpline(id))) if id == fit_id()
-    ));
+    let constrained = ConstrainedSketch::new(source.clone(), crate::constraints::policy()).unwrap();
+    let rank = constrained.inspect_rank().unwrap();
+    assert_eq!(
+        (rank.rank, rank.degrees_of_freedom, rank.equations),
+        (0, 12, 0)
+    );
+    assert_eq!(constrained.geometry(), &source);
 }
 
 #[test]

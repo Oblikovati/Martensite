@@ -3,7 +3,7 @@ use super::{
     ArcBranch, AxisDirection, CoordinateAxis, LineAngle, ParallelDirection, metric,
     on_face::AttachmentEquation,
 };
-use martensite_tkmath::gp::Point3;
+use martensite_tkmath::{gp::Point3, predicates::roots::CubicFitTangent};
 use martensite_tksolve::{
     ad::{DualNumber, DualVector},
     residual::{ResidualError, ResidualSource, ResidualTolerance},
@@ -19,7 +19,8 @@ type Vector = DualVector<3>;
 // The parallel path uses fewer than 100 elementary dual operations and copies, including
 // both vector normalizations, the two basis vectors and the branch dot product. Colinear adds
 // two length projections. G2 adds fixed-size exact endpoint stencils and two curvature
-// projections. Equal Radius evaluates two three-point sagitta stencils and their difference.
+// projections. Equal Radius evaluates two sagitta stencils. The fit tangent stencil uses
+// three fixed affine differences per axis and two normalized tangent rows.
 // Charging 256 per structural unit covers these operations, fixed-size seeding,
 // row collection and Angle's outward trial guard. The charge counts abstract scalar work,
 // independent of allocator or libm time.
@@ -79,6 +80,11 @@ pub(super) enum Equation {
         target: LineAngle,
         minimum_sine: f64,
     },
+    FitTangent {
+        reference: FrameReference,
+        tangent: CubicFitTangent,
+        weights: [f64; 4],
+    },
     Continuity {
         reference: FrameReference,
         cubic_reference: bool,
@@ -89,6 +95,15 @@ pub(super) enum Equation {
 impl Equation {
     pub(super) fn refreshed_chart(self, direction: [f64; 3]) -> Option<Self> {
         match self {
+            Self::FitTangent {
+                reference,
+                tangent,
+                weights,
+            } if reference.needs_refresh(direction) => Some(Self::FitTangent {
+                reference: FrameReference::from_direction(direction),
+                tangent,
+                weights,
+            }),
             Self::PointOnLine { reference, scale } if reference.needs_refresh(direction) => {
                 Some(Self::PointOnLine {
                     scale,
@@ -142,6 +157,7 @@ impl Equation {
             | Self::PointOnLine { .. }
             | Self::Parallel { .. }
             | Self::Axis(..)
+            | Self::FitTangent { .. }
             | Self::Continuity { .. } => 2,
         }
     }
@@ -149,6 +165,7 @@ impl Equation {
     fn width(self) -> usize {
         match self {
             Self::EqualRadius { .. } => 18,
+            Self::FitTangent { .. } => 15,
             Self::Continuity {
                 cubic_reference: true,
                 curvature_scale: Some(_),
@@ -254,6 +271,11 @@ impl ResidualSource for Equation {
                 target,
                 minimum_sine,
             } => angle_row(v, &first()?, target, minimum_sine),
+            Self::FitTangent {
+                reference,
+                tangent,
+                weights,
+            } => continuity::evaluate_fit(v, &first()?, reference, tangent, weights),
             Self::Continuity {
                 reference,
                 cubic_reference,

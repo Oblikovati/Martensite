@@ -18,6 +18,7 @@ use std::{borrow::Cow, collections::BTreeMap, sync::Arc};
 mod admission;
 mod chart;
 mod failure;
+mod fit_replay;
 use admission::admit;
 use failure::{preview_failure, solve_failure};
 
