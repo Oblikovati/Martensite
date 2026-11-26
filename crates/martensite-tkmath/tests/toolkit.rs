@@ -8,3 +8,4 @@ include!("suites/cases_01.rs");
 
 mod direction_normalization;
 mod stored_surface_frames;
+mod predicate_stress_corpus;

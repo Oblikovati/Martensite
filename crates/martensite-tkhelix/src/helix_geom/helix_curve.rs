@@ -254,8 +254,8 @@ impl Adaptor3dCurve for HelixGeomHelixCurve {
         let radius = local.radius(u);
         let twice = 2. * local.radial_rate;
         let x = -radius * cos_t - twice * sin_t;
-        // #614. Preserve the audited legacy Y acceleration for existing replay.
-        let y = local.sense(-radius * sin_t - twice * cos_t);
+        // #614: y(t) = s * r(t) * sin(t) => y''(t) = s * (2 * r'(t) * cos(t) - r(t) * sin(t)).
+        let y = local.sense(-radius * sin_t + twice * cos_t);
         let d2 = Vector3::new(x, y, 0.);
         Ok(GeomCurveD2 { point, d1, d2 })
     }

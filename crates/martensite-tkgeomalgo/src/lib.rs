@@ -8,6 +8,7 @@
 //! their modules.
 pub mod app_blend;
 pub mod approx_int;
+pub mod completeness;
 pub mod fair_curve;
 pub mod gcc_ana;
 pub mod gcc_ent;
