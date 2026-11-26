@@ -114,7 +114,7 @@ impl BOPAlgoBuilder {
             shapes_sd: DataMap::with_allocator(ShapeMapHasher, 100, resource.clone()),
             origins: DataMap::with_allocator(ShapeMapHasher, 100, resource.clone()),
             in_parts: DataMap::with_allocator(ShapeMapHasher, 100, resource.clone()),
-            non_destructive: false,
+            non_destructive: true,
             glue: Glue::Off,
             check_inverted: true,
         }

@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added the deep isolation test suite (`deep_isolation`) covering source vertex, tolerance, and location mutations after Boolean success, failure, and cancellation (#25).
+
 - Added the two-process byte-for-byte determinism gate (`two_process_determinism`) and `HashMap`/`HashSet` determinism audit (`docs/features/determinism/hashmap-audit.md`) (#53).
 
 - Added the written thread-safety contract, public type classification manifest (`docs/architecture/thread-safety-manifest.tsv`), compile-time `Send`/`Sync` assertions, and CI manifest check in `cargo xtask` (#61).
@@ -170,7 +172,13 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added revision-checked extraction of the extrusion chart from a saved cylindrical face, so edits could reuse the selected face's native location, axes and radius (#420).
 
+### Changed
+
+- Changed Booleans (`BOPAlgoBuilder`, `BOPAlgoPaveFiller`, `BRepAlgoAPIBuilderAlgo`) and lofts (`BRepOffsetAPIThruSections`, `BRepFillGenerator`) to be non-destructive by default (`non_destructive: true`, `mutable_input: false`) (#26).
+
 ### Fixed
+
+- Detached non-destructive `BRepAlgoAPIBuilderAlgo` Boolean results with a deep copy and merged copy history so later source vertex or location mutations cannot invalidate completed results (#457).
 
 - Replaced `BaseAllocator`'s inner `Box<AllocatorFacadeFields>` with `Arc<AllocatorFacadeFields>` to fix a Stacked Borrows violation detected by Miri under `allocator-api2` and added Miri-verified `Send`/`Sync` audit tests for all audited collection and allocator implementations (#63).
 
