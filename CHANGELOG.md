@@ -166,6 +166,14 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Normalized finite nonzero `Direction3`, `Direction2`, `Vector3`, `Vector2`, `Xyz`, and `Xy` inputs without squared-norm overflow or underflow, and rejected zero and non-finite inputs (#550).
+
+- Excluded planar-face restriction edges from Exact HLR smooth 3D outline compounds by default while keeping legacy planar restriction replay selectable through `OutlineClassificationBehavior::LegacyPlanarRestrictionsV1` (#612).
+
+- Preserved incident edge maximum tolerance instead of summing edge tolerances when storing 2D offset intersection vertices, preventing thick-solid shell operations from widening exact cube vertex tolerances (#554).
+
+- Enforced admitted `VK_KHR_line_rasterization` device extension gating through `LineCapabilities::enabled_extension` before `vkCreateDevice` (#382).
+
 - Isolated Contap surface sampling per operation and made contour diagnostics opt-in through the caller's writer (#611).
 
 - Fixed section ancestry queries for boundary-coincident edges with a unique source face on each operand (#613).

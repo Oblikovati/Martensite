@@ -83,7 +83,7 @@ fn device_extension_names(
     if runtime.meshlet_group_limit != 0 {
         extensions.push(ash::ext::mesh_shader::NAME.as_ptr());
     }
-    if let Some(name) = runtime.lines.extension.filter(|_| runtime.lines.bresenham) {
+    if let Some(name) = runtime.lines.enabled_extension() {
         extensions.push(name.as_ptr());
     }
     append_window_extensions(runtime, &mut extensions);
