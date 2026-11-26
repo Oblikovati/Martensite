@@ -44,6 +44,7 @@ mod report;
 mod source_sdk;
 mod suite_weights;
 mod targets;
+mod thread_safety_manifest;
 mod thread_sanitizer;
 mod thread_sanitizer_selection;
 #[cfg(test)]

@@ -196,6 +196,9 @@ fn lint_changed_files(
     reporter.step("Check toolkit unsafe inventory", || {
         check_unsafe_inventory(context.runner, context.root(), changed)
     })?;
+    reporter.step("Check thread-safety manifest", || {
+        crate::thread_safety_manifest::check_thread_safety_manifest(context.root(), changed)
+    })?;
     let whitespace = reporter.step("Check whitespace in changed files", || {
         check_whitespace(&context.git, merge_base, changed)
     });
