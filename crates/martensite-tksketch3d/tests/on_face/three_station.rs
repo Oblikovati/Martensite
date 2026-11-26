@@ -230,48 +230,51 @@ fn zero_distance_zero_chord_duplicate_id_and_zero_work_are_independently_typed()
     let original = source_recipe(&binding, PARAMETERS.map(|t| lifted(t, 1.25)));
     let mut input = original;
     input.native_options.max_subdivisions = 0;
-    let attempt =
-        |input| binding.create_three_station_curve(&source, input, || original.source, || false);
+    let refuse = |input| {
+        binding
+            .create_three_station_curve(&source, input, || original.source, || false)
+            .unwrap_err()
+    };
     assert!(matches!(
-        attempt(input),
-        Err(Failure::Native(FaceAttachmentCubicError::Proof(
+        refuse(input),
+        Failure::Native(FaceAttachmentCubicError::Proof(
             PlanarCubicProofFailure::Incomplete { .. }
-        )))
+        ))
     ));
     let mut input = original;
     input.native_options.distance_limit = 0.;
     assert!(matches!(
-        attempt(input),
-        Err(Failure::Native(FaceAttachmentCubicError::Native(
+        refuse(input),
+        Failure::Native(FaceAttachmentCubicError::Native(
             FaceAttachmentCurveError::Tolerance { limit: 0., .. }
-        )))
+        ))
     ));
     let mut input = original;
     input.stations[1] = Station::Create {
         point: pid(7),
         uv: lifted(0., 1.25),
     };
-    assert!(matches!(attempt(input),
-        Err(Failure::Edit(EditFailure::QuadraticFitSpline { source: FitSplineFailure::CoincidentStations([a,b]), .. }))
+    assert!(matches!(refuse(input),
+        Failure::Edit(EditFailure::QuadraticFitSpline { source: FitSplineFailure::CoincidentStations([a,b]), .. })
             if [a,b] == [pid(2),pid(7)]
     ));
     input.stations[1] = input.stations[0];
     assert!(matches!(
-        attempt(input),
-        Err(Failure::Edit(EditFailure::DuplicateIdentity { .. }))
+        refuse(input),
+        Failure::Edit(EditFailure::DuplicateIdentity { .. })
     ));
     let mut input = original;
     input.fit_policy.max_inverse_gain = 3.0_f64.next_down();
     assert!(matches!(
-        attempt(input),
-        Err(Failure::Edit(EditFailure::QuadraticFitSpline {
+        refuse(input),
+        Failure::Edit(EditFailure::QuadraticFitSpline {
             source: FitSplineFailure::Limit {
                 quantity: FitSplineQuantity::InverseGain,
                 upper: 3.,
                 ..
             },
             ..
-        }))
+        })
     ));
 }
 
