@@ -138,11 +138,16 @@ mod tests {
 
         let class_ab = set.try_merge(a, b).expect("a and b within 1e-5");
         assert!(set.are_coincident(a, b));
-        assert_eq!(set.try_merge(b, d).expect("d keeps diameter <= 1e-5"), class_ab);
+        assert_eq!(
+            set.try_merge(b, d).expect("d keeps diameter <= 1e-5"),
+            class_ab
+        );
         assert!(set.are_coincident(a, d));
 
         // Merging c with b would make dist(a, c) = 1.2e-5 > 1e-5: refused!
-        let err = set.try_merge(b, c).expect_err("must refuse diameter exceedance");
+        let err = set
+            .try_merge(b, c)
+            .expect_err("must refuse diameter exceedance");
         assert!(err.diameter > err.max_diameter);
         assert!(!set.are_coincident(a, c));
     }

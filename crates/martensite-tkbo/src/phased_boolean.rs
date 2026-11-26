@@ -148,30 +148,24 @@ mod tests {
 
     #[test]
     fn pipeline_unites_multiple_tools_and_rejects_unverified_hints() {
-        let base = BRepPrimAPIMakeBox::from_points(
-            Point3::new(0.0, 0.0, 0.0),
-            Point3::new(4.0, 4.0, 4.0),
-        )
-        .expect("base")
-        .shape()
-        .expect("shape")
-        .clone();
-        let t1 = BRepPrimAPIMakeBox::from_points(
-            Point3::new(1.0, 1.0, 2.0),
-            Point3::new(2.0, 2.0, 5.0),
-        )
-        .expect("t1")
-        .shape()
-        .expect("shape")
-        .clone();
-        let t2 = BRepPrimAPIMakeBox::from_points(
-            Point3::new(2.5, 1.0, 2.0),
-            Point3::new(3.5, 2.0, 5.0),
-        )
-        .expect("t2")
-        .shape()
-        .expect("shape")
-        .clone();
+        let base =
+            BRepPrimAPIMakeBox::from_points(Point3::new(0.0, 0.0, 0.0), Point3::new(4.0, 4.0, 4.0))
+                .expect("base")
+                .shape()
+                .expect("shape")
+                .clone();
+        let t1 =
+            BRepPrimAPIMakeBox::from_points(Point3::new(1.0, 1.0, 2.0), Point3::new(2.0, 2.0, 5.0))
+                .expect("t1")
+                .shape()
+                .expect("shape")
+                .clone();
+        let t2 =
+            BRepPrimAPIMakeBox::from_points(Point3::new(2.5, 1.0, 2.0), Point3::new(3.5, 2.0, 5.0))
+                .expect("t2")
+                .shape()
+                .expect("shape")
+                .clone();
 
         let false_hint = CoincidenceHint {
             object_face_index: 999,

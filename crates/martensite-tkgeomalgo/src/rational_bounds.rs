@@ -17,8 +17,7 @@ impl RationalPatchAabb {
     /// True when `self` and `other` overlap after inflating by `margin`.
     pub fn overlaps(&self, other: &Self, margin: f64) -> bool {
         (0..3).all(|axis| {
-            self.min[axis] - margin <= other.max[axis]
-                && other.min[axis] - margin <= self.max[axis]
+            self.min[axis] - margin <= other.max[axis] && other.min[axis] - margin <= self.max[axis]
         })
     }
 }
@@ -158,11 +157,7 @@ mod tests {
             vec![Point3::new(0.5, 0.0, z), Point3::new(0.5, 1.0, z)],
             vec![Point3::new(1.0, 0.0, z), Point3::new(1.0, 1.0, z)],
         ];
-        let weights = vec![
-            vec![1.0, 1.0],
-            vec![mid_weight, mid_weight],
-            vec![1.0, 1.0],
-        ];
+        let weights = vec![vec![1.0, 1.0], vec![mid_weight, mid_weight], vec![1.0, 1.0]];
         RationalBezierPatch::new(poles, weights).expect("valid patch")
     }
 
