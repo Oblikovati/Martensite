@@ -51,7 +51,15 @@ fn non_destructive_disjoint_fuse_preserves_input_free_flag_and_bytes() {
     let left_before = serialize_shape(&left);
     let right_before = serialize_shape(&right);
 
-    let fuse = BRepAlgoAPIFuse::from_shapes(&left, &right).expect("fuse disjoint boxes");
+    let mut fuse = BRepAlgoAPIFuse::new();
+    fuse.set_non_destructive(true);
+    let mut args = martensite_tkernel::ncollection::List::default();
+    args.append(left.clone());
+    let mut tools = martensite_tkernel::ncollection::List::default();
+    tools.append(right.clone());
+    fuse.set_arguments(&args);
+    fuse.set_tools(&tools);
+    fuse.build().expect("fuse disjoint boxes");
     assert!(fuse.is_done());
 
     assert!(left.free().expect("left free after"));

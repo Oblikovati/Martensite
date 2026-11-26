@@ -66,7 +66,7 @@ impl BRepFillGenerator {
             my_map: GeneratedFaces::default(),
             my_old_new_shapes: DataMap::default(),
             my_reshaper: BRepToolsReShape::new(),
-            my_mutable_input: false,
+            my_mutable_input: true,
             my_status: ThruSectionErrorStatus::NotDone,
         }
     }

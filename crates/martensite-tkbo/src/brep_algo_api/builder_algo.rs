@@ -51,7 +51,7 @@ impl BRepAlgoAPIBuilderAlgo {
         Self {
             algo: BRepAlgoAPIAlgo::new(),
             arguments: List::default(),
-            non_destructive: true,
+            non_destructive: false,
             glue: Glue::Off,
             check_inverted: true,
             fill_history: true,
@@ -329,16 +329,13 @@ impl BRepAlgoAPIBuilderAlgo {
             }
             self.history = Handle::new(history);
         }
-        if self.non_destructive && !self.algo.base.my_shape.is_null() {
-            self.detach_non_destructive_result()?;
-        }
         Ok(())
     }
 
     /// Deep-copy the published non-destructive Boolean result and compose its copy history
     /// so later mutations to source vertices, edges, curves, pcurves, tolerances, or meshes
     /// cannot invalidate the completed result (#457).
-    fn detach_non_destructive_result(&mut self) -> Result<(), Failure> {
+    pub fn detach_non_destructive_result(&mut self) -> Result<(), Failure> {
         let mut copy = BRepBuilderAPICopy::with_shape(&self.algo.base.my_shape, true, true)?;
         if !copy.is_done() {
             return Ok(());

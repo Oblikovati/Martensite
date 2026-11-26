@@ -127,7 +127,7 @@ impl BOPAlgoPaveFiller {
             data_structure: None,
             context: Handle::default(),
             iterator: None,
-            non_destructive: true,
+            non_destructive: false,
             glue: Glue::Off,
             avoid_build_pcurve: false,
             is_primary: true,

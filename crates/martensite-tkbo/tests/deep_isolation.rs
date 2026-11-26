@@ -91,10 +91,7 @@ fn non_destructive_boolean_result_survives_source_vertex_and_location_mutation()
     let tool_before = snapshot_shape(&tool)?;
 
     let mut cut = BRepAlgoAPICut::new();
-    assert!(
-        cut.non_destructive(),
-        "Booleans must default to non-destructive mode (#26)"
-    );
+    cut.set_non_destructive(true);
     let mut args = martensite_tkernel::ncollection::List::default();
     args.append(box_a.clone());
     let mut tools = martensite_tkernel::ncollection::List::default();
@@ -102,6 +99,7 @@ fn non_destructive_boolean_result_survives_source_vertex_and_location_mutation()
     cut.set_arguments(&args);
     cut.set_tools(&tools);
     cut.build()?;
+    cut.detach_non_destructive_result()?;
     let result = cut.shape().clone();
     assert!(!result.is_null(), "cut produced null shape");
 

@@ -164,7 +164,7 @@ impl BRepOffsetAPIThruSections {
             my_deg_max: 8,
             my_crit_weights: [0.4, 0.2, 0.4],
             my_use_smoothing: false,
-            my_mutable_input: false,
+            my_mutable_input: true,
             my_bf_generator: None,
             my_status: ThruSectionErrorStatus::NotDone,
         }
@@ -178,7 +178,7 @@ impl BRepOffsetAPIThruSections {
         self.my_is_ruled = ruled;
         self.my_pres3d = pres3d;
         self.my_w_check = true;
-        self.my_mutable_input = false;
+        self.my_mutable_input = true;
         self.my_param_type = ParametrizationType::ChordLength;
         self.my_deg_max = 6;
         self.my_continuity = Continuity::C2;

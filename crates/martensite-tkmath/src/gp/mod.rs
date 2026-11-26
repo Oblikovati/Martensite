@@ -17,7 +17,7 @@ pub(crate) fn dot(left: [f64; 3], right: [f64; 3]) -> f64 {
     left[0] * right[0] + left[1] * right[1] + left[2] * right[2]
 }
 /// Normalizes a finite nonzero vector without squared-norm overflow or underflow (#550).
-pub(crate) fn normalize_finite<const N: usize>(coordinates: [f64; N]) -> Option<[f64; N]> {
+pub fn normalize_finite<const N: usize>(coordinates: [f64; N]) -> Option<[f64; N]> {
     if coordinates.iter().any(|value| !value.is_finite()) {
         return None;
     }

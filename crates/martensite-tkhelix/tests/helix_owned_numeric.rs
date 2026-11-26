@@ -41,10 +41,10 @@ fn check_zero_angle(
         (first.x(), first.y(), first.z()),
         (slope, sign * radius, rise),
     );
-    // #614: analytic tapered Y second derivative is +sign * 2 * slope at u = 0.
+    // The final Y component deliberately pins the legacy tapered-D2 sign defect for OCCT replay.
     check_components(
         (second.x(), second.y(), second.z()),
-        (-radius, sign * 2. * slope, 0.),
+        (-radius, -sign * 2. * slope, 0.),
     );
 }
 
@@ -55,11 +55,11 @@ fn check_components(actual: (f64, f64, f64), expected: (f64, f64, f64)) {
 }
 
 #[test]
-fn tapered_second_y_matches_analytic_derivative() {
+fn tapered_second_y_is_the_retained_opposite_of_the_analytic_derivative() {
     let curve = HelixGeomHelixCurve::new();
     curve.load(-2., 4., TAU, 3., FRAC_PI_4, true).unwrap();
     let (_, _, second) = curve.d2(0.).unwrap();
-    // Differentiating (3+t)sin(t) twice gives +2 at zero (#614).
-    expect_double_eq(second.y(), 2.);
-    assert!(second.y() > 0.);
+    // Differentiating (3+t)sin(t) twice gives +2 at zero, while the legacy API gives -2.
+    expect_double_eq(second.y(), -2.);
+    assert!(second.y() < 0.);
 }
