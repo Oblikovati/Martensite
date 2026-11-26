@@ -71,14 +71,14 @@ fn warm_radius_drag_rotates_the_sagitta_while_preserving_the_model_circle() {
         .unwrap()
         .apply(&radius_batch(5.), || false)
         .unwrap();
-    let angle = 0.1_f64;
-    let target = point([7. + 2. * angle.sin(), 0., 2. * angle.cos()]);
+    let (sine, cosine) = martensite_cmath::sincos(0.1);
+    let target = point([7. + 2. * sine, 0., 2. * cosine]);
     let moved = sketch.drag(pid(3), target, || false).unwrap();
     let arc = moved.sketch.geometry().arc(aid()).unwrap();
     let [x, y, z] = *arc.points()[2].coordinates();
     assert!(x > 7.15);
     assert!(y.abs() <= 2e-7);
-    assert!(((x - 7.).hypot(z) - 2.).abs() <= 2e-7);
+    assert!((martensite_cmath::hypot(x - 7., z) - 2.).abs() <= 2e-7);
     assert!((arc.radius() - 5.).abs() <= 2e-7);
     assert_eq!(moved.rank.degrees_of_freedom, 1);
     assert!(moved.residual_work_bound <= policy().residual_work);
@@ -230,13 +230,13 @@ fn preferred_arc_drag_projects_an_off_plane_cursor_onto_the_sagitta_circle() {
         .unwrap()
         .apply(&radius_batch(5.), || false)
         .unwrap();
-    let angle = 0.1_f64;
-    let cursor = point([7. + 3. * angle.sin(), 0.3, 3. * angle.cos()]);
+    let (sine, cosine) = martensite_cmath::sincos(0.1);
+    let cursor = point([7. + 3. * sine, 0.3, 3. * cosine]);
     let moved = sketch
         .drag_preferred(pid(3), cursor, 1e-8, || false)
         .unwrap();
     let arc = moved.update.sketch.geometry().arc(aid()).unwrap();
-    let expected = [7. + 2. * angle.sin(), 0., 2. * angle.cos()];
+    let expected = [7. + 2. * sine, 0., 2. * cosine];
     for (&actual, expected) in arc.points()[2].coordinates().iter().zip(expected) {
         assert!((actual - expected).abs() <= 2e-7);
     }

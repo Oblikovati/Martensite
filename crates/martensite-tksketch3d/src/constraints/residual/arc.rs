@@ -68,7 +68,8 @@ mod tests {
             let chart = Sagitta::new(&trial, 0, displacement(&trial, 0).unwrap(), branch).unwrap();
             let radius = chart.radius().unwrap();
             assert_eq!(radius.value(), 5.);
-            assert_eq!(radius.gradient()[7], 0.5 * (1. - (4. / height).powi(2)));
+            let aspect = 4. / height;
+            assert_eq!(radius.gradient()[7], 0.5 * (1. - aspect * aspect));
             let midpoint = chart.intrinsic().unwrap();
             assert_eq!(midpoint.value(), 0.);
             assert_eq!(midpoint.gradient()[6], 1.);
