@@ -134,21 +134,17 @@ impl CurveOnSurfaceState {
 
     // Match the retained Linux x86-64 evaluation order; no language rule mandates it.
     pub(super) fn copy_from_current_binding(&self) -> Result<Self, Failure> {
-        let last = self.parameter_from_current_binding(|curve| curve.try_last_parameter())?;
-        let first = self.parameter_from_current_binding(|curve| curve.try_first_parameter())?;
-        let gcurve = GCurveBase::new(&self.gcurve.representation().location(), first, last);
-        Ok(Self::from_components(gcurve, self.pcurve(), self.surface()))
-    }
-
-    fn parameter_from_current_binding(
-        &self,
-        query: fn(&dyn Geom2dCurve) -> Result<f64, Failure>,
-    ) -> Result<f64, Failure> {
-        let pcurve = self.fields.read().pcurve.clone();
+        let (pcurve, surface) = {
+            let fields = self.fields.read();
+            (fields.pcurve.clone(), fields.surface.clone())
+        };
         let curve = pcurve
             .get()
             .ok_or_else(|| null_object("BRep_CurveOnSurface: the p-curve is null"))?;
-        query(curve)
+        let last = curve.try_last_parameter()?;
+        let first = curve.try_first_parameter()?;
+        let gcurve = GCurveBase::new(&self.gcurve.representation().location(), first, last);
+        Ok(Self::from_components(gcurve, pcurve, surface))
     }
 
     /// `SetUVPoints(P1, P2)`; `pcurve.set_uv_points(first, last)`.

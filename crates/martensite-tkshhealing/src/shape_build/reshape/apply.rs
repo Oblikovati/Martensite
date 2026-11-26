@@ -71,9 +71,25 @@ fn remove_address(in_flight: &mut Vec<usize>, address: usize) {
 
 /// The rebuilt shape and the local status of the sub-shape loop.
 struct Rebuilt {
-    result: Shape,
+    result: Option<Shape>,
+    unchanged: Vec<Shape>,
     modified: bool,
     status: i32,
+}
+
+impl Rebuilt {
+    fn ensure_result(&mut self, shape: &Shape) -> Result<(), Failure> {
+        if self.result.is_none() {
+            let mut copy = shape.empty_copied()?;
+            copy.set_orientation(Orientation::Forward);
+            let builder = BRepBuilder::default();
+            for prev in self.unchanged.drain(..) {
+                builder.add(&mut copy, &prev)?;
+            }
+            self.result = Some(copy);
+        }
+        Ok(())
+    }
 }
 
 /// The second half of `applyImpl`: an empty copy of the shape (FORWARD, to protect
@@ -86,21 +102,28 @@ fn rebuild(
     until: ShapeEnum,
     in_flight: &mut Vec<usize>,
 ) -> Result<Shape, Failure> {
-    let mut result = shape.empty_copied()?;
     let orientation = shape.orientation();
-    result.set_orientation(Orientation::Forward);
     let address = shape.tshape_address();
     in_flight.push(address);
-    let rebuilt = rebuild_children(reshape, shape, kind, until, in_flight, result);
+    let rebuilt = rebuild_children(reshape, shape, kind, until, in_flight);
     remove_address(in_flight, address);
-    let Rebuilt {
-        mut result,
-        modified,
-        status,
-    } = rebuilt?;
-    if !modified {
+    let mut rebuilt = rebuilt?;
+    if !rebuilt.modified {
         return Ok(shape.clone());
     }
+    let mut result = match rebuilt.result.take() {
+        Some(r) => r,
+        None => {
+            let mut copy = shape.empty_copied()?;
+            copy.set_orientation(Orientation::Forward);
+            let builder = BRepBuilder::default();
+            for prev in rebuilt.unchanged.drain(..) {
+                builder.add(&mut copy, &prev)?;
+            }
+            copy
+        }
+    };
+    let status = rebuilt.status;
     // Restore range on edge broken by EmptyCopied()
     if kind == ShapeEnum::Edge {
         ShapeBuildEdge.copy_ranges(
@@ -130,10 +153,10 @@ fn rebuild_children(
     kind: ShapeEnum,
     until: ShapeEnum,
     in_flight: &mut Vec<usize>,
-    result: Shape,
 ) -> Result<Rebuilt, Failure> {
     let mut rebuilt = Rebuilt {
-        result,
+        result: None,
+        unchanged: Vec::new(),
         modified: false,
         status: reshape.status_bits(),
     };
@@ -142,7 +165,7 @@ fn rebuild_children(
         let sub = it.value()?.clone();
         it.next();
         let applied = apply_impl(reshape, &sub, until, in_flight)?;
-        add_applied(reshape, &mut rebuilt, kind, &sub, &applied)?;
+        add_applied(reshape, shape, &mut rebuilt, kind, &sub, &applied)?;
     }
     Ok(rebuilt)
 }
@@ -151,6 +174,7 @@ fn rebuild_children(
 /// compound, or when of the same type), or its items of the sub-shape's type.
 fn add_applied(
     reshape: &ShapeBuildReShape,
+    parent: &Shape,
     rebuilt: &mut Rebuilt,
     kind: ShapeEnum,
     sub: &Shape,
@@ -167,11 +191,16 @@ fn add_applied(
         return Ok(());
     }
     rebuilt.status |= bits(ShapeExtendStatus::Done3);
+    if !rebuilt.modified {
+        rebuilt.unchanged.push(applied.clone());
+        return Ok(());
+    }
+    rebuilt.ensure_result(parent)?;
     let builder = BRepBuilder::default();
     let sub_kind = sub.shape_type()?;
     if kind == ShapeEnum::Compound || applied.shape_type()? == sub_kind {
         // Fix for SAMTECH bug OCC322 about absence internal vertices after sewing
-        return builder.add(&mut rebuilt.result, applied);
+        return builder.add(rebuilt.result.as_mut().expect("initialized"), applied);
     }
     let mut nb_items = 0;
     let mut items = ShapeIterator::new(applied, true, true);
@@ -180,7 +209,7 @@ fn add_applied(
         items.next();
         nb_items += 1;
         if item.shape_type()? == sub_kind {
-            builder.add(&mut rebuilt.result, &item)?;
+            builder.add(rebuilt.result.as_mut().expect("initialized"), &item)?;
         } else {
             rebuilt.status |= bits(ShapeExtendStatus::Fail1);
         }

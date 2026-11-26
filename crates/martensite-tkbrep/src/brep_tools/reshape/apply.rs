@@ -151,10 +151,27 @@ fn current_status<R: ReShape + ?Sized>(reshape: &R) -> i32 {
 
 /// The state of the rebuilt copy of a shape.
 struct Rebuilt {
-    result: Shape,
+    result: Option<Shape>,
+    unchanged: Vec<Shape>,
     modified: bool,
     is_empty: bool,
     status: i32,
+}
+
+impl Rebuilt {
+    fn ensure_result(&mut self, shape: &Shape) -> Result<(), Failure> {
+        if self.result.is_none() {
+            let mut copy = shape.empty_copied()?;
+            // Protect against INTERNAL or EXTERNAL shapes.
+            copy.set_orientation(Orientation::Forward);
+            let builder = BRepBuilder::default();
+            for prev in self.unchanged.drain(..) {
+                builder.add(&mut copy, &prev)?;
+            }
+            self.result = Some(copy);
+        }
+        Ok(())
+    }
 }
 
 /// Rebuilds an empty copy of the shape with the sub-shapes applied; the copy is
@@ -167,31 +184,44 @@ fn rebuild<R: ReShape + ?Sized>(
 ) -> Result<Shape, Failure> {
     let kind = shape.shape_type()?;
     let mut rebuilt = Rebuilt {
-        result: shape.empty_copied()?,
+        result: None,
+        unchanged: Vec::new(),
         modified: false,
         is_empty: true,
         status: current_status(reshape),
     };
     let orientation = shape.orientation();
-    // Protect against INTERNAL or EXTERNAL shapes.
-    rebuilt.result.set_orientation(Orientation::Forward);
     in_flight.add(shape);
     for child in ShapeIterator::new(shape, false, true) {
         let applied = apply_impl(reshape, &child, until, in_flight)?;
-        add_applied(reshape, kind, (&child, &applied), &mut rebuilt)?;
+        add_applied(reshape, shape, kind, (&child, &applied), &mut rebuilt)?;
     }
     in_flight.remove(shape);
     if !rebuilt.modified {
         return Ok(shape.clone());
     }
-    let mut result = rebuilt.result;
-    if rebuilt.is_empty && !matches!(kind, ShapeEnum::Vertex | ShapeEnum::Edge | ShapeEnum::Face) {
+    let result = if rebuilt.is_empty
+        && !matches!(kind, ShapeEnum::Vertex | ShapeEnum::Edge | ShapeEnum::Face)
+    {
         // An empty container is removed.
-        result = Shape::default();
+        Shape::default()
     } else {
-        restore_attributes(kind, shape, &result)?;
-        result.set_orientation(orientation);
-    }
+        let mut r = match rebuilt.result.take() {
+            Some(r) => r,
+            None => {
+                let mut copy = shape.empty_copied()?;
+                copy.set_orientation(Orientation::Forward);
+                let builder = BRepBuilder::default();
+                for prev in rebuilt.unchanged.drain(..) {
+                    builder.add(&mut copy, &prev)?;
+                }
+                copy
+            }
+        };
+        restore_attributes(kind, shape, &r)?;
+        r.set_orientation(orientation);
+        r
+    };
     let replacement_kind = if result.is_null() {
         ReplacementKind::Remove
     } else {
@@ -207,6 +237,7 @@ fn rebuild<R: ReShape + ?Sized>(
 /// are none or they have another type).
 fn add_applied<R: ReShape + ?Sized>(
     reshape: &R,
+    parent: &Shape,
     kind: ShapeEnum,
     (child, applied): (&Shape, &Shape),
     rebuilt: &mut Rebuilt,
@@ -223,16 +254,21 @@ fn add_applied<R: ReShape + ?Sized>(
     }
     rebuilt.is_empty = false;
     rebuilt.status |= encode_status(3);
+    if !rebuilt.modified {
+        rebuilt.unchanged.push(applied.clone());
+        return Ok(());
+    }
+    rebuilt.ensure_result(parent)?;
     let builder = BRepBuilder::default();
     if kind == ShapeEnum::Compound || applied.shape_type()? == child.shape_type()? {
         // Keep the internal vertices that sewing would otherwise lose.
-        return builder.add(&mut rebuilt.result, applied);
+        return builder.add(rebuilt.result.as_mut().expect("initialized"), applied);
     }
     let mut count = 0;
     for sub in ShapeIterator::new(applied, true, true) {
         count += 1;
         if sub.shape_type()? == child.shape_type()? {
-            builder.add(&mut rebuilt.result, &sub)?;
+            builder.add(rebuilt.result.as_mut().expect("initialized"), &sub)?;
         } else {
             rebuilt.status |= encode_status(10);
         }

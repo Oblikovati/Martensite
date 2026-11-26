@@ -105,11 +105,13 @@ impl<'a> DoubleTab<'a> {
         Ok(&mut self.storage.slice_mut()[offset])
     }
     /// Reads declared indices; `table.value(1,1)?`.
+    #[inline]
     pub fn value(&self, row: i32, col: i32) -> Result<&f64, ArrayError> {
         let [r, c] = self.shape.indices(row, col)?;
         self.at(r, c)
     }
     /// Mutates declared indices; `*table.change_value(1,1)? = 2.0`.
+    #[inline]
     pub fn change_value(&mut self, row: i32, col: i32) -> Result<&mut f64, ArrayError> {
         let [r, c] = self.shape.indices(row, col)?;
         self.change_at(r, c)
