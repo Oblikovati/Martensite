@@ -87,9 +87,22 @@ impl BasisRecurrence<'_, '_> {
     }
 
     // Knot span (Knots[ii+pp] - Knots[ii-qq+pp+1]) and its left knot, or None when null.
+    #[inline]
     fn scale(&self, qq: i32, pp: i32) -> Result<Option<(f64, f64)>, Failure> {
-        let upper: f64 = array_value(self.knots, self.span + pp)?;
-        let left: f64 = array_value(self.knots, self.span - qq + pp + 1)?;
+        let knots = self.knots.as_slice();
+        let lower = self.knots.lower();
+        let u_idx = self.span + pp - lower;
+        let l_idx = self.span - qq + pp + 1 - lower;
+        let upper = if u_idx >= 0 && (u_idx as usize) < knots.len() {
+            knots[u_idx as usize]
+        } else {
+            array_value(self.knots, self.span + pp)?
+        };
+        let left = if l_idx >= 0 && (l_idx as usize) < knots.len() {
+            knots[l_idx as usize]
+        } else {
+            array_value(self.knots, self.span - qq + pp + 1)?
+        };
         let scale: f64 = upper - left;
         if scale.abs() < real_small() {
             return Ok(None);

@@ -13,7 +13,8 @@ impl<T: VectorItem> VectorBase<'_, T> {
             VectorStorage::Borrowed(values) => values,
         }
     }
-    pub(super) fn values_mut(&mut self) -> &mut [T] {
+    #[inline]
+    pub(crate) fn values_mut(&mut self) -> &mut [T] {
         match &mut self.storage {
             VectorStorage::Inline => &mut self.inline[..self.length],
             VectorStorage::Owned(values) => values,

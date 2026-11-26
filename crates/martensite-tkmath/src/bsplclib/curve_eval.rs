@@ -31,13 +31,13 @@ pub struct CurveSpan<'r, 'a> {
     pub mults: Option<&'r Array1<'a, i32>>,
 }
 
-// The local evaluation buffers.
+// The local evaluation buffers (stack-allocated up to MAX_DEGREE to avoid per-eval heap traffic).
 pub(crate) struct LocalSpan {
     pub(crate) u: f64,
     pub(crate) dim: usize,
     pub(crate) rational: bool,
-    pub(crate) knots: Vec<f64>,
-    pub(crate) poles: Vec<f64>,
+    pub(crate) knots: [f64; 2 * MAX_DEGREE as usize],
+    pub(crate) poles: [f64; (MAX_DEGREE as usize + 1) * 4],
 }
 
 /// Raises the out-of-range failure for degrees above MaxDegree
@@ -70,13 +70,12 @@ pub(crate) fn prepare_eval(
         &mut index,
         &mut u,
     )?;
-    let max: usize = MAX_DEGREE as usize;
     let mut local = LocalSpan {
         u,
         dim: dimension,
         rational: false,
-        knots: vec![0.0; 2 * max],
-        poles: vec![0.0; (max + 1) * (dimension + 1)],
+        knots: [0.0; 2 * MAX_DEGREE as usize],
+        poles: [0.0; (MAX_DEGREE as usize + 1) * 4],
     };
     build_knots(
         degree,
@@ -131,7 +130,7 @@ fn derivatives(
     degree: i32,
     n: i32,
     dimension: usize,
-) -> Result<Vec<f64>, Failure> {
+) -> Result<[f64; 16], Failure> {
     bohm(
         local.u,
         degree,
@@ -140,11 +139,20 @@ fn derivatives(
         local.dim as i32,
         &mut local.poles,
     )?;
+    let mut ders = [0.0_f64; 16];
+    let count = (n as usize + 1) * dimension;
     if !local.rational {
-        return Ok(local.poles.clone());
+        ders[..count].copy_from_slice(&local.poles[..count]);
+        return Ok(ders);
     }
-    let mut ders: Vec<f64> = vec![0.0; dimension * 4];
-    rational_derivative(degree, n, dimension as i32, &local.poles, &mut ders, true)?;
+    rational_derivative(
+        degree,
+        n,
+        dimension as i32,
+        &local.poles,
+        &mut ders[..dimension * 4],
+        true,
+    )?;
     Ok(ders)
 }
 
@@ -177,7 +185,7 @@ pub fn d1_scalar(
     weights: Option<&Array1<'_, f64>>,
 ) -> Result<(f64, f64), Failure> {
     let mut local: LocalSpan = prepare_scalar(span, poles, weights)?;
-    let result: Vec<f64> = derivatives(&mut local, span.degree, 1, 1)?;
+    let result: [f64; 16] = derivatives(&mut local, span.degree, 1, 1)?;
     Ok((result[0], result[1]))
 }
 
@@ -190,7 +198,7 @@ pub fn d2_scalar(
     weights: Option<&Array1<'_, f64>>,
 ) -> Result<(f64, f64, f64), Failure> {
     let mut local: LocalSpan = prepare_scalar(span, poles, weights)?;
-    let result: Vec<f64> = derivatives(&mut local, span.degree, 2, 1)?;
+    let result: [f64; 16] = derivatives(&mut local, span.degree, 2, 1)?;
     let v2: f64 = higher(&local, span.degree, 2, &result[2..3])[0];
     Ok((result[0], result[1], v2))
 }
@@ -203,7 +211,7 @@ pub fn d3_scalar(
     weights: Option<&Array1<'_, f64>>,
 ) -> Result<(f64, f64, f64, f64), Failure> {
     let mut local: LocalSpan = prepare_scalar(span, poles, weights)?;
-    let result: Vec<f64> = derivatives(&mut local, span.degree, 3, 1)?;
+    let result: [f64; 16] = derivatives(&mut local, span.degree, 3, 1)?;
     let v2: f64 = higher(&local, span.degree, 2, &result[2..3])[0];
     let v3: f64 = higher(&local, span.degree, 3, &result[3..4])[0];
     Ok((result[0], result[1], v2, v3))
@@ -292,7 +300,7 @@ pub fn d1<P: CurvePoint>(
 ) -> Result<(P, P::Vector), Failure> {
     let mut local: LocalSpan = prepare_points(span, poles, weights)?;
     let d: usize = P::DIMENSION;
-    let result: Vec<f64> = derivatives(&mut local, span.degree, 1, d)?;
+    let result: [f64; 16] = derivatives(&mut local, span.degree, 1, d)?;
     Ok((P::point_from(&result), P::vector_from(&result[d..])))
 }
 
@@ -305,7 +313,7 @@ pub fn d2<P: CurvePoint>(
 ) -> Result<(P, P::Vector, P::Vector), Failure> {
     let mut local: LocalSpan = prepare_points(span, poles, weights)?;
     let d: usize = P::DIMENSION;
-    let result: Vec<f64> = derivatives(&mut local, span.degree, 2, d)?;
+    let result: [f64; 16] = derivatives(&mut local, span.degree, 2, d)?;
     let v2: Vec<f64> = higher(&local, span.degree, 2, &result[2 * d..3 * d]);
     Ok((
         P::point_from(&result),
@@ -323,7 +331,7 @@ pub fn d3<P: CurvePoint>(
 ) -> Result<CurveD3<P>, Failure> {
     let mut local: LocalSpan = prepare_points(span, poles, weights)?;
     let d: usize = P::DIMENSION;
-    let result: Vec<f64> = derivatives(&mut local, span.degree, 3, d)?;
+    let result: [f64; 16] = derivatives(&mut local, span.degree, 3, d)?;
     let v2: Vec<f64> = higher(&local, span.degree, 2, &result[2 * d..3 * d]);
     let v3: Vec<f64> = higher(&local, span.degree, 3, &result[3 * d..4 * d]);
     Ok((

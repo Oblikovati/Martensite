@@ -5,12 +5,14 @@ use TransformForm::*;
 use std::ops;
 impl Transform3 {
     /// Returns `self * other` (Transform3::multiplied); `left.multiplied(right)`.
+    #[inline]
     pub fn multiplied(mut self, other: Self) -> Self {
         self.multiply(other);
         self
     }
     /// Right-composes in place (Transform3::multiply). The operand is a copy, so `t.multiply(t)`
     /// never sees the partial updates a self-product would; `left.multiply(right)`.
+    #[inline]
     pub fn multiply(&mut self, other: Self) {
         if other.form == Identity {
             return;

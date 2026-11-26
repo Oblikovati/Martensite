@@ -168,6 +168,7 @@ impl Clone for DoubleTab<'_> {
 /// with the ArrayError (indices and bounds) outside the table.
 impl std::ops::Index<(i32, i32)> for DoubleTab<'_> {
     type Output = f64;
+    #[inline]
     #[track_caller]
     fn index(&self, (row, col): (i32, i32)) -> &f64 {
         self.value(row, col)
@@ -177,6 +178,7 @@ impl std::ops::Index<(i32, i32)> for DoubleTab<'_> {
 /// `operator()(int, int)` with caller-guaranteed indices; `table[(1, 1)] = 2.0`. Panics
 /// with the ArrayError (indices and bounds) outside the table.
 impl std::ops::IndexMut<(i32, i32)> for DoubleTab<'_> {
+    #[inline]
     #[track_caller]
     fn index_mut(&mut self, (row, col): (i32, i32)) -> &mut f64 {
         self.change_value(row, col)

@@ -50,35 +50,43 @@ impl LuResult {
         self.status == Status::Ok
     }
     fn initialize(&mut self, a: &Matrix<'_>) -> Result<Vector<'static>, Status> {
-        let n: i32 = a.row_number();
-        self.dimension = n as usize;
-        self.lu = Some(Matrix::with_bounds(0, n - 1, 0, n - 1).unwrap());
-        self.pivot = Some(Array1::with_size(n as usize));
-        let matrix: &mut Matrix<'_> = self.lu.as_mut().unwrap();
-        let mut scales: Vector<'static> = Vector::with_size(n as usize);
-        for i in 0..n {
-            for j in 0..n {
-                matrix[(i, j)] = *a.at(i as usize, j as usize).unwrap();
-                scales[i] = scales[i].max(matrix[(i, j)].abs());
+        let n: usize = a.row_number() as usize;
+        self.dimension = n;
+        let mut lu = Matrix::with_bounds(0, n as i32 - 1, 0, n as i32 - 1).unwrap();
+        self.pivot = Some(Array1::with_size(n));
+        let mut scales: Vector<'static> = Vector::with_size(n);
+        let src = a.cells();
+        let dst = lu.cells_mut();
+        dst.copy_from_slice(src);
+        let scale_slice = scales.values_mut();
+        for (i, row) in dst.chunks_exact(n).enumerate() {
+            let mut max_val = 0.0_f64;
+            for &v in row {
+                max_val = max_val.max(v.abs());
             }
-            if scales[i] == 0.0 {
+            if max_val == 0.0 {
                 return Err(Status::NumericalError);
             }
+            scale_slice[i] = max_val;
         }
+        self.lu = Some(lu);
         Ok(scales)
     }
     fn pivot_row(&self, k: i32, scales: &Vector<'_>) -> i32 {
-        let matrix: &Matrix<'_> = self.lu.as_ref().unwrap();
+        let n = self.dimension;
+        let ku = k as usize;
+        let cells = self.lu.as_ref().unwrap().cells();
+        let scale_slice = scales.values();
         let mut maximum: f64 = 0.0;
-        let mut row: i32 = k;
-        for i in k..self.dimension as i32 {
-            let scaled: f64 = matrix[(i, k)].abs() / scales[i];
+        let mut row: usize = ku;
+        for i in ku..n {
+            let scaled: f64 = cells[i * n + ku].abs() / scale_slice[i];
             if scaled > maximum {
                 maximum = scaled;
                 row = i;
             }
         }
-        row
+        row as i32
     }
     fn pivot_step(&mut self, k: i32, scales: &mut Vector<'_>, tolerance: f64) -> bool {
         let row: i32 = self.pivot_row(k, scales);
@@ -124,24 +132,27 @@ impl LuResult {
         }
     }
     fn solve_column(&self, x: &mut Vector<'_>) {
-        let matrix: &Matrix<'_> = self.lu.as_ref().unwrap();
+        let cells = self.lu.as_ref().unwrap().cells();
         let pivots: &[i32] = self.pivot.as_ref().unwrap().as_slice();
-        let n: i32 = self.dimension as i32;
+        let n: usize = self.dimension;
+        let xv = x.values_mut();
         for i in 0..n {
-            let pivot: i32 = pivots[i as usize];
-            let mut sum: f64 = x[pivot];
-            x[pivot] = x[i];
+            let pivot: usize = pivots[i] as usize;
+            let mut sum: f64 = xv[pivot];
+            xv[pivot] = xv[i];
+            let row = &cells[i * n..i * n + i];
             for j in 0..i {
-                sum -= matrix[(i, j)] * x[j];
+                sum -= row[j] * xv[j];
             }
-            x[i] = sum;
+            xv[i] = sum;
         }
         for i in (0..n).rev() {
-            let mut sum: f64 = x[i];
+            let mut sum: f64 = xv[i];
+            let row = &cells[i * n..i * n + n];
             for j in i + 1..n {
-                sum -= matrix[(i, j)] * x[j];
+                sum -= row[j] * xv[j];
             }
-            x[i] = sum / matrix[(i, i)];
+            xv[i] = sum / row[i];
         }
     }
 }
@@ -151,11 +162,19 @@ impl From<&LuResult> for bool {
     }
 }
 fn eliminate(matrix: &mut Matrix<'_>, k: i32) {
-    for i in k + 1..matrix.row_number() {
-        matrix[(i, k)] /= matrix[(k, k)];
-        let factor: f64 = matrix[(i, k)];
-        for j in k + 1..matrix.col_number() {
-            matrix[(i, j)] -= factor * matrix[(k, j)];
+    let n = matrix.col_number() as usize;
+    let ku = k as usize;
+    let cells = matrix.cells_mut();
+    let (top, bottom) = cells.split_at_mut((ku + 1) * n);
+    let pivot_row = &top[ku * n..ku * n + n];
+    let inv_pivot = 1.0 / pivot_row[ku];
+    let pivot_tail = &pivot_row[ku + 1..];
+    for row in bottom.chunks_exact_mut(n) {
+        let factor = row[ku] * inv_pivot;
+        row[ku] = factor;
+        let row_tail = &mut row[ku + 1..];
+        for (dst, &src) in row_tail.iter_mut().zip(pivot_tail.iter()) {
+            *dst -= factor * src;
         }
     }
 }

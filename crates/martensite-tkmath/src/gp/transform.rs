@@ -233,6 +233,7 @@ impl Transform3 {
         self.offset
     }
     /// Applies the point-specific shortcuts of Point3::transform; `transform.apply(Point3::default())`.
+    #[inline]
     pub fn apply(self, point: Point3) -> Point3 {
         let xyz = Xyz::from(point);
         match self.form {
@@ -245,6 +246,7 @@ impl Transform3 {
     }
     /// Always executes matrix multiplication as Transform3::transforms_coordinates does;
     /// `transform.apply_coordinates(xyz)`.
+    #[inline]
     pub fn apply_coordinates(self, coordinates: Xyz) -> Xyz {
         let mut result = self.matrix.apply(coordinates);
         if self.scale != 1.0 {
@@ -253,6 +255,7 @@ impl Transform3 {
         result + self.offset
     }
     /// Mutates coordinates with `Transform3::transforms_coordinates`; `transform.transforms(&mut xyz)`.
+    #[inline]
     pub fn transforms(&self, coordinates: &mut Xyz) {
         *coordinates = self.apply_coordinates(*coordinates);
     }

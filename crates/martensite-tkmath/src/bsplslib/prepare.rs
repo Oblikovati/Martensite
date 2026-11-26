@@ -62,8 +62,8 @@ pub(crate) struct Patch {
     pub(crate) d1: i32,
     pub(crate) d2: i32,
     pub(crate) rational: bool,
-    pub(crate) knots1: Vec<f64>,
-    pub(crate) knots2: Vec<f64>,
+    pub(crate) knots1: [f64; 2 * MAX_DEGREE as usize],
+    pub(crate) knots2: [f64; 2 * MAX_DEGREE as usize],
     pub(crate) poles: Vec<f64>,
 }
 
@@ -145,9 +145,8 @@ pub(crate) fn prepare_eval(
         span.v_per,
         span.v_index,
     )?;
-    let max: usize = MAX_DEGREE as usize;
-    let mut knots_u: Vec<f64> = vec![0.0; 2 * max];
-    let mut knots_v: Vec<f64> = vec![0.0; 2 * max];
+    let mut knots_u = [0.0_f64; 2 * MAX_DEGREE as usize];
+    let mut knots_v = [0.0_f64; 2 * MAX_DEGREE as usize];
     build_knots(
         span.u_degree,
         lu.index,

@@ -97,6 +97,7 @@ fn projected(u: &Matrix<'_>, w: &Vector<'_>, b: &Vector<'_>, j: i32, m: i32) -> 
 }
 
 /// `SIGN(a, b)` macro.
+#[inline]
 pub(super) fn sign(magnitude: f64, direction: f64) -> f64 {
     if direction >= 0.0 {
         magnitude.abs()
@@ -105,6 +106,7 @@ pub(super) fn sign(magnitude: f64, direction: f64) -> f64 {
     }
 }
 /// Overflow-avoiding hypotenuse `PYTHAG`.
+#[inline]
 pub(super) fn pythag(left: f64, right: f64) -> f64 {
     let a: f64 = left.abs();
     let b: f64 = right.abs();
@@ -119,16 +121,22 @@ pub(super) fn pythag(left: f64, right: f64) -> f64 {
     0.0
 }
 /// Rotates columns `left`/`right` over rows `1..=rows` (the `y*c + z*s` pair).
+#[inline]
 pub(super) fn rotate_columns(
     matrix: &mut Matrix<'_>,
     rows: i32,
     [left, right]: [i32; 2],
     [cosine, sine]: [f64; 2],
 ) {
-    for row in 1..=rows {
-        let y: f64 = matrix[(row, left)];
-        let z: f64 = matrix[(row, right)];
-        matrix[(row, left)] = y * cosine + z * sine;
-        matrix[(row, right)] = z * cosine - y * sine;
+    let cols = matrix.col_number() as usize;
+    let r0 = (1 - matrix.lower_row()) as usize;
+    let cl = (left - matrix.lower_col()) as usize;
+    let cr = (right - matrix.lower_col()) as usize;
+    let cells = matrix.cells_mut();
+    for row in cells[r0 * cols..(r0 + rows as usize) * cols].chunks_exact_mut(cols) {
+        let y: f64 = row[cl];
+        let z: f64 = row[cr];
+        row[cl] = y * cosine + z * sine;
+        row[cr] = z * cosine - y * sine;
     }
 }
