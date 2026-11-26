@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added native three-station planar Curve On Face with a matched quadratic edge and pcurve (#611).
+
 - Added an explicit Radius continuation for supported free sketch arcs through an exact half turn (#611).
 
 - Added native four-station Curve On Face on bounded planar trims and Point On Face on full non-pole spherical bands (#611).

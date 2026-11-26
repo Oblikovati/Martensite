@@ -347,3 +347,28 @@ refusals. A native planar attachment control verifies the same refusal on an
 arc point and independently accepts attachment of an unrelated point.
 The composed stage passed 360 tests and strict Rust 1.98.1 Clippy. Nine
 opt-in cases were skipped.
+
+## E58. Three-station Curve On Face on a planar trim
+
+The three-point authoring case retains the original start, midpoint and end
+identities and their fixed parameters `[0, 1/2, 1]`. The admitted edge and its
+pcurve both retain native degree two. They share the same fit operator and
+carry separate measured station-error bounds. The four-station cubic keeps
+its existing recipe and solver continuation.
+
+The owned top-face fixture checks literal native degree, control coordinates,
+parameters, replay and detached ownership. The holed fixtures prove a
+closed-rim tangency and reject entry strictly between three valid stations.
+They also check reversal, a tight distance limit and typed refusal of
+unsupported quadratic tangent and curvature relations. The composed
+half-turn control refuses a crossing Radius whose arc shares a real station
+with the qualified planar quadratic.
+
+The isolated leaf passed 343 Sketch3D, 1,374 Math and 154 BRep tests and
+strict Rust 1.98.1 Clippy. Nine opt-in Sketch3D cases were skipped. The
+39 native face ThreadSanitizer cases passed with reproducible detached
+archives. Five or more stations require a separate piecewise fit contract.
+
+The combined source stage passed 5,233 tests with nine opt-in skips,
+including the crossing-arc incident quadratic fixture. Strict all-target
+Clippy, `cargo deny --all-features check` and `cargo audit` passed.
