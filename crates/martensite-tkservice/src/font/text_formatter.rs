@@ -121,9 +121,10 @@ impl FontTextFormatter {
         state.new_lines.clear();
         (state.last_symbol_width, state.max_symbol_width) = (0.0, 0.0);
     }
-    /// `Append`: adds the string's glyph corners laid out with the font (from the start of the
-    /// whole text, as natively); a string of command symbols only raises `Standard_OutOfRange`
-    /// from `Last()` of the empty corner list. Example: `formatter.append(&text, &font)?`.
+    /// `Append`: adds the string's glyph corners laid out with `font`, preserving earlier
+    /// runs' glyph positions and font metrics (#576). A string of command symbols only raises
+    /// `Standard_OutOfRange` from `Last()` of the empty corner list.
+    /// Example: `formatter.append(&text, &font)?`.
     pub fn append(&self, text: &String8, font: &FontFTFont) -> Result<(), Failure> {
         if text.is_empty() {
             return Ok(());
@@ -131,8 +132,9 @@ impl FontTextFormatter {
         let mut state = self.state.write();
         state.ascender = state.ascender.max(font.ascender());
         state.line_spacing = state.line_spacing.max(font.line_spacing());
-        state.text.extend(decode(text));
-        layout_glyphs(&mut state, font);
+        let run = decode(text);
+        layout_glyphs(&mut state, &run, font);
+        state.text.extend(run);
         let last = state.corners.last().map(|c| c.x).ok_or_else(|| {
             out_of_range(
                 "NCollection_DynamicArray::Last - no glyph corner; expected a printable symbol",
@@ -148,11 +150,13 @@ fn max_f32(a: f32, b: f32) -> f32 {
     if a < b { b } else { a }
 }
 
-/// The advance loop of `Append` over the whole text.
-fn layout_glyphs(state: &mut TextFormatterState, font: &FontFTFont) {
-    let mut symbols_counter = 0;
-    let mut it =
-        FontTextFormatterIterator::over(state.text.clone(), FontTextFormatterIterationFilter::None);
+/// The advance loop of `Append` over only the newly appended `run` (#576).
+fn layout_glyphs(state: &mut TextFormatterState, run: &[u32], font: &FontFTFont) {
+    let mut symbols_counter = current_line_symbol_count(&state.text);
+    let mut it = FontTextFormatterIterator::over(
+        run.to_vec(),
+        FontTextFormatterIterationFilter::None,
+    );
     while it.more() {
         let (this, next) = (it.symbol(), it.symbol_next());
         it.next();
@@ -177,6 +181,47 @@ fn layout_glyphs(state: &mut TextFormatterState, font: &FontFTFont) {
         state.corners.push(state.pen);
         state.pen.x += advance;
         state.max_symbol_width = max_f32(state.max_symbol_width, advance);
+    }
+}
+
+/// Counts printable symbols since the last newline in previously appended text.
+fn current_line_symbol_count(previous: &[u32]) -> i32 {
+    let mut count = 0i32;
+    for &ch in previous.iter().rev() {
+        if ch == 0x0A {
+            break;
+        }
+        if !FontTextFormatter::is_command_symbol(ch) {
+            count += 1;
+        }
+    }
+    count
+}
+
+#[cfg(test)]
+mod multi_run_append_tests {
+    use super::*;
+    use crate::font::FontFTFont;
+
+    #[test]
+    fn appending_two_runs_preserves_glyph_count_and_first_corner() {
+        let font = FontFTFont::default();
+        let formatter = FontTextFormatter::default();
+        let first = String8::from_unicode_units(b"a", 1);
+        let second = String8::from_unicode_units(b"b", 1);
+
+        formatter.append(&first, &font).expect("append first run");
+        let after_first = formatter.state.read().corners.clone();
+        assert_eq!(after_first.len(), 1);
+
+        formatter.append(&second, &font).expect("append second run");
+        let after_second = formatter.state.read().corners.clone();
+        assert_eq!(
+            after_second.len(),
+            2,
+            "second append must not re-walk earlier characters (#576)"
+        );
+        assert_eq!(after_second[0], after_first[0]);
     }
 }
 
