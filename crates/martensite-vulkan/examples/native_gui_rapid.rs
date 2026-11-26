@@ -2,7 +2,9 @@
 #![cfg_attr(not(target_os = "linux"), no_main)] // X11 window fixture.
 #![cfg(target_os = "linux")]
 #[cfg(test)]
-include!("../tests/support/support_unit_tests_elsewhere.rs");
+macro_rules! support_unit_tests {
+    ($($tests:tt)*) => {};
+}
 #[path = "support/device_options.rs"]
 mod device_options;
 #[path = "support/framebuffer_capture_image.rs"]

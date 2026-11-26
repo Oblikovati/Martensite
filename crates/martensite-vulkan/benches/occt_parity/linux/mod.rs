@@ -2,7 +2,10 @@
 mod ais;
 mod frames;
 mod geometry;
-include!("../../../tests/support/support_unit_tests_elsewhere.rs");
+#[cfg(test)]
+macro_rules! support_unit_tests {
+    ($($tests:tt)*) => {};
+}
 #[path = "../../../examples/support/native_window.rs"]
 mod native_window;
 mod stage;
