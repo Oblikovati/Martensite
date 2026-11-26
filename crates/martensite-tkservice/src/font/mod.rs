@@ -23,6 +23,7 @@ mod ft_font_render;
 mod ft_font_select;
 mod ft_library;
 mod glyph_outline;
+mod owned_result;
 mod rect;
 mod system_font;
 mod text_formatter;
@@ -37,6 +38,7 @@ pub use glyph_outline::{
     FontGlyphOutlineGlyphHasher, FontGlyphOutlineGlyphIdentity, FontGlyphOutlineSegment,
     FontGlyphOutlineSegmentKind,
 };
+pub use owned_result::{FontConsumedCoverage, FontOperationResult};
 pub use rect::FontRect;
 pub use system_font::FontSystemFont;
 pub use text_formatter::{
