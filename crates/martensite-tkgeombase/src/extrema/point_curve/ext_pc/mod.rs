@@ -243,7 +243,7 @@ impl<'a, T: ExtremaCurveTool> GGExtPC<'a, T> {
         self.ext_pc
             .initialize_reference(self.curve.clone().unwrap())?;
         self.interval_perform(point)?;
-        if self.classification_policy == PointCurveClassification::DifferentialV2 {
+        if self.classification_policy == PointCurveClassification::CertifiedSplineV2 {
             let _ = spline_roots::perform_bezier_certified(self, point, curve, bezier_ref);
         }
         Ok(())

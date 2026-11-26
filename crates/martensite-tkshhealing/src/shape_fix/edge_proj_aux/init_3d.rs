@@ -124,7 +124,7 @@ fn extrema_parameter(
     }
     let mut parameter = fallback;
     for index in 1..=extrema.nb_ext().ok()? {
-        if extrema.is_min(index).ok()? {
+        if extrema.is_min(index).unwrap_or(false) {
             parameter = extrema.point(index).ok()?.parameter();
         }
     }

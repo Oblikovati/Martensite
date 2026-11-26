@@ -14,15 +14,15 @@ use martensite_tkg2d::geom2d::native::std_min;
 
 /// The knot spans of the range: the knots, the period jump and the first and last
 /// used knot indexes.
-struct KnotSpans {
+pub(super) struct KnotSpans {
     knots: Array1<'static, f64>,
-    jump: f64,
-    first: i32,
-    last: i32,
+    pub(super) jump: f64,
+    pub(super) first: i32,
+    pub(super) last: i32,
 }
 
 impl KnotSpans {
-    fn knot(&self, index: i32) -> Result<f64, Failure> {
+    pub(super) fn knot(&self, index: i32) -> Result<f64, Failure> {
         let value: &f64 = self
             .knots
             .value(index)
@@ -31,7 +31,7 @@ impl KnotSpans {
     }
     // The bounds of span `index`, the first starting at `uinf` and the last (or,
     // with `else_if`, a later one only) ending at `usup`.
-    fn span(
+    pub(super) fn span(
         &self,
         index: i32,
         (uinf, usup): (f64, f64),
@@ -113,15 +113,11 @@ impl<'a, T: ExtremaCurveTool> GGExtPC<'a, T> {
         } else {
             self.perform_sampled_spans(point, curve, &spans)?;
             if self.classification_policy
-                == crate::extrema::PointCurveClassification::DifferentialV2
+                == crate::extrema::PointCurveClassification::CertifiedSplineV2
             {
-                for index in spans.first..spans.last {
-                    let raw = (spans.knot(index)?, spans.knot(index + 1)?);
-                    let clipped = spans.span(index, (self.uinf, self.usup), false)?;
-                    let _ = super::spline_roots::perform_bspline_span_certified(
-                        self, point, curve, spline, raw, clipped, spans.jump,
-                    );
-                }
+                let _ = super::spline_roots::perform_bspline_spans_certified(
+                    self, point, curve, spline, &spans,
+                );
             }
         }
         self.done = true;

@@ -84,7 +84,7 @@ impl Sampler<'_> {
                 }
                 let locate = ext.as_mut().expect("initialized above");
                 locate.perform(sp1.value(), u)?;
-                if locate.is_done() && locate.is_min()? {
+                if locate.is_done() && locate.is_min().unwrap_or(false) {
                     sp2.calculate(locate.point()?.parameter())?;
                     der.der2 = sp2.derivative()?;
                     der.len2 = der.der2.square_magnitude();

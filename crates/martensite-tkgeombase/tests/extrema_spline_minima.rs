@@ -41,12 +41,20 @@ fn collect_extrema_2d(extrema: &ExtPC2d<'_>) -> Vec<(f64, f64, bool)> {
     out
 }
 
+fn certified_ext_2d<'a>(query: Point2, adaptor: &'a Geom2dAdaptorCurve) -> ExtPC2d<'a> {
+    let mut extrema = ExtPC2d::new();
+    extrema.set_classification_policy(PointCurveClassification::CertifiedSplineV2);
+    extrema.initialize(adaptor, 0.0, 1.0, 1e-7).unwrap();
+    extrema.perform(query).unwrap();
+    extrema
+}
+
 #[test]
 fn issue_462_quadratic_bspline_finds_both_interior_minima_and_maximum() {
     let curve = parabola_bspline_2d();
     let adaptor = Geom2dAdaptorCurve::with_curve(&curve).unwrap();
     let query = Point2::new(0.025, 0.0054);
-    let extrema = ExtPC2d::with_range(query, &adaptor, 0.0, 1.0, 1e-7).unwrap();
+    let extrema = certified_ext_2d(query, &adaptor);
     assert!(extrema.is_done());
     let roots = collect_extrema_2d(&extrema);
     assert_eq!(roots.len(), 3, "expected 3 stationary roots, got {roots:?}");
@@ -70,7 +78,7 @@ fn closer_interior_root_pairs_are_both_found() {
     // minima sit at u = 0.025 +/- delta.
     for delta in [5e-4_f64, 1e-4_f64] {
         let query = Point2::new(0.025, 0.005 + 100.0 * delta * delta);
-        let extrema = ExtPC2d::with_range(query, &adaptor, 0.0, 1.0, 1e-7).unwrap();
+        let extrema = certified_ext_2d(query, &adaptor);
         assert!(extrema.is_done());
         let roots = collect_extrema_2d(&extrema);
         assert_eq!(
@@ -101,8 +109,7 @@ fn reversed_orientation_and_split_knots_preserve_all_interior_minima() {
         Handle::new(Geom2dBSplineCurve::new(&reversed_poles, &knots, &mults, 2, false).unwrap())
             .cast();
     let adaptor = Geom2dAdaptorCurve::with_curve(&reversed).unwrap();
-    let extrema =
-        ExtPC2d::with_range(Point2::new(0.025, 0.0054), &adaptor, 0.0, 1.0, 1e-7).unwrap();
+    let extrema = certified_ext_2d(Point2::new(0.025, 0.0054), &adaptor);
     let roots = collect_extrema_2d(&extrema);
     assert_eq!(roots.len(), 3);
     assert!((roots[0].0 - 0.973).abs() < 1e-10 && roots[0].2);
@@ -125,8 +132,7 @@ fn reversed_orientation_and_split_knots_preserve_all_interior_minima() {
     split.insert_knot(0.025, 1, 1e-12).unwrap();
     let split_handle: Handle<dyn Geom2dCurve> = Handle::new(split).cast();
     let split_adaptor = Geom2dAdaptorCurve::with_curve(&split_handle).unwrap();
-    let split_ext =
-        ExtPC2d::with_range(Point2::new(0.025, 0.0054), &split_adaptor, 0.0, 1.0, 1e-7).unwrap();
+    let split_ext = certified_ext_2d(Point2::new(0.025, 0.0054), &split_adaptor);
     let split_roots = collect_extrema_2d(&split_ext);
     assert_eq!(split_roots.len(), 3, "split_roots={split_roots:?}");
     assert!(
@@ -153,8 +159,7 @@ fn bezier_and_3d_bspline_curves_also_certify_all_interior_minima() {
     let bezier: Handle<dyn Geom2dCurve> =
         Handle::new(Geom2dBezierCurve::new(&poles_2d).unwrap()).cast();
     let bez_adaptor = Geom2dAdaptorCurve::with_curve(&bezier).unwrap();
-    let bez_ext =
-        ExtPC2d::with_range(Point2::new(0.025, 0.0054), &bez_adaptor, 0.0, 1.0, 1e-7).unwrap();
+    let bez_ext = certified_ext_2d(Point2::new(0.025, 0.0054), &bez_adaptor);
     let bez_roots = collect_extrema_2d(&bez_ext);
     assert_eq!(bez_roots.len(), 3);
     assert!(bez_roots[0].2 && !bez_roots[1].2 && bez_roots[2].2);
@@ -169,8 +174,10 @@ fn bezier_and_3d_bspline_curves_also_certify_all_interior_minima() {
     let curve_3d: Handle<dyn GeomCurve> =
         Handle::new(GeomBSplineCurve::new(&poles_3d, &knots, &mults, 2, false).unwrap()).cast();
     let adaptor_3d = GeomAdaptorCurve::with_curve(&curve_3d).unwrap();
-    let ext_3d =
-        ExtPC::with_range(Point3::new(0.025, 0.0054, 1.0), &adaptor_3d, 0.0, 1.0, 1e-7).unwrap();
+    let mut ext_3d = ExtPC::new();
+    ext_3d.set_classification_policy(PointCurveClassification::CertifiedSplineV2);
+    ext_3d.initialize(&adaptor_3d, 0.0, 1.0, 1e-7).unwrap();
+    ext_3d.perform(Point3::new(0.025, 0.0054, 1.0)).unwrap();
     assert_eq!(ext_3d.nb_ext().unwrap(), 3);
 }
 

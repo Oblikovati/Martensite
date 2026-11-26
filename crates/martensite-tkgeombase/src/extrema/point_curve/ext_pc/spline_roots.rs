@@ -42,32 +42,41 @@ pub(super) fn perform_bezier_certified<T: ExtremaCurveTool>(
     Ok(())
 }
 
-/// Isolates and certifies all stationary points of a B-spline span `[a, b]` (#462).
-pub(super) fn perform_bspline_span_certified<T: ExtremaCurveTool>(
+/// Isolates and certifies all stationary points across active B-spline spans (#462).
+/// Hoists pole and flat-knot extraction once per curve instead of per span.
+pub(super) fn perform_bspline_spans_certified<T: ExtremaCurveTool>(
     extrema: &mut GGExtPC<'_, T>,
     point: T::Point,
     curve: &T::Curve,
     spline: &T::BSpline,
-    span_bounds: (f64, f64),
-    clipped: (f64, f64),
-    jump: f64,
+    spans: &super::bspline::KnotSpans,
 ) -> Result<(), Failure> {
-    let (k_lo, k_hi) = (span_bounds.0 - jump, span_bounds.1 - jump);
-    let span_len = k_hi - k_lo;
-    if !span_len.is_finite() || span_len <= 0.0 || clipped.1 <= clipped.0 {
-        return Ok(());
-    }
     let degree = spline.pole_degree() as usize;
     let poles = spline.homogeneous_poles();
     let flat_knots = spline.flat_knots();
     let periodic = spline.is_spline_periodic();
     let rational = spline.is_spline_rational();
-    let weighted = extract_bspline_span_bezier(&poles, &flat_knots, degree, k_lo, k_hi, periodic)?;
-    let t0 = ((clipped.0 - span_bounds.0) / span_len).clamp(0.0, 1.0);
-    let t1 = ((clipped.1 - span_bounds.0) / span_len).clamp(0.0, 1.0);
-    let segment = trim_homogeneous_bezier(&weighted, t0, t1);
-    let brackets = isolate_segment_roots(point, &segment, rational)?;
-    record_certified_roots(extrema, point, curve, clipped, &brackets)
+    for index in spans.first..spans.last {
+        let span_bounds = (spans.knot(index)?, spans.knot(index + 1)?);
+        let clipped = spans.span(index, (extrema.uinf, extrema.usup), false)?;
+        let (k_lo, k_hi) = (span_bounds.0 - spans.jump, span_bounds.1 - spans.jump);
+        let span_len = k_hi - k_lo;
+        if !span_len.is_finite() || span_len <= 0.0 || clipped.1 <= clipped.0 {
+            continue;
+        }
+        let Ok(weighted) =
+            extract_bspline_span_bezier(&poles, &flat_knots, degree, k_lo, k_hi, periodic)
+        else {
+            continue;
+        };
+        let t0 = ((clipped.0 - span_bounds.0) / span_len).clamp(0.0, 1.0);
+        let t1 = ((clipped.1 - span_bounds.0) / span_len).clamp(0.0, 1.0);
+        let segment = trim_homogeneous_bezier(&weighted, t0, t1);
+        if let Ok(brackets) = isolate_segment_roots(point, &segment, rational) {
+            let _ = record_certified_roots(extrema, point, curve, clipped, &brackets);
+        }
+    }
+    Ok(())
 }
 
 fn to_weighted(poles: &[[f64; 4]]) -> Vec<[f64; 4]> {
@@ -112,13 +121,17 @@ fn extract_bspline_span_bezier(
 
 fn find_flat_span_index(flat_knots: &[f64], degree: usize, u_lo: f64, tol: f64) -> Option<usize> {
     let limit = flat_knots.len().checked_sub(degree + 1)?;
-    let mut best = None;
-    for i in degree..limit {
-        if flat_knots[i] <= u_lo + tol && flat_knots[i + 1] > u_lo + tol {
-            best = Some(i);
-        }
+    if degree >= limit {
+        return None;
     }
-    best
+    let slice = &flat_knots[degree..=limit];
+    let pos = slice.partition_point(|&k| k <= u_lo + tol);
+    if pos == 0 || pos >= slice.len() {
+        return None;
+    }
+    let idx = degree + pos - 1;
+    (idx < limit && flat_knots[idx] <= u_lo + tol && flat_knots[idx + 1] > u_lo + tol)
+        .then_some(idx)
 }
 
 fn insert_knot_to_multiplicity(
@@ -428,11 +441,8 @@ fn record_certified_roots<T: ExtremaCurveTool>(
             Ok(is_min) => StationaryNature::from(is_min),
             Err(error) => StationaryNature::Unresolved(error),
         };
-        // Avoid adding uncertified near-endpoint duplicates when supplementing sampled spans.
-        if matches!(nature, StationaryNature::Unresolved(_))
-            && ((u - u_start).abs() <= extrema.tol_u.max(1e-9)
-                || (u_end - u).abs() <= extrema.tol_u.max(1e-9))
-        {
+        // Avoid adding uncertified roots when supplementing sampled spans (#462).
+        if matches!(nature, StationaryNature::Unresolved(_)) {
             continue;
         }
         extrema.add_classified_sol(u, pos, sq_dist, nature);

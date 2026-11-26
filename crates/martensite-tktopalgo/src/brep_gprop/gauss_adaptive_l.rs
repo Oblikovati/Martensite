@@ -7,6 +7,7 @@ use super::gauss_adaptive::{
     AdaptiveRun, EPS_PARAM, GaussRules, SUBS_POWER, knots_of, max_element, max_subs, sm,
 };
 use martensite_tkernel::standard::Failure;
+use martensite_tkg2d::geom2d::native::std_max;
 use martensite_tkmath::math;
 
 /// The sums of one L interval (`CDim`, `CIxx`, `CIyy`, `CIzz` per Gauss order, and the
@@ -157,7 +158,7 @@ impl AdaptiveRun<'_, '_> {
         if self.strict_refinement {
             self.state.error_l_total += error_l;
         } else {
-            self.state.error_l_total = self.state.error_l_total.max(error_l);
+            self.state.error_l_total = std_max(self.state.error_l_total, error_l);
         }
         Ok(())
     }
@@ -216,11 +217,19 @@ impl AdaptiveRun<'_, '_> {
         if !self.boundary_point(surface, l, weight)? {
             return Ok(());
         }
+        if !self.strict_refinement {
+            self.err_ul[index] = 0.0;
+        }
         let u1 = self.input.bounds.0;
-        if self.state.u2 == u1 {
+        if self.strict_refinement {
+            if self.state.u2 == u1 {
+                return Ok(());
+            }
+        } else if (self.state.u2 - u1).abs() < EPS_PARAM {
+            self.state.refinement_exhausted |= self.state.u2 != u1;
             return Ok(());
         }
-        let count = self.u_integral(surface)?;
+        let count = self.u_integral(surface, pass)?;
         let dul = self.state.dul;
         let g = self.gauss;
         for ui in &self.u.inertia[..count] {
@@ -232,7 +241,11 @@ impl AdaptiveRun<'_, '_> {
         if pass > 0 {
             return Ok(());
         }
-        self.err_ul[index] += self.state.error_u * dul.abs();
+        if self.strict_refinement {
+            self.err_ul[index] += self.state.error_u * dul.abs();
+        } else {
+            self.err_ul[index] = self.state.error_u * ((self.state.u2 - u1) * dul).abs();
+        }
         for ui in &self.u.inertia[..count] {
             sums.ix = g.add(sums.ix, g.mult(ui.ix, dul));
             sums.iy = g.add(sums.iy, g.mult(ui.iy, dul));
@@ -260,7 +273,11 @@ impl AdaptiveRun<'_, '_> {
         }
         let (puv, vuv) = surface.d12d(l)?;
         self.state.dul = vuv.y() * weight;
-        if self.state.dul == 0.0 {
+        if self.strict_refinement {
+            if self.state.dul == 0.0 {
+                return Ok(false);
+            }
+        } else if self.state.dul.abs() < EPS_PARAM {
             return Ok(false);
         }
         self.state.v = clamp(puv.y(), bv1, bv2);
@@ -278,8 +295,15 @@ impl AdaptiveRun<'_, '_> {
         li.izz = g.mult(sums.izz[0], lr);
         if self.input.error_passes == 2 {
             let sub_dim = (sums.dim[1] - sums.dim[0]).abs();
-            // #407: the former Vinert scratch-state copy must not govern U convergence.
-            self.l.error[index] = g.mult(g.add(sub_dim, self.err_ul[index]), lr.abs());
+            if self.strict_refinement {
+                // #407: the former Vinert scratch-state copy must not govern U convergence.
+                self.l.error[index] = g.mult(g.add(sub_dim, self.err_ul[index]), lr.abs());
+            } else {
+                if g.kind == super::gauss::GaussType::Vinert {
+                    self.state.error_u = self.err_ul[index];
+                }
+                self.l.error[index] = g.add(g.mult(sub_dim, lr), self.err_ul[index]);
+            }
         }
         li.ix = g.mult(sums.ix, lr);
         li.iy = g.mult(sums.iy, lr);

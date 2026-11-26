@@ -96,8 +96,13 @@ impl ExtPRevS {
                 } else {
                     self.below_range(v, periodic)
                 };
-                let (extremum, point_e, d2) =
-                    is_extremum((u, v), point, surface, is_v_sup, an_ext.is_min(i)?)?;
+                let (extremum, point_e, d2) = is_extremum(
+                    (u, v),
+                    point,
+                    surface,
+                    is_v_sup,
+                    an_ext.is_min(i).unwrap_or(false),
+                )?;
                 if !extremum {
                     continue;
                 }

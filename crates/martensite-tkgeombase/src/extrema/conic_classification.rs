@@ -15,13 +15,15 @@ pub enum PointCurveClassification {
     /// Certify stationarity and classify the local squared-distance second variation.
     #[default]
     DifferentialV2,
+    /// Certify conic extrema and run Bernstein isolation on B-spline and Bézier spans (#462).
+    CertifiedSplineV2,
 }
 
 impl PointCurveClassification {
     pub(super) fn legacy_seed(self, retained_flag: impl FnOnce() -> bool) -> bool {
         match self {
             Self::LegacyV1 => retained_flag(),
-            Self::DifferentialV2 => false,
+            Self::DifferentialV2 | Self::CertifiedSplineV2 => false,
         }
     }
 }

@@ -93,7 +93,7 @@ impl ExtPExtS {
             return Ok(self.nb_ext == NB_EXT_MAX);
         }
         self.f.set_point(section.point);
-        let is_min: bool = an_ext.is_min(i)?;
+        let is_min: bool = an_ext.is_min(i).unwrap_or(false);
         let mut solver = FunctionSetRoot::new(&self.f, &section.tol, 100)?;
         self.solve_from(&mut u, is_min, section, &mut solver)?;
         if self.keep_new_roots(false)? {

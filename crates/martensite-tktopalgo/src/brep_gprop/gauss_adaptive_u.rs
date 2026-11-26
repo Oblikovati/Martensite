@@ -6,9 +6,13 @@ use super::gauss_adaptive::{AdaptiveRun, SUBS_POWER, max_element, max_subs, sm};
 use martensite_tkernel::standard::Failure;
 
 impl AdaptiveRun<'_, '_> {
-    /// Both outer Gauss orders use the same inner convergence rule. Update the total
-    /// U error after each subdivision; a stale estimate cannot govern refinement (#407).
-    pub(super) fn u_integral(&mut self, surface: &BRepGPropFace) -> Result<usize, Failure> {
+    /// Both outer Gauss orders use the same inner convergence rule in strict mode (#407),
+    /// while legacy entry points preserve exact OCCT adaptive arithmetic.
+    pub(super) fn u_integral(
+        &mut self,
+        surface: &BRepGPropFace,
+        pass: usize,
+    ) -> Result<usize, Failure> {
         let (u1, u2) = (self.input.bounds.0, self.state.u2);
         let end = self.u.fill(u1, u2, &self.input.u_knots, None);
         let max = max_subs(end, SUBS_POWER).min(sm());
@@ -44,11 +48,14 @@ impl AdaptiveRun<'_, '_> {
                 self.u.inertia[j - 1] = Inertia::default();
             } else {
                 for index in range.into_iter().take(k_end) {
-                    self.u_span(surface, index)?;
+                    self.u_span(surface, pass, index)?;
                 }
             }
             if j == end {
                 k_end = 2;
+                if !self.strict_refinement {
+                    self.state.error_u = self.u.error[max_element(&self.u.error)];
+                }
             }
             if self.strict_refinement {
                 let mass: f64 = self.u.inertia[..j].iter().map(|part| part.mass).sum();
@@ -60,9 +67,6 @@ impl AdaptiveRun<'_, '_> {
                     break;
                 }
             } else {
-                if j == end {
-                    self.state.error_u = self.u.error[max_element(&self.u.error)];
-                }
                 let refine = self.state.error_u - self.state.eps_u > 0.0 && self.state.eps_u != 0.0;
                 if !(refine || k_end == 1) {
                     break;
@@ -72,13 +76,21 @@ impl AdaptiveRun<'_, '_> {
         Ok(j)
     }
 
-    /// Evaluate both U orders on one interval. The second order estimates area error;
-    /// the first supplies all moments, independently of the outer order (#407).
-    fn u_span(&mut self, surface: &BRepGPropFace, index: usize) -> Result<(), Failure> {
+    /// Evaluate U orders on one interval.
+    fn u_span(
+        &mut self,
+        surface: &BRepGPropFace,
+        pass: usize,
+        index: usize,
+    ) -> Result<(), Failure> {
         let mut local = [Inertia::default(); 2];
         let um = 0.5 * (self.u.second[index] + self.u.first[index]);
         let ur = 0.5 * (self.u.second[index] - self.u.first[index]);
-        let orders = self.input.error_passes;
+        let orders = if self.strict_refinement {
+            self.input.error_passes
+        } else {
+            self.input.error_passes - pass
+        };
         for (order, sums) in local.iter_mut().enumerate().take(orders) {
             let (points, weights) = &self.input.u_rules.rules[order];
             for (point, weight) in points.iter().zip(weights) {
@@ -86,7 +98,7 @@ impl AdaptiveRun<'_, '_> {
                 self.add_u_point(order, (p, normal), *weight, sums);
             }
         }
-        self.store_u_span(index, ur, &local);
+        self.store_u_span(pass, index, ur, &local);
         Ok(())
     }
 
@@ -114,7 +126,7 @@ impl AdaptiveRun<'_, '_> {
     }
 
     /// The moments of a U interval (times its half range) and its error.
-    fn store_u_span(&mut self, index: usize, ur: f64, local: &[Inertia; 2]) {
+    fn store_u_span(&mut self, pass: usize, index: usize, ur: f64, local: &[Inertia; 2]) {
         let g = self.gauss;
         let ui = &mut self.u.inertia[index];
         ui.mass = g.mult(local[0].mass, ur);
@@ -122,6 +134,9 @@ impl AdaptiveRun<'_, '_> {
             ui.ixx = g.mult(local[0].ixx, ur);
             ui.iyy = g.mult(local[0].iyy, ur);
             ui.izz = g.mult(local[0].izz, ur);
+        }
+        if !self.strict_refinement && pass > 0 {
+            return;
         }
         let d_mass = (local[1].mass - local[0].mass).abs();
         ui.ix = g.mult(local[0].ix, ur);
@@ -135,6 +150,10 @@ impl AdaptiveRun<'_, '_> {
         ui.ixy = g.mult(local[0].ixy, ur);
         ui.ixz = g.mult(local[0].ixz, ur);
         ui.iyz = g.mult(local[0].iyz, ur);
-        self.u.error[index] = g.mult(d_mass, ur.abs());
+        self.u.error[index] = if self.strict_refinement {
+            g.mult(d_mass, ur.abs())
+        } else {
+            g.mult(d_mass, ur)
+        };
     }
 }
