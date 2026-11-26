@@ -31,11 +31,50 @@ impl Program {
         spent: Option<Work>,
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<Reframed, Failure> {
+        self.reframe_sources((geometry, uv), None, policy, spent, cancelled)
+    }
+
+    pub(in crate::constraints) fn reframe_attachment(
+        self: &Arc<Self>,
+        geometry: &Snapshot,
+        uv: [f64; 2],
+        equation: super::super::on_face::AttachmentEquation,
+        policy: ConstraintPolicy,
+        spent: Work,
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<Reframed, Failure> {
+        self.reframe_sources(
+            (geometry, Some(uv)),
+            Some(equation),
+            policy,
+            Some(spent),
+            cancelled,
+        )
+    }
+
+    fn reframe_sources(
+        self: &Arc<Self>,
+        (geometry, uv): (&Snapshot, Option<[f64; 2]>),
+        attachment: Option<super::super::on_face::AttachmentEquation>,
+        policy: ConstraintPolicy,
+        spent: Option<Work>,
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<Reframed, Failure> {
         let mut work = spent.unwrap_or_default();
         if let Some(spent) = spent {
             work = charge(policy, spent, self.chart_sources.len())?;
         }
-        let updates = self.collect_frames(geometry, cancelled)?;
+        let mut updates = self.collect_frames(geometry, cancelled)?;
+        if let Some(equation) = attachment {
+            let index = self.attachment_block.ok_or(Failure::ReturnedCoordinates {
+                expected: self.points.len() * 3 + 2,
+                actual: self.points.len() * 3,
+            })?;
+            updates.push((
+                index,
+                Arc::new(residual::Equation::SurfaceAttachment(equation)),
+            ));
+        }
         if updates.is_empty() {
             return Ok(Reframed {
                 program: self.clone(),

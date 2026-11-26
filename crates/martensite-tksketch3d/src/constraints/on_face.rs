@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Source-bound planar attachment ownership layered over the actual hard sketch program.
 mod curve;
+mod cylinder;
 mod drag;
 mod equation;
 mod failure;
@@ -15,21 +16,28 @@ use martensite_tkbrep::brep::planar_attachment::{
 use std::{num::NonZeroU64, sync::Arc};
 
 pub use curve::{PlanarFaceCurve, PlanarFaceCurveFailure, PlanarFaceCurveRecipe};
+pub use cylinder::{
+    CylindricalAttachedSketch, CylindricalFaceBinding, CylindricalFaceDragUpdate,
+    CylindricalFaceFailure, CylindricalFaceRelation,
+};
 pub use drag::PlanarFaceDragUpdate;
-pub(in crate::constraints) use equation::PlanarEquation;
+pub(in crate::constraints) use equation::{AttachmentEquation, PlanarEquation};
 pub use failure::PlanarFaceConstraintFailure;
 use failure::PlanarFaceConstraintFailure as Failure;
 
 /// Host-authoritative identity and version of a captured native face.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct PlanarFaceRevision {
+pub struct FaceAttachmentRevision {
     /// Original named body and face with their host incarnation and revision.
     pub face: AttachmentSource,
     /// Host input reservation for the exact immutable source binding.
     pub input_salt: NonZeroU64,
 }
 
-impl PlanarFaceRevision {
+/// Backward-compatible name for the host authority of a planar point attachment.
+pub type PlanarFaceRevision = FaceAttachmentRevision;
+
+impl FaceAttachmentRevision {
     fn may_replace(self, old: Self) -> bool {
         let a = self.face;
         let b = old.face;
@@ -294,7 +302,7 @@ fn build_program(
         &sketch.geometry,
         &sketch.relations,
         sketch.policy,
-        Some((record.id, record.point, equation)),
+        Some((record.id, record.point, AttachmentEquation::Plane(equation))),
         cancelled,
     )?);
     program.verify_attachment_state(&sketch.geometry, record.uv, cancelled)?;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::{
     ArcBranch, AxisDirection, CoordinateAxis, LineAngle, ParallelDirection, metric,
-    on_face::PlanarEquation,
+    on_face::AttachmentEquation,
 };
 use martensite_tkmath::gp::Point3;
 use martensite_tksolve::{
@@ -34,7 +34,7 @@ pub(super) fn work_bound(units: usize) -> usize {
 
 #[derive(Clone, Copy)]
 pub(super) enum Equation {
-    PlanarAttachment(PlanarEquation),
+    SurfaceAttachment(AttachmentEquation),
     Coincident {
         scale: f64,
     },
@@ -121,7 +121,7 @@ impl Equation {
 
     pub(super) fn rows(self) -> usize {
         match self {
-            Self::Coincident { .. } | Self::PlanarAttachment(_) => 3,
+            Self::Coincident { .. } | Self::SurfaceAttachment(_) => 3,
             Self::Length { .. }
             | Self::Plane(_)
             | Self::ArcIntrinsic { .. }
@@ -167,7 +167,7 @@ impl Equation {
             | Self::Radius { .. }
             | Self::PointOnLine { .. }
             | Self::Continuity { .. } => 9,
-            Self::PlanarAttachment(_) => 5,
+            Self::SurfaceAttachment(_) => 5,
             _ => 6,
         }
     }
@@ -188,7 +188,7 @@ impl ResidualSource for Equation {
         }
         let first = || displacement(v, 0);
         match *self {
-            Self::PlanarAttachment(source) => source.evaluate(v),
+            Self::SurfaceAttachment(source) => source.evaluate(v),
             Self::Coincident { scale } => Ok(first()?.scaled(scale)?.components().to_vec()),
             Self::Length { scale, target } => Ok(vec![
                 checked_length(&first()?)?.shifted(-target)?.scaled(scale)?,

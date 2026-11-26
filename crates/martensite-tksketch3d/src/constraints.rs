@@ -34,9 +34,10 @@ pub use error::{ConstraintFailure, PolicyQuantity};
 pub use martensite_tksolve::{nonlinear::SolveOptions, preview::Limits as SolverLimits};
 pub use motion::{RigidMotion, RigidMotionFailure};
 pub use on_face::{
-    PlanarAttachedSketch, PlanarFaceBinding, PlanarFaceConstraintFailure, PlanarFaceCurve,
-    PlanarFaceCurveFailure, PlanarFaceCurveRecipe, PlanarFaceDragUpdate, PlanarFaceRelation,
-    PlanarFaceRevision,
+    CylindricalAttachedSketch, CylindricalFaceBinding, CylindricalFaceDragUpdate,
+    CylindricalFaceFailure, CylindricalFaceRelation, FaceAttachmentRevision, PlanarAttachedSketch,
+    PlanarFaceBinding, PlanarFaceConstraintFailure, PlanarFaceCurve, PlanarFaceCurveFailure,
+    PlanarFaceCurveRecipe, PlanarFaceDragUpdate, PlanarFaceRelation, PlanarFaceRevision,
 };
 pub use preferred::{PreferenceReport, PreferenceSettlement, PreferredDragUpdate};
 use program::Program;

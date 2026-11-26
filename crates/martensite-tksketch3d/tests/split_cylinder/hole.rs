@@ -384,3 +384,36 @@ fn emit_hole_split() {
         edit.report, edit.cuts, edit.fragments
     );
 }
+
+#[test]
+fn point_attachment_does_not_treat_a_holed_wall_as_a_full_trim() {
+    use martensite_tkmath::predicates::roots::metric_bounds::segment_cylinder::CylinderPointError;
+    let wall = trimmed([0.5, 2.5], AXIAL);
+    let current = wall.source();
+    let point = [0., 1., 1.];
+    let uv = [std::f64::consts::FRAC_PI_2, 1.];
+    assert!(matches!(
+        wall.point_seed(current, point, uv[0]),
+        Err(CylindricalFaceError::Point(
+            CylinderPointError::UnsupportedHole
+        ))
+    ));
+    assert!(matches!(
+        wall.point_place(current, point),
+        Err(CylindricalFaceError::Point(
+            CylinderPointError::UnsupportedHole
+        ))
+    ));
+    assert!(matches!(
+        wall.point_chart(current, uv, || false),
+        Err(CylindricalFaceError::Point(
+            CylinderPointError::UnsupportedHole
+        ))
+    ));
+    assert!(matches!(
+        wall.point_qualify(current, uv, point, 1e-8, || false),
+        Err(CylindricalFaceError::Point(
+            CylinderPointError::UnsupportedHole
+        ))
+    ));
+}

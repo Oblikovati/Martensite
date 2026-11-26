@@ -466,3 +466,4 @@ fn emit_cylindrical_split() {
 
 mod hole;
 mod native_trim;
+mod point_on_face;

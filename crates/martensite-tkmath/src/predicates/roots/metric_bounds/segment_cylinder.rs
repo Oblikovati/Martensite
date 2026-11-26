@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Exact directed segment contacts with a located, full-period cylindrical chart.
 mod hole;
+mod point;
 mod root;
+pub use point::{CylinderPointChart, CylinderPointError, CylinderPointQuery, require_nearby_lift};
 mod trace;
 pub use trace::{
     CylinderHoleCarrier, CylinderHoleTraceEdge, CylinderWallTraceInput,
@@ -195,6 +197,7 @@ impl CylinderSegmentError {
 pub struct SegmentCylinderWall {
     origin: ExactVector,
     inverse: [ExactVector; 3],
+    axes: [ExactVector; 3],
     radius: Ratio,
     axial: [Ratio; 2],
     hole: Option<Hole>,
@@ -222,10 +225,12 @@ impl SegmentCylinderWall {
         let u = place.vector(exact_vector(*frame.x_direction().coordinates(), 1)?);
         let v = place.vector(exact_vector(*frame.y_direction().coordinates(), 2)?);
         let axis = place.vector(exact_vector(*frame.direction().coordinates(), 3)?);
-        let inverse = invert([u, v, axis])?;
+        let axes = [u, v, axis];
+        let inverse = invert(axes.clone())?;
         Ok(Self {
             origin,
             inverse,
+            axes,
             radius: Ratio::from_finite(radius),
             axial: axial.map(Ratio::from_finite),
             hole: None,

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::{
-    ConstraintFailure as Failure, ConstraintPolicy, ConstraintRank, PolicyQuantity, Relation,
-    RelationId,
+    ConstraintFailure as Failure, ConstraintPolicy, ConstraintRank, Relation, RelationId,
     adopt::apply_checked,
     binding::{Binding, BlockOwner, EquationBlock},
     continuity::JoinReference,
@@ -16,8 +15,10 @@ use martensite_tksolve::{
 };
 use std::{borrow::Cow, collections::BTreeMap, sync::Arc};
 
+mod admission;
 mod chart;
 mod failure;
+use admission::admit;
 use failure::{preview_failure, solve_failure};
 
 #[derive(Clone)]
@@ -30,7 +31,7 @@ pub(super) struct Program {
     authored_rows: usize,
     frozen_coordinates: usize,
     prepared: Prepared,
-    has_parameters: bool,
+    attachment_block: Option<usize>,
 }
 
 impl Program {
@@ -47,10 +48,10 @@ impl Program {
         geometry: &Snapshot,
         relations: &BTreeMap<RelationId, Relation>,
         policy: ConstraintPolicy,
-        planar: Option<(RelationId, PointId, super::on_face::PlanarEquation)>,
+        attachment: Option<(RelationId, PointId, super::on_face::AttachmentEquation)>,
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<Self, Failure> {
-        admit(geometry, relations, policy, planar.is_some())?;
+        admit(geometry, relations, policy, attachment.is_some())?;
         let points = geometry
             .owned_ids()
             .filter_map(|key| match key {
@@ -73,18 +74,19 @@ impl Program {
             frozen_coordinates,
         } = super::binding::bind(geometry, relations, &point_columns, policy, cancelled)?;
         let mut domains = vec![Domain::Length(policy.length_scale.value()); 3 * points.len()];
-        if let Some((id, point, equation)) = planar {
+        let attachment_block = attachment.map(|_| blocks.len());
+        if let Some((id, point, equation)) = attachment {
             let start = *point_columns
                 .get(&point)
                 .ok_or(Failure::MissingPoint(point))?;
             let uv = domains.len();
             blocks.push(EquationBlock {
                 owner: BlockOwner::Relation(id),
-                source: Arc::new(residual::Equation::PlanarAttachment(equation)),
+                source: Arc::new(residual::Equation::SurfaceAttachment(equation)),
                 variables: [start, start + 1, start + 2, uv, uv + 1].into(),
             });
             authored_rows += 3;
-            domains.extend(equation.steps.map(Domain::Parameter));
+            domains.extend(equation.steps().map(Domain::Parameter));
         }
         let mut limits = policy.preview;
         limits.work = limits
@@ -117,7 +119,7 @@ impl Program {
             authored_rows,
             frozen_coordinates,
             prepared,
-            has_parameters: planar.is_some(),
+            attachment_block,
         })
     }
 
@@ -362,7 +364,7 @@ impl Program {
     }
 
     fn value_count(&self) -> usize {
-        3 * self.points.len() + 2 * usize::from(self.has_parameters)
+        3 * self.points.len() + 2 * usize::from(self.attachment_block.is_some())
     }
 
     pub(super) fn set_point_and_uv(
@@ -433,55 +435,6 @@ fn pin_columns(fixed: &mut BTreeMap<usize, f64>, start: usize, values: &[f64]) {
     for (offset, &value) in values[start..start + 3].iter().enumerate() {
         fixed.entry(start + offset).or_insert(value);
     }
-}
-
-fn admit(
-    geometry: &Snapshot,
-    relations: &BTreeMap<RelationId, Relation>,
-    policy: ConstraintPolicy,
-    planar: bool,
-) -> Result<(), Failure> {
-    let sine = policy.parallel_sine_tolerance;
-    if !(sine > 0. && sine < 1.) {
-        return Err(Failure::InvalidParallelSine(sine));
-    }
-    if !(1. / policy.length_scale.value()).is_finite() {
-        return Err(Failure::InvalidLengthScale(policy.length_scale.value()));
-    }
-    bound(
-        PolicyQuantity::ValidationItems,
-        geometry
-            .entities
-            .len()
-            .saturating_add(relations.len())
-            .saturating_add(usize::from(planar)),
-        policy.validation_items,
-    )?;
-    if let Some(&spline) = geometry.fit_splines.keys().next() {
-        return Err(Failure::UnsupportedEntity(EntityId::FitSpline(spline)));
-    }
-    let points = geometry
-        .owned_ids()
-        .filter(|entity| matches!(entity, EntityId::Point(_)))
-        .count();
-    bound(
-        PolicyQuantity::Coordinates,
-        points
-            .saturating_mul(3)
-            .saturating_add(2 * usize::from(planar)),
-        policy.preview.coordinates,
-    )
-}
-
-fn bound(quantity: PolicyQuantity, requested: usize, maximum: usize) -> Result<(), Failure> {
-    if requested > maximum {
-        return Err(Failure::Limit {
-            quantity,
-            requested,
-            maximum,
-        });
-    }
-    Ok(())
 }
 
 fn read_only_drag(geometry: &Snapshot, point: PointId) -> Failure {

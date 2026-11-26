@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Certified line contact with a selected finite, full-period native cylindrical wall.
 mod capture;
+mod point;
 
 pub use super::planar_attachment::AttachmentSource;
 use super::{
@@ -10,8 +11,9 @@ use super::{
 use crate::topods::{Face, Solid};
 use martensite_tkmath::predicates::roots::metric_bounds::segment_cylinder::SegmentCylinderWall;
 pub use martensite_tkmath::predicates::roots::metric_bounds::segment_cylinder::{
-    CylinderContactSense, CylinderLinePlace, CylinderSegmentContact, CylinderSegmentError,
-    CylinderSegmentIntersection, CylinderWallPlace, SegmentCylinderCut,
+    CylinderContactSense, CylinderLinePlace, CylinderPointChart, CylinderPointError,
+    CylinderPointQuery, CylinderSegmentContact, CylinderSegmentError, CylinderSegmentIntersection,
+    CylinderWallPlace, SegmentCylinderCut,
 };
 use std::{error::Error, fmt};
 
@@ -39,6 +41,8 @@ pub enum CylindricalFaceError {
     },
     /// The exact root, placement, or position evidence was incomplete.
     Numeric(CylinderSegmentError),
+    /// A point lift or its certified distance could not be admitted.
+    Point(CylinderPointError),
     /// The capture or query was cooperatively cancelled.
     Cancelled,
 }
@@ -60,6 +64,7 @@ impl fmt::Display for CylindricalFaceError {
                 write!(out, "cylindrical face trace {upper_bound} exceeds {limit}")
             }
             Self::Numeric(cause) => cause.fmt(out),
+            Self::Point(cause) => cause.fmt(out),
             Self::Cancelled => out.write_str("cylindrical face query cancelled"),
         }
     }
@@ -70,6 +75,7 @@ impl Error for CylindricalFaceError {
         match self {
             Self::Source(cause) => Some(cause),
             Self::Numeric(cause) => Some(cause),
+            Self::Point(cause) => Some(cause),
             _ => None,
         }
     }
@@ -114,6 +120,13 @@ impl CylindricalSplitDomain {
         mut cancelled: impl FnMut() -> bool,
     ) -> Result<CylinderSegmentIntersection, CylindricalFaceError> {
         poll(&mut cancelled)?;
+        self.require_current(current)?;
+        self.proof
+            .intersect(endpoints, cancelled)
+            .map_err(numeric_failure)
+    }
+
+    fn require_current(&self, current: AttachmentSource) -> Result<(), CylindricalFaceError> {
         if current != self.source {
             return Err(CylindricalFaceError::Source(
                 FaceAttachmentError::StaleSource {
@@ -122,9 +135,7 @@ impl CylindricalSplitDomain {
                 },
             ));
         }
-        self.proof
-            .intersect(endpoints, cancelled)
-            .map_err(numeric_failure)
+        Ok(())
     }
 }
 
