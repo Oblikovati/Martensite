@@ -102,6 +102,8 @@ pub enum RelationSpec {
     FixPoint(PointId),
     /// Fix both ordered endpoints of an existing line at their current exact positions.
     FixLine(LineId),
+    /// Fix a midpoint-witness arc at its exact authored placement.
+    FixArc(ArcId),
     /// Constrain distinct points to coincide without merging their IDs.
     Coincident([PointId; 2]),
     /// Constrain a distinct point to an infinite line support, leaving its axial coordinate free.
@@ -114,6 +116,8 @@ pub enum RelationSpec {
     Length(LineId, MinimumLength),
     /// Drive the radius of a midpoint-witness arc and retain its sweep branch.
     Radius(ArcId, MinimumLength),
+    /// Constrain two distinct midpoint-witness arcs to the same physical radius.
+    EqualRadius([ArcId; 2]),
     /// Constrain a line to the chosen coordinate axis and direction sign.
     ParallelToAxis(LineId, CoordinateAxis, AxisDirection),
     /// Keep a line parallel to every plane with this normal, leaving its offset free.
@@ -137,6 +141,8 @@ pub enum Relation {
     FixPoint(PointId, Point3),
     /// Fixed line ID and exact positions in authored endpoint order.
     FixLine(LineId, [Point3; 2]),
+    /// Fixed arc ID, exact start/end/witness positions and captured sweep branch.
+    FixArc(ArcId, [Point3; 3], ArcBranch),
     /// Two point identities whose positions must coincide within the length tolerance.
     Coincident([PointId; 2]),
     /// Point identity and its infinite line support.
@@ -150,6 +156,8 @@ pub enum Relation {
     Length(LineId, MinimumLength),
     /// An arc identity, target radius in model units and captured sweep branch.
     Radius(ArcId, MinimumLength, ArcBranch),
+    /// Ordered arc IDs and their corresponding captured sweep branches.
+    EqualRadius([ArcId; 2], [ArcBranch; 2]),
     /// Line identity, coordinate axis, and stored direction sign.
     ParallelToAxis(LineId, CoordinateAxis, AxisDirection),
     /// Line identity and the model-space plane normal.
@@ -232,6 +240,9 @@ pub struct ConstrainedSketch {
 
 impl ConstrainedSketch {
     /// Prepare existing admitted geometry with an empty relation set.
+    ///
+    /// Through arcs require a strict minor or major branch and a witness within the
+    /// length tolerance of the chord midpoint's normal plane.
     /// Example: `ConstrainedSketch::new(snapshot, policy)?`.
     pub fn new(geometry: Snapshot, policy: ConstraintPolicy) -> Result<Self, ConstraintFailure> {
         let relations = BTreeMap::new();

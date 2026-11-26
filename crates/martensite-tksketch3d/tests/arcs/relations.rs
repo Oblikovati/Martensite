@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
+mod pairing;
+
 use super::*;
 use crate::constraints::{length, policy, rid};
 use martensite_tksketch3d::constraints::{

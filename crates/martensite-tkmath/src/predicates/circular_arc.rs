@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Exact metric checks on the three authored points of a circular arc.
+use super::compare::compare_radical_gap;
 use super::{
     NonFiniteCoordinate, exact_coordinate, exact_vector3, triangle::dot3,
     triple_product::exact_cross,
@@ -92,6 +93,21 @@ impl ArcTripleMetrics {
         let limit = scalar(limit, 3)?;
         let allowed = (&limit * &limit * &self.chord_squared) << 2_usize;
         Ok(self.midpoint_projection_squared.cmp(&allowed))
+    }
+
+    /// Compare the absolute difference between exact circle radii with an absolute length limit.
+    /// Example: `first.compare_radius_difference(&second, 1e-7)?`.
+    pub fn compare_radius_difference(
+        &self,
+        other: &Self,
+        limit: f64,
+    ) -> Result<Ordering, ArcTripleFailure> {
+        let limit = scalar(limit, 6)?;
+        // Put both squared radii and the squared cap over the product of the denominators.
+        let first = &self.radius_numerator * &other.radius_denominator;
+        let second = &other.radius_numerator * &self.radius_denominator;
+        let cap_squared = &limit * &limit * &self.radius_denominator * &other.radius_denominator;
+        Ok(compare_radical_gap(first, second, cap_squared))
     }
 
     /// Check the exact circle radius against the closed band around a nonnegative target.

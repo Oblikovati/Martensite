@@ -28,6 +28,13 @@ pub(super) fn feasible(
         Relation::FixLine(line, anchors) => snapshot.line(line).is_some_and(|line| {
             same_bits(line.points[0], anchors[0]) && same_bits(line.points[1], anchors[1])
         }),
+        Relation::FixArc(arc, anchors, branch) => snapshot.arc(arc).is_some_and(|arc| {
+            arc.points()
+                .into_iter()
+                .zip(anchors)
+                .all(|(point, anchor)| same_bits(point, anchor))
+                && arc_layout::branch_matches(arc, branch)
+        }),
         Relation::Coincident([first, second]) => {
             let (Some(a), Some(b)) = (snapshot.point(first), snapshot.point(second)) else {
                 return false;
@@ -49,6 +56,12 @@ pub(super) fn feasible(
         Relation::Radius(arc, target, branch) => snapshot
             .arc(arc)
             .is_some_and(|arc| arc_layout::radius_matches(arc, target, branch, policy)),
+        Relation::EqualRadius([first, second], branches) => {
+            let (Some(first), Some(second)) = (snapshot.arc(first), snapshot.arc(second)) else {
+                return false;
+            };
+            arc_layout::equal_radius_matches([first, second], branches, policy)
+        }
         Relation::Parallel(lines, direction) => pair(snapshot, lines)
             .and_then(|[a, b]| {
                 parallel(

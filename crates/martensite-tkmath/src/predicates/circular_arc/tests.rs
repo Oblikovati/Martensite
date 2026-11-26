@@ -47,3 +47,27 @@ fn bad_source_geometry_and_scalar_keep_their_input_identity() {
         }))
     ));
 }
+
+#[test]
+fn exact_radius_difference_uses_its_own_closed_band_for_opposite_branches() {
+    let small = metrics(0., 8.);
+    let large = ArcTripleMetrics::new([[-8., 0., 0.], [8., 0., 0.], [0., 4., 0.]]).unwrap();
+    for (first, second) in [(&small, &large), (&large, &small)] {
+        assert_eq!(
+            first.compare_radius_difference(second, 5.0_f64.next_down()),
+            Ok(Ordering::Greater)
+        );
+        assert_eq!(
+            first.compare_radius_difference(second, 5.),
+            Ok(Ordering::Equal)
+        );
+        assert_eq!(
+            first.compare_radius_difference(second, 5.0_f64.next_up()),
+            Ok(Ordering::Less)
+        );
+    }
+    assert_eq!(
+        small.compare_radius_difference(&metrics(0., 2.), 0.),
+        Ok(Ordering::Equal)
+    );
+}

@@ -93,6 +93,19 @@ impl ArcLayout {
         })
     }
 
+    pub(super) fn midpoint_key(self) -> ([PointId; 2], PointId) {
+        let [start, end, witness] = self.points;
+        let mut chord = [start, end];
+        chord.sort_unstable();
+        (chord, witness)
+    }
+
+    pub(super) fn circle_key(self) -> [PointId; 3] {
+        let mut points = self.points;
+        points.sort_unstable();
+        points
+    }
+
     pub(super) fn require_branch(self, expected: ArcBranch) -> Result<(), Failure> {
         if self.branch != expected {
             return Err(Failure::Arc(
@@ -145,17 +158,46 @@ pub(super) fn radius_matches(
     policy: ConstraintPolicy,
 ) -> bool {
     let tolerance = policy.length_tolerance.value();
-    let Ok(metrics) = metrics(arc) else {
+    on_branch(arc, branch).is_some_and(|metrics| {
+        metrics.radius_in_band(target.value(), tolerance) == Ok(true)
+            && nominal_radii_agree(arc.radius(), target.value(), tolerance)
+    })
+}
+
+pub(super) fn equal_radius_matches(
+    [first, second]: [ArcGeometry; 2],
+    [first_branch, second_branch]: [ArcBranch; 2],
+    policy: ConstraintPolicy,
+) -> bool {
+    let (Some(a), Some(b)) = (
+        on_branch(first, first_branch),
+        on_branch(second, second_branch),
+    ) else {
         return false;
     };
+    let tolerance = policy.length_tolerance.value();
+    matches!(
+        a.compare_radius_difference(&b, tolerance),
+        Ok(Ordering::Less | Ordering::Equal)
+    ) && nominal_radii_agree(first.radius(), second.radius(), tolerance)
+}
+
+pub(super) fn branch_matches(arc: ArcGeometry, branch: ArcBranch) -> bool {
+    on_branch(arc, branch).is_some()
+}
+
+fn on_branch(arc: ArcGeometry, branch: ArcBranch) -> Option<ArcTripleMetrics> {
+    let metrics = metrics(arc).ok()?;
+    (metrics.branch() == branch_order(branch) && nominal_branch(arc) == Ok(branch))
+        .then_some(metrics)
+}
+
+fn nominal_radii_agree(first: f64, second: f64, tolerance: f64) -> bool {
     let segment = |length| [[0.; 3], [length, 0., 0.]];
-    metrics.branch() == branch_order(branch)
-        && nominal_branch(arc) == Ok(branch)
-        && metrics.radius_in_band(target.value(), tolerance) == Ok(true)
-        && matches!(
-            compare_length_difference_3d(segment(arc.radius()), segment(target.value()), tolerance),
-            Ok(Ordering::Less | Ordering::Equal)
-        )
+    matches!(
+        compare_length_difference_3d(segment(first), segment(second), tolerance),
+        Ok(Ordering::Less | Ordering::Equal)
+    )
 }
 
 fn branch_order(branch: ArcBranch) -> Ordering {

@@ -45,14 +45,17 @@ pub fn compare_length_difference_3d(
     let a = squared_separation_3d(exact_vector3(first[0], 0)?, exact_vector3(first[1], 1)?);
     let b = squared_separation_3d(exact_vector3(second[0], 2)?, exact_vector3(second[1], 3)?);
     let limit = exact_coordinate(limit, 4, 0)?;
-    let limit_sq = &limit * &limit;
+    Ok(compare_radical_gap(a, b, &limit * &limit))
+}
+
+pub(super) fn compare_radical_gap(a: BigInt, b: BigInt, limit_sq: BigInt) -> Ordering {
     let (longer, shorter) = if a >= b { (a, b) } else { (b, a) };
     // sqrt(longer) <= sqrt(shorter) + limit reduces to one exact sign, then a square.
     let remainder = longer - &shorter - &limit_sq;
     if remainder < BigInt::from(0) {
-        return Ok(Ordering::Less);
+        return Ordering::Less;
     }
-    Ok((&remainder * &remainder).cmp(&(4 * shorter * limit_sq)))
+    (&remainder * &remainder).cmp(&(4 * shorter * limit_sq))
 }
 
 fn squared_separation_3d(first: [BigInt; 3], second: [BigInt; 3]) -> BigInt {

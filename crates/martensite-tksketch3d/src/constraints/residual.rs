@@ -14,11 +14,12 @@ mod frame;
 pub(super) use frame::FrameReference;
 
 type Vector = DualVector<3>;
-// Each evaluator has at most 15 input scalars and four result rows.
+// Each evaluator has at most 18 input scalars and four result rows.
 // The parallel path uses fewer than 100 elementary dual operations and copies, including
 // both vector normalizations, the two basis vectors and the branch dot product. Colinear adds
 // two length projections. G2 adds fixed-size exact endpoint stencils and two curvature
-// projections. Charging 256 per structural unit covers these operations, fixed-size seeding,
+// projections. Equal Radius evaluates two three-point sagitta stencils and their difference.
+// Charging 256 per structural unit covers these operations, fixed-size seeding,
 // row collection and Angle's outward trial guard. The charge counts abstract scalar work,
 // independent of allocator or libm time.
 const SCALAR_WORK_PER_UNIT: usize = 256;
@@ -47,6 +48,10 @@ pub(super) enum Equation {
     Radius {
         branch: ArcBranch,
         target: f64,
+        scale: f64,
+    },
+    EqualRadius {
+        branches: [ArcBranch; 2],
         scale: f64,
     },
     PointOnLine {
@@ -120,6 +125,7 @@ impl Equation {
             | Self::Plane(_)
             | Self::ArcIntrinsic { .. }
             | Self::Radius { .. }
+            | Self::EqualRadius { .. }
             | Self::Perpendicular
             | Self::EqualLength { .. }
             | Self::Angle { .. } => 1,
@@ -141,6 +147,7 @@ impl Equation {
 
     fn width(self) -> usize {
         match self {
+            Self::EqualRadius { .. } => 18,
             Self::Continuity {
                 cubic_reference: true,
                 curvature_scale: Some(_),
@@ -196,6 +203,14 @@ impl ResidualSource for Equation {
             } => {
                 let chart = arc::Sagitta::new(v, 0, first, branch)?;
                 Ok(vec![chart.radius()?.shifted(-target)?.scaled(scale)?])
+            }
+            Self::EqualRadius {
+                branches: [a, b],
+                scale,
+            } => {
+                let first = arc::Sagitta::new(v, 0, first, a)?.radius()?;
+                let second = arc::Sagitta::new(v, 9, displacement(v, 9)?, b)?.radius()?;
+                Ok(vec![first.minus(&second)?.scaled(scale)?])
             }
             Self::PointOnLine { scale, reference } => {
                 let basis = reference.basis(&unit(&first()?)?, "point-on-line")?;

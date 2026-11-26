@@ -66,12 +66,14 @@ fn spec(relation: Relation) -> RelationSpec {
     match relation {
         Relation::FixPoint(point, _) => RelationSpec::FixPoint(point),
         Relation::FixLine(line, _) => RelationSpec::FixLine(line),
+        Relation::FixArc(arc, _, _) => RelationSpec::FixArc(arc),
         Relation::Coincident(points) => RelationSpec::Coincident(points),
         Relation::PointOnLine(point, line) => RelationSpec::PointOnLine(point, line),
         Relation::Colinear(lines, direction) => RelationSpec::Colinear(lines, direction),
         Relation::Parallel(lines, direction) => RelationSpec::Parallel(lines, direction),
         Relation::Length(line, length) => RelationSpec::Length(line, length),
         Relation::Radius(arc, target, _) => RelationSpec::Radius(arc, target),
+        Relation::EqualRadius(arcs, _) => RelationSpec::EqualRadius(arcs),
         Relation::ParallelToAxis(line, axis, direction) => {
             RelationSpec::ParallelToAxis(line, axis, direction)
         }

@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Bind authored relations to solver columns and exact fixed coordinates.
+mod arc;
 use super::{
     ConstraintFailure as Failure, ConstraintPolicy, ContinuityJoin, LineAngle, Relation,
     RelationId, RelationSpec,
-    arc_layout::{self, ArcLayout},
+    arc_layout::ArcLayout,
     continuity,
     incidence::{SharedEnds, shared_ends},
     metric, poll,
@@ -112,6 +113,7 @@ impl Layout<'_> {
                 self.fix(id, endpoints[0], anchors[0])?;
                 self.fix(id, endpoints[1], anchors[1])
             }
+            Relation::FixArc(arc, anchors, branch) => self.fix_arc(id, arc, anchors, branch),
             Relation::Coincident(points) => {
                 self.equation(id, &points, Equation::Coincident { scale: self.scale })
             }
@@ -156,22 +158,8 @@ impl Layout<'_> {
                     },
                 )
             }
-            Relation::Radius(arc, target, branch) => {
-                let layout = *self
-                    .arcs
-                    .get(&arc)
-                    .ok_or(Failure::MissingOperand(id, EntityId::Arc(arc)))?;
-                layout.require_branch(branch)?;
-                self.equation(
-                    id,
-                    &layout.points,
-                    Equation::Radius {
-                        branch,
-                        target: target.value(),
-                        scale: self.scale,
-                    },
-                )
-            }
+            Relation::Radius(arc, target, branch) => self.radius(id, arc, target, branch),
+            Relation::EqualRadius(arcs, branches) => self.equal_radius(id, arcs, branches),
             Relation::Parallel(lines, direction) => {
                 let [a, b] = pair_of(self.geometry, id, lines)?;
                 self.pair_equation(
@@ -261,37 +249,18 @@ impl Layout<'_> {
     }
 
     fn fix(&mut self, id: RelationId, point: PointId, position: Point3) -> Result<(), Failure> {
+        self.pin(id, point, position)?;
+        self.authored_rows += 3;
+        Ok(())
+    }
+
+    fn pin(&mut self, id: RelationId, point: PointId, position: Point3) -> Result<(), Failure> {
         let start = self.start(id, point)?;
         for (axis, &value) in position.coordinates().iter().enumerate() {
             if let Some(previous) = self.fixed.insert(start + axis, value)
                 && previous.to_bits() != value.to_bits()
             {
                 return Err(Failure::ConflictingFix(id, point));
-            }
-        }
-        self.authored_rows += 3;
-        Ok(())
-    }
-
-    fn arc_intrinsics(&mut self) -> Result<(), Failure> {
-        for arc in self.arcs.values() {
-            let variables = slots(&arc.points, |point| {
-                self.point_columns
-                    .get(&point)
-                    .copied()
-                    .ok_or(Failure::MissingPoint(point))
-            })?;
-            // A fully fixed arc has no intrinsic variable direction. Its exact points are
-            // checked against the midpoint and branch gates before publication.
-            if !variables.iter().all(|slot| self.fixed.contains_key(slot)) {
-                self.blocks.push(EquationBlock {
-                    owner: BlockOwner::IntrinsicArc(arc.id),
-                    source: Arc::new(Equation::ArcIntrinsic {
-                        branch: arc.branch,
-                        scale: self.scale,
-                    }),
-                    variables: variables.into(),
-                });
             }
         }
         Ok(())
@@ -349,6 +318,7 @@ pub(super) fn capture(
     match spec {
         RelationSpec::FixPoint(key) => Ok(Relation::FixPoint(key, point(key)?)),
         RelationSpec::FixLine(key) => Ok(Relation::FixLine(key, line(key)?.points)),
+        RelationSpec::FixArc(key) => arc::capture_fix(geometry, id, key, policy),
         RelationSpec::Coincident([a, b]) => {
             distinct(id, EntityId::Point(a), EntityId::Point(b))?;
             point(a)?;
@@ -380,14 +350,8 @@ pub(super) fn capture(
             }
             Ok(Relation::Length(key, target))
         }
-        RelationSpec::Radius(key, target) => {
-            let arc = arc_layout::operand(geometry, id, key)?;
-            if target.value() < geometry.minimum.value() {
-                return Err(Failure::RadiusBelowMinimum(id, key, target.value()));
-            }
-            let layout = ArcLayout::capture(arc, policy)?;
-            Ok(Relation::Radius(key, target, layout.branch))
-        }
+        RelationSpec::Radius(key, target) => arc::capture_radius(geometry, id, key, target, policy),
+        RelationSpec::EqualRadius(arcs) => arc::capture_equal(geometry, id, arcs, policy),
         RelationSpec::ParallelToAxis(key, axis, direction) => {
             let [start, end] = line(key)?.points;
             let component = end.coordinates()[axis.index()] - start.coordinates()[axis.index()];
