@@ -40,7 +40,7 @@ fn measurement(face: &martensite_tkbrep::topods::Shape, target: f64) -> (GProps,
         } => max_face_relative_error,
         other => panic!("expected EstimatedRelative evidence, got {other:?}"),
     };
-    (result.properties().clone(), achieved)
+    (*result.properties(), achieved)
 }
 
 #[test]
