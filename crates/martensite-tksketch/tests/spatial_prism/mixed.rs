@@ -288,7 +288,7 @@ fn mixed_prism_refuses_skew_oblique_unrepresentable_tiny_trace_and_cap() {
         extrude_mixed_wire(&skew, [0., 0., 3.], options(), || false),
         Err(SpatialPrismFailure::MixedPoint { .. })
     ));
-    let large = rounded_wire(|[x, y, _]| [x, y, 2.0_f64.powi(53)], false, false);
+    let large = rounded_wire(|[x, y, _]| [x, y, 9_007_199_254_740_992.], false, false);
     assert!(
         matches!(extrude_mixed_wire(&large, [0., 0., 1.], options(), || false), Err(SpatialPrismFailure::MixedPoint { point, .. }) if point == pid(11))
     );
