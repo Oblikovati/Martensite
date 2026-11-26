@@ -8,6 +8,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added source-bound Point On Face on finite cylindrical walls and directed tangency from a line to a four-station fit cubic (#611).
+
+- Added certified normal extrusion from a closed mixed quarter-arc profile in either direction (#611).
+
 - Added native pitched-table and flat-end helix wires and checked Cartesian, cylindrical and spherical equation curves (#611).
 
 - Added exact line splits on supported cylindrical walls and one interior UV aperture and live Include for named straight edges with rebind and detachment (#611).

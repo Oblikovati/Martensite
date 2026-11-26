@@ -207,3 +207,70 @@ and geometry bytes.
 
 The combined native stage on Rust 1.98.1 passed 6,711 tests and strict
 all-target Clippy across the affected toolkits. Ten opt-in cases were ignored.
+
+## E51. Point On Face on a finite cylindrical wall
+
+The attached sketch retains the named captured face, source revision,
+input reservation and unwrapped original UV. The ordinary hard sketch
+program adds three rows and two parameter coordinates with their own
+scales. After each accepted move, the solver reanchors the angular
+chart. Publication independently checks actual XYZ and UV against the
+closed rims and bounds their Euclidean separation.
+
+The owned full-wall fixtures cross the original paired seam in both
+directions. They check both rims and adjacent outside points, an
+ambiguous half turn, a coupled ordinary Coincident relation, stale source
+and late cancellation. A translated source fixture checks frozen
+ownership. Independent processes reproduced identical geometry and
+trim evidence. The original leaf passed 244 toolkit and 26
+ThreadSanitizer tests. A separate mixed-capability test verifies that
+point qualification explicitly refuses a wall with an interior hole.
+The line Split path still admits that hole independently.
+
+## E52. Tangency to a four-station fit cubic
+
+A directed line and an outgoing four-station fit cubic share an authored
+terminal point. The two angular rows use the fixed station operator's
+analytic sensitivities in the same local frame as line and control-cubic
+tangency. The accepted geometry must also pass the independently rebuilt
+native endpoint and jet check. Replay and rigid motion inspect the same
+two warm residuals after the rounded native geometry check. The
+large-origin fixtures exercise a case where the affine candidate and
+retained native derivative differ.
+
+The exact dyadic implementation evaluates station velocity and pole
+materialization without repeated general rational reduction. Across
+interleaved optimized runs with 512 timed updates each, idle p95 changed
+from 3.65–4.09 ms to 1.77–2.24 ms. With a controlled load on the sibling
+thread, it changed from 4.19–6.56 ms to 1.88–2.89 ms. All twelve runs
+accepted 600 updates and produced the same geometry and work receipt.
+The maximum charged work remained 742,656 scalar units.
+
+## E53. Normal extrusion from a mixed quarter-arc profile
+
+The checked extrusion path accepts a single analytic cardinal quarter arc
+and straight uses that form a coplanar, closed tangent loop. It builds a
+native solid in either normal direction and reads back the circular side,
+cap trims, topology, input lineage and ordered validation. An independent
+area bound on the retained mixed profile determines the volume bound.
+The straight-only prism entry point retains its existing contract.
+
+The owned 30-by-30 profile with a radius-5 corner and depth 3 has area
+`875 + 25π/4` and volume `2625 + 75π/4`. Both directions retain 10
+vertices, 15 edges, 7 faces and 32 history records. The controls check
+invalid input, cancellation, source isolation and repeated native output
+in independent processes with different legacy precision settings. The
+seven focused ThreadSanitizer controls passed.
+
+Three optimized Rust 1.98.1 processes each measured 64 checked warm
+extrusions on Linux x86-64. The per-process p95 was 54.385–63.367 ms,
+pooled p50 was 43.558 ms, and pooled p95 was 61.347 ms. First-call
+times were 35.028–52.273 ms, with peak process RSS 22.9–23.3 MiB.
+The SMT sibling was 71.7–89.1% busy. Timing covers kernel extrusion
+from an already exported wire. Source construction, external receipt
+checks and teardown occurred outside the sample.
+
+The combined attachment and fit stage passed 5,154 tests and strict
+Rust 1.98.1 Clippy. The subsequent optimized-fit and mixed-prism stage
+passed 386 focused toolkit and modeling tests and strict all-target
+Clippy. Both stages left nine opt-in cases skipped.
