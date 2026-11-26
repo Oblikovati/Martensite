@@ -312,10 +312,26 @@ mod translated_conic_tests {
     fn quarter_arcs(cx: f64, cy: f64, rx: f64, ry: f64) -> [[([f64; 2], f64); 3]; 4] {
         let w = std::f64::consts::FRAC_1_SQRT_2;
         [
-            (([cx + rx, cy], 1.0), ([cx + rx, cy + ry], w), ([cx, cy + ry], 1.0)),
-            (([cx, cy + ry], 1.0), ([cx - rx, cy + ry], w), ([cx - rx, cy], 1.0)),
-            (([cx - rx, cy], 1.0), ([cx - rx, cy - ry], w), ([cx, cy - ry], 1.0)),
-            (([cx, cy - ry], 1.0), ([cx + rx, cy - ry], w), ([cx + rx, cy], 1.0)),
+            (
+                ([cx + rx, cy], 1.0),
+                ([cx + rx, cy + ry], w),
+                ([cx, cy + ry], 1.0),
+            ),
+            (
+                ([cx, cy + ry], 1.0),
+                ([cx - rx, cy + ry], w),
+                ([cx - rx, cy], 1.0),
+            ),
+            (
+                ([cx - rx, cy], 1.0),
+                ([cx - rx, cy - ry], w),
+                ([cx, cy - ry], 1.0),
+            ),
+            (
+                ([cx, cy - ry], 1.0),
+                ([cx + rx, cy - ry], w),
+                ([cx + rx, cy], 1.0),
+            ),
         ]
         .map(|(a, b, c)| [a, b, c])
     }
@@ -343,8 +359,7 @@ mod translated_conic_tests {
             .unwrap();
             let expected = std::f64::consts::PI * rx * ry;
             assert!(
-                (report.representative() - expected).abs()
-                    <= report.absolute_error_bound() + 1e-12,
+                (report.representative() - expected).abs() <= report.absolute_error_bound() + 1e-12,
                 "cx={cx}, cy={cy}: got {} expected {expected}",
                 report.representative()
             );
