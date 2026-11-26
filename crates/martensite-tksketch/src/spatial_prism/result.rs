@@ -291,7 +291,7 @@ fn copied_images(
         .collect()
 }
 
-fn copy_failure(failure: CopyFailure) -> Failure {
+pub(super) fn copy_failure(failure: CopyFailure) -> Failure {
     match failure {
         CopyFailure::SharedRoot => Failure::History("fresh copied root identity"),
         CopyFailure::MissingMember => {
@@ -304,7 +304,10 @@ fn copy_failure(failure: CopyFailure) -> Failure {
     }
 }
 
-fn original_shape(result: &OperationResult, image: ResultEntity) -> Result<&Shape, Failure> {
+pub(super) fn original_shape(
+    result: &OperationResult,
+    image: ResultEntity,
+) -> Result<&Shape, Failure> {
     let shape = match image {
         ResultEntity::Face(index) => result.faces().get(index).map(AsRef::as_ref),
         ResultEntity::Edge(index) => result.edges().get(index).map(AsRef::as_ref),

@@ -71,7 +71,7 @@ pub(super) fn bind<'a>(
     Ok((region, bound))
 }
 
-fn bind_native_wire(
+pub(super) fn bind_native_wire(
     region: &PlanarRegion,
     edges: &BTreeMap<ProfileCurveId, &Edge>,
     cancelled: &mut impl FnMut() -> bool,

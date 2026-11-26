@@ -108,7 +108,13 @@ pub fn build_planar_line_regions_with_work_and_cancel(
             ));
         }
     }
-    placement::build_located_lines(profile, resolution, requested, &mut cancelled)
+    placement::build_located(
+        profile,
+        resolution,
+        requested,
+        ProfileTopologyMode::ScopedLines,
+        &mut cancelled,
+    )
 }
 
 /// Build planar regions with an explicit versioned exact proof route and finite work.
@@ -134,6 +140,8 @@ pub fn build_planar_regions_with_proof_and_cancel(
     )
 }
 mod placement;
+mod quarter;
+pub use quarter::build_planar_cardinal_quarter_regions_with_work_and_cancel;
 mod program;
 pub use program::build_planar_regions_with_integration_budget_and_cancel;
 

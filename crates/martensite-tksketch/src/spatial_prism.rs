@@ -2,11 +2,16 @@
 //! Bind exact authored spatial lines to the ordinary planar-extrusion pipeline.
 mod binding;
 mod failure;
+mod mixed;
 pub(crate) mod plane;
 mod result;
 pub(crate) mod volume;
 
 pub use failure::{SpatialPrismFailure, SpatialPrismStage};
+pub use mixed::{
+    DetachedMixedSpatialPrism, MixedPrismArcTrim, MixedSpatialPrismHistory, MixedSpatialPrismImage,
+    MixedSpatialPrismResult, MixedSpatialPrismSource, extrude_mixed_wire,
+};
 pub use result::{
     DetachedSpatialPrism, SpatialPrismHistory, SpatialPrismImage, SpatialPrismResult,
     SpatialPrismSource,

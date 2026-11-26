@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-//! Straight-line graph proof in intrinsic UV, followed by a shared native location.
+//! Scoped graph proof in intrinsic UV, followed by a shared native location.
 use super::{
     DECLINE, PlanarRegion, PlanarRegionSet, ProfileTopologyMode, Resolution, SketchProfile, Stage,
     cancelled_failure, program,
@@ -20,10 +20,11 @@ use martensite_tkmath::{
     toploc::Location,
 };
 
-pub(super) fn build_located_lines(
+pub(super) fn build_located(
     profile: &SketchProfile,
     resolution: Resolution,
     requested: PlanarProofWorkLimit,
+    mode: ProfileTopologyMode,
     cancelled: &mut (impl FnMut() -> bool + Send),
 ) -> PlanarRegionWorkResult {
     let admission =
@@ -41,7 +42,7 @@ pub(super) fn build_located_lines(
         requested,
         PlanarProofVersion::CarrierV2,
         None,
-        ProfileTopologyMode::ScopedLines,
+        mode,
         cancelled,
     )?;
     place(regions, frame, requested, cancelled)

@@ -2,7 +2,7 @@
 use martensite_tkbo::profile_extrusion::{HistoryRole, OperationDecline, PlanarRegionWorkFailure};
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::predicates::NonFiniteCoordinate;
-use martensite_tksketch3d::{LineId, PointId};
+use martensite_tksketch3d::{CurveId, LineId, PointId};
 use std::{cmp::Ordering, error::Error, fmt};
 
 /// A cancellable or native boundary of a spatial prism operation.
@@ -95,6 +95,35 @@ pub enum SpatialPrismFailure {
         /// Unchanged acceptance limit.
         limit: f64,
     },
+    /// The mixed prism supports exactly one certified cardinal quarter arc.
+    MixedArcCount(usize),
+    /// The mixed profile must sweep along its exact normal.
+    MixedDirection([f64; 3]),
+    /// A source point or its translated image does not have the required exact chart.
+    MixedPoint {
+        /// Authored point (including the arc center control).
+        point: PointId,
+        /// Required exact relation.
+        expected: &'static str,
+    },
+    /// The mixed prism could not establish required retained native correspondence.
+    MixedBinding {
+        /// Active operation stage.
+        stage: SpatialPrismStage,
+        /// Authored curve where applicable.
+        curve: Option<CurveId>,
+        /// Required native evidence.
+        expected: &'static str,
+    },
+    /// The retained circular quarter exceeds the requested spatial trace limit.
+    MixedTrace {
+        /// Authored circular arc.
+        curve: CurveId,
+        /// Certified source trace bound in model units.
+        bound: f64,
+        /// Unchanged caller limit.
+        limit: f64,
+    },
     /// Existing planar-region failure with its work and provenance intact.
     Region(Box<PlanarRegionWorkFailure>),
     /// Existing ordinary extrusion failure with its stage and cause intact.
@@ -167,6 +196,35 @@ impl fmt::Display for SpatialPrismFailure {
             Cause::SweepFaceTrace { face, bound, limit } => write!(
                 f,
                 "retained sweep face {face} has trim trace bound {bound}, above {limit}"
+            ),
+            Cause::MixedArcCount(actual) => write!(
+                f,
+                "mixed spatial prism has {actual} arcs; expected one certified cardinal quarter"
+            ),
+            Cause::MixedDirection(direction) => write!(
+                f,
+                "mixed prism direction {direction:?} must be finite, nonzero and normal to the profile"
+            ),
+            Cause::MixedPoint { point, expected } => {
+                write!(f, "mixed prism point {point:?} must preserve {expected}")
+            }
+            Cause::MixedBinding {
+                stage,
+                curve,
+                expected,
+            } => {
+                write!(
+                    f,
+                    "mixed prism {stage:?} for {curve:?} must preserve {expected}"
+                )
+            }
+            Cause::MixedTrace {
+                curve,
+                bound,
+                limit,
+            } => write!(
+                f,
+                "native arc {curve:?} has source trace bound {bound}; expected at most {limit}"
             ),
             Cause::Region(source) => write!(f, "spatial prism region failed ({source})"),
             Cause::Sweep(source) => write!(f, "spatial prism sweep failed ({source})"),

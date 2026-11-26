@@ -459,3 +459,6 @@ mod retained;
 
 #[path = "spatial_prism/replay.rs"]
 mod replay;
+
+#[path = "spatial_prism/mixed.rs"]
+mod mixed;

@@ -209,6 +209,25 @@ impl BRepLibMakeEdge {
         Self::initialized(|maker| maker.init_curve_vertices_params(curve, v1, v2, p1, p2))
     }
 
+    /// Build a 3D edge with known native parameters and an explicit local tolerance.
+    /// Example: `BRepLibMakeEdge::from_curve_vertices_params_with_tolerance(&curve, [&a, &b], [0., 1.], 1e-7)?`.
+    pub fn from_curve_vertices_params_with_tolerance(
+        curve: &Handle<dyn GeomCurve>,
+        ends: [&Vertex; 2],
+        range: [f64; 2],
+        tolerance: f64,
+    ) -> Result<Self, Failure> {
+        if !tolerance.is_finite() || tolerance <= 0.0 {
+            return Err(Failure::with_message(
+                "Standard_DomainError",
+                &format!("curve tolerance {tolerance} must be finite and positive"),
+            ));
+        }
+        Self::initialized(|maker| {
+            maker.init_vertices_with_precision(curve, ends, range, || tolerance)
+        })
+    }
+
     /// `BRepLib_MakeEdge(L, S)`: the whole 2d curve on the surface;
     /// `BRepLibMakeEdge::from_pcurve(&c, &s)?`.
     pub fn from_pcurve(
