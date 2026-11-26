@@ -26,6 +26,7 @@ martensite-tkshhealing = { path = "../martensite-tkshhealing", version = "0.4.0"
 allocator-api2 = "0.4"
 
 [dev-dependencies]
+martensite-tkbo = { path = "../martensite-tkbo", version = "0.9.0" }
 martensite-tkprim = { path = "../martensite-tkprim", version = "0.4.0" }
 martensite-test-support = { path = "../martensite-test-support", version = "0.3.6" }
 martensite-process-policy = { path = "../martensite-process-policy", version = "0.4.0", features = ["case-runner"] }
@@ -49,3 +50,7 @@ path = "tests/proximity_actual_mesher.rs"
 [[test]]
 name = "tktopalgo_bnd_original_mesher"
 path = "tests/tktopalgo_bnd_original_mesher.rs"
+
+[[test]]
+name = "tkbo_trimmed_torus"
+path = "tests/tkbo_trimmed_torus.rs"
