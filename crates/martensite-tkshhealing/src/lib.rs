@@ -21,6 +21,7 @@ macro_rules! parent_interface {
     };
 }
 
+pub mod explicit_repair;
 pub mod sh_message;
 pub mod shape_algo;
 pub mod shape_analysis;
