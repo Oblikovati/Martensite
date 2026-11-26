@@ -78,6 +78,7 @@ mod viewer_grid;
 mod viewer_iter;
 mod viewer_lights;
 mod viewer_plane;
+mod viewport_contracts;
 
 pub use circular_grid::V3dCircularGrid;
 pub use computed_structure::{V3dComputedStructure, V3dStructureComputer};
@@ -93,6 +94,10 @@ pub use rectangular_grid::V3dRectangularGrid;
 pub use trihedron::V3dTrihedron;
 pub use view::V3dView;
 pub use viewer::V3dViewer;
+pub use viewport_contracts::{
+    ChildViewComposition, ChildViewSlot, PreviewCapturePlan, PreviewRegion, ProjectedPixel,
+    project_world_points_checked,
+};
 
 use martensite_tkernel::standard::Failure;
 

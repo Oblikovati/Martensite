@@ -182,28 +182,35 @@ impl FontFTFont {
         aspect: FontFontAspect,
     ) {
         let system_font = FontFontMgr::get_instance().find_fallback_font(subset, aspect);
-        let Some(system_font) = system_font.get() else {
-            return;
-        };
-        let mut face_id = 0;
-        params.is_single_stroke_font =
-            params.is_single_stroke_font || system_font.is_single_stroke_font();
-        let path =
-            system_font.font_path_any(aspect, &mut params.to_synthesize_italic, &mut face_id);
-        if path.is_empty() || !fallback.init(&path, &params, face_id) {
-            return;
+        if let Some(system_font) = system_font.get() {
+            let mut face_id = 0;
+            params.is_single_stroke_font =
+                params.is_single_stroke_font || system_font.is_single_stroke_font();
+            let path =
+                system_font.font_path_any(aspect, &mut params.to_synthesize_italic, &mut face_id);
+            if !path.is_empty() && fallback.init(&path, &params, face_id) {
+                fallback.state.write().font_aspect = aspect;
+                let primary = self.primary_name();
+                let text = [
+                    &b"Font_FTFont, using fallback font '"[..],
+                    system_font.font_name().as_bytes(),
+                    b"' for symbols unsupported by '",
+                    &primary,
+                    b"'",
+                ]
+                .concat();
+                Message::send_trace_text(&AsciiString::from_view(&text));
+                return;
+            }
         }
-        fallback.state.write().font_aspect = aspect;
-        let primary = self.primary_name();
-        let text = [
-            &b"Font_FTFont, using fallback font '"[..],
-            system_font.font_name().as_bytes(),
-            b"' for symbols unsupported by '",
-            &primary,
-            b"'",
-        ]
-        .concat();
-        Message::send_trace_text(&AsciiString::from_view(&text));
+        // When no system fallback font is available for Western symbols, fall back to the
+        // embedded fallback font so Western glyph lookup stays deterministic (#575).
+        if subset == FontUnicodeSubset::Western {
+            let data = FontFontMgr::embed_fallback_font();
+            if fallback.init_from(&data, &AsciiString::from("Embed Fallback Font"), &params, 0) {
+                fallback.state.write().font_aspect = aspect;
+            }
+        }
     }
     /// The family name of the face, else the font path.
     fn primary_name(&self) -> Vec<u8> {
