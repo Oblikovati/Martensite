@@ -1,4 +1,4 @@
-use super::{Failure, construction, cross, dot, normalize_finite};
+use super::{Failure, construction, cross, dot};
 /// Normalized 3D direction; `Direction3::new(1.0,0.0,0.0)?`.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Direction3 {
@@ -27,23 +27,26 @@ impl Direction3 {
         Self::normalize([x, y, z], "gp_Dir() - input vector has zero norm")
     }
     pub(crate) fn normalize(coordinates: [f64; 3], message: &str) -> Result<Self, Failure> {
-        let coordinates = normalize_finite(coordinates).ok_or_else(|| {
-            construction(&format!(
-                "{message}: ({}, {}, {})",
-                coordinates[0], coordinates[1], coordinates[2]
-            ))
-        })?;
-        Ok(Self { coordinates })
+        let squared = dot(coordinates, coordinates);
+        if squared == 1.0 {
+            return Ok(Self { coordinates });
+        }
+        if squared <= 0.0 {
+            return Err(construction(message));
+        }
+        let magnitude = squared.sqrt();
+        Ok(Self {
+            coordinates: coordinates.map(|value| martensite_cmath::quotient(value, magnitude)),
+        })
     }
     /// Normalizes without a zero-norm check for elementary-surface evaluation.
     /// A zero input yields NaN components through unchecked division; `Direction3::normalize_unchecked([1.0,1.0,0.0])`.
     pub(crate) fn normalize_unchecked(coordinates: [f64; 3]) -> Self {
-        if let Some(normalized) = normalize_finite(coordinates) {
-            return Self {
-                coordinates: normalized,
-            };
+        let squared = dot(coordinates, coordinates);
+        if squared == 1.0 {
+            return Self { coordinates };
         }
-        let magnitude = dot(coordinates, coordinates).sqrt();
+        let magnitude = squared.sqrt();
         Self {
             coordinates: coordinates.map(|value| martensite_cmath::quotient(value, magnitude)),
         }

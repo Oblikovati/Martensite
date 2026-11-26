@@ -58,11 +58,25 @@ impl Direction2 {
     /// Normalizes with the fast path and a caller-specific zero-norm message;
     /// `Direction2::normalized_with(xy,"Direction2::set_coord() - result vector has zero norm")?`.
     pub(in crate::gp) fn normalized_with(xy: Xy, message: &str) -> Result<Self, Failure> {
-        let [x, y] = crate::gp::normalize_finite([xy.x(), xy.y()])
-            .ok_or_else(|| construction(&format!("{message}: ({}, {})", xy.x(), xy.y())))?;
-        Ok(Self {
-            coordinates: Xy::new(x, y),
-        })
+        let squared = xy.square_modulus();
+        // 1 +/- gp::resolution() rounds to 1 and Resolution^2 underflows to 0.
+        if squared == 1.0 {
+            return Ok(Self { coordinates: xy });
+        }
+        if squared <= 0.0 {
+            return Err(construction(&format!(
+                "{message}: ({}, {})",
+                xy.x(),
+                xy.y()
+            )));
+        }
+        let magnitude = squared.sqrt();
+        // An infinite component gives inf/inf; quotient keeps that NaN target-independent.
+        let coordinates = Xy::new(
+            martensite_cmath::quotient(xy.x(), magnitude),
+            martensite_cmath::quotient(xy.y(), magnitude),
+        );
+        Ok(Self { coordinates })
     }
     /// Constructs from planar algebra; `Direction2::from_xy(xy)?`.
     pub fn from_xy(xy: Xy) -> Result<Self, Failure> {

@@ -169,20 +169,6 @@ impl FontFTFont {
     }
 }
 
-#[cfg(test)]
-mod decoration_metric_tests {
-    use super::FontFTFont;
-
-    #[test]
-    fn invalid_font_reports_zero_decoration_metrics() {
-        let font = FontFTFont::default();
-        assert_eq!(font.underline_position(), 0.0);
-        assert_eq!(font.underline_thickness(), 0.0);
-        assert_eq!(font.strikeout_position(), 0.0);
-        assert_eq!(font.strikeout_thickness(), 0.0);
-    }
-}
-
 impl FontFTFont {
     /// The face of the next character for kerning: this face or its fallback face.
     fn next_face(&self, next: u32) -> usize {
@@ -321,5 +307,19 @@ impl FontFTFont {
         rect.top = slot.bitmap_top as f32;
         rect.right = (slot.bitmap_left + slot.bitmap.width as i32) as f32;
         rect.bottom = (slot.bitmap_top - slot.bitmap.rows as i32) as f32;
+    }
+}
+
+#[cfg(test)]
+mod decoration_metric_tests {
+    use super::FontFTFont;
+
+    #[test]
+    fn invalid_font_reports_zero_decoration_metrics() {
+        let font = FontFTFont::default();
+        assert_eq!(font.underline_position(), 0.0);
+        assert_eq!(font.underline_thickness(), 0.0);
+        assert_eq!(font.strikeout_position(), 0.0);
+        assert_eq!(font.strikeout_thickness(), 0.0);
     }
 }

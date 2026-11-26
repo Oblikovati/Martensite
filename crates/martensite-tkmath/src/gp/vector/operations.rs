@@ -56,16 +56,16 @@ impl Vector3 {
         Ok(())
     }
     fn normalize_with_message(self, message: &str) -> Result<Self, Failure> {
-        let coordinates =
-            crate::gp::normalize_finite([self.x(), self.y(), self.z()]).ok_or_else(|| {
-                construction(&format!(
-                    "{message}: ({}, {}, {})",
-                    self.x(),
-                    self.y(),
-                    self.z()
-                ))
-            })?;
-        Ok(Self::new(coordinates[0], coordinates[1], coordinates[2]))
+        let magnitude = self.magnitude();
+        if magnitude <= f64::MIN_POSITIVE {
+            return Err(construction(&format!(
+                "{message}: ({}, {}, {})",
+                self.x(),
+                self.y(),
+                self.z()
+            )));
+        }
+        Ok(self / magnitude)
     }
     /// Computes the direction angle after magnitude checks; `vector.angle(other)?`.
     pub fn angle(self, other: Self) -> Result<f64, Failure> {

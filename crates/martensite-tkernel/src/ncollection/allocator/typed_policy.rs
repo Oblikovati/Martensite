@@ -11,11 +11,10 @@ impl BaseAllocator {
         if self.may_hold_record(layout) {
             return self.allocate_virtual_typed(layout);
         }
-        // A built-in heap policy allocates directly with `std::alloc` so the returned
-        // pointer's provenance matches `layout` without a prepended header (#584, #63).
+        // A built-in heap policy allocates directly via `raw_heap` without the virtual
+        // allocation hash map, keeping header provenance compatible with custom `Free` (#584).
         let direct = self.direct_heap_layout(layout)?;
-        // SAFETY: `direct.size() > 0` is enforced by `Allocator::allocate`.
-        NonNull::new(unsafe { std::alloc::alloc_zeroed(direct) })
+        crate::standard::memory::raw_heap::heap_allocate(direct.size(), direct.align(), true)
     }
 
     pub(super) fn direct_heap_layout(&self, layout: Layout) -> Option<Layout> {
@@ -33,12 +32,9 @@ impl BaseAllocator {
     ///
     /// # Safety
     /// `address` must come from `allocate_typed` on this direct built-in heap path with `layout`.
-    pub(super) unsafe fn free_direct_heap_typed(&self, address: NonNull<u8>, layout: Layout) {
-        let direct = self
-            .direct_heap_layout(layout)
-            .expect("direct heap typed allocation must retain a valid layout");
-        // SAFETY: `address` was allocated via `std::alloc::alloc_zeroed(direct)`.
-        unsafe { std::alloc::dealloc(address.as_ptr(), direct) };
+    pub(super) unsafe fn free_direct_heap_typed(&self, address: NonNull<u8>, _layout: Layout) {
+        // SAFETY: `address` was allocated via `raw_heap::heap_allocate`.
+        unsafe { heap_free(address) };
     }
     fn allocate_builtin_arena(&self, layout: Layout) -> Option<NonNull<u8>> {
         match &*self.fields.inner {
