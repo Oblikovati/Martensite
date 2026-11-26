@@ -120,14 +120,22 @@ impl CacheState {
         } else {
             (local_u, local_v)
         };
-        let mut transient: Vec<f64> = vec![0.0; cols.max(0) as usize];
+        let cols_usize: usize = cols.max(0) as usize;
+        let mut stack_buf: [f64; 128] = [0.0; 128];
+        let mut heap_buf: Vec<f64>;
+        let transient: &mut [f64] = if cols_usize <= stack_buf.len() {
+            &mut stack_buf[..cols_usize]
+        } else {
+            heap_buf = vec![0.0; cols_usize];
+            &mut heap_buf
+        };
         no_derivative_eval_polynomial(
             max_param,
             max_degree,
             cols,
             max_degree * cols,
             self.poles_weights.as_slice(),
-            &mut transient,
+            transient,
         )?;
         let mut values: [f64; 4] = [0.0; 4];
         no_derivative_eval_polynomial(
@@ -135,7 +143,7 @@ impl CacheState {
             min_degree,
             dimension,
             dimension * min_degree,
-            &transient,
+            transient,
             &mut values,
         )?;
         if self.is_rational {

@@ -77,6 +77,7 @@ impl LeastSquare {
         let mut the_a: Matrix<'static> =
             Matrix::filled(self.resinit, self.resfin, self.resinit, self.resfin, 0.)
                 .map_err(|error| array_failure(error, "AppParCurves_LeastSquare::MakeTAA"))?;
+        let b2_cols = self.b2.col_number();
         for k in self.first_p..=self.last_p {
             let indexdeb: i32 = *self.myindex.value(k)? + 1;
             let (jinit, jfin) = (
@@ -84,13 +85,13 @@ impl LeastSquare {
                 self.resfin.min(indexdeb + self.deg),
             );
             for i in jinit..=jfin {
-                let akj: f64 = *self.a.value(k, i)?;
+                let akj: f64 = self.a[(k, i)];
                 for j in jinit..=i {
-                    the_a[(i, j)] += *self.a.value(k, j)? * akj;
+                    the_a[(i, j)] += self.a[(k, j)] * akj;
                 }
                 if let Some(rhs) = rhs.as_deref_mut() {
-                    for j in 1..=self.b2.col_number() {
-                        *rhs.change_value(i, j)? += akj * *self.b2.value(k, j)?;
+                    for j in 1..=b2_cols {
+                        rhs[(i, j)] += akj * self.b2[(k, j)];
                     }
                 }
             }

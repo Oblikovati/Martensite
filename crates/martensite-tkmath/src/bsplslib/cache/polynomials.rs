@@ -29,8 +29,16 @@ impl super::CacheState {
         };
         let (min_degree, max_degree) = self.degrees();
         let row_stride: usize = (min_deriv as usize + 1) * dimension;
-        let mut transient: Vec<f64> =
-            vec![0.0; ((max_deriv as usize + 1) * cols).max((min_deriv as usize + 1) * dimension)];
+        let transient_len: usize =
+            ((max_deriv as usize + 1) * cols).max((min_deriv as usize + 1) * dimension);
+        let mut stack_buf: [f64; 320] = [0.0; 320];
+        let mut heap_buf: Vec<f64>;
+        let transient: &mut [f64] = if transient_len <= stack_buf.len() {
+            &mut stack_buf[..transient_len]
+        } else {
+            heap_buf = vec![0.0; transient_len];
+            &mut heap_buf
+        };
         // Along the variable of maximal degree.
         eval_polynomial(
             max_param,
@@ -38,7 +46,7 @@ impl super::CacheState {
             max_degree,
             cols as i32,
             self.poles_weights.as_slice(),
-            &mut transient,
+            transient,
         )?;
         let dim_i32: i32 = dimension as i32;
         // Row 0: derivatives along the variable of minimal degree.
@@ -47,7 +55,7 @@ impl super::CacheState {
             min_deriv,
             min_degree,
             dim_i32,
-            &transient,
+            transient,
             &mut result[..],
         )?;
         if max_deriv > 0 {
@@ -80,14 +88,14 @@ impl super::CacheState {
         }
         // Rows are laid out along the max-degree direction; RationalDerivative is told so.
         let size: usize = ((u_deriv_max + 1) * (v_deriv_max + 1) * 3) as usize;
-        let mut rational: Vec<f64> = vec![0.0; size];
+        let mut rational: [f64; 36] = [0.0; 36];
         let (n, m) = if is_max_u {
             (u_deriv_max, v_deriv_max)
         } else {
             (v_deriv_max, u_deriv_max)
         };
-        rational_derivative(n, m, n, m, &result[..], &mut rational, true)?;
-        result[..size].copy_from_slice(&rational);
+        rational_derivative(n, m, n, m, &result[..], &mut rational[..size], true)?;
+        result[..size].copy_from_slice(&rational[..size]);
         Ok(())
     }
 

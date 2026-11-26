@@ -23,6 +23,31 @@ impl Cache {
         self.lock_state().build_cache(u, v, ku, kv, poles, weights)
     }
 
+    /// Evaluates a point if `(u, v)` lies in the cached patch under a single lock;
+    /// `cache.try_d0(0.5, 0.5)`.
+    #[inline]
+    pub fn try_d0(&self, u: f64, v: f64) -> Option<Result<Point3, Failure>> {
+        let state = self.lock_state();
+        state.is_cache_valid(u, v).then(|| state.d0(u, v))
+    }
+
+    /// Evaluates a point and tangents if `(u, v)` lies in the cached patch under a single lock;
+    /// `cache.try_d1(0.5, 0.5)`.
+    #[allow(clippy::type_complexity)]
+    #[inline]
+    pub fn try_d1(&self, u: f64, v: f64) -> Option<Result<(Point3, Vector3, Vector3), Failure>> {
+        let state = self.lock_state();
+        state.is_cache_valid(u, v).then(|| state.d1(u, v))
+    }
+
+    /// Evaluates point and second derivatives if `(u, v)` lies in the cached patch under a single lock;
+    /// `cache.try_d2(0.5, 0.5)`.
+    #[inline]
+    pub fn try_d2(&self, u: f64, v: f64) -> Option<Result<SurfaceD2, Failure>> {
+        let state = self.lock_state();
+        state.is_cache_valid(u, v).then(|| state.d2(u, v))
+    }
+
     /// Evaluates a point; `cache.d0(0.5, 0.5)?`.
     pub fn d0(&self, u: f64, v: f64) -> Result<Point3, Failure> {
         self.lock_state().d0(u, v)

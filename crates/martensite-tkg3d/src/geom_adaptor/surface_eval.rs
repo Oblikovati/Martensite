@@ -79,13 +79,10 @@ pub(super) fn cached_bspline<O: CachedOrder>(
     data: &mut BSplineData,
     (u, v): (f64, f64),
 ) -> Result<O::Output, Failure> {
-    let valid: bool = data
-        .cache
-        .with(|cache| cache.is_cache_valid(u, v))
-        .unwrap_or(false);
-    if !valid {
-        rebuild_bspline_cache(data, (u, v))?;
+    if let Some(Some(hit)) = data.cache.with(|cache| O::try_cached(cache, u, v)) {
+        return hit;
     }
+    rebuild_bspline_cache(data, (u, v))?;
     data.cache
         .with(|cache| O::cached(cache, u, v))
         .expect("B-spline cache built above")
@@ -110,23 +107,15 @@ pub(super) fn bound_or_cached_bspline<O: CachedOrder>(
 // RebuildCache for a B-spline: create the cache once, then fill it on the span of (u, v).
 fn rebuild_bspline_cache(data: &mut BSplineData, (u, v): (f64, f64)) -> Result<(), Failure> {
     let surface: &GeomBSplineSurface = &data.surface;
-    let (flat_u, flat_v) = (surface.u_knot_sequence(), surface.v_knot_sequence());
-    let (poles, weights) = (surface.poles(), surface.weights());
-    if data.cache.is_null() {
-        let cache = Cache::new(
-            surface.u_degree(),
-            surface.is_u_periodic(),
-            &flat_u,
-            surface.v_degree(),
-            surface.is_v_periodic(),
-            &flat_v,
-            weights.as_ref(),
-        )?;
-        data.cache = SharedBSplineSurfaceCache::new(cache);
-    }
-    data.cache
-        .with_mut(|cache| cache.build_cache(u, v, &flat_u, &flat_v, &poles, weights.as_ref()))
-        .expect("B-spline cache created above")
+    surface.with_cache_build_inputs(|((u_deg, u_per), (v_deg, v_per)), flat_u, flat_v, poles, weights| {
+        if data.cache.is_null() {
+            let cache = Cache::new(u_deg, u_per, flat_u, v_deg, v_per, flat_v, weights)?;
+            data.cache = SharedBSplineSurfaceCache::new(cache);
+        }
+        data.cache
+            .with_mut(|cache| cache.build_cache(u, v, flat_u, flat_v, poles, weights))
+            .expect("B-spline cache created above")
+    })
 }
 
 // RebuildCache for a Bezier surface: the flat knots of each degree.
