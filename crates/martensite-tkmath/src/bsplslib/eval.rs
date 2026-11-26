@@ -177,7 +177,7 @@ pub fn d2(
         second_direction(&mut patch, None, 2 * row)?;
     }
     if patch.rational {
-        let mut ders: Vec<f64> = vec![0.0; 48];
+        let mut ders = [0.0_f64; 48];
         rational_derivative(patch.d1, patch.d2, 2, 2, &patch.poles, &mut ders, true)?;
         // (i, j) of the first/second direction sits at 9*i + 3*j.
         let [vu, vv, vuu, vvv] = oriented(patch.u_first, [9, 3, 18, 6]);

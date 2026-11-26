@@ -54,6 +54,49 @@ pub(crate) fn validate_degrees(u_degree: i32, v_degree: i32) -> Result<(), Failu
     Ok(())
 }
 
+/// Stack-backed pole buffer for common CAD surface degrees (up to 7x7 rational = 256 f64s),
+/// avoiding per-evaluation heap allocation and 21 KB zero-fill.
+#[allow(clippy::large_enum_variant)]
+pub(crate) enum PatchPoles {
+    Stack { buf: [f64; 256], len: usize },
+    Heap(Vec<f64>),
+}
+
+impl PatchPoles {
+    #[inline]
+    fn with_len(len: usize) -> Self {
+        if len <= 256 {
+            Self::Stack {
+                buf: [0.0; 256],
+                len,
+            }
+        } else {
+            Self::Heap(vec![0.0; len])
+        }
+    }
+}
+
+impl std::ops::Deref for PatchPoles {
+    type Target = [f64];
+    #[inline]
+    fn deref(&self) -> &[f64] {
+        match self {
+            Self::Stack { buf, len } => &buf[..*len],
+            Self::Heap(v) => v,
+        }
+    }
+}
+
+impl std::ops::DerefMut for PatchPoles {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut [f64] {
+        match self {
+            Self::Stack { buf, len } => &mut buf[..*len],
+            Self::Heap(v) => v,
+        }
+    }
+}
+
 // The local evaluation buffers and the outputs of PrepareEval.
 pub(crate) struct Patch {
     pub(crate) u_first: bool,
@@ -64,7 +107,7 @@ pub(crate) struct Patch {
     pub(crate) rational: bool,
     pub(crate) knots1: [f64; 2 * MAX_DEGREE as usize],
     pub(crate) knots2: [f64; 2 * MAX_DEGREE as usize],
-    pub(crate) poles: Vec<f64>,
+    pub(crate) poles: PatchPoles,
 }
 
 impl Patch {
@@ -201,7 +244,7 @@ pub(crate) fn prepare_eval(
     } else {
         (span.v_degree, span.u_degree)
     };
-    let poles_buffer: Vec<f64> = if u_first {
+    let poles_buffer: PatchPoles = if u_first {
         grid.u_first_poles(rational)?
     } else {
         grid.v_first_poles(rational)?
@@ -276,43 +319,64 @@ impl PatchGrid<'_, '_, '_> {
         Ok(false)
     }
 
-    fn push_pole(
+    #[inline]
+    fn write_pole(
         &self,
-        buffer: &mut Vec<f64>,
+        dst: &mut [f64],
+        cursor: &mut usize,
         ip: i32,
         jp: i32,
         rational: bool,
     ) -> Result<(), Failure> {
         let point: Point3 = grid_value(self.poles, ip, jp)?;
+        let c = *cursor;
         if !rational {
-            buffer.extend_from_slice(&[point.x(), point.y(), point.z()]);
+            dst[c] = point.x();
+            dst[c + 1] = point.y();
+            dst[c + 2] = point.z();
+            *cursor = c + 3;
             return Ok(());
         }
         let w: f64 = grid_value(self.weights()?, ip, jp)?;
-        buffer.extend_from_slice(&[point.x() * w, point.y() * w, point.z() * w, w]);
+        dst[c] = point.x() * w;
+        dst[c + 1] = point.y() * w;
+        dst[c + 2] = point.z() * w;
+        dst[c + 3] = w;
+        *cursor = c + 4;
         Ok(())
     }
 
+    fn required_len(&self) -> usize {
+        // Enough for D0..D3 (at least 4 rows/cols for low-degree surfaces that index up to 3*row).
+        let u_slots = (self.u_degree.max(3) + 1) as usize;
+        let v_slots = (self.v_degree.max(3) + 1) as usize;
+        4 * u_slots * v_slots
+    }
+
     // Rows along U, each holding VDegree+1 poles.
-    fn u_first_poles(&self, rational: bool) -> Result<Vec<f64>, Failure> {
+    fn u_first_poles(&self, rational: bool) -> Result<PatchPoles, Failure> {
         let ((pl_row, pu_row), (pl_col, pu_col)) = (self.rows(), self.cols());
-        let mut buffer: Vec<f64> = Vec::new();
+        let mut buffer = PatchPoles::with_len(self.required_len());
+        let dst: &mut [f64] = &mut buffer;
+        let mut cursor = 0usize;
         let mut ip: i32 = wrap_low(pl_row + self.uindex, pl_row, pu_row);
         for _ in 0..=self.u_degree {
             let mut jp: i32 = wrap_low(pl_col + self.vindex, pl_col, pu_col);
             for _ in 0..=self.v_degree {
-                self.push_pole(&mut buffer, ip, jp, rational)?;
+                self.write_pole(dst, &mut cursor, ip, jp, rational)?;
                 jp = wrap_high(jp + 1, pl_col, pu_col);
             }
             ip = wrap_high(ip + 1, pl_row, pu_row);
         }
-        Ok(padded(buffer))
+        Ok(buffer)
     }
 
     // Rows along V, each holding UDegree+1 poles.
-    fn v_first_poles(&self, rational: bool) -> Result<Vec<f64>, Failure> {
+    fn v_first_poles(&self, rational: bool) -> Result<PatchPoles, Failure> {
         let ((pl_row, pu_row), (pl_col, pu_col)) = (self.rows(), self.cols());
-        let mut buffer: Vec<f64> = Vec::new();
+        let mut buffer = PatchPoles::with_len(self.required_len());
+        let dst: &mut [f64] = &mut buffer;
+        let mut cursor = 0usize;
         let mut jp: i32 = wrap_low(pl_col + self.vindex, pl_col, pu_col);
         for _ in 0..=self.v_degree {
             let mut ip: i32 = wrap_low(pl_row + self.uindex, pl_row, pu_row);
@@ -321,20 +385,11 @@ impl PatchGrid<'_, '_, '_> {
                 ip = wrap_high(ip, pl_row, pu_row);
             }
             for _ in 0..=self.u_degree {
-                self.push_pole(&mut buffer, ip, jp, rational)?;
+                self.write_pole(dst, &mut cursor, ip, jp, rational)?;
                 ip = wrap_high(ip + 1, pl_row, pu_row);
             }
             jp = wrap_high(jp + 1, pl_col, pu_col);
         }
-        Ok(padded(buffer))
+        Ok(buffer)
     }
-}
-
-// The data container's pole buffer: 4 * 26 * 26 values.
-fn padded(mut buffer: Vec<f64>) -> Vec<f64> {
-    let size: usize = 4 * (MAX_DEGREE as usize + 1) * (MAX_DEGREE as usize + 1);
-    if buffer.len() < size {
-        buffer.resize(size, 0.0);
-    }
-    buffer
 }
