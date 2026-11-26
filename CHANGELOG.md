@@ -8,6 +8,12 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added directed tangent and G2 relations at supported control-cubic endpoints and native Section of finite planar faces by a work plane (#611).
+
+- Added point and straight-curve attachment to supported trimmed planar faces, exact planar line splits, and axial line projection onto supported trimmed cylinder walls (#611).
+
+- Added checked cylindrical and conical helix construction, analytic pitch-table and flat-end laws, and normalized Sketch3D point, polyline, drawing-edge and fit-cubic imports (#611).
+
 - Added the constraint solver toolkit for residual equations, numerical rank analysis, coordinate preferences, and bounded Sketch3D drag previews (#611).
 
 - Added immutable model-space point and line sketches with atomic edits and exact minimum-length checks (#611).

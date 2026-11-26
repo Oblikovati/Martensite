@@ -1,5 +1,7 @@
 # Sketch3D implementation evidence
 
+See the [source and generator evidence](SOURCE-IMPLEMENTATION-EVIDENCE.md) for later continuity, attachment, projection and curve work.
+
 The production receipts continue the earlier [design and experiment evidence](EVIDENCE.md).
 
 ## E15. Native point and line adoption

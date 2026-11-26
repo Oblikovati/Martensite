@@ -153,6 +153,8 @@ When desktop Inventor interop lands, the app maps Corliss spatial geometry into 
 
 ## Verification and performance
 
+Kernel fixture receipts are recorded in the [implementation evidence](IMPLEMENTATION-EVIDENCE.md) and the [source and generator evidence](SOURCE-IMPLEMENTATION-EVIDENCE.md).
+
 | Claim | Evidence and owner |
 | --- | --- |
 | Spatial equations constrain intended freedoms and preserve accepted branches. | Solver owner checks an independent evaluator and closed-form rank and DOF of every row in [RELATION-EQUATIONS.md](RELATION-EQUATIONS.md). Include every refused set, 90°-rotated poses, ADR-0034 shared-endpoint Colinear (0, 1 and 2 shared), `Angle` iterate `u1 ∥ u2`, center-point semicircles, overconstraints, redundant and near-singular rows, antiparallel poses, far-from-origin mixed UV solves, and unit scales. Cross-check automatic and injected derivatives against finite differences away from singularities. |
