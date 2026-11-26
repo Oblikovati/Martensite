@@ -31,7 +31,11 @@ retained curves through the exact endpoint evaluator before adoption.
 The native fixtures cover free and fixed reference controls, shared endpoint
 identity, the reversed branch, cancellation, and direct first- and
 second-derivative expectations. The fit-cubic solver layout has its own
-admission gate.
+admission gate. An exact monotone derivative check can certify eligible
+unweighted identity-mapped cubics before root isolation. On the owned
+111-coordinate preferred-motion workload, three processes measured
+2.21–2.54 ms p95 compared with 4.89–6.19 ms for the original route.
+Geometry, solve results and deterministic work receipts agreed bit for bit.
 
 ## E40. Point On Face and straight Curve On Face
 
@@ -102,8 +106,11 @@ The analytic sequence keeps caller-supplied row identities and rejects
 overlapping authored zones by exact dyadic comparison. Ordered pitch rows
 have continuous positions and retain the one-sided axial derivative at each
 join. The owned flat-end curve uses constant-elevation end arcs and the
-integral of the smoothstep axial velocity through both ramps. The native
-sequence export has a separate receipt.
+integral of the smoothstep axial velocity through both ramps. The retained
+native wire reads back each span and certifies bounds of `5.82e−8` model
+units for the pitch table and `3.30e−7` for the flat-end fixture. The
+exact Math and Helix suites passed 5,007 tests, nine ThreadSanitizer
+controls and strict Clippy.
 
 ## E45. Normalized Sketch3D imports
 
@@ -123,3 +130,80 @@ Rust 1.98.1 Clippy passed.
 
 The combined source stage passed 786 focused tests and strict Rust 1.98.1
 Clippy across the affected toolkits. Ten established tests were marked ignored.
+
+## E46. Equation curves
+
+TKG3d retains Cartesian polynomial curves as detached, directed native Bézier
+edges on the original parameter interval. For cylindrical and spherical
+equations it retains an ordered chain of checked cubic spans. The interval
+proof checks position error and regularity against the authored equation.
+The trim, vertices and native curve controls are read back after export.
+
+The independent fixture set covers rotated source frames, signed angular
+motion, zero derivatives, spherical poles, cancellation and deterministic
+native replay. The two exact stages passed 5,387 tests, 20 ThreadSanitizer
+checks and strict Rust 1.98.1 Clippy.
+
+## E47. Split on a finite cylindrical wall
+
+The line split keeps each exact ordered quadratic root until it can classify
+the selected native wall or aperture. A root on either paired seam use or on
+a retained rim is a valid contact. A root which falls in the open hole is
+reported separately. The supported wall is a full turn with an optional
+rectangular UV hole strictly inside its source chart.
+
+The owned one-third parameter case certifies the retained cut at
+`(0, −1, 1)` with zero placement error. The other root on the opposite
+side is trimmed out. Native checks distinguish disjoint, rejected and
+incomplete outcomes. The leaf passed 242 Sketch3D tests, six Math cases,
+35 legacy BRep captures, 24 ThreadSanitizer tests and strict Clippy.
+
+## E48. Include a named straight edge
+
+Include captures the selected native edge, its original bounded line and
+both named endpoint occurrences. The authored spatial curve and its points
+are read-only until detached. Rebind requires a newer revision of the same
+source scope and reuses each owned endpoint ID. Geometry and lineage use
+the original source parameter order.
+
+The fixture compares against independently calculated endpoint coordinates
+and straight length, and refuses coordinate-near substitute vertices and
+unrepresentable placement. The exact leaf passed 229 Sketch3D tests,
+1,484 lower tests, seven ThreadSanitizer checks and strict Clippy. Two
+processes reproduced identical evidence bytes.
+
+## E49. Radius, Equal Radius and Fix Arc
+
+The checked solver layout keeps the authored start, end and midpoint witness
+of a through arc together with its Minor or Major branch. The native
+adoption check tests the actual retained circle and driving radius
+independently. Fix retains all three exact anchors. Equal Radius shares
+intrinsic rows only when their authored point identities agree.
+
+The owned fixture drives a Major arc against an independent fixed Minor
+circle. It checks rank 17, one degree of freedom, the original circle bits
+and the expected sagitta. Center-authored arcs, off-midpoint witnesses and
+exact semicircles have typed layout refusals. The leaf passed 4,694 tests
+and strict Rust 1.98.1 Clippy. Six hundred accepted preferred motion samples
+replayed bit for bit across processes, including three concurrent lanes.
+The combined stage verifies that a fixed arc survives an independent planar
+attachment drag and exact reopen and detach.
+
+## E50. Mixed line and circular-arc wires
+
+The first mixed wire export materializes the two retained straight legs and
+the center-defined cardinal quarter of an admitted Bend. It uses one vertex
+per shared authored endpoint, preserves directed native trim intervals and
+keeps the arc center and source use identities in the history. Pairs need a
+certified tangent contact or strictly separated complete bounds before
+adoption.
+
+The checked native trim is `[0, π/2]`, with forward analytic tangent
+transport bounded by `2⁻⁵²`. A changed radius or active range failed independent
+native readback. The leaf passed 234 Sketch3D toolkit tests, 1,340 library
+tests, 27 existing Prism, Sweep and Loft tests, five ThreadSanitizer cases
+and strict Clippy. Two independent processes produced identical history
+and geometry bytes.
+
+The combined native stage on Rust 1.98.1 passed 6,711 tests and strict
+all-target Clippy across the affected toolkits. Ten opt-in cases were ignored.

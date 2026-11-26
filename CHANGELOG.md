@@ -8,6 +8,12 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added native pitched-table and flat-end helix wires and checked Cartesian, cylindrical and spherical equation curves (#611).
+
+- Added exact line splits on supported cylindrical walls and one interior UV aperture and live Include for named straight edges with rebind and detachment (#611).
+
+- Added driving Radius, Equal Radius and Fix Arc for supported midpoint-witness arcs, and native mixed line and circular-quarter wire export (#611).
+
 - Added directed tangent and G2 relations at supported control-cubic endpoints and native Section of finite planar faces by a work plane (#611).
 
 - Added point and straight-curve attachment to supported trimmed planar faces, exact planar line splits, and axial line projection onto supported trimmed cylinder walls (#611).
