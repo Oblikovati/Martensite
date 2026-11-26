@@ -8,6 +8,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added native four-station Curve On Face on bounded planar trims and Point On Face on full non-pole spherical bands (#611).
+
+- Added directed line-to-arc tangency at a shared endpoint with separate authored and retained circular-jet checks (#611).
+
 - Added source-bound Point On Face on finite cylindrical walls and directed tangency from a line to a four-station fit cubic (#611).
 
 - Added certified normal extrusion from a closed mixed quarter-arc profile in either direction (#611).

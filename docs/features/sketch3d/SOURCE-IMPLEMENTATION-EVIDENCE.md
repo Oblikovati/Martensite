@@ -274,3 +274,59 @@ The combined attachment and fit stage passed 5,154 tests and strict
 Rust 1.98.1 Clippy. The subsequent optimized-fit and mixed-prism stage
 passed 386 focused toolkit and modeling tests and strict all-target
 Clippy. Both stages left nine opt-in cases skipped.
+
+## E54. Four-station Curve On Face on a planar trim
+
+The source recipe retains a captured face revision, four directed UV stations,
+and the reservation for each new or reused sketch point. The same fixed
+interpolation operator produces the 3D cubic and its pcurve. Native readback
+checks every retained pole and the active domain. Both paths need a common
+strictly monotone chart direction and independent whole-span inclusion in
+the original convex outer trim with at most one convex hole.
+
+The owned holed fixture proves both strict clearance and exact tangency to
+the retained inner rim. Four admissible stations alone cannot establish
+clearance. A checked rejection fixture enters the open hole strictly between
+stations. A work limit, duplicate station, changed native pcurve or active
+range, stale source, and late cancellation each produce their own refusal.
+The isolated leaf passed 323 toolkit, 154 BRep, 16 Math and 28
+ThreadSanitizer controls, plus strict Rust 1.98.1 Clippy.
+
+## E55. Directed line-to-arc tangency
+
+A named incoming line meets a Minor or Major midpoint-witness arc at one
+shared endpoint. Two angular rows fit the outgoing tangent in a refreshed
+local frame. Acceptance independently compares the exact authored tangent
+and the derivative of the retained native circle at that endpoint, in the
+same directed convention. A 54-bit component ratio fixture reaches the
+exact authored direction but exceeds the requested sine limit after native
+rounding. The solver reports the refusal and keeps the accepted snapshot.
+
+The six owned controls cover both arc branches, reference-frame refresh,
+replay, a wrong shared identity, and circular G2 incompatibility with a
+straight line. Rust 1.98.1 passed 4,456 Math and 257 Sketch3D tests, with
+nine opt-in cases skipped, plus strict all-target Clippy.
+
+## E56. Point On Face on a finite spherical band
+
+The checked solver binds a point to an unperforated full-turn spherical band
+with two finite latitude rims away from the poles. It retains the original
+face occurrence, continuous longitude lift and source revision. Three
+ordinary hard rows share the periodic drag path with the cylinder. The
+spherical qualification checks the stored native trim and a positive
+surface Jacobian bound independently before publishing a candidate.
+
+The radius-2 fixture uses native curved meridian seams and latitudes
+`[0, 0.5]`. It tests both seam senses, exact equator with zero achieved
+distance, the adjacent outside representable value, a separate Euclidean
+`3–4–5` error case, near-pole refusal, stale and late-cancelled edits,
+rebind and detach. The leaf passed 322 toolkit tests with nine opt-in
+cases skipped, strict production Clippy and 52 ThreadSanitizer cases
+across sphere, cylinder and planar attachment. Two independent replay
+processes produced identical receipts.
+
+The native lower tests passed all 15 recorded capture cases. A rounded
+world point on a nonzero rim is refused when its trim side cannot be
+resolved. Partial bands and polar mounts have separate typed refusals.
+The combined planar, spherical and arc stage passed 6,972 tests and
+strict Rust 1.98.1 all-target Clippy. Nine opt-in tests were skipped.
