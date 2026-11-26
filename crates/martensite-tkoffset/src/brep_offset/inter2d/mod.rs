@@ -376,8 +376,11 @@ fn edge_inter(
     if !lv1.is_empty() {
         // The removal of the doubles.
         purge_doubles(&mut lv1, &mut lv2, None)?;
-        // The storage of the vertices.
-        let tol_store = (BRepTool::edge_tolerance(e1)? + BRepTool::edge_tolerance(e2)?).max(tol);
+        // Use max edge tolerance rather than summing them; intersection_vertex already
+        // covers the measured 3D spread, so summing blindly doubles exact tolerances (#554).
+        let tol_store = BRepTool::edge_tolerance(e1)?
+            .max(BRepTool::edge_tolerance(e2)?)
+            .max(tol);
         store_pair((e1, &lv1), (e2, &lv2), tol_store, as_des, a_dmvv)?;
     }
     Ok(())
@@ -486,7 +489,9 @@ pub(super) fn ref_edge_inter(
                 the_image_vv.bind(&vref, &a_new_vertex)?;
             }
         }
-        let tol_store = (BRepTool::edge_tolerance(e1)? + BRepTool::edge_tolerance(e2)?)
+        // Use max edge tolerance rather than summing them (#554).
+        let tol_store = BRepTool::edge_tolerance(e1)?
+            .max(BRepTool::edge_tolerance(e2)?)
             .max(tol)
             .max(tol_ll);
         store_pair((e1, &lv1), (e2, &lv2), tol_store, as_des, a_dmvv)?;
