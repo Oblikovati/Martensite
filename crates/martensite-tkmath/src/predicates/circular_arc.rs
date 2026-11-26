@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Exact metric checks on the three authored points of a circular arc.
 use super::compare::compare_radical_gap;
+use super::direction_band::compare_directions;
 use super::{
     NonFiniteCoordinate, exact_coordinate, exact_vector3, triangle::dot3,
     triple_product::exact_cross,
@@ -127,6 +128,44 @@ impl ArcTripleMetrics {
                 && self.radius_numerator <= &upper * &upper * &self.radius_denominator,
         )
     }
+}
+
+/// Compare the exact outward through-arc tangent with the directed incoming line.
+///
+/// The first arc point is the selected endpoint; the other endpoint and the
+/// through witness follow. The incoming line runs toward the selected endpoint.
+/// A collinear arc is refused, and the caller admits a nonzero line.
+/// Example: `compare_arc_endpoint_tangent_3d(arc, line, 1e-8)?`.
+pub fn compare_arc_endpoint_tangent_3d(
+    [selected, other, witness]: [[f64; 3]; 3],
+    [from, to]: [[f64; 3]; 2],
+    sine: f64,
+) -> Result<(Ordering, Ordering), ArcTripleFailure> {
+    let selected = point(selected, 0)?;
+    let chord = difference(&point(other, 1)?, &selected);
+    let through = difference(&point(witness, 2)?, &selected);
+    let from = point(from, 3)?;
+    let line = difference(&point(to, 4)?, &from);
+    let sine = scalar(sine, 5)?;
+    let tangent = endpoint_tangent(&chord, &through)?;
+    Ok(compare_directions(&line, &tangent, &sine))
+}
+
+fn endpoint_tangent(
+    chord: &[BigInt; 3],
+    through: &[BigInt; 3],
+) -> Result<[BigInt; 3], ArcTripleFailure> {
+    let plane = exact_cross(chord, through);
+    if plane.iter().all(|axis| axis.sign() == Sign::NoSign) {
+        return Err(ArcTripleFailure::Collinear);
+    }
+    // Crossing the endpoint radial vector with the oriented circle normal
+    // reduces to the two terms below, up to one strictly positive factor.
+    let d2 = squared(chord);
+    let w2 = squared(through);
+    Ok(std::array::from_fn(|axis| {
+        &d2 * &through[axis] - &w2 * &chord[axis]
+    }))
 }
 
 fn point(values: [f64; 3], operand: usize) -> Result<[BigInt; 3], ArcTripleFailure> {

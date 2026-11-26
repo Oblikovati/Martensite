@@ -80,6 +80,9 @@ pub(super) enum Equation {
         target: LineAngle,
         minimum_sine: f64,
     },
+    ArcTangent {
+        reference: FrameReference,
+    },
     FitTangent {
         reference: FrameReference,
         tangent: CubicFitTangent,
@@ -95,6 +98,11 @@ pub(super) enum Equation {
 impl Equation {
     pub(super) fn refreshed_chart(self, direction: [f64; 3]) -> Option<Self> {
         match self {
+            Self::ArcTangent { reference } if reference.needs_refresh(direction) => {
+                Some(Self::ArcTangent {
+                    reference: FrameReference::from_direction(direction),
+                })
+            }
             Self::FitTangent {
                 reference,
                 tangent,
@@ -158,6 +166,7 @@ impl Equation {
             | Self::Parallel { .. }
             | Self::Axis(..)
             | Self::FitTangent { .. }
+            | Self::ArcTangent { .. }
             | Self::Continuity { .. } => 2,
         }
     }
@@ -171,7 +180,8 @@ impl Equation {
                 curvature_scale: Some(_),
                 ..
             } => 15,
-            Self::Parallel { .. }
+            Self::ArcTangent { .. }
+            | Self::Parallel { .. }
             | Self::Colinear { .. }
             | Self::Perpendicular
             | Self::EqualLength { .. }
@@ -276,6 +286,7 @@ impl ResidualSource for Equation {
                 tangent,
                 weights,
             } => continuity::evaluate_fit(v, &first()?, reference, tangent, weights),
+            Self::ArcTangent { reference } => continuity::evaluate_arc(v, &first()?, reference),
             Self::Continuity {
                 reference,
                 cubic_reference,

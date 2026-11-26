@@ -211,6 +211,8 @@ impl Layout<'_> {
                 tangent,
                 weights,
             }
+        } else if matches!(join, ContinuityJoin::LineArc(_)) {
+            Equation::ArcTangent { reference }
         } else {
             Equation::Continuity {
                 reference,

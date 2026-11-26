@@ -71,3 +71,30 @@ fn exact_radius_difference_uses_its_own_closed_band_for_opposite_branches() {
         Ok(Ordering::Equal)
     );
 }
+
+#[test]
+fn exact_endpoint_tangent_uses_the_actual_triangle_and_the_selected_outward_sense() {
+    let [a, b, w] = [[-4., 0., 0.], [4., 0., 0.], [0., 2., 0.]];
+    for (curve, line) in [
+        ([a, b, w], [[-7., -4., 0.], a]),
+        ([b, a, w], [[7., -4., 0.], b]),
+        ([a, b, [0., 8., 0.]], [[-1., -4., 0.], a]),
+        (
+            [[0.; 3], [4., 0., 0.], [1., 1., 0.]],
+            [[-1., -2., 0.], [0.; 3]],
+        ),
+    ] {
+        assert_eq!(
+            compare_arc_endpoint_tangent_3d(curve, line, 0.),
+            Ok((Ordering::Greater, Ordering::Equal))
+        );
+        assert_eq!(
+            compare_arc_endpoint_tangent_3d(curve, [line[1], line[0]], 0.),
+            Ok((Ordering::Less, Ordering::Equal))
+        );
+    }
+    assert_eq!(
+        compare_arc_endpoint_tangent_3d([a, b, [0.; 3]], [a, b], 0.),
+        Err(ArcTripleFailure::Collinear)
+    );
+}

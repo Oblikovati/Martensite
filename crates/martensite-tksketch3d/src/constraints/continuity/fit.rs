@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! A line and a fixed-station fit cubic share one authored endpoint slot.
-use super::{ContinuityFailure, ContinuityJoin, JoinStencil, distinct, pair};
+use super::{ContinuityFailure, ContinuityJoin, JoinStencil, distinct, line_other, pair};
 use crate::{
     EntityId, FitSplineGeometry, FitSplineId, LineId, PointId, Snapshot,
     constraints::{ConstraintFailure as Failure, RelationId},
@@ -54,10 +54,7 @@ fn slots(
     stations: [PointId; 4],
     join: LineFitCubicJoin,
 ) -> Result<([PointId; 5], CubicFitEnd), ContinuityFailure> {
-    let other = line
-        .iter()
-        .position(|point| *point == join.endpoint)
-        .map(|end| line[1 - end]);
+    let other = line_other(line, join.endpoint);
     let (Some(other), Some([shared, a, b, c])) = (other, pair::at_end(stations, join.endpoint))
     else {
         return Err(ContinuityFailure::UnsharedEndpoint(join.into()));

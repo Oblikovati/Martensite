@@ -2,6 +2,7 @@
 //! Differentiate exact endpoint stencils and a moving reference frame.
 use super::{
     DualNumber, FrameReference, ResidualError, Vector, checked_length, components, directed, unit,
+    vector,
 };
 use crate::constraints::ParallelDirection;
 use martensite_tkmath::predicates::roots::{
@@ -56,6 +57,41 @@ pub(super) fn evaluate_fit(
     let adjusted = unit(&inject::<4>(value, inputs, stencil)?)?;
     let basis = tangent_basis(reference, &unit(line)?, &adjusted)?;
     Ok(components(&basis, &adjusted)?.into())
+}
+
+pub(super) fn evaluate_arc(
+    inputs: &[DualNumber],
+    line: &Vector,
+    reference: FrameReference,
+) -> Result<Vec<DualNumber>, ResidualError> {
+    let selected = vector(inputs, 3)?;
+    let chord = vector(inputs, 6)?.minus(&selected)?;
+    let through = vector(inputs, 9)?.minus(&selected)?;
+    let adjusted = arc_direction(chord, through)?;
+    let basis = tangent_basis(reference, &unit(line)?, &adjusted)?;
+    Ok(components(&basis, &adjusted)?.into())
+}
+
+fn arc_direction(chord: Vector, through: Vector) -> Result<Vector, ResidualError> {
+    let scale = chord
+        .components()
+        .iter()
+        .chain(through.components())
+        .map(|value| value.value().abs())
+        .fold(0., f64::max);
+    let inverse = scale.recip();
+    if !scale.is_finite() || scale <= 0. || !inverse.is_finite() {
+        return Err(ResidualError::Domain(format!(
+            "arc tangent scale {scale}: expected a positive finite reciprocal"
+        )));
+    }
+    // A common positive scale cancels when the homogeneous tangent is normalized.
+    // Holding this scale constant in the differential gives the same direction derivative.
+    let chord = chord.scaled(inverse)?;
+    let through = through.scaled(inverse)?;
+    let chord_term = chord.product(&through.dot(&through)?)?;
+    let through_term = through.product(&chord.dot(&chord)?)?;
+    unit(&through_term.minus(&chord_term)?)
 }
 
 fn tangent_basis(
@@ -160,4 +196,24 @@ fn divide(vector: &Vector, divisor: &DualNumber) -> Result<Vector, ResidualError
         .each_ref()
         .map(|value| value.quotient(divisor));
     Ok(Vector::new([x?, y?, z?])?)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::constraints::residual::displacement;
+
+    #[test]
+    fn arc_tangent_out_of_plane_partial_has_the_expected_physical_scale() {
+        let points = [-7., -4., 0., -4., 0., 0., 4., 0., 0., 0., 2., 0.];
+        let seeded = DualNumber::seed(&points).unwrap();
+        let line = displacement(&seeded, 0).unwrap();
+        let frame = FrameReference::from_direction([3., 4., 0.]);
+        let rows = evaluate_arc(&seeded, &line, frame).unwrap();
+        assert_eq!(rows.len(), 2);
+        assert!(rows.iter().all(|row| row.value().abs() < 1e-14));
+        // For the first row the line frame is +Z, so varying W.z has
+        // derivative |E-S|² / |T| = 64/160 at the exact arc.
+        assert!((rows[0].gradient()[11] - 0.4).abs() < 1e-14);
+    }
 }

@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Bind the reference and adjusted curves by their shared authored endpoint.
 use super::{ConstraintFailure, ConstraintPolicy, RelationId};
-use crate::{ControlSplineId, EntityId, FitSplineId, LineId, PointId, Snapshot};
+use crate::{ArcId, ControlSplineId, EntityId, FitSplineId, LineId, PointId, Snapshot};
+use martensite_tkmath::predicates::ArcTripleFailure;
 use martensite_tkmath::predicates::roots::{
     CubicEndJetFailure, CubicFitNumericError, CubicFitTangent,
 };
 use std::{cmp::Ordering, fmt};
 
+mod arc;
 mod fit;
 mod pair;
+pub use arc::LineArcJoin;
 pub use fit::LineFitCubicJoin;
 mod reference;
 pub use pair::CubicCubicJoin;
@@ -21,6 +24,8 @@ pub enum ContinuityJoin {
     LineCubic(LineCubicJoin),
     /// An incoming line and an outgoing fixed four-station fit cubic. Tangent only.
     LineFitCubic(LineFitCubicJoin),
+    /// An incoming line and an outgoing midpoint-witness circular arc. Tangent only.
+    LineArc(LineArcJoin),
     /// An incoming and an outgoing control cubic.
     CubicCubic(CubicCubicJoin),
 }
@@ -30,6 +35,7 @@ impl ContinuityJoin {
         match self {
             Self::LineCubic(join) => JoinReference::Line(join.line),
             Self::LineFitCubic(join) => JoinReference::Line(join.line),
+            Self::LineArc(join) => JoinReference::Line(join.line),
             Self::CubicCubic(join) => JoinReference::Cubic(join.reference, join.endpoint),
         }
     }
@@ -93,6 +99,12 @@ pub enum ContinuityFailure {
     FitSensitivity(FitSplineId, CubicFitNumericError),
     /// The rebuilt stored endpoint does not retain the authored point's coordinate bits.
     FitEndpointIdentity(FitSplineId, PointId),
+    /// A circular arc has positive curvature magnitude at a finite radius.
+    ArcCurvatureMismatch(ArcId),
+    /// Exact arc or native jet input outside the supported domain.
+    ArcTangent(ArcId, ArcTripleFailure),
+    /// The stored circle endpoint exceeds the arc's authored position fit limit.
+    ArcNativeEndpoint(ArcId, PointId),
     /// Curvature tolerance must be a finite nonnegative inverse length.
     InvalidCurvatureTolerance(f64),
 }
@@ -101,6 +113,7 @@ impl fmt::Display for ContinuityFailure {
     fn fmt(&self, output: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Endpoint(source) => source.fmt(output),
+            Self::ArcTangent(arc, source) => write!(output, "arc {arc:?} tangent: {source}"),
             Self::InvalidCurvatureTolerance(value) => write!(
                 output,
                 "curvature tolerance {value} must be finite and nonnegative in inverse model units",
@@ -115,6 +128,7 @@ impl std::error::Error for ContinuityFailure {
         match self {
             Self::Endpoint(source) => Some(source),
             Self::FitSensitivity(_, source) => Some(source),
+            Self::ArcTangent(_, source) => Some(source),
             _ => None,
         }
     }
@@ -154,6 +168,7 @@ pub(super) fn bind(
     let (points, count) = match join {
         ContinuityJoin::LineCubic(join) => line_stencil(geometry, id, join, g2)?,
         ContinuityJoin::LineFitCubic(join) => return fit::bind(geometry, id, join, g2),
+        ContinuityJoin::LineArc(join) => arc::bind(geometry, id, join, g2)?,
         ContinuityJoin::CubicCubic(join) => pair::bind(geometry, id, join, g2)?,
     };
     Ok(JoinStencil {
@@ -203,6 +218,13 @@ fn line_controls(
     let count = if g2 { 4 } else { 3 };
     distinct(&points[..count])?;
     Ok((points, count))
+}
+
+fn line_other([first, second]: [PointId; 2], shared: PointId) -> Option<PointId> {
+    if first == shared {
+        return Some(second);
+    }
+    (second == shared).then_some(first)
 }
 
 fn distinct(points: &[PointId]) -> Result<(), ContinuityFailure> {
@@ -271,6 +293,7 @@ fn measure(
 ) -> Result<bool, ConstraintFailure> {
     let checked = match join {
         ContinuityJoin::LineCubic(_) => line_limits(points, limit, curvature),
+        ContinuityJoin::LineArc(join) => return arc::limits(geometry, id, join, points, limit),
         ContinuityJoin::LineFitCubic(join) => {
             return fit::limits(geometry, id, join, [points[0], points[1]], limit);
         }

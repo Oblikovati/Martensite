@@ -28,8 +28,8 @@ use std::{
 pub use angle::{InvalidLineAngle, LineAngle};
 pub use arc_layout::{ArcBranch, ArcConstraintFailure};
 pub use continuity::{
-    ContinuityFailure, ContinuityJoin, CubicCubicJoin, CurvatureTolerance, LineCubicJoin,
-    LineFitCubicJoin,
+    ContinuityFailure, ContinuityJoin, CubicCubicJoin, CurvatureTolerance, LineArcJoin,
+    LineCubicJoin, LineFitCubicJoin,
 };
 pub use error::{ConstraintFailure, PolicyQuantity};
 pub use martensite_tksolve::{nonlinear::SolveOptions, preview::Limits as SolverLimits};

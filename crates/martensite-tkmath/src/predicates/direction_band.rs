@@ -18,16 +18,24 @@ pub fn compare_directed_line_sine_3d(
     let first = displacement(first, 0)?;
     let second = displacement(second, 2)?;
     let limit = exact_coordinate(limit, 4, 0)?;
-    let cross = exact_cross(&first, &second);
-    // Inputs are integers in units of 2^-1074. The extra squared limit on the
-    // right contributes two more powers of that scale.
+    Ok(compare_directions(&first, &second, &limit))
+}
+
+pub(super) fn compare_directions(
+    first: &[BigInt; 3],
+    second: &[BigInt; 3],
+    limit: &BigInt,
+) -> (Ordering, Ordering) {
+    let cross = exact_cross(first, second);
+    // The squared limit introduces two additional powers of the binary64 grid.
+    // Each direction may have its own positive common scale, which cancels.
     const SQUARED_LIMIT_SHIFT: usize = 2 * 1074;
     let observed = dot3(&cross, &cross) << SQUARED_LIMIT_SHIFT;
-    let allowed = &limit * &limit * dot3(&first, &first) * dot3(&second, &second);
-    Ok((
-        dot3(&first, &second).cmp(&BigInt::from(0)),
+    let allowed = limit * limit * dot3(first, first) * dot3(second, second);
+    (
+        dot3(first, second).cmp(&BigInt::from(0)),
         observed.cmp(&allowed),
-    ))
+    )
 }
 
 fn displacement(

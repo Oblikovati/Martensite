@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 mod relations;
+mod tangent;
 
 use crate::fixture::{lid, line, pid, point, seed};
 use martensite_tkmath::gp::Direction3;
