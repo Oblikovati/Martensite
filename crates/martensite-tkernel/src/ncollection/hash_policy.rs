@@ -32,18 +32,21 @@ pub trait HashPolicy<K> {
 #[derive(Clone, Copy, Debug, Default)]
 pub struct DefaultHashPolicy;
 impl<K: HashKey + PartialEq> HashPolicy<K> for DefaultHashPolicy {
+    #[inline]
     fn hash(&self, key: &K) -> usize {
         key.kernel_hash()
     }
+    #[inline]
     fn equal(&self, first: &K, second: &K) -> bool {
         first.kernel_equal(second)
     }
+    #[inline]
     fn walks_in_order_added(&self) -> bool {
         K::WALKS_IN_ORDER_ADDED
     }
 }
 macro_rules! integer_hash {
-    ($($type:ty),*) => { $(impl HashKey for $type { fn kernel_hash(&self)->usize { *self as usize } })* };
+    ($($type:ty),*) => { $(impl HashKey for $type { #[inline] fn kernel_hash(&self)->usize { *self as usize } })* };
 }
 integer_hash!(
     bool, u8, i8, u16, i16, u32, i32, u64, i64, usize, isize, char

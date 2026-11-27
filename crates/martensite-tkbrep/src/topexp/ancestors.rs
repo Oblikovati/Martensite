@@ -67,9 +67,10 @@ fn bind_ancestors(
     append: Append,
 ) -> Result<(), Failure> {
     let mut ancestors = Explorer::new(shape, ancestor_kind, ShapeEnum::Shape)?;
+    let mut subs = Explorer::default();
     while ancestors.more() {
         let ancestor = ancestors.current().clone();
-        let mut subs = Explorer::new(&ancestor, sub_kind, ShapeEnum::Shape)?;
+        subs.init(&ancestor, sub_kind, ShapeEnum::Shape)?;
         while subs.more() {
             let index = index_of(map, subs.current());
             append_ancestor(map.change_from_index(index)?, &ancestor, append);

@@ -10,19 +10,26 @@ pub(crate) fn find_or_add_child(
     tag: i32,
     create: bool,
 ) -> Option<Arc<TdfLabelNode>> {
-    let (mut last, mut current) = (None, node.first_child());
-    if let Some(found) = node.state.read().last_found_child.upgrade() {
-        if found.tag() == tag {
-            return Some(found);
+    let (mut last, mut current) = {
+        let state = node.state.read();
+        if let Some(found) = state.last_found_child.upgrade() {
+            let found_tag = found.tag();
+            if found_tag == tag {
+                return Some(found);
+            }
+            if found_tag < tag {
+                (Some(found.clone()), found.brother())
+            } else {
+                (None, state.first_child.clone())
+            }
+        } else {
+            (None, state.first_child.clone())
         }
-        if found.tag() < tag {
-            current = found.brother();
-            last = Some(found);
-        }
-    }
-    while let Some(candidate) = current.clone().filter(|candidate| candidate.tag() < tag) {
-        current = candidate.brother();
-        last = Some(candidate);
+    };
+    while let Some(candidate) = current.as_ref().filter(|candidate| candidate.tag() < tag) {
+        let next = candidate.brother();
+        last = current;
+        current = next;
     }
     let child = match current.filter(|candidate| candidate.tag() == tag) {
         Some(existing) => Some(existing),

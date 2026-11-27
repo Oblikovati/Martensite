@@ -24,11 +24,8 @@ impl BRepMeshDelaun {
         if !self.initialized_circles {
             return Ok(());
         }
-        let points = [
-            *self.get_vertex(nodes[0])?.coord(),
-            *self.get_vertex(nodes[1])?.coord(),
-            *self.get_vertex(nodes[2])?.coord(),
-        ];
+        let [v0, v1, v2] = self.mesh_ref()?.get_nodes_3(nodes)?;
+        let points = [*v0.coord(), *v1.coord(), *v2.coord()];
         if !self.circles.bind_points(index, &points)? {
             self.mesh_ref()?.remove_element(index)?;
         }

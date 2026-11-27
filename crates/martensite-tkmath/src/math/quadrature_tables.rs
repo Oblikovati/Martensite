@@ -10,9 +10,33 @@ pub fn gauss_points_max() -> i32 {
 pub fn kronrod_points_max() -> i32 {
     123
 }
+/// Closed-form table offset `sum_{i=1}^{order-1} ((i + 1) >> 1)` for `order >= 1`.
+#[inline]
+fn gauss_table_start(order: i32) -> usize {
+    if order <= 1 {
+        return 0;
+    }
+    let k: usize = (order - 1) as usize;
+    let half: usize = k >> 1;
+    half * (half + 1) + if k & 1 == 1 { half + 1 } else { 0 }
+}
+
+/// Fills stack buffers with the positive-first half of Gauss nodes and weights
+/// (`points[0..half]`, `weights[0..half]`) for `1 <= order <= 61`.
+#[inline]
+pub(super) fn fill_gauss_half_tables(order: i32, points: &mut [f64; 61], weights: &mut [f64; 61]) {
+    let start: usize = gauss_table_start(order);
+    let half: usize = ((order + 1) >> 1) as usize;
+    for i in 0..half {
+        let idx: usize = start + i + 1;
+        points[i] = gauss::point(idx);
+        weights[i] = gauss::weight(idx);
+    }
+}
+
 /// Copies positive-first Gauss nodes; `gauss_points(5,&mut points)`.
 pub fn gauss_points(order: i32, points: &mut Vector<'_>) {
-    let start: usize = (1..order).map(|i| ((i + 1) >> 1) as usize).sum();
+    let start: usize = gauss_table_start(order);
     let half: i32 = (order + 1) >> 1;
     for i in 1..=half {
         points[i] = gauss::point(start + i as usize);
@@ -23,7 +47,7 @@ pub fn gauss_points(order: i32, points: &mut Vector<'_>) {
 }
 /// Copies Gauss weights; `gauss_weights(5,&mut weights)`.
 pub fn gauss_weights(order: i32, weights: &mut Vector<'_>) {
-    let start: usize = (1..order).map(|i| ((i + 1) >> 1) as usize).sum();
+    let start: usize = gauss_table_start(order);
     let half: i32 = (order + 1) >> 1;
     for i in 1..=half {
         weights[i] = gauss::weight(start + i as usize);

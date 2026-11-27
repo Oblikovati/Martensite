@@ -30,11 +30,17 @@ impl KronrodSingleIntegration {
     pub(super) fn refine(
         &mut self,
         f: &mut impl Function,
-        q: &Quadrature,
+        q: &Quadrature<'_>,
         bounds: [f64; 2],
         tolerance: f64,
         limit: i32,
     ) {
+        if !(self.error > tolerance
+            && self.absolute > self.absolute_floor
+            && self.iterations < limit)
+        {
+            return;
+        }
         let mut intervals: Intervals = Intervals {
             bounds: bounds.to_vec(),
             errors: vec![self.absolute],

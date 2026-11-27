@@ -73,16 +73,23 @@ fn update_projection<T: Graphic3dCameraScalar>(
     matrices.is_projection_valid = true;
 }
 
-/// The double matrices after `update` (an orientation or projection update).
-fn matrices_d(
+/// Cached double matrices need only a read lock; refresh under a write lock on miss.
+fn read_double_matrix<R>(
     camera: &Graphic3dCamera,
+    is_valid: impl Fn(&Graphic3dCameraMatrices<f64>) -> bool,
     update: fn(&Graphic3dCameraState, &mut Graphic3dCameraMatrices<f64>),
-) -> Graphic3dCameraMatrices<f64> {
+    read: impl Fn(&Graphic3dCameraMatrices<f64>) -> R,
+) -> R {
+    if let Some(value) = camera.read(|s| is_valid(&s.matrices_d).then(|| read(&s.matrices_d))) {
+        return value;
+    }
     camera.write(|s| {
-        let mut matrices = s.matrices_d;
-        update(s, &mut matrices);
-        s.matrices_d = matrices;
-        matrices
+        if !is_valid(&s.matrices_d) {
+            let mut matrices = s.matrices_d;
+            update(s, &mut matrices);
+            s.matrices_d = matrices;
+        }
+        read(&s.matrices_d)
     })
 }
 
@@ -129,7 +136,12 @@ fn read_float_projection(
 impl Graphic3dCamera {
     /// The world-to-view matrix; `camera.orientation_matrix()`.
     pub fn orientation_matrix(&self) -> Mat4<f64> {
-        matrices_d(self, update_orientation).orientation
+        read_double_matrix(
+            self,
+            |m| m.is_orientation_valid,
+            update_orientation,
+            |m| m.orientation,
+        )
     }
     /// The world-to-view matrix in float; `camera.orientation_matrix_f()`.
     pub fn orientation_matrix_f(&self) -> Mat4<f32> {
@@ -142,7 +154,12 @@ impl Graphic3dCamera {
     }
     /// The (mono) projection matrix; `camera.projection_matrix()`.
     pub fn projection_matrix(&self) -> Mat4<f64> {
-        matrices_d(self, update_projection).m_projection
+        read_double_matrix(
+            self,
+            |m| m.is_projection_valid,
+            update_projection,
+            |m| m.m_projection,
+        )
     }
     /// The projection matrix in float; `camera.projection_matrix_f()`.
     pub fn projection_matrix_f(&self) -> Mat4<f32> {
@@ -150,7 +167,12 @@ impl Graphic3dCamera {
     }
     /// The left eye projection; `camera.projection_stereo_left()`.
     pub fn projection_stereo_left(&self) -> Mat4<f64> {
-        matrices_d(self, update_projection).l_projection
+        read_double_matrix(
+            self,
+            |m| m.is_projection_valid,
+            update_projection,
+            |m| m.l_projection,
+        )
     }
     /// The left eye projection in float; `camera.projection_stereo_left_f()`.
     pub fn projection_stereo_left_f(&self) -> Mat4<f32> {
@@ -158,7 +180,12 @@ impl Graphic3dCamera {
     }
     /// The right eye projection; `camera.projection_stereo_right()`.
     pub fn projection_stereo_right(&self) -> Mat4<f64> {
-        matrices_d(self, update_projection).r_projection
+        read_double_matrix(
+            self,
+            |m| m.is_projection_valid,
+            update_projection,
+            |m| m.r_projection,
+        )
     }
     /// The right eye projection in float; `camera.projection_stereo_right_f()`.
     pub fn projection_stereo_right_f(&self) -> Mat4<f32> {
@@ -268,6 +295,20 @@ fn inverse(matrix: &Mat4<f64>) -> Option<Mat4<f64>> {
     matrix.inverted_to(&mut output).then_some(output)
 }
 
+/// `Project` of one point using borrowed view and projection matrices (no Mat4 copies).
+#[inline]
+fn project_point(point: &Point3, view: &Mat4<f64>, projection: &Mat4<f64>) -> Point3 {
+    let v = *view * Vec4::new(point.x(), point.y(), point.z(), 1.0);
+    let p = *projection * v;
+    let w = p.w();
+    if w == 0.0 {
+        Point3::new(p.x(), p.y(), p.z())
+    } else {
+        let inv = 1.0 / w;
+        Point3::new(p.x() * inv, p.y() * inv, p.z() * inv)
+    }
+}
+
 /// The inverse view and projection matrices of one camera state, from
 /// [`Graphic3dCamera::un_projection`].
 #[derive(Clone, Copy, Debug)]
@@ -287,10 +328,20 @@ impl Graphic3dUnProjection {
 impl Graphic3dCamera {
     /// `Project`: world to normalized device coordinates; `camera.project(&p)`.
     pub fn project(&self, point: &Point3) -> Point3 {
-        transformed(
-            point,
-            &[self.orientation_matrix(), self.projection_matrix()],
-        )
+        if let Some(projected) = self.read(|s| {
+            (s.matrices_d.is_orientation_valid && s.matrices_d.is_projection_valid).then(|| {
+                project_point(point, &s.matrices_d.orientation, &s.matrices_d.m_projection)
+            })
+        }) {
+            return projected;
+        }
+        self.write(|s| {
+            let mut matrices = s.matrices_d;
+            update_orientation(s, &mut matrices);
+            update_projection(s, &mut matrices);
+            s.matrices_d = matrices;
+            project_point(point, &s.matrices_d.orientation, &s.matrices_d.m_projection)
+        })
     }
     /// `UnProject`: device coordinates to world (the origin for singular matrices);
     /// `camera.un_project(&p)`.

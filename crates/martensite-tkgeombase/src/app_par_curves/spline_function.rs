@@ -1,28 +1,25 @@
 //! `AppParCurves::SplineFunction`: the B-spline basis matrix and its derivative at
 //! parameters, with the span index of each parameter.
-use crate::native_failure::array_failure;
-use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::bsplclib;
 use martensite_tkmath::math::{IntegerVector, Matrix, Vector};
 
 // flatknots(i), checked (the retained file compiles the checks out).
+#[inline]
 fn knot(flatknots: &Vector<'_>, i: i32) -> Result<f64, Failure> {
     flatknots.value(i).copied()
 }
 
 // The deg + 1 non-null B-spline values (and derivatives) at u in span `kindex`, by
-// the retained triangular recurrence.
-fn local_basis(
+// the retained triangular recurrence, written into `poles` and `dpoles` (length >= deg + 2).
+fn fill_local_basis(
     deg: i32,
     flatknots: &Vector<'_>,
     kindex: i32,
     u: f64,
-) -> Result<(Vec<f64>, Vec<f64>), Failure> {
-    let deg1: usize = usize::try_from(deg + 1).map_err(|_| {
-        Failure::out_of_range(&format!("AppParCurves::SplineFunction: degree {deg}"))
-    })?;
-    let mut poles: Vec<f64> = vec![0.; deg1 + 1];
+    poles: &mut [f64],
+    dpoles: &mut [f64],
+) -> Result<(), Failure> {
     poles[1] = 1.;
     for qq in 2..=deg as usize {
         poles[qq] = 0.;
@@ -38,9 +35,9 @@ fn local_basis(
             poles[qq] = saved;
         }
     }
-    let mut dpoles: Vec<f64> = poles.clone();
-    last_degree(deg, flatknots, kindex, u, [&mut poles, &mut dpoles])?;
-    Ok((poles, dpoles))
+    let len = deg as usize + 2;
+    dpoles[..len].copy_from_slice(&poles[..len]);
+    last_degree(deg, flatknots, kindex, u, [poles, dpoles])
 }
 
 // The last raise of the recurrence, which also yields the derivatives.
@@ -49,7 +46,7 @@ fn last_degree(
     flatknots: &Vector<'_>,
     kindex: i32,
     u: f64,
-    [poles, dpoles]: [&mut Vec<f64>; 2],
+    [poles, dpoles]: [&mut [f64]; 2],
 ) -> Result<(), Failure> {
     let qq: usize = deg as usize + 1;
     let (mut locqq, mut locdqq): (f64, f64) = (0., 0.);
@@ -75,6 +72,7 @@ fn last_degree(
 }
 
 // A(i, j) = value and DA(i, j) = derivative (DA first, as the retained chained assignment).
+#[inline]
 fn put(
     a: &mut Matrix<'_>,
     da: &mut Matrix<'_>,
@@ -101,10 +99,21 @@ pub fn spline_function(
     index: &mut IntegerVector<'_>,
 ) -> Result<(), Failure> {
     let deg1: i32 = degree + 1;
-    let mut aflatknots: Array1<'static, f64> =
-        Array1::with_bounds(flatknots.lower(), flatknots.upper())
-            .map_err(|error| array_failure(error, "AppParCurves::SplineFunction"))?;
-    (flatknots.lower()..=flatknots.upper()).for_each(|i| aflatknots[i] = flatknots[i]);
+    let buf_len: usize = usize::try_from(deg1 + 1).map_err(|_| {
+        Failure::out_of_range(&format!("AppParCurves::SplineFunction: degree {degree}"))
+    })?;
+    let mut stack_p: [f64; 32] = [0.0; 32];
+    let mut stack_dp: [f64; 32] = [0.0; 32];
+    let mut heap_p: Vec<f64>;
+    let mut heap_dp: Vec<f64>;
+    let (poles, dpoles): (&mut [f64], &mut [f64]) = if buf_len <= stack_p.len() {
+        (&mut stack_p[..buf_len], &mut stack_dp[..buf_len])
+    } else {
+        heap_p = vec![0.0; buf_len];
+        heap_dp = vec![0.0; buf_len];
+        (&mut heap_p, &mut heap_dp)
+    };
+    let aflatknots = flatknots.array1();
     let mut oldkindex: i32 = 1;
     for i in parameters.lower()..=parameters.upper() {
         let u: f64 = parameters[i];
@@ -121,7 +130,8 @@ pub fn spline_function(
         )?;
         oldkindex = kindex;
         *index.change_value(i)? = kindex - degree - 1;
-        let (poles, dpoles) = local_basis(degree, flatknots, kindex, u)?;
+        poles.fill(0.0);
+        fill_local_basis(degree, flatknots, kindex, u, poles, dpoles)?;
         for j in 1..=deg1 {
             put(
                 a,

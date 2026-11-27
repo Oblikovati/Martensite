@@ -23,6 +23,7 @@ struct VertexToolState {
 /// Native indexed UV uniqueness tool; `BRepMeshVertexTool::new(&allocator)`.
 pub struct BRepMeshVertexTool {
     allocator: MeshAllocator,
+    vertices: MeshVertexCollectionSlot,
     state: SharedState<VertexToolState>,
 }
 impl_transient!(BRepMeshVertexTool, "BRepMesh_VertexTool", StandardTransient);
@@ -32,8 +33,10 @@ impl BRepMeshVertexTool {
         let tolerance = martensite_tkernel::precision::confusion();
         let mut selector = BRepMeshVertexInspector::new(allocator);
         selector.set_tolerances(tolerance, tolerance);
+        let vertices = selector.change_vertices();
         Self {
             allocator: allocator.clone(),
+            vertices,
             state: SharedState::new(VertexToolState {
                 filter: CellFilter::with_allocator(
                     tolerance + 0.05 * tolerance,
@@ -92,15 +95,33 @@ impl BRepMeshVertexTool {
     }
     /// Retain the current vector handle; `tool.vertices()`.
     pub fn vertices(&self) -> Handle<MeshVertexCollection> {
-        self.state.read().selector.vertices()
+        self.vertices.read().clone()
     }
     /// Access the native mutable handle through shared ownership; `*tool.change_vertices().write() = replacement`.
     pub fn change_vertices(&self) -> MeshVertexCollectionSlot {
-        self.state.read().selector.change_vertices()
+        self.vertices.clone()
     }
     /// Read a one-based stored vertex; `tool.find_key(1)?`.
+    #[inline]
     pub fn find_key(&self, index: i32) -> Result<BRepMeshVertex, Failure> {
-        self.state.read().selector.get_vertex(index)
+        let collection = self.vertices.read();
+        inspector::read_initialized_vertex(&collection, index)
+    }
+    /// Read three one-based stored vertices under a single lock acquisition.
+    #[inline]
+    pub(crate) fn find_keys_3(&self, indices: [i32; 3]) -> Result<[BRepMeshVertex; 3], Failure> {
+        let collection = self.vertices.read();
+        let guard = collection.read();
+        let v0 = *guard
+            .value(indices[0].wrapping_sub(1))
+            .map_err(inspector::vertex_array_failure)?;
+        let v1 = *guard
+            .value(indices[1].wrapping_sub(1))
+            .map_err(inspector::vertex_array_failure)?;
+        let v2 = *guard
+            .value(indices[2].wrapping_sub(1))
+            .map_err(inspector::vertex_array_failure)?;
+        Ok([v0, v1, v2])
     }
     /// Retain a const reference to the current collection slot; `tool.find_key_reference(1)?`.
     pub fn find_key_reference(&self, index: i32) -> Result<VertexSlotRead, Failure> {
@@ -108,7 +129,7 @@ impl BRepMeshVertexTool {
     }
     /// Return allocated slots, including deleted vertices; `tool.extent()`.
     pub fn extent(&self) -> i32 {
-        self.state.read().selector.nb_vertices()
+        self.vertices.read().read().length()
     }
     /// Test the native storage extent; `tool.is_empty()`.
     pub fn is_empty(&self) -> bool {

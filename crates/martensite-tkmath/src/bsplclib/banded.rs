@@ -43,8 +43,17 @@ pub fn build_bsp_matrix(
             "{BUILD}: Degree = {degree}; expected <= {MAX_DEGREE}"
         )));
     }
-    let max_order: i32 = MAX_DEGREE + 1;
-    let mut basis: Matrix<'static> = Matrix::filled(1, max_order, 1, max_order, 0.0)
+    let basis_dim: i32 = order;
+    let mut stack_basis: [f64; 64] = [0.0; 64];
+    let mut heap_basis: Vec<f64>;
+    let basis_slice: &mut [f64] =
+        if (basis_dim as usize) * (basis_dim as usize) <= stack_basis.len() {
+            &mut stack_basis[..(basis_dim as usize) * (basis_dim as usize)]
+        } else {
+            heap_basis = vec![0.0; (basis_dim as usize) * (basis_dim as usize)];
+            &mut heap_basis
+        };
+    let mut basis: Matrix<'_> = Matrix::from_buffer(basis_slice, 1, basis_dim, 1, basis_dim)
         .map_err(|error| Failure::out_of_range(&error.to_string()))?;
     matrix.init(0.0);
     let columns: usize = matrix.col_number() as usize;
@@ -65,7 +74,7 @@ pub fn build_bsp_matrix(
         }
         let index: i32 = degree + 1 + first - i;
         let row: usize = (i - matrix.lower_row()) as usize * columns;
-        let source: usize = contact as usize * max_order as usize;
+        let source: usize = contact as usize * basis_dim as usize;
         for j in 0..order {
             let column: i32 = index + j - 1;
             if !(0..band_width).contains(&column) {

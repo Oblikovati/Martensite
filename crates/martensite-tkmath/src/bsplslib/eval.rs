@@ -110,12 +110,12 @@ pub fn d1(
     validate_degrees(span.u_degree, span.v_degree)?;
     let mut patch: Patch = prepare_eval(span, poles, weights)?;
     let row: usize = first_order_patch(&mut patch)?;
-    let (result, first, second): (Vec<f64>, usize, usize) = if patch.rational {
-        let mut ders: Vec<f64> = vec![0.0; 48];
+    let mut ders = [0.0_f64; 48];
+    let (result, first, second): (&[f64], usize, usize) = if patch.rational {
         rational_derivative(patch.d1, patch.d2, 1, 1, &patch.poles, &mut ders, true)?;
-        (ders, 6, 3)
+        (&ders, 6, 3)
     } else {
-        (patch.poles.clone(), row, 3)
+        (&patch.poles, row, 3)
     };
     // `first` is the derivative along the first direction.
     let (vu, vv): (usize, usize) = if patch.u_first {
@@ -123,7 +123,7 @@ pub fn d1(
     } else {
         (second, first)
     };
-    Ok((point(&result), vector(&result[vu..]), vector(&result[vv..])))
+    Ok((point(result), vector(&result[vu..]), vector(&result[vv..])))
 }
 
 /// Homogeneous point and first derivatives with the weight derivatives
@@ -177,7 +177,7 @@ pub fn d2(
         second_direction(&mut patch, None, 2 * row)?;
     }
     if patch.rational {
-        let mut ders: Vec<f64> = vec![0.0; 48];
+        let mut ders = [0.0_f64; 48];
         rational_derivative(patch.d1, patch.d2, 2, 2, &patch.poles, &mut ders, true)?;
         // (i, j) of the first/second direction sits at 9*i + 3*j.
         let [vu, vv, vuu, vvv] = oriented(patch.u_first, [9, 3, 18, 6]);

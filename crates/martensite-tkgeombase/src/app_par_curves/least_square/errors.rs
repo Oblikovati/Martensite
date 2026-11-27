@@ -32,16 +32,9 @@ impl LeastSquare {
         let (mut f, mut max3d, mut max2d): (f64, f64, f64) = (0., 0., 0.);
         let mut i2: i32 = 1;
         for k in 1..=self.nb_p + self.nb_p2d {
-            let width: i32 = if k <= self.nb_p { 3 } else { 2 };
-            let poles: Vec<Vec<f64>> = (0..width)
-                .map(|c| {
-                    (1..=self.nbpoles)
-                        .map(|i| self.mypoles.value(i, i2 + c).copied())
-                        .collect::<Result<_, _>>()
-                })
-                .collect::<Result<_, _>>()?;
+            let width: usize = if k <= self.nb_p { 3 } else { 2 };
             for i in self.first_p..=self.last_p {
-                let (fi, gr) = self.point_error(i, i2, &poles, grad.is_some())?;
+                let (fi, gr) = self.point_error(i, i2, width, grad.is_some())?;
                 if width == 3 {
                     max3d = max3d.max_native(fi);
                 } else {
@@ -53,7 +46,7 @@ impl LeastSquare {
                 }
                 f += fi;
             }
-            i2 += width;
+            i2 += width as i32;
         }
         Ok((f, max3d.sqrt(), max2d.sqrt()))
     }
@@ -64,10 +57,9 @@ impl LeastSquare {
         &self,
         i: i32,
         i2: i32,
-        poles: &[Vec<f64>],
+        width: usize,
         with_gradient: bool,
     ) -> Result<(f64, f64), Failure> {
-        let width: usize = poles.len();
         let (mut value, mut derivative) = ([0.; 3], [0.; 3]);
         let indexdeb: i32 = *self.myindex.value(i)? + 1;
         for j in indexdeb..=indexdeb + self.deg {
@@ -78,14 +70,15 @@ impl LeastSquare {
                 0.
             };
             for c in 0..width {
-                let pole: f64 = pole_at(&poles[c], j)?;
+                let pole: f64 = *self.mypoles.value(j, i2 + c as i32)?;
                 value[c] += aij * pole;
                 derivative[c] += daij * pole;
             }
         }
-        let offsets: Vec<f64> = (0..width)
-            .map(|c| Ok(value[c] - *self.mypoints.value(i, i2 + c as i32)?))
-            .collect::<Result<_, Failure>>()?;
+        let mut offsets = [0.0; 3];
+        for (c, offset) in offsets.iter_mut().enumerate().take(width) {
+            *offset = value[c] - *self.mypoints.value(i, i2 + c as i32)?;
+        }
         let mut fi: f64 = offsets[0] * offsets[0] + offsets[1] * offsets[1];
         let mut gr: f64 = 2.0 * (derivative[0] * offsets[0] + derivative[1] * offsets[1]);
         if width == 3 {
@@ -94,19 +87,6 @@ impl LeastSquare {
         }
         Ok((fi, gr))
     }
-}
-
-// Px(j) of the 1-based pole column (Vector Px(1, nbpoles)).
-fn pole_at(column: &[f64], j: i32) -> Result<f64, Failure> {
-    usize::try_from(j - 1)
-        .ok()
-        .and_then(|slot| column.get(slot).copied())
-        .ok_or_else(|| {
-            Failure::out_of_range(&format!(
-                "AppParCurves_LeastSquare::Error: pole {j}; expected 1..={}",
-                column.len()
-            ))
-        })
 }
 
 /// `if (Fi > MaxE) MaxE = Fi` (NaN never replaces the maximum).

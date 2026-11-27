@@ -4,6 +4,7 @@ mod special;
 
 /// Parses a C-locale numeric prefix and returns its byte end offset; `strtod(" 1.5tail") == (1.5,4)`.
 /// No conversion returns `(0.0, 0)`; embedded NUL terminates input as in C.
+#[inline]
 pub fn strtod(input: &str) -> (f64, usize) {
     strtod_bytes(input.as_bytes())
 }
@@ -12,24 +13,23 @@ pub fn strtod(input: &str) -> (f64, usize) {
 /// `strtod_bytes(b" 1.5\xfftail") == (1.5, 4)`.
 ///
 /// The C-string form accepts byte strings that cannot be represented by `&str`.
+#[inline]
 pub fn strtod_bytes(input: &[u8]) -> (f64, usize) {
-    let bytes = c_prefix(input);
-    parse_prefix(bytes, leading_space_end(bytes))
+    // Scanners stop naturally at NUL (not whitespace, digit, sign, '.', 'e'/'E', 'x'/'X', or inf/nan),
+    // avoiding a redundant upfront full-slice NUL scan on the common decimal path.
+    parse_prefix(input, leading_space_end(input))
 }
 
-fn c_prefix(input: &[u8]) -> &[u8] {
-    let end = input
-        .iter()
-        .position(|byte| *byte == 0)
-        .unwrap_or(input.len());
-    &input[..end]
-}
-
+#[inline]
 fn leading_space_end(bytes: &[u8]) -> usize {
-    bytes
-        .iter()
-        .position(|byte| !matches!(*byte, b' ' | b'\t' | b'\n' | b'\r' | 11 | 12))
-        .unwrap_or(bytes.len())
+    let mut i = 0;
+    while i < bytes.len() {
+        match bytes[i] {
+            b' ' | b'\t' | b'\n' | b'\r' | 11 | 12 => i += 1,
+            _ => break,
+        }
+    }
+    i
 }
 
 fn parse_prefix(bytes: &[u8], start: usize) -> (f64, usize) {

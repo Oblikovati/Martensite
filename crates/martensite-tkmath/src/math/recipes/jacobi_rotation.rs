@@ -65,9 +65,18 @@ fn rotate_upper(work: &mut Matrix<'_>, row: i32, col: i32, angle: [f64; 2]) {
     }
 }
 /// `ROTATE(a, i, j, k, l)`: `g = a(i,j); h = a(k,l)` then the tau-stabilized update.
+#[inline]
 fn rotate(work: &mut Matrix<'_>, [left, right]: [(i32, i32); 2], [sine, tau]: [f64; 2]) {
-    let g: f64 = work[left];
-    let h: f64 = work[right];
-    work[left] = g - sine * (h + g * tau);
-    work[right] = h + sine * (g - h * tau);
+    let cols = work.col_number() as usize;
+    let r0 = (left.0 - work.lower_row()) as usize;
+    let c0 = (left.1 - work.lower_col()) as usize;
+    let r1 = (right.0 - work.lower_row()) as usize;
+    let c1 = (right.1 - work.lower_col()) as usize;
+    let cells = work.cells_mut();
+    let idx0 = r0 * cols + c0;
+    let idx1 = r1 * cols + c1;
+    let g: f64 = cells[idx0];
+    let h: f64 = cells[idx1];
+    cells[idx0] = g - sine * (h + g * tau);
+    cells[idx1] = h + sine * (g - h * tau);
 }

@@ -13,6 +13,7 @@ use std::ops::{Index, IndexMut, Mul, MulAssign, Neg};
 /// `vector[vector.lower()]`. Panics (naming the index and bounds) outside the bounds.
 impl<T: VectorItem> Index<i32> for VectorBase<'_, T> {
     type Output = T;
+    #[inline]
     #[track_caller]
     fn index(&self, index: i32) -> &T {
         let (lower, upper) = (self.lower(), self.upper());
@@ -23,6 +24,7 @@ impl<T: VectorItem> Index<i32> for VectorBase<'_, T> {
 /// `operator()(int)` with the caller-guaranteed index of a bounded loop;
 /// `vector[vector.lower()] = 1.0`. Panics (naming the index and bounds) outside them.
 impl<T: VectorItem> IndexMut<i32> for VectorBase<'_, T> {
+    #[inline]
     #[track_caller]
     fn index_mut(&mut self, index: i32) -> &mut T {
         let (lower, upper) = (self.lower(), self.upper());

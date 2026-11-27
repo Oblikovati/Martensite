@@ -139,26 +139,31 @@ impl<'a, T> Array2<'a, T> {
     }
 
     /// Reads zero-based row/column offsets; `array.at(0,0)?`.
+    #[inline]
     pub fn at(&self, row: usize, col: usize) -> Result<&T, ArrayError> {
         self.elements.at(self.offset(row, col)?)
     }
     /// Mutates zero-based row/column offsets; `*array.change_at(0,0)? = value`.
+    #[inline]
     pub fn change_at(&mut self, row: usize, col: usize) -> Result<&mut T, ArrayError> {
         let offset = self.offset(row, col)?;
         self.elements.change_at(offset)
     }
     /// Reads declared row/column indices; `array.value(array.lower_row(),array.lower_col())?`.
+    #[inline]
     pub fn value(&self, row: i32, col: i32) -> Result<&T, ArrayError> {
         let (r, c) = self.bounded_offsets(row, col)?;
         self.at(r, c)
     }
     /// Mutates declared row/column indices; `*array.change_value(1,1)? = value`.
+    #[inline]
     pub fn change_value(&mut self, row: i32, col: i32) -> Result<&mut T, ArrayError> {
         let (r, c) = self.bounded_offsets(row, col)?;
         self.change_at(r, c)
     }
     /// Moves a Rust replacement into a cell; `array.set_value(1,1,42)?`.
     /// Use `set_value_with_assignment` to retain a caller-owned mutable donor.
+    #[inline]
     pub fn set_value(&mut self, row: i32, col: i32, value: T) -> Result<(), ArrayError> {
         *self.change_value(row, col)? = value;
         Ok(())

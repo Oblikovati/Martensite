@@ -156,14 +156,6 @@ impl PoleSpan<'_> {
         }
         Ok((1, self.nb_poles))
     }
-    // A periodic index past the pole count wraps once.
-    fn wrap(&self, index: i32) -> i32 {
-        if self.periodic && index > self.nb_poles {
-            index - self.nb_poles
-        } else {
-            index
-        }
-    }
 }
 
 impl BSplineSurface {
@@ -217,29 +209,56 @@ impl BSplineSurface {
         tolerance: f64,
     ) -> Result<BoundingBox3, Failure> {
         let surface = self.surface()?;
-        let u = PoleSpan {
-            knots: surface.u_knots(),
-            mults: surface.u_multiplicities(),
-            degree: surface.u_degree(),
-            nb_poles: surface.nb_u_poles(),
-            periodic: surface.is_u_periodic(),
-        };
-        let v = PoleSpan {
-            knots: surface.v_knots(),
-            mults: surface.v_multiplicities(),
-            degree: surface.v_degree(),
-            nb_poles: surface.nb_v_poles(),
-            periodic: surface.is_v_periodic(),
-        };
-        let (i_min, i_max) = u.range((patch.u_min, patch.u_max), (u1, u2))?;
-        let (j_min, j_max) = v.range((patch.v_min, patch.v_max), (v1, v2))?;
+        let nb_u: i32 = surface.nb_u_poles();
+        let nb_v: i32 = surface.nb_v_poles();
+        let full_u: bool = !(patch.u_min > u1 || patch.u_max < u2);
+        let full_v: bool = !(patch.v_min > v1 || patch.v_max < v2);
         let poles = surface.poles();
         let mut bounds: BoundingBox3 = BoundingBox3::default();
+        if full_u && full_v {
+            poles.iter().for_each(|&pole| bounds.add_point(pole));
+            bounds.enlarge(tolerance);
+            return Ok(bounds);
+        }
+        let u_periodic: bool = surface.is_u_periodic();
+        let v_periodic: bool = surface.is_v_periodic();
+        let (i_min, i_max) = if full_u {
+            (1, nb_u)
+        } else {
+            let u = PoleSpan {
+                knots: surface.u_knots(),
+                mults: surface.u_multiplicities(),
+                degree: surface.u_degree(),
+                nb_poles: nb_u,
+                periodic: u_periodic,
+            };
+            u.range((patch.u_min, patch.u_max), (u1, u2))?
+        };
+        let (j_min, j_max) = if full_v {
+            (1, nb_v)
+        } else {
+            let v = PoleSpan {
+                knots: surface.v_knots(),
+                mults: surface.v_multiplicities(),
+                degree: surface.v_degree(),
+                nb_poles: nb_v,
+                periodic: v_periodic,
+            };
+            v.range((patch.v_min, patch.v_max), (v1, v2))?
+        };
+        let wrap = |index: i32, nb: i32, periodic: bool| -> i32 {
+            if periodic && index > nb {
+                index - nb
+            } else {
+                index
+            }
+        };
         for i in i_min..=i_max {
+            let wi: i32 = wrap(i, nb_u, u_periodic);
             for j in j_min..=j_max {
                 // A pole index still past the array after one wrap is index-range failure.
                 let pole = poles
-                    .value(u.wrap(i), v.wrap(j))
+                    .value(wi, wrap(j, nb_v, v_periodic))
                     .map_err(|e| exceptions::out_of_range(&format!("pole ({i}, {j}): {e}")))?;
                 bounds.add_point(*pole);
             }

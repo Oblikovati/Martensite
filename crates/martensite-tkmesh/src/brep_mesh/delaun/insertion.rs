@@ -114,9 +114,7 @@ impl BRepMeshDelaun {
     }
 
     fn fan_side_metrics(&self, vertex: i32, nodes: [i32; 2]) -> Result<PolygonFanMetrics, Failure> {
-        let point = self.get_vertex(vertex)?;
-        let first = self.get_vertex(nodes[0])?;
-        let last = self.get_vertex(nodes[1])?;
+        let [point, first, last] = self.mesh_ref()?.get_nodes_3([vertex, nodes[0], nodes[1]])?;
         let direction = *last.coord() - *first.coord();
         let edge_length = direction.modulus();
         if edge_length < martensite_tkernel::precision::p_confusion() {
@@ -184,9 +182,7 @@ impl BRepMeshDelaun {
 
     fn add_fan_triangle(&mut self, vertex: i32, edge: i32, forward: bool) -> Result<(), Failure> {
         let nodes = self.fan_nodes(edge, forward)?;
-        let point = self.get_vertex(vertex)?;
-        let first = self.get_vertex(nodes[0])?;
-        let last = self.get_vertex(nodes[1])?;
+        let [point, first, last] = self.mesh_ref()?.get_nodes_3([vertex, nodes[0], nodes[1]])?;
         let direction = *last.coord() - *first.coord();
         let length = direction.modulus();
         if length < martensite_tkernel::precision::p_confusion() {

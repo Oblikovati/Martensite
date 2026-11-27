@@ -23,8 +23,14 @@ impl NamedColor {
     }
     /// Returns the table's sRGB floats, used by the nearest-name search;
     /// `NamedColor::MATRABLUE.srgb()[2] == 0.75`.
+    #[inline]
     pub fn srgb(self) -> [f32; 3] {
-        self.entry().1
+        SRGB_TABLE[self.0]
+    }
+    /// Contiguous sRGB table in canonical enumerator order for branchless nearest-name scans.
+    #[inline]
+    pub(super) fn srgb_table() -> &'static [[f32; 3]; COLOR_COUNT] {
+        &SRGB_TABLE
     }
     /// Returns the enumerator's integer value; `NamedColor::WHITE.index() == 508`.
     pub const fn index(self) -> i32 {
@@ -99,3 +105,22 @@ include!("color_names/table_5.rs");
 include!("color_names/table_6.rs");
 include!("color_names/table_7.rs");
 include!("color_names/table_8.rs");
+
+const SRGB_TABLE: [[f32; 3]; COLOR_COUNT] = {
+    let tables: [&[ColorEntry]; 9] = [
+        &TABLE_0, &TABLE_1, &TABLE_2, &TABLE_3, &TABLE_4, &TABLE_5, &TABLE_6, &TABLE_7, &TABLE_8,
+    ];
+    let mut out = [[0.0_f32; 3]; COLOR_COUNT];
+    let mut i = 0;
+    let mut t = 0;
+    while t < tables.len() {
+        let mut j = 0;
+        while j < tables[t].len() {
+            out[i] = tables[t][j].1;
+            i += 1;
+            j += 1;
+        }
+        t += 1;
+    }
+    out
+};

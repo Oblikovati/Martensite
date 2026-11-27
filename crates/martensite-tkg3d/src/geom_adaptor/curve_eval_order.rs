@@ -27,6 +27,8 @@ pub(super) trait EvalOrder {
     ) -> Result<Self::Output, Failure>;
     /// `Cache->Dk`.
     fn cached(cache: &Cache, u: f64) -> Result<Self::Output, Failure>;
+    /// `Cache->Dk` if `u` is inside the cached span (single lock acquisition).
+    fn try_cached(cache: &Cache, u: f64) -> Option<Result<Self::Output, Failure>>;
     /// `GeomOffsetCurveUtils::EvaluateDk`; `None` when the offset is undefined.
     fn offset(
         u: f64,
@@ -62,6 +64,9 @@ impl EvalOrder for EvalD0 {
     }
     fn cached(cache: &Cache, u: f64) -> Result<Point3, Failure> {
         cache.d0::<Point3>(u)
+    }
+    fn try_cached(cache: &Cache, u: f64) -> Option<Result<Point3, Failure>> {
+        cache.try_d0::<Point3>(u)
     }
     fn offset(
         u: f64,
@@ -106,6 +111,11 @@ impl EvalOrder for EvalD1 {
     fn cached(cache: &Cache, u: f64) -> Result<GeomCurveD1, Failure> {
         let (point, d1) = cache.d1::<Point3>(u)?;
         Ok(GeomCurveD1 { point, d1 })
+    }
+    fn try_cached(cache: &Cache, u: f64) -> Option<Result<GeomCurveD1, Failure>> {
+        cache
+            .try_d1::<Point3>(u)
+            .map(|r| r.map(|(point, d1)| GeomCurveD1 { point, d1 }))
     }
     fn offset(
         u: f64,
@@ -153,6 +163,11 @@ impl EvalOrder for EvalD2 {
     fn cached(cache: &Cache, u: f64) -> Result<GeomCurveD2, Failure> {
         let (point, d1, d2) = cache.d2::<Point3>(u)?;
         Ok(GeomCurveD2 { point, d1, d2 })
+    }
+    fn try_cached(cache: &Cache, u: f64) -> Option<Result<GeomCurveD2, Failure>> {
+        cache
+            .try_d2::<Point3>(u)
+            .map(|r| r.map(|(point, d1, d2)| GeomCurveD2 { point, d1, d2 }))
     }
     fn offset(
         u: f64,
@@ -203,6 +218,11 @@ impl EvalOrder for EvalD3 {
     fn cached(cache: &Cache, u: f64) -> Result<GeomCurveD3, Failure> {
         let (point, d1, d2, d3) = cache.d3::<Point3>(u)?;
         Ok(GeomCurveD3 { point, d1, d2, d3 })
+    }
+    fn try_cached(cache: &Cache, u: f64) -> Option<Result<GeomCurveD3, Failure>> {
+        cache
+            .try_d3::<Point3>(u)
+            .map(|r| r.map(|(point, d1, d2, d3)| GeomCurveD3 { point, d1, d2, d3 }))
     }
     fn offset(
         u: f64,

@@ -24,9 +24,18 @@ pub(crate) struct TShapeFields {
 /// let base = TShapeBase::new(ShapeEnum::Wire);
 /// assert_eq!(base.state() & 0xF, ShapeEnum::Wire as u16);
 /// ```
-#[derive(Default)]
 pub struct TShapeBase {
+    shape_type: ShapeEnum,
     pub(crate) fields: SharedState<TShapeFields>,
+}
+
+impl Default for TShapeBase {
+    fn default() -> Self {
+        Self {
+            shape_type: ShapeEnum::Compound,
+            fields: SharedState::default(),
+        }
+    }
 }
 
 impl TShapeBase {
@@ -35,11 +44,18 @@ impl TShapeBase {
     pub fn new(shape_type: ShapeEnum) -> Self {
         let state = shape_type as u16 | BIT_FREE | BIT_MODIFIED | BIT_ORIENTABLE;
         Self {
+            shape_type,
             fields: SharedState::new(TShapeFields {
                 shapes: Vec::new(),
                 state,
             }),
         }
+    }
+
+    /// The immutable shape type (`ShapeType()`), readable without locking.
+    #[inline]
+    pub fn shape_type(&self) -> ShapeEnum {
+        self.shape_type
     }
 
     /// The compact state word (`myState`, dumped as `State`); `base.state()`.
@@ -202,8 +218,9 @@ pub trait TShape: Transient {
         self.tshape_base().set_bit(BIT_CONVEX, is_convex);
     }
     /// `ShapeType()`: the type stored in bits 0-3; `tshape.shape_type()`.
+    #[inline]
     fn shape_type(&self) -> ShapeEnum {
-        stored_shape_type(self.tshape_base().state())
+        self.tshape_base().shape_type()
     }
     /// `NbChildren()`: the number of direct sub-shapes; `tshape.nb_children()`.
     fn nb_children(&self) -> i32 {

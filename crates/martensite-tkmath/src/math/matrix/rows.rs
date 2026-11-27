@@ -3,12 +3,14 @@ use crate::math::Vector;
 use martensite_tkernel::standard::Failure;
 impl Matrix<'_> {
     /// Reads a declared cell with exception category; `matrix.value(1,1)?`.
+    #[inline]
     pub fn value(&self, row: i32, col: i32) -> Result<&f64, Failure> {
         self.table
             .value(row, col)
             .map_err(|_| Failure::out_of_range("NCollection_Array2::Value"))
     }
     /// Mutates a declared cell with exception category; `*matrix.change_value(1,1)?=2.0`.
+    #[inline]
     pub fn change_value(&mut self, row: i32, col: i32) -> Result<&mut f64, Failure> {
         self.table
             .change_value(row, col)

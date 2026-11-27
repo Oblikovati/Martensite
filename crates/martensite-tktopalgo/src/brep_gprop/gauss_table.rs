@@ -10,11 +10,17 @@ pub(super) type GaussRule = (Vec<f64>, Vec<f64>);
 /// (positive points first, then their opposites), zero-based; a failure for a
 /// negative order (the native `math_Vector(1, Order)` bounds).
 pub(super) fn gauss_points_and_weights(order: i32) -> Result<GaussRule, Failure> {
-    let mut points: Vector<'static> = Vector::with_bounds(1, order)?;
-    let mut weights: Vector<'static> = Vector::with_bounds(1, order)?;
-    math::gauss_points(order, &mut points);
-    math::gauss_weights(order, &mut weights);
-    let points: Vec<f64> = (1..=order).map(|i| points[i]).collect();
-    let weights: Vec<f64> = (1..=order).map(|i| weights[i]).collect();
+    if order < 1 {
+        let _ = Vector::with_bounds(1, order)?;
+    }
+    let len = order as usize;
+    let mut points = vec![0.0_f64; len];
+    let mut weights = vec![0.0_f64; len];
+    {
+        let mut p_vec = Vector::from_buffer(&mut points, 1, order)?;
+        let mut w_vec = Vector::from_buffer(&mut weights, 1, order)?;
+        math::gauss_points(order, &mut p_vec);
+        math::gauss_weights(order, &mut w_vec);
+    }
     Ok((points, weights))
 }

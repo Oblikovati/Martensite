@@ -123,6 +123,15 @@ fn bracketed_roots(
     }
     Ok(())
 }
+fn horner_value(c: &LongCoefficients, degree: i32, x: LongDouble) -> LongDouble {
+    let d: usize = degree as usize;
+    let mut value: LongDouble = c[d];
+    for &coefficient in c[..d].iter().rev() {
+        value = value * x + coefficient;
+    }
+    value
+}
+
 fn bisected(
     c: &LongCoefficients,
     degree: i32,
@@ -130,10 +139,10 @@ fn bisected(
     mut right: LongDouble,
     mut left_value: LongDouble,
 ) -> LongDouble {
-    let two: LongDouble = LongDouble::new(2.0);
     for _ in 0..DISTINCT_ROOT_BISECTION_ITERATIONS {
-        let middle: LongDouble = (left + right) / two;
-        let value: LongDouble = horner(c, degree, middle).0;
+        // Scaling by 2^-1 is exact for normal values and avoids software 80-bit division.
+        let middle: LongDouble = (left + right).scale(-1);
+        let value: LongDouble = horner_value(c, degree, middle);
         if (left_value < LongDouble::ZERO) == (value < LongDouble::ZERO) {
             left = middle;
             left_value = value;
@@ -141,5 +150,5 @@ fn bisected(
             right = middle;
         }
     }
-    (left + right) / two
+    (left + right).scale(-1)
 }

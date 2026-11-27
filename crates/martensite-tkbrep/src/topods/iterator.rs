@@ -69,6 +69,7 @@ impl ShapeIterator {
     }
 
     /// `More()`: true while a sub-shape remains; `iterator.more()`.
+    #[inline]
     pub fn more(&self) -> bool {
         self.tshape
             .get()
@@ -77,6 +78,7 @@ impl ShapeIterator {
 
     /// `Next()`: moves to the next sub-shape; past the end it does nothing, as the
     /// native list iterator; `iterator.next()`.
+    #[inline]
     pub fn next(&mut self) {
         if !self.more() {
             return;
@@ -87,6 +89,7 @@ impl ShapeIterator {
 
     /// `Value()`: the current composed sub-shape; Standard_NoSuchObject when there is
     /// none; `iterator.value()?`.
+    #[inline]
     pub fn value(&self) -> Result<&Shape, Failure> {
         if !self.more() {
             return Err(Failure::with_type(
@@ -102,6 +105,7 @@ impl ShapeIterator {
     }
 
     /// Borrow actual inline current storage even after reset; `iterator.reference_shape()`.
+    #[inline]
     pub fn reference_shape(&self) -> &Shape {
         // Native const references access myShape directly, not Value's More precondition.
         &self.shape

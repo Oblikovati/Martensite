@@ -9,7 +9,7 @@ impl BRepMeshDataStructureOfDelaun {
         self.connectivity
             .read()
             .links
-            .find_index(&MeshLinkKey(SharedState::new(*edge))) as i32
+            .find_index(&MeshLinkKey::new(*edge)) as i32
     }
     /// Read an indexed link; `mesh.get_link(1)?`.
     pub fn get_link(&self, index: i32) -> Result<BRepMeshEdge, Failure> {
@@ -18,8 +18,7 @@ impl BRepMeshDataStructureOfDelaun {
             .read()
             .links
             .find_key(index as usize)?
-            .0
-            .snapshot())
+            .to_edge())
     }
     /// Snapshot the domain's native hash iteration order; `mesh.links_of_domain()`.
     pub fn links_of_domain(&self) -> PackedMap<i32> {
@@ -36,15 +35,12 @@ impl BRepMeshDataStructureOfDelaun {
     /// Reuse a deleted slot or return the signed orientation of an existing edge; `mesh.add_link(&edge)?`.
     pub fn add_link(&self, edge: &BRepMeshEdge) -> Result<i32, Failure> {
         let mut state = self.connectivity.write();
-        let key = MeshLinkKey(SharedState::new(*edge));
+        let key = MeshLinkKey::new(*edge);
         let found = state.links.find_index(&key);
         if found != 0 {
-            let same = state
-                .links
-                .find_key(found)?
-                .0
-                .snapshot()
-                .is_same_orientation(edge);
+            let existing = state.links.find_key(found)?;
+            let same =
+                existing.first_node == edge.first_node() && existing.last_node == edge.last_node();
             return Ok(if same { found as i32 } else { -(found as i32) });
         }
         let index = state.insert_link(key)?;
@@ -64,8 +60,6 @@ impl BRepMeshDataStructureOfDelaun {
         state
             .links
             .find_key(index as usize)?
-            .0
-            .write()
             .set_movability(movability);
         Ok(())
     }
@@ -76,12 +70,12 @@ impl BRepMeshDataStructureOfDelaun {
 }
 impl DelaunConnectivity {
     fn substitute_link(&mut self, index: i32, edge: &BRepMeshEdge) -> Result<bool, Failure> {
-        let mut old = self.links.find_key(index as usize)?.0.snapshot();
+        let mut old = self.links.find_key(index as usize)?.to_edge();
         if old.movability() == DegreeOfFreedom::Deleted {
             self.replace_link(index, *edge, PairOfIndex::default())?;
             return Ok(true);
         }
-        if self.links.find_index(&MeshLinkKey(SharedState::new(*edge))) != 0 {
+        if self.links.find_index(&MeshLinkKey::new(*edge)) != 0 {
             return Ok(false);
         }
         old.set_movability(DegreeOfFreedom::Deleted);
@@ -133,19 +127,22 @@ impl DelaunConnectivity {
         pair: PairOfIndex,
     ) -> Result<(), Failure> {
         self.links
-            .substitute(index as usize, MeshLinkKey(SharedState::new(edge)), pair)
+            .substitute(index as usize, MeshLinkKey::new(edge), pair)
     }
     pub(super) fn remove_link(&mut self, index: i32, force: bool) -> Result<(), Failure> {
-        let mut edge = self.links.find_key(index as usize)?.0.snapshot();
-        if edge.movability() == DegreeOfFreedom::Deleted
-            || (!force && edge.movability() != DegreeOfFreedom::Free)
+        let key = self.links.find_key(index as usize)?;
+        let movability = key.movability();
+        if movability == DegreeOfFreedom::Deleted
+            || (!force && movability != DegreeOfFreedom::Free)
             || self.links.find_from_index(index as usize)?.extent() != 0
         {
             return Ok(());
         }
+        let edge = key.to_edge();
         self.clean_link(index, &edge)?;
-        edge.set_movability(DegreeOfFreedom::Deleted);
-        *self.links.find_key(index as usize)?.0.write() = edge;
+        self.links
+            .find_key(index as usize)?
+            .set_movability(DegreeOfFreedom::Deleted);
         self.link_domain.remove(index);
         self.deleted_links.append(index);
         Ok(())

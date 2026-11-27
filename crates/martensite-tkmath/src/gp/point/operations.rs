@@ -103,10 +103,12 @@ impl Point3 {
         *self = self.mirrored_plane(frame);
     }
     /// Applies the point-specific transform path; `point.transformed(transform)`.
+    #[inline]
     pub fn transformed(self, transform: Transform3) -> Self {
         transform.apply(self)
     }
     /// Transforms this point in place; `point.transform(transform)`.
+    #[inline]
     pub fn transform(&mut self, transform: Transform3) {
         *self = self.transformed(transform);
     }

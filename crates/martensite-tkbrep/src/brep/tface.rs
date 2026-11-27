@@ -67,6 +67,12 @@ impl BRepTFace {
             }),
         }
     }
+    /// `Surface()` and `Location()` read under a single lock; `face.surface_and_location()`.
+    #[inline]
+    pub fn surface_and_location(&self) -> (Handle<dyn GeomSurface>, Location) {
+        let fields = self.fields.read();
+        (fields.surface.clone(), fields.location.clone())
+    }
     /// `Surface()`; `face.surface()`.
     pub fn surface(&self) -> Handle<dyn GeomSurface> {
         self.fields.read().surface.clone()

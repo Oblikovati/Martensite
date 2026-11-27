@@ -41,6 +41,33 @@ fn copy_grid<T: Copy>(
 }
 
 impl GeomBSplineSurface {
+    /// Borrows the knot sequences, poles, weights, and degrees/periodicity under a single
+    /// read lock for building a `BSplSLib::Cache` without cloning; internal to `tkg3d`.
+    #[allow(clippy::type_complexity)]
+    pub(crate) fn with_cache_build_inputs<R>(
+        &self,
+        f: impl FnOnce(
+            ((i32, bool), (i32, bool)),
+            &Array1<'_, f64>,
+            &Array1<'_, f64>,
+            &Array2<'_, Point3>,
+            Option<&Array2<'_, f64>>,
+        ) -> R,
+    ) -> R {
+        let state = self.state.read();
+        let weights = (state.u_rational || state.v_rational).then_some(&state.weights);
+        f(
+            (
+                (state.u.deg, state.u.periodic),
+                (state.v.deg, state.v.periodic),
+            ),
+            &state.u.flat_knots,
+            &state.v.flat_knots,
+            &state.poles,
+            weights,
+        )
+    }
+
     fn read_direction<R>(&self, u: bool, read: impl FnOnce(&Direction) -> R) -> R {
         read(self.state.read().dir(u))
     }

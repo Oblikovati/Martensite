@@ -220,14 +220,28 @@ fn triangle_info<A: DelaunayInsertionHooks + ?Sized>(
     nodes: &[i32; 3],
 ) -> Result<[TriangleNodeInfo; 3], Failure> {
     let data = algo.base_data();
+    let structure = data.get_structure();
     let splitter = algo.insertion().get_range_splitter().range_state();
+    let vertices = structure.get_nodes_3(*nodes)?;
+    let movabilities = structure.link_movabilities_3(triangle.edges)?;
+    let nodes_map = data.get_nodes_map();
     let mut info = [TriangleNodeInfo::default(); 3];
     for i in 0..3 {
-        let vertex = data.get_structure().get_node(nodes[i])?;
-        info[i].point_2d = splitter.scale(Point2::from(*vertex.coord()), false).xy();
-        info[i].point = node_point(data, nodes[i])?.xyz();
-        let link = data.get_structure().get_link(triangle.edges[i])?;
-        info[i].is_frontier_link = link.movability() == DegreeOfFreedom::Frontier;
+        info[i].point_2d = splitter
+            .scale(Point2::from(*vertices[i].coord()), false)
+            .xy();
+        info[i].point = usize::try_from(vertices[i].location_3d())
+            .ok()
+            .and_then(|index| nodes_map.get(index).copied())
+            .ok_or_else(|| {
+                Failure::new(&format!(
+                    "BRepMesh_Deflection: missing 3d node for index {} (location {})",
+                    nodes[i],
+                    vertices[i].location_3d()
+                ))
+            })?
+            .xyz();
+        info[i].is_frontier_link = movabilities[i] == DegreeOfFreedom::Frontier;
     }
     Ok(info)
 }

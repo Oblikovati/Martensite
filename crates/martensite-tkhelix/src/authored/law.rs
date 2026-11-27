@@ -149,10 +149,7 @@ impl ConstantHelix {
         if !(0. ..=end).contains(&parameter) {
             return Err(HelixFailure::Parameter { parameter, end });
         }
-        let (cosine, sine) = (
-            martensite_cmath::cos(parameter),
-            martensite_cmath::sin(parameter),
-        );
+        let (sine, cosine) = martensite_cmath::sincos(parameter);
         let local = match order {
             0 => self.local.point(parameter, cosine, sine),
             1 => self.local.first(parameter, cosine, sine),

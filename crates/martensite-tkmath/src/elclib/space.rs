@@ -82,17 +82,17 @@ pub fn line_d1(u: f64, position: Axis1) -> SpaceD1 {
     )
 }
 /// Circle point and first derivative; `circle_d1(0.5,frame,2.0)`.
+#[inline]
 pub fn circle_d1(u: f64, position: Axis2, radius: f64) -> SpaceD1 {
-    let (x, y) = (
-        radius * martensite_cmath::cos(u),
-        radius * martensite_cmath::sin(u),
-    );
+    let (sine, cosine) = martensite_cmath::sincos(u);
+    let (x, y) = (radius * cosine, radius * sine);
     let frame = Frame::of(position);
     (frame.point(x, y), vector(frame.span(-y, x)))
 }
 /// Ellipse point and first derivative; `ellipse_d1(0.5,frame,3.0,2.0)`.
+#[inline]
 pub fn ellipse_d1(u: f64, position: Axis2, major: f64, minor: f64) -> SpaceD1 {
-    let (cosine, sine) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
+    let (sine, cosine) = martensite_cmath::sincos(u);
     let frame = Frame::of(position);
     (
         frame.point(cosine * major, sine * minor),
@@ -120,18 +120,18 @@ pub fn parabola_d1(u: f64, position: Axis2, focal: f64) -> SpaceD1 {
 }
 
 /// Circle point and derivatives up to the second; `circle_d2(0.5,frame,2.0)`.
+#[inline]
 pub fn circle_d2(u: f64, position: Axis2, radius: f64) -> SpaceD2 {
-    let (x, y) = (
-        radius * martensite_cmath::cos(u),
-        radius * martensite_cmath::sin(u),
-    );
+    let (sine, cosine) = martensite_cmath::sincos(u);
+    let (x, y) = (radius * cosine, radius * sine);
     let frame = Frame::of(position);
     let (point, first) = (frame.point(x, y), vector(frame.span(-y, x)));
     (point, first, vector(frame.span(-x, -y)))
 }
 /// Ellipse point and derivatives up to the second; `ellipse_d2(0.5,frame,3.0,2.0)`.
+#[inline]
 pub fn ellipse_d2(u: f64, position: Axis2, major: f64, minor: f64) -> SpaceD2 {
-    let (cosine, sine) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
+    let (sine, cosine) = martensite_cmath::sincos(u);
     let frame = Frame::of(position);
     (
         frame.point(cosine * major, sine * minor),

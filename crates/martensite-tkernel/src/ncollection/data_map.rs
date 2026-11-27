@@ -67,15 +67,18 @@ impl<K: Debug, V, H: HashPolicy<K>> DataMap<K, V, H> {
         self.storage.buckets()
     }
     /// Checks whether a key is bound; `map.is_bound(&1)`.
+    #[inline]
     pub fn is_bound(&self, key: &K) -> bool {
         self.lookup(key).is_some()
     }
     /// Borrows a bound value or reports Standard_NoSuchObject; `map.find(&1)?`.
+    #[inline]
     pub fn find(&self, key: &K) -> Result<&V, Failure> {
         let (_, slot) = self.lookup(key).ok_or_else(|| missing_key(key))?;
         Ok(self.storage.payload().value(slot))
     }
     /// Borrows a bound value exclusively; `*map.change_find(&1)?=42`.
+    #[inline]
     pub fn change_find(&mut self, key: &K) -> Result<&mut V, Failure> {
         let (_, slot) = self.lookup(key).ok_or_else(|| missing_key(key))?;
         Ok(self.storage.payload_mut().value_mut(slot))

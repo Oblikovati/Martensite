@@ -82,13 +82,12 @@ pub fn sphere_d2(u: f64, v: f64, position: Axis3, radius: f64) -> SurfaceD2 {
 }
 /// Torus point with derivatives up to the second, flushing small terms;
 /// `torus_d2(0.5,0.2,frame,5.0,1.0)`.
+#[inline]
 pub fn torus_d2(u: f64, v: f64, position: Axis3, major: f64, minor: f64) -> SurfaceD2 {
     let frame = Frame::of(position);
-    let (cos_u, sin_u) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
-    let (tube_cos, tube_sin) = (
-        minor * martensite_cmath::cos(v),
-        minor * martensite_cmath::sin(v),
-    );
+    let (sin_u, cos_u) = martensite_cmath::sincos(u);
+    let (sin_v, cos_v) = martensite_cmath::sincos(v);
+    let (tube_cos, tube_sin) = (minor * cos_v, minor * sin_v);
     let ring = major + tube_cos;
     let tolerance = torus_tolerance(major, minor);
     let [a1, a2, a3, a4, a5, a6] = [

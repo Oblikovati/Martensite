@@ -113,22 +113,26 @@ impl<'a, T: VectorItem> VectorBase<'a, T> {
         self.lower = lower;
     }
     /// Reads a zero-based offset; `vector.at(0)?`.
+    #[inline]
     pub fn at(&self, index: usize) -> Result<&T, Failure> {
         self.values()
             .get(index)
             .ok_or_else(|| Failure::out_of_range("NCollection_Array1::At"))
     }
     /// Mutates a zero-based offset; `*vector.change_at(0)?=1.0`.
+    #[inline]
     pub fn change_at(&mut self, index: usize) -> Result<&mut T, Failure> {
         self.values_mut()
             .get_mut(index)
             .ok_or_else(|| Failure::out_of_range("NCollection_Array1::ChangeAt"))
     }
     /// Reads a declared index; `vector.value(vector.lower())?`.
+    #[inline]
     pub fn value(&self, index: i32) -> Result<&T, Failure> {
         self.at(self.index_offset(index)?)
     }
     /// Mutates a declared index; `*vector.change_value(1)?=2.0`.
+    #[inline]
     pub fn change_value(&mut self, index: i32) -> Result<&mut T, Failure> {
         let offset = self.index_offset(index)?;
         self.change_at(offset)

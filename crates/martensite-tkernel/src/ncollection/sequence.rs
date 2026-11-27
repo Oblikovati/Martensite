@@ -59,6 +59,7 @@ impl<T> Sequence<T> {
         self.topology.allocator()
     }
     /// Returns the element count; `sequence.len() == 3`.
+    #[inline]
     pub fn len(&self) -> usize {
         self.topology.size()
     }
@@ -95,10 +96,12 @@ impl<T> Sequence<T> {
         self.endpoint_mut(false)
     }
     /// Borrows an item by one-based index; `sequence.value(1)?`.
+    #[inline]
     pub fn value(&self, index: usize) -> Result<&T, Failure> {
         self.read_indexed(index)
     }
     /// Borrows an item exclusively by one-based index; `*sequence.change_value(1)? = 10`.
+    #[inline]
     pub fn change_value(&mut self, index: usize) -> Result<&mut T, Failure> {
         self.write_indexed(index)
     }
@@ -130,6 +133,7 @@ impl<T> Sequence<T> {
         SequenceCursor::new(self, true)
     }
     /// Checks the one-based index and returns its zero-based numeric offset.
+    #[inline]
     fn offset(&self, member: &str, index: usize) -> Result<usize, Failure> {
         if index == 0 || index > self.len() {
             return Err(out_of_range(member, index, &format!("1..={}", self.len())));

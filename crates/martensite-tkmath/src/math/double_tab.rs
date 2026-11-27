@@ -96,20 +96,24 @@ impl<'a> DoubleTab<'a> {
         self.col_size() as i32
     }
     /// Reads zero-based offsets, independently of bounds; `table.at(0,0)?`.
+    #[inline]
     pub fn at(&self, row: usize, col: usize) -> Result<&f64, ArrayError> {
         Ok(&self.storage.slice()[self.shape.offset(row, col)?])
     }
     /// Mutates zero-based offsets; `*table.change_at(0,0)? = 2.0`.
+    #[inline]
     pub fn change_at(&mut self, row: usize, col: usize) -> Result<&mut f64, ArrayError> {
         let offset = self.shape.offset(row, col)?;
         Ok(&mut self.storage.slice_mut()[offset])
     }
     /// Reads declared indices; `table.value(1,1)?`.
+    #[inline]
     pub fn value(&self, row: i32, col: i32) -> Result<&f64, ArrayError> {
         let [r, c] = self.shape.indices(row, col)?;
         self.at(r, c)
     }
     /// Mutates declared indices; `*table.change_value(1,1)? = 2.0`.
+    #[inline]
     pub fn change_value(&mut self, row: i32, col: i32) -> Result<&mut f64, ArrayError> {
         let [r, c] = self.shape.indices(row, col)?;
         self.change_at(r, c)
@@ -168,6 +172,7 @@ impl Clone for DoubleTab<'_> {
 /// with the ArrayError (indices and bounds) outside the table.
 impl std::ops::Index<(i32, i32)> for DoubleTab<'_> {
     type Output = f64;
+    #[inline]
     #[track_caller]
     fn index(&self, (row, col): (i32, i32)) -> &f64 {
         self.value(row, col)
@@ -177,6 +182,7 @@ impl std::ops::Index<(i32, i32)> for DoubleTab<'_> {
 /// `operator()(int, int)` with caller-guaranteed indices; `table[(1, 1)] = 2.0`. Panics
 /// with the ArrayError (indices and bounds) outside the table.
 impl std::ops::IndexMut<(i32, i32)> for DoubleTab<'_> {
+    #[inline]
     #[track_caller]
     fn index_mut(&mut self, (row, col): (i32, i32)) -> &mut f64 {
         self.change_value(row, col)

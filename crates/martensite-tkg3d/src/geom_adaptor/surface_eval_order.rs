@@ -71,6 +71,8 @@ pub(super) trait SurfaceEvalOrder {
 pub(super) trait CachedOrder: SurfaceEvalOrder {
     /// `Cache->Dk(U, V)`.
     fn cached(cache: &Cache, u: f64, v: f64) -> Result<Self::Output, Failure>;
+    /// `Cache->Dk(U, V)` if `(u, v)` is inside the cached patch (single lock acquisition).
+    fn try_cached(cache: &Cache, u: f64, v: f64) -> Option<Result<Self::Output, Failure>>;
 }
 
 const ZERO: Vector3 = Vector3::new(0.0, 0.0, 0.0);
@@ -398,11 +400,19 @@ impl CachedOrder for EvalD0 {
     fn cached(cache: &Cache, u: f64, v: f64) -> Result<Point3, Failure> {
         cache.d0(u, v)
     }
+    fn try_cached(cache: &Cache, u: f64, v: f64) -> Option<Result<Point3, Failure>> {
+        cache.try_d0(u, v)
+    }
 }
 impl CachedOrder for EvalD1 {
     fn cached(cache: &Cache, u: f64, v: f64) -> Result<GeomSurfaceD1, Failure> {
         let (point, d1u, d1v) = cache.d1(u, v)?;
         Ok(GeomSurfaceD1 { point, d1u, d1v })
+    }
+    fn try_cached(cache: &Cache, u: f64, v: f64) -> Option<Result<GeomSurfaceD1, Failure>> {
+        cache
+            .try_d1(u, v)
+            .map(|r| r.map(|(point, d1u, d1v)| GeomSurfaceD1 { point, d1u, d1v }))
     }
 }
 impl CachedOrder for EvalD2 {
@@ -415,6 +425,18 @@ impl CachedOrder for EvalD2 {
             d2u: values.vuu,
             d2v: values.vvv,
             d2uv: values.vuv,
+        })
+    }
+    fn try_cached(cache: &Cache, u: f64, v: f64) -> Option<Result<GeomSurfaceD2, Failure>> {
+        cache.try_d2(u, v).map(|r| {
+            r.map(|values| GeomSurfaceD2 {
+                point: values.p,
+                d1u: values.vu,
+                d1v: values.vv,
+                d2u: values.vuu,
+                d2v: values.vvv,
+                d2uv: values.vuv,
+            })
         })
     }
 }

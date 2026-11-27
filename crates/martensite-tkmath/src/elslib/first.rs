@@ -31,12 +31,11 @@ pub fn cone_d1(u: f64, v: f64, position: Axis3, radius: f64, semi_angle: f64) ->
     )
 }
 /// Cylinder point and first derivatives; `cylinder_d1(0.5,1.0,frame,2.0)`.
+#[inline]
 pub fn cylinder_d1(u: f64, v: f64, position: Axis3, radius: f64) -> SurfaceD1 {
     let frame = Frame::of(position);
-    let (a1, a2) = (
-        radius * martensite_cmath::cos(u),
-        radius * martensite_cmath::sin(u),
-    );
+    let (sin_u, cos_u) = martensite_cmath::sincos(u);
+    let (a1, a2) = (radius * cos_u, radius * sin_u);
     (
         frame.point(frame.triple(a1, a2, v)),
         vector(frame.pair(-a2, a1)),
@@ -44,13 +43,12 @@ pub fn cylinder_d1(u: f64, v: f64, position: Axis3, radius: f64) -> SurfaceD1 {
     )
 }
 /// Sphere point and first derivatives; `sphere_d1(0.5,0.2,frame,2.0)`.
+#[inline]
 pub fn sphere_d1(u: f64, v: f64, position: Axis3, radius: f64) -> SurfaceD1 {
     let frame = Frame::of(position);
-    let (cos_u, sin_u) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
-    let (ring, height) = (
-        radius * martensite_cmath::cos(v),
-        radius * martensite_cmath::sin(v),
-    );
+    let (sin_u, cos_u) = martensite_cmath::sincos(u);
+    let (sin_v, cos_v) = martensite_cmath::sincos(v);
+    let (ring, height) = (radius * cos_v, radius * sin_v);
     let (a1, a2, a3, a4) = (ring * cos_u, ring * sin_u, height * cos_u, height * sin_u);
     (
         frame.point(frame.triple(a1, a2, height)),
@@ -60,13 +58,12 @@ pub fn sphere_d1(u: f64, v: f64, position: Axis3, radius: f64) -> SurfaceD1 {
 }
 /// Torus point and first derivatives with terms within `10·(r+R)·ε` flushed to zero;
 /// `torus_d1(0.5,0.2,frame,5.0,1.0)`.
+#[inline]
 pub fn torus_d1(u: f64, v: f64, position: Axis3, major: f64, minor: f64) -> SurfaceD1 {
     let frame = Frame::of(position);
-    let (cos_u, sin_u) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
-    let (tube_cos, tube_sin) = (
-        minor * martensite_cmath::cos(v),
-        minor * martensite_cmath::sin(v),
-    );
+    let (sin_u, cos_u) = martensite_cmath::sincos(u);
+    let (sin_v, cos_v) = martensite_cmath::sincos(v);
+    let (tube_cos, tube_sin) = (minor * cos_v, minor * sin_v);
     let ring = major + tube_cos;
     let tolerance = torus_tolerance(major, minor);
     let [a1, a2, a3, a4] = [

@@ -24,11 +24,12 @@ pub fn fill_box<C: ?Sized + SampledCurve>(
     last: f64,
     n: i32,
 ) -> Result<f64, Failure> {
-    bounds.add_sample(curve.sample_point(first)?);
+    let first_point = curve.sample_point(first)?;
+    bounds.add_sample(first_point);
     let span: f64 = last - first;
     // The retained test is `abs(span) > PConfusion`, so a NaN span takes the two-ends branch.
     if span.abs() > precision::p_confusion() {
-        return fill_samples(bounds, curve, first, span, n);
+        return fill_samples(bounds, curve, first, span, n, first_point);
     }
     bounds.add_sample(curve.sample_point(last)?);
     Ok(0.0)
@@ -41,11 +42,11 @@ fn fill_samples<C: ?Sized + SampledCurve>(
     first: f64,
     span: f64,
     n: i32,
+    mut p1: <C::Bounds as SampleBounds>::Point,
 ) -> Result<f64, Failure> {
     let step: f64 = span / f64::from(2 * n);
     let mut p: f64 = first;
     let mut tolerance: f64 = 0.0;
-    let mut p1 = curve.sample_point(first)?;
     for _ in 1..=n {
         p += step;
         let p2 = curve.sample_point(p)?;
@@ -69,17 +70,14 @@ fn intersect_with_hull<B: SampleBounds>(poles: B, original: &B, reduced: &mut B)
         return;
     }
     let (pole_min, pole_max) = poles.min_max();
-    let lower: Vec<f64> = min
-        .iter()
-        .zip(&pole_min)
-        .map(|(&a, &b)| std_max(a, b))
-        .collect();
-    let upper: Vec<f64> = max
-        .iter()
-        .zip(&pole_max)
-        .map(|(&a, &b)| std_min(a, b))
-        .collect();
-    reduced.update_min_max(&lower, &upper);
+    let dim: usize = min.len();
+    let mut lower: [f64; 3] = [0.0; 3];
+    let mut upper: [f64; 3] = [0.0; 3];
+    for k in 0..dim {
+        lower[k] = std_max(min[k], pole_min[k]);
+        upper[k] = std_min(max[k], pole_max[k]);
+    }
+    reduced.update_min_max(&lower[..dim], &upper[..dim]);
 }
 
 /// `ReduceSplineBox(Poles, OrigBox, ReducedBox)`: update `reduced` with the part of

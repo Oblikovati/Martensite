@@ -13,22 +13,68 @@ use martensite_tkernel::{
     standard::{Failure, Handle, SharedState, StandardTransient},
 };
 
+use std::sync::atomic::{AtomicU8, Ordering};
+
 mod compact;
 mod dump;
 mod elements;
 mod links;
 
 // Removing a link changes movability and equality; the endpoint hash remains stable.
+// Connectivity's outer SharedState synchronizes all structural changes; AtomicU8 allows
+// lock-free in-place movability updates without a per-link RwLock.
 #[derive(Debug)]
-struct MeshLinkKey(SharedState<BRepMeshEdge>);
+struct MeshLinkKey {
+    first_node: i32,
+    last_node: i32,
+    movability: AtomicU8,
+}
+impl MeshLinkKey {
+    #[inline]
+    fn new(edge: BRepMeshEdge) -> Self {
+        Self {
+            first_node: edge.first_node(),
+            last_node: edge.last_node(),
+            movability: AtomicU8::new(edge.movability() as u8),
+        }
+    }
+    #[inline]
+    fn movability(&self) -> DegreeOfFreedom {
+        match self.movability.load(Ordering::Relaxed) {
+            0 => DegreeOfFreedom::Free,
+            1 => DegreeOfFreedom::InVolume,
+            2 => DegreeOfFreedom::OnSurface,
+            3 => DegreeOfFreedom::OnCurve,
+            4 => DegreeOfFreedom::Fixed,
+            5 => DegreeOfFreedom::Frontier,
+            _ => DegreeOfFreedom::Deleted,
+        }
+    }
+    #[inline]
+    fn set_movability(&self, movability: DegreeOfFreedom) {
+        self.movability.store(movability as u8, Ordering::Relaxed);
+    }
+    #[inline]
+    fn to_edge(&self) -> BRepMeshEdge {
+        BRepMeshEdge::new(self.first_node, self.last_node, self.movability())
+    }
+}
 impl PartialEq for MeshLinkKey {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
-        self.0.snapshot() == other.0.snapshot()
+        if self.movability.load(Ordering::Relaxed) == DegreeOfFreedom::Deleted as u8
+            || other.movability.load(Ordering::Relaxed) == DegreeOfFreedom::Deleted as u8
+        {
+            return false;
+        }
+        (self.first_node == other.first_node && self.last_node == other.last_node)
+            || (self.first_node == other.last_node && self.last_node == other.first_node)
     }
 }
 impl HashKey for MeshLinkKey {
+    #[inline]
     fn kernel_hash(&self) -> usize {
-        self.0.snapshot().kernel_hash()
+        BRepMeshEdge::new(self.first_node, self.last_node, DegreeOfFreedom::Free).kernel_hash()
     }
 }
 struct DelaunConnectivity {
@@ -78,8 +124,27 @@ impl BRepMeshDataStructureOfDelaun {
         self.nodes.find_index(vertex)
     }
     /// Read a one-based node slot; `mesh.get_node(1)?`.
+    #[inline]
     pub fn get_node(&self, index: i32) -> Result<BRepMeshVertex, Failure> {
         self.nodes.find_key(index)
+    }
+    /// Read three one-based node slots under a single lock acquisition.
+    #[inline]
+    pub(crate) fn get_nodes_3(&self, indices: [i32; 3]) -> Result<[BRepMeshVertex; 3], Failure> {
+        self.nodes.find_keys_3(indices)
+    }
+    /// Read the movabilities of three one-based links under a single lock acquisition.
+    #[inline]
+    pub(crate) fn link_movabilities_3(
+        &self,
+        edges: [i32; 3],
+    ) -> Result<[DegreeOfFreedom; 3], Failure> {
+        let state = self.connectivity.read();
+        Ok([
+            state.links.find_key(edges[0] as usize)?.movability(),
+            state.links.find_key(edges[1] as usize)?.movability(),
+            state.links.find_key(edges[2] as usize)?.movability(),
+        ])
     }
     /// Retain the node's original collection slot; `mesh.get_node_reference(1)?`.
     pub fn get_node_reference(&self, index: i32) -> Result<super::VertexSlotRead, Failure> {

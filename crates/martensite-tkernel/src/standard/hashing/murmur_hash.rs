@@ -20,6 +20,7 @@ const MUL_32: u32 = 0x5bd1_e995;
 /// use martensite_tkernel::standard::hashing::murmur_hash::murmur_hash_64a;
 /// assert_eq!(murmur_hash_64a(&[], 0), 0);
 /// ```
+#[inline]
 pub fn murmur_hash_64a(key: &[u8], seed: u64) -> u64 {
     let mut hash: u64 = seed ^ (key.len() as u64).wrapping_mul(MUL_64);
     let (words, tail) = key.as_chunks::<8>();

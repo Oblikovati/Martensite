@@ -116,6 +116,7 @@ impl Matrix<'_> {
 /// `value`/`change_value` return out-of-range failure instead.
 impl std::ops::Index<(i32, i32)> for Matrix<'_> {
     type Output = f64;
+    #[inline]
     #[track_caller]
     fn index(&self, index: (i32, i32)) -> &f64 {
         &self.table[index]
@@ -123,6 +124,7 @@ impl std::ops::Index<(i32, i32)> for Matrix<'_> {
 }
 /// `operator()(int, int)` with caller-guaranteed indices; `matrix[(1, 1)] = 2.0`.
 impl std::ops::IndexMut<(i32, i32)> for Matrix<'_> {
+    #[inline]
     #[track_caller]
     fn index_mut(&mut self, index: (i32, i32)) -> &mut f64 {
         &mut self.table[index]

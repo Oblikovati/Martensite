@@ -139,9 +139,10 @@ impl Explorer {
     }
     fn advance_descent_step(&mut self) -> bool {
         let top = &mut self.stack[self.active_depth - 1];
-        let step = match top.value() {
-            Err(_) => Step::Pop,
-            Ok(current) => classify(current, self.to_find, self.to_avoid),
+        let step = if !top.more() {
+            Step::Pop
+        } else {
+            classify(top.reference_shape(), self.to_find, self.to_avoid)
         };
         match step {
             Step::Found => return true,
@@ -179,8 +180,8 @@ impl Explorer {
     pub fn current(&self) -> &Shape {
         match self.stack[..self.active_depth].last() {
             // A level on the stack always has a current shape (exhausted levels are popped).
-            Some(top) => top.value().unwrap_or(&self.shape),
-            None => &self.shape,
+            Some(top) if top.more() => top.reference_shape(),
+            _ => &self.shape,
         }
     }
 

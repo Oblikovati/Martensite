@@ -15,33 +15,39 @@ pub(super) struct CellIndex {
     length: usize,
 }
 impl CellIndex {
+    #[inline]
     pub(super) fn from_point<I: CellGeometry>(
         point: &I::CellPoint,
         sizes: &Array1<'_, f64>,
     ) -> Self {
         let mut index = Self::allocate(sizes.len());
+        let dst = index.as_mut_slice();
         for (axis, size) in sizes.as_slice().iter().enumerate() {
-            index.as_mut_slice()[axis] = cell_coordinate(I::cell_coordinate(axis, point) / size);
+            dst[axis] = cell_coordinate(I::cell_coordinate(axis, point) / size);
         }
         index
     }
+    #[inline]
     pub(super) fn from_slice(source: &[i32]) -> Self {
         let mut index = Self::allocate(source.len());
         index.as_mut_slice().copy_from_slice(source);
         index
     }
+    #[inline]
     pub(super) fn as_mut_slice(&mut self) -> &mut [i32] {
         match &mut self.heap {
             Some(heap) => &mut heap[..self.length],
             None => &mut self.inline[..self.length],
         }
     }
+    #[inline]
     pub(super) fn as_slice(&self) -> &[i32] {
         match &self.heap {
             Some(heap) => &heap[..self.length],
             None => &self.inline[..self.length],
         }
     }
+    #[inline]
     pub(super) fn data_ptr(&self) -> *const i32 {
         self.as_slice().as_ptr()
     }
@@ -52,7 +58,15 @@ impl fmt::Debug for CellIndex {
     }
 }
 impl Clone for CellIndex {
+    #[inline]
     fn clone(&self) -> Self {
+        if self.heap.is_none() {
+            return Self {
+                inline: self.inline,
+                heap: None,
+                length: self.length,
+            };
+        }
         // A cell copies coordinates into its own ten-inline-element storage.
         Self::from_slice(self.as_slice())
     }

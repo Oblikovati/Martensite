@@ -119,8 +119,37 @@ impl Guid {
     /// Guid::new().write_c_string(&mut output);
     /// assert_eq!(output[36], 0);
     /// ```
+    #[inline]
     pub fn write_c_string(&self, output: &mut [u8; GUID_SIZE_ALLOC]) {
-        output[..GUID_SIZE].copy_from_slice(self.to_string().as_bytes());
+        const HEX: &[u8; 16] = b"0123456789abcdef";
+        let uuid: Uuid = self.0;
+        let put = |out: &mut [u8; GUID_SIZE_ALLOC], pos: usize, byte: u8| {
+            out[pos] = HEX[(byte >> 4) as usize];
+            out[pos + 1] = HEX[(byte & 0x0f) as usize];
+        };
+        let d1 = uuid.data1.to_be_bytes();
+        put(output, 0, d1[0]);
+        put(output, 2, d1[1]);
+        put(output, 4, d1[2]);
+        put(output, 6, d1[3]);
+        output[8] = b'-';
+        let d2 = uuid.data2.to_be_bytes();
+        put(output, 9, d2[0]);
+        put(output, 11, d2[1]);
+        output[13] = b'-';
+        let d3 = uuid.data3.to_be_bytes();
+        put(output, 14, d3[0]);
+        put(output, 16, d3[1]);
+        output[18] = b'-';
+        put(output, 19, uuid.data4[0]);
+        put(output, 21, uuid.data4[1]);
+        output[23] = b'-';
+        put(output, 24, uuid.data4[2]);
+        put(output, 26, uuid.data4[3]);
+        put(output, 28, uuid.data4[4]);
+        put(output, 30, uuid.data4[5]);
+        put(output, 32, uuid.data4[6]);
+        put(output, 34, uuid.data4[7]);
         output[GUID_SIZE] = 0;
     }
 

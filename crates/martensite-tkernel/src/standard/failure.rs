@@ -117,8 +117,9 @@ impl Failure {
         stack_capture::set_default_length(length);
     }
 }
+#[inline]
 fn c_string(text: &str) -> FailureText {
-    FailureText::from_bytes(text.as_bytes())
+    FailureText::from_str(text)
 }
 /// UTF-8 presentation of the type, message, and stack. Byte-preserving
 /// output uses [`Failure::print_to`] when the message or stack is not UTF-8.

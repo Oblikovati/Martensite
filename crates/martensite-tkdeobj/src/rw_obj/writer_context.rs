@@ -169,20 +169,30 @@ impl RwObjObjWriterContext {
         };
         self.write_text(&line).is_ok()
     }
-    fn corner(&self, node: i32) -> String {
-        let position = node + self.elem_pos_first;
-        let normal = node + self.elem_norm_first;
-        let uv = node + self.elem_uv_first;
-        match (self.has_normals, self.has_tex_coords) {
-            (true, true) => format!("{position}/{uv}/{normal}"),
-            (true, false) => format!("{position}//{normal}"),
-            (false, true) => format!("{position}/{uv}"),
-            (false, false) => position.to_string(),
-        }
-    }
     fn write_corners(&mut self, nodes: &[i32]) -> bool {
-        let corners: Vec<String> = nodes.iter().map(|node| self.corner(*node)).collect();
-        self.write_line(&format!("f {}\n", corners.join(" ")))
+        let Some(file) = self.file.as_mut() else {
+            return false;
+        };
+        let mut ok = file.write_all(b"f").is_ok();
+        for &node in nodes {
+            if !ok {
+                break;
+            }
+            let position = node + self.elem_pos_first;
+            let res = match (self.has_normals, self.has_tex_coords) {
+                (true, true) => write!(
+                    file,
+                    " {position}/{}/{}",
+                    node + self.elem_uv_first,
+                    node + self.elem_norm_first
+                ),
+                (true, false) => write!(file, " {position}//{}", node + self.elem_norm_first),
+                (false, true) => write!(file, " {position}/{}", node + self.elem_uv_first),
+                (false, false) => write!(file, " {position}"),
+            };
+            ok = res.is_ok();
+        }
+        ok && file.write_all(b"\n").is_ok()
     }
     /// Writes a triangle; `writer.write_triangle(&Vec3::new(0, 1, 2))`.
     pub fn write_triangle(&mut self, triangle: &Vec3<i32>) -> bool {
@@ -194,18 +204,27 @@ impl RwObjObjWriterContext {
     }
     /// Writes a vertex; `writer.write_vertex(&Vec3::new(0.0, 0.0, 0.0))`.
     pub fn write_vertex(&mut self, value: &Vec3<f32>) -> bool {
+        let Some(file) = self.file.as_mut() else {
+            return false;
+        };
         let [x, y, z] = [value.x, value.y, value.z].map(single_precision_text);
-        self.write_line(&format!("v {x} {y} {z}\n"))
+        writeln!(file, "v {x} {y} {z}").is_ok()
     }
     /// Writes a normal; `writer.write_normal(&Vec3::new(0.0, 0.0, 1.0))`.
     pub fn write_normal(&mut self, value: &Vec3<f32>) -> bool {
+        let Some(file) = self.file.as_mut() else {
+            return false;
+        };
         let [x, y, z] = [value.x, value.y, value.z].map(single_precision_text);
-        self.write_line(&format!("vn {x} {y} {z}\n"))
+        writeln!(file, "vn {x} {y} {z}").is_ok()
     }
     /// Writes texture coordinates; `writer.write_tex_coord(&Vec2::new(0.5, 0.5))`.
     pub fn write_tex_coord(&mut self, value: &Vec2<f32>) -> bool {
+        let Some(file) = self.file.as_mut() else {
+            return false;
+        };
         let [u, v] = [value.x, value.y].map(single_precision_text);
-        self.write_line(&format!("vt {u} {v}\n"))
+        writeln!(file, "vt {u} {v}").is_ok()
     }
     /// Writes a group name; `writer.write_group(&name)`.
     pub fn write_group(&mut self, value: &AsciiString) -> bool {

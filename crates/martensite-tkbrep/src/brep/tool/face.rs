@@ -26,8 +26,15 @@ impl BRepTool {
         face: &FaceView<'_>,
     ) -> Result<(Handle<dyn GeomSurface>, Location), Failure> {
         let tface = face_tshape(face, "BRep_Tool::Surface")?;
-        let location = (face.location() * &tface.location())?;
-        Ok((tface.surface(), location))
+        let (surface, tface_loc) = tface.surface_and_location();
+        let location = if face.location().is_identity() {
+            tface_loc
+        } else if tface_loc.is_identity() {
+            face.location().clone()
+        } else {
+            (face.location() * &tface_loc)?
+        };
+        Ok((surface, location))
     }
 
     /// `Surface(F)`: the surface, transformed into a copy when the composed location

@@ -10,6 +10,7 @@ impl Matrix3 {
         self.determinant().abs() <= f64::MIN_POSITIVE
     }
     /// Uses the adjugate arithmetic; release builds permit singular inversion; `matrix.inverted()?`.
+    #[inline]
     pub fn inverted(self) -> Result<Self, Failure> {
         let adjugate = self.adjugate();
         let determinant = self.coefficients[0][0] * adjugate.coefficients[0][0]
@@ -22,6 +23,7 @@ impl Matrix3 {
         }
         Ok(adjugate * (1.0 / determinant))
     }
+    #[inline]
     fn adjugate(self) -> Self {
         let [[a, b, c], [d, e, f], [g, h, i]] = self.coefficients;
         Self::new([

@@ -107,6 +107,15 @@ impl BRepTEdge {
     pub fn curves(&self) -> Vec<Handle<dyn BRepCurveRepresentation>> {
         self.fields.read().curves.clone()
     }
+    /// Borrows the stored curve representations under the read lock without cloning the list;
+    /// `edge.with_curves(|curves| curves.len())`.
+    #[inline]
+    pub fn with_curves<R>(
+        &self,
+        read: impl FnOnce(&[Handle<dyn BRepCurveRepresentation>]) -> R,
+    ) -> R {
+        read(&self.fields.read().curves)
+    }
     /// Copy the curve records only when their count is within the supplied limit.
     /// Returns the actual count when it exceeds `maximum`.
     /// Example: `let records = edge.curves_within_limit(16)?;`.
@@ -154,18 +163,23 @@ impl TShape for BRepTEdge {
     /// A new edge with the same tolerance and flags and copies of the parametric
     /// curves and regularities (the polygons are not copied).
     fn empty_copy(&self) -> Result<Handle<dyn TShape>, Failure> {
-        let copy = Self::new();
-        copy.set_tolerance(self.tolerance());
-        let mut copied = Vec::new();
-        for representation in self.curves().iter().filter(|r| is_copied_by_empty_copy(r)) {
-            if let Some(representation) = representation.get() {
-                copied.push(representation.copy()?);
+        let (tolerance, flags, copied) = {
+            let fields = self.fields.read();
+            let mut copied = Vec::with_capacity(fields.curves.len());
+            for representation in fields.curves.iter().filter(|r| is_copied_by_empty_copy(r)) {
+                if let Some(representation) = representation.get() {
+                    copied.push(representation.copy()?);
+                }
             }
+            (fields.tolerance, fields.flags, copied)
+        };
+        let copy = Self::new();
+        {
+            let mut dst = copy.fields.write();
+            dst.tolerance = tolerance;
+            dst.flags = flags;
+            dst.curves = copied;
         }
-        copy.change_curves(|curves| curves.extend(copied));
-        copy.set_degenerated(self.degenerated());
-        copy.set_same_parameter(self.same_parameter());
-        copy.set_same_range(self.same_range());
         Ok(Handle::new(copy).into_upcast())
     }
     /// The class name, the `TopoDS_TShape` dump, the tolerance, the flags and each

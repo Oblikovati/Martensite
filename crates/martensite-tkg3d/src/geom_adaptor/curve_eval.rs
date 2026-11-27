@@ -66,13 +66,14 @@ fn bspline_eval<O: EvalOrder>(
     if let Some((start, finish)) = boundary_span(&data.curve, u, first, last)? {
         return O::local(&data.curve, u, start, finish);
     }
-    let valid: bool = data
-        .cache
-        .as_ref()
-        .is_some_and(|cache| cache.with(|cache| cache.is_cache_valid(u)).unwrap());
-    if !valid {
-        rebuild_bspline_cache(data, u)?;
+    if let Some(cache) = data.cache.as_ref()
+        && let Some(hit) = cache
+            .with(|cache| O::try_cached(cache, u))
+            .expect("non-null spline cache")
+    {
+        return hit;
     }
+    rebuild_bspline_cache(data, u)?;
     data.cache
         .as_ref()
         .expect("cache built above")

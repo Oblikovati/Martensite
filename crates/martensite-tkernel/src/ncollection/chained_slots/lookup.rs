@@ -29,4 +29,30 @@ impl<K, V> ChainedSlots<K, V> {
             .find(bucket, |slot| hasher.equal(self.payload.key(slot), key));
         (bucket, slot)
     }
+    /// Finds a bound key using a precomputed hash and custom equality without constructing `K`.
+    #[inline]
+    pub(in crate::ncollection) fn lookup_by(
+        &self,
+        hash: usize,
+        equal: impl FnMut(&K) -> bool,
+    ) -> Option<(usize, usize)> {
+        if self.size() == 0 {
+            return None;
+        }
+        let (bucket, slot) = self.lookup_with_bucket_by(hash, equal);
+        slot.map(|slot| (bucket, slot))
+    }
+    /// Returns the bucket and matching slot for a precomputed hash and custom equality.
+    #[inline]
+    pub(in crate::ncollection) fn lookup_with_bucket_by(
+        &self,
+        hash: usize,
+        mut equal: impl FnMut(&K) -> bool,
+    ) -> (usize, SlotLink) {
+        let bucket = hash % self.bucket_count + 1;
+        let slot = self
+            .chains
+            .find(bucket, |slot| equal(self.payload.key(slot)));
+        (bucket, slot)
+    }
 }
