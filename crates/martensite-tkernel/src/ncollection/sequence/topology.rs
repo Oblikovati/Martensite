@@ -207,22 +207,21 @@ impl SequenceTopology {
     pub(super) fn find(&self, index: usize, update_cache: bool) -> *mut SeqNode {
         let (previous, previous_index) = self.cache.position();
         // Fast path for sequential/repeated indexed reads outside controlled clear.
-        let node = if self.clear_scope().is_none() && !previous.is_null() {
-            if index == previous_index {
-                return previous;
-            } else if index == previous_index + 1 {
-                // SAFETY: caller validated index <= size and previous is live at previous_index.
-                unsafe { (*previous).next() }
-            } else if index + 1 == previous_index {
-                // SAFETY: caller validated index >= 1 and previous is live at previous_index.
-                unsafe { (*previous).previous() }
+        // SAFETY: Sequence validates index and retains the live chain or its clear-scope liveness.
+        let node = unsafe {
+            if self.clear_scope().is_none() && !previous.is_null() {
+                if index == previous_index {
+                    return previous;
+                } else if index == previous_index + 1 {
+                    (*previous).next()
+                } else if index + 1 == previous_index {
+                    (*previous).previous()
+                } else {
+                    self.search().find(index, previous, previous_index)
+                }
             } else {
-                // SAFETY: Sequence validates index and retains the live chain.
-                unsafe { self.search().find(index, previous, previous_index) }
+                self.search().find(index, previous, previous_index)
             }
-        } else {
-            // SAFETY: Sequence validates index and retains the live chain or its clear-scope liveness.
-            unsafe { self.search().find(index, previous, previous_index) }
         };
         if update_cache {
             self.cache.publish(node, index);
