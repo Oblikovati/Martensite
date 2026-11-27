@@ -46,13 +46,13 @@ pub fn build_bsp_matrix(
     let basis_dim: i32 = order;
     let mut stack_basis: [f64; 64] = [0.0; 64];
     let mut heap_basis: Vec<f64>;
-    let basis_slice: &mut [f64] = if (basis_dim as usize) * (basis_dim as usize) <= stack_basis.len()
-    {
-        &mut stack_basis[..(basis_dim as usize) * (basis_dim as usize)]
-    } else {
-        heap_basis = vec![0.0; (basis_dim as usize) * (basis_dim as usize)];
-        &mut heap_basis
-    };
+    let basis_slice: &mut [f64] =
+        if (basis_dim as usize) * (basis_dim as usize) <= stack_basis.len() {
+            &mut stack_basis[..(basis_dim as usize) * (basis_dim as usize)]
+        } else {
+            heap_basis = vec![0.0; (basis_dim as usize) * (basis_dim as usize)];
+            &mut heap_basis
+        };
     let mut basis: Matrix<'_> = Matrix::from_buffer(basis_slice, 1, basis_dim, 1, basis_dim)
         .map_err(|error| Failure::out_of_range(&error.to_string()))?;
     matrix.init(0.0);

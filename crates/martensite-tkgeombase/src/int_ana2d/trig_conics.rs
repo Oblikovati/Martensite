@@ -106,7 +106,8 @@ impl AnaIntersection {
         for i in 1..=self.nbp {
             let mut s: f64 = roots.value(i)?;
             let (sin_s, cos_s) = martensite_cmath::sincos(s);
-            let (tx, ty) = coord_ancien_repere(curve.major * cos_s, curve.minor * sin_s, curve.axis);
+            let (tx, ty) =
+                coord_ancien_repere(curve.major * cos_s, curve.minor * sin_s, curve.axis);
             if !curve.direct {
                 s = PI + PI - s;
             }

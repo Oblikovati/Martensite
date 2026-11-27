@@ -107,15 +107,17 @@ pub(super) fn bound_or_cached_bspline<O: CachedOrder>(
 // RebuildCache for a B-spline: create the cache once, then fill it on the span of (u, v).
 fn rebuild_bspline_cache(data: &mut BSplineData, (u, v): (f64, f64)) -> Result<(), Failure> {
     let surface: &GeomBSplineSurface = &data.surface;
-    surface.with_cache_build_inputs(|((u_deg, u_per), (v_deg, v_per)), flat_u, flat_v, poles, weights| {
-        if data.cache.is_null() {
-            let cache = Cache::new(u_deg, u_per, flat_u, v_deg, v_per, flat_v, weights)?;
-            data.cache = SharedBSplineSurfaceCache::new(cache);
-        }
-        data.cache
-            .with_mut(|cache| cache.build_cache(u, v, flat_u, flat_v, poles, weights))
-            .expect("B-spline cache created above")
-    })
+    surface.with_cache_build_inputs(
+        |((u_deg, u_per), (v_deg, v_per)), flat_u, flat_v, poles, weights| {
+            if data.cache.is_null() {
+                let cache = Cache::new(u_deg, u_per, flat_u, v_deg, v_per, flat_v, weights)?;
+                data.cache = SharedBSplineSurfaceCache::new(cache);
+            }
+            data.cache
+                .with_mut(|cache| cache.build_cache(u, v, flat_u, flat_v, poles, weights))
+                .expect("B-spline cache created above")
+        },
+    )
 }
 
 // RebuildCache for a Bezier surface: the flat knots of each degree.

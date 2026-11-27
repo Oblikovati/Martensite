@@ -39,8 +39,8 @@ impl BRepMeshDataStructureOfDelaun {
         let found = state.links.find_index(&key);
         if found != 0 {
             let existing = state.links.find_key(found)?;
-            let same = existing.first_node == edge.first_node()
-                && existing.last_node == edge.last_node();
+            let same =
+                existing.first_node == edge.first_node() && existing.last_node == edge.last_node();
             return Ok(if same { found as i32 } else { -(found as i32) });
         }
         let index = state.insert_link(key)?;

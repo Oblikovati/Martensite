@@ -21,11 +21,7 @@ fn gauss_table_start(order: i32) -> usize {
 /// Fills stack buffers with the positive-first half of Gauss nodes and weights
 /// (`points[0..half]`, `weights[0..half]`) for `1 <= order <= 61`.
 #[inline]
-pub(super) fn fill_gauss_half_tables(
-    order: i32,
-    points: &mut [f64; 61],
-    weights: &mut [f64; 61],
-) {
+pub(super) fn fill_gauss_half_tables(order: i32, points: &mut [f64; 61], weights: &mut [f64; 61]) {
     let start: usize = gauss_table_start(order);
     let half: usize = ((order + 1) >> 1) as usize;
     for i in 0..half {

@@ -57,7 +57,10 @@ impl GeomBSplineSurface {
         let state = self.state.read();
         let weights = (state.u_rational || state.v_rational).then_some(&state.weights);
         f(
-            ((state.u.deg, state.u.periodic), (state.v.deg, state.v.periodic)),
+            (
+                (state.u.deg, state.u.periodic),
+                (state.v.deg, state.v.periodic),
+            ),
             &state.u.flat_knots,
             &state.v.flat_knots,
             &state.poles,

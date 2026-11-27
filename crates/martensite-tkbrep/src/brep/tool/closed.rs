@@ -102,11 +102,13 @@ impl BRepTool {
             return Ok(false);
         }
         let relative = location.predivided(edge.location())?;
-        Ok(edge_tshape(edge, "BRep_Tool::IsClosed")?.with_curves(|curves| {
-            curves.iter().filter_map(|r| r.get()).any(|r| {
-                r.is_curve_on_surface_at(surface, &relative) && r.is_curve_on_closed_surface()
-            })
-        }))
+        Ok(
+            edge_tshape(edge, "BRep_Tool::IsClosed")?.with_curves(|curves| {
+                curves.iter().filter_map(|r| r.get()).any(|r| {
+                    r.is_curve_on_surface_at(surface, &relative) && r.is_curve_on_closed_surface()
+                })
+            }),
+        )
     }
 
     /// `IsClosed(E, T, L)`: whether the edge has two node arrays on (`triangulation`,
@@ -121,11 +123,13 @@ impl BRepTool {
             return Ok(false);
         }
         let relative = location.predivided(edge.location())?;
-        Ok(edge_tshape(edge, "BRep_Tool::IsClosed")?.with_curves(|curves| {
-            curves.iter().filter_map(|r| r.get()).any(|r| {
-                r.is_polygon_on_triangulation_at(triangulation, &relative)
-                    && r.is_polygon_on_closed_triangulation()
-            })
-        }))
+        Ok(
+            edge_tshape(edge, "BRep_Tool::IsClosed")?.with_curves(|curves| {
+                curves.iter().filter_map(|r| r.get()).any(|r| {
+                    r.is_polygon_on_triangulation_at(triangulation, &relative)
+                        && r.is_polygon_on_closed_triangulation()
+                })
+            }),
+        )
     }
 }

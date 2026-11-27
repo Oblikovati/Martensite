@@ -329,8 +329,9 @@ impl Graphic3dCamera {
     /// `Project`: world to normalized device coordinates; `camera.project(&p)`.
     pub fn project(&self, point: &Point3) -> Point3 {
         if let Some(projected) = self.read(|s| {
-            (s.matrices_d.is_orientation_valid && s.matrices_d.is_projection_valid)
-                .then(|| project_point(point, &s.matrices_d.orientation, &s.matrices_d.m_projection))
+            (s.matrices_d.is_orientation_valid && s.matrices_d.is_projection_valid).then(|| {
+                project_point(point, &s.matrices_d.orientation, &s.matrices_d.m_projection)
+            })
         }) {
             return projected;
         }

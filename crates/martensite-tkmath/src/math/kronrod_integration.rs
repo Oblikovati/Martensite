@@ -63,13 +63,7 @@ impl<'a> Quadrature<'a> {
         let mut gw_buf = vec![0.0_f64; half];
         let mut kp_buf = vec![0.0_f64; n];
         let mut kw_buf = vec![0.0_f64; n];
-        let q = Quadrature::from_slices(
-            order,
-            &mut gp_buf,
-            &mut gw_buf,
-            &mut kp_buf,
-            &mut kw_buf,
-        )?;
+        let q = Quadrature::from_slices(order, &mut gp_buf, &mut gw_buf, &mut kp_buf, &mut kw_buf)?;
         Some(f(&q))
     }
     fn evaluate(
