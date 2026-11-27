@@ -1,0 +1,32 @@
+[workspace]
+
+[package]
+name = "martensite-wasm-e2e"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+martensite-render-core = { path = "../../crates/martensite-render-core" }
+martensite-tkbrep = { path = "../../crates/martensite-tkbrep" }
+martensite-tkernel = { path = "../../crates/martensite-tkernel" }
+martensite-tkmath = { path = "../../crates/martensite-tkmath" }
+martensite-tkmesh = { path = "../../crates/martensite-tkmesh" }
+martensite-tkprim = { path = "../../crates/martensite-tkprim" }
+martensite-tkservice = { path = "../../crates/martensite-tkservice" }
+martensite-tktopalgo = { path = "../../crates/martensite-tktopalgo" }
+martensite-tkv3d = { path = "../../crates/martensite-tkv3d" }
+martensite-webgpu = { path = "../../crates/martensite-webgpu" }
+js-sys = "=0.3.107"
+wasm-bindgen = "=0.2.130"
+wasm-bindgen-futures = "=0.4.80"
+web-sys = { version = "=0.3.107", features = ["OffscreenCanvas", "console"] }
+
+[profile.release]
+opt-level = "s"
+lto = "thin"
+codegen-units = 1
+panic = "abort"

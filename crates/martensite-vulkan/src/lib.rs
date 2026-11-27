@@ -33,31 +33,11 @@ mod clipped_depth_reference_empty;
 #[cfg(test)]
 mod clipped_depth_shared_reference;
 #[cfg(test)]
-#[path = "."]
-mod driver_tests {
-    use crate::driver_backend::DriverBackend;
-    use crate::{
-        Graphic3dRenderDriver, RenderBackend, RenderError, RenderPipelinePolicies,
-        RenderRasterPolicy, VulkanOptions, VulkanRenderer,
-    };
-    use std::sync::Arc;
-    #[path = "driver_constructor_contract.rs"]
-    mod constructor_contract;
-    #[path = "raster_policy_driver_tests.rs"]
-    mod raster_policy_contract;
-}
+mod driver_tests;
 #[cfg(test)]
 mod fixed_grid_point_gpu_tests;
 #[cfg(test)]
-#[path = "."]
-mod gradient_tests {
-    use crate::gradient_background::gradient_layer;
-    use martensite_tkservice::aspect::AspectGradientFillMethod;
-    #[path = "gradient_background_device_tests.rs"]
-    mod device_tests;
-    #[path = "../tests/support/elliptical_gradient_reference.rs"]
-    mod elliptical_reference;
-}
+mod gradient_tests;
 #[cfg(test)]
 mod hatch_surface;
 #[cfg(test)]

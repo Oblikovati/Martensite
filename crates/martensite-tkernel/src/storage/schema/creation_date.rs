@@ -90,7 +90,6 @@ fn windows_creation_date_initialization_preserves_zero_fields() {
 }
 
 #[cfg(target_arch = "wasm32")]
-#[forbid(unsafe_code)]
 fn native_local_date() -> (u32, u32, i32) {
     let now = js_sys::Date::new_0();
     (

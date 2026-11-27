@@ -2,6 +2,7 @@
 //! the build without FFmpeg compiles it (no input opens, so the worker only handles events).
 use super::{MediaFormatContext, MediaFrame, MediaTimer};
 use martensite_tkernel::message::Message;
+#[cfg(not(target_arch = "wasm32"))]
 use martensite_tkernel::osd::{Osd, SignalMode};
 use martensite_tkernel::standard::{Handle, StandardCondition, StandardTransient};
 use martensite_tkernel::tcollection::AsciiString;
@@ -30,6 +31,7 @@ enum MediaPlayerEvent {
     /// `Media_PlayerEvent_SEEK`.
     Seek,
     /// `Media_PlayerEvent_NEXT`.
+    #[cfg_attr(target_arch = "wasm32", allow(dead_code))]
     Next,
 }
 

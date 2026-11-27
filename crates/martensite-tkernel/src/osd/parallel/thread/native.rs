@@ -99,7 +99,6 @@ mod system_info_tests {
 /// WebAssembly thread identity mapped deterministically from `std::thread::ThreadId`
 /// without `thread_local!` (#631).
 #[cfg(not(any(unix, windows)))]
-#[forbid(unsafe_code)]
 pub(crate) fn current_thread_id() -> usize {
     use std::sync::{Mutex, OnceLock};
     static IDS: OnceLock<Mutex<Vec<(std::thread::ThreadId, usize)>>> = OnceLock::new();
@@ -119,7 +118,6 @@ pub(crate) fn current_thread_id() -> usize {
 /// Browser WebAssembly logical processor count from `navigator.hardwareConcurrency`
 /// (falls back to 1 when unavailable) (#631).
 #[cfg(target_arch = "wasm32")]
-#[forbid(unsafe_code)]
 pub(crate) fn online_processors() -> i32 {
     let pooled = super::super::platform_thread::wasm_worker_pool_size();
     if pooled > 0 {
@@ -129,7 +127,6 @@ pub(crate) fn online_processors() -> i32 {
 }
 
 #[cfg(target_arch = "wasm32")]
-#[forbid(unsafe_code)]
 fn browser_hardware_concurrency() -> Option<i32> {
     let global = js_sys::global();
     let nav = js_sys::Reflect::get(&global, &wasm_bindgen::JsValue::from_str("navigator")).ok()?;

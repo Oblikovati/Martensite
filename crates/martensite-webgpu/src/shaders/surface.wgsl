@@ -119,14 +119,24 @@ fn is_clipped(world_pos: vec3<f32>, clip_count: u32) -> bool {
 }
 
 fn sample_shadow(shadow_coord: vec4<f32>) -> f32 {
-    if scene_u.shadow_env.y < 0.5 || shadow_coord.w <= 0.0 {
-        return 1.0;
-    }
-    let ndc = shadow_coord.xyz / shadow_coord.w;
+    let safe_w = select(1.0, shadow_coord.w, shadow_coord.w > 0.0);
+    let ndc = shadow_coord.xyz / safe_w;
     let uv = vec2<f32>(ndc.x * 0.5 + 0.5, 0.5 - ndc.y * 0.5);
-    let in_bounds = uv.x >= 0.0 && uv.x <= 1.0 && uv.y >= 0.0 && uv.y <= 1.0 && ndc.z >= 0.0 && ndc.z <= 1.0;
+    let in_bounds = scene_u.shadow_env.y >= 0.5
+        && shadow_coord.w > 0.0
+        && uv.x >= 0.0
+        && uv.x <= 1.0
+        && uv.y >= 0.0
+        && uv.y <= 1.0
+        && ndc.z >= 0.0
+        && ndc.z <= 1.0;
     let depth_ref = clamp(ndc.z - scene_u.shadow_env.x, 0.0, 1.0);
-    let vis = textureSampleCompare(shadow_tex, shadow_sampler, clamp(uv, vec2<f32>(0.0), vec2<f32>(1.0)), depth_ref);
+    let vis = textureSampleCompare(
+        shadow_tex,
+        shadow_sampler,
+        clamp(uv, vec2<f32>(0.0), vec2<f32>(1.0)),
+        depth_ref,
+    );
     return select(1.0, vis, in_bounds);
 }
 
@@ -242,12 +252,14 @@ fn eval_lit(
 }
 
 fn shade_fragment(in: VsOut, front_facing: bool) -> vec4<f32> {
+    // Evaluate all implicit-derivative builtins in uniform control flow before any discard.
+    let texel = textureSample(surface_tex, surface_sampler, in.uv);
+    let shadow = sample_shadow(in.shadow_coord);
+    let fw = fwidth(in.bary);
     if is_clipped(in.world_pos, draw_u.counts_flags.z) {
         discard;
     }
     let flags = draw_u.counts_flags.w;
-    let texel = textureSample(surface_tex, surface_sampler, in.uv);
-    let shadow = sample_shadow(in.shadow_coord);
     var base = select(in.color, draw_u.base_color * in.color, SHADING_MODE != 0u);
     if (flags & 1u) != 0u {
         base = base * texel;
@@ -260,7 +272,6 @@ fn shade_fragment(in: VsOut, front_facing: bool) -> vec4<f32> {
         rgb = eval_lit(in.world_pos, in.world_normal, front_facing, base.rgb, shadow);
     }
     if (flags & 2u) != 0u {
-        let fw = fwidth(in.bary);
         let edge_dist = min(min(in.bary.x / max(fw.x, 1e-5), in.bary.y / max(fw.y, 1e-5)), in.bary.z / max(fw.z, 1e-5));
         let factor = 1.0 - smoothstep(0.0, max(draw_u.viewport_params.z, 1.0), edge_dist);
         rgb = mix(rgb, draw_u.edge_color.rgb, factor * draw_u.edge_color.a);

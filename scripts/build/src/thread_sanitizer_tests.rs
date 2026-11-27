@@ -131,7 +131,10 @@ fn workflow_runs_the_pinned_sanitizer_and_requires_its_actual_job_result() {
         "rustup toolchain install nightly-2026-09-25 --profile minimal --component rust-src"
     ));
     assert!(workflow.contains("run: cargo xtask ci thread-sanitizer"));
-    assert!(workflow.contains("needs: [plan, checks, tests, release-tests, thread-sanitizer]"));
+    assert!(
+        workflow
+            .contains("needs: [plan, checks, tests, release-tests, thread-sanitizer, wasm-check]")
+    );
     assert!(
         workflow.contains("cargo xtask ci gate --checks \"$PLAN_RESULT\" --tests \"$SANITIZER_RESULT\" $HAS_SANITIZER_FLAG")
     );

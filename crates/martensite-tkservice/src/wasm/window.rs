@@ -451,7 +451,7 @@ impl AspectWindow for WasmWindow {
         }
     }
     fn native_handle(&self) -> AspectDrawable {
-        0
+        if self.has_live_canvas() { 1 } else { 0 }
     }
     fn native_parent_handle(&self) -> AspectDrawable {
         0

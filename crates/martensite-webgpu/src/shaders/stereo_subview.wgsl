@@ -38,14 +38,18 @@ fn fs_main(in: VsOut) -> @location(0) vec4<f32> {
     }
     let l = textureSample(left_tex, linear_sampler, uv);
     let r = textureSample(right_tex, linear_sampler, uv);
+    let rx = (uv.x - comp_u.rect_uv.x) / max(comp_u.rect_uv.z, 1e-5);
+    let ry = (uv.y - comp_u.rect_uv.y) / max(comp_u.rect_uv.w, 1e-5);
+    let sub_sample = textureSample(left_tex, linear_sampler, clamp(vec2<f32>(rx, ry), vec2<f32>(0.0), vec2<f32>(1.0)));
+    let half_uv = vec2<f32>(fract(uv.x * 2.0), uv.y);
+    let ls = textureSample(left_tex, linear_sampler, half_uv);
+    let rs = textureSample(right_tex, linear_sampler, half_uv);
     if mode == 0u {
         // Subview blit inside rect_uv
-        let rx = (uv.x - comp_u.rect_uv.x) / max(comp_u.rect_uv.z, 1e-5);
-        let ry = (uv.y - comp_u.rect_uv.y) / max(comp_u.rect_uv.w, 1e-5);
         if rx < 0.0 || rx > 1.0 || ry < 0.0 || ry > 1.0 {
             discard;
         }
-        return textureSample(left_tex, linear_sampler, vec2<f32>(rx, ry));
+        return sub_sample;
     }
     if mode == 1u {
         return vec4<f32>(l.r, r.g, r.b, 1.0); // Red-Cyan anaglyph
@@ -66,8 +70,5 @@ fn fs_main(in: VsOut) -> @location(0) vec4<f32> {
     }
     // Side-by-side (mode 6)
     let is_right = uv.x >= 0.5;
-    let half_uv = vec2<f32>(fract(uv.x * 2.0), uv.y);
-    let ls = textureSample(left_tex, linear_sampler, half_uv);
-    let rs = textureSample(right_tex, linear_sampler, half_uv);
     return select(ls, rs, is_right);
 }

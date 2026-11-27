@@ -156,13 +156,11 @@ impl Drop for EventSource {
 
 /// Browser WebAssembly event sink forwarding log messages to `console.*` (#631).
 #[cfg(target_arch = "wasm32")]
-#[forbid(unsafe_code)]
 pub(super) struct EventSource {
     name: String,
 }
 
 #[cfg(target_arch = "wasm32")]
-#[forbid(unsafe_code)]
 impl EventSource {
     pub(super) fn open(name: &AsciiString) -> Self {
         Self {

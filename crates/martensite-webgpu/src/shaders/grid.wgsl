@@ -39,17 +39,17 @@ fn vs_main(@builtin(vertex_index) vid: u32) -> VsOut {
 @fragment
 fn fs_main(in: VsOut) -> @location(0) vec4<f32> {
     let dir = in.far_pt - in.near_pt;
-    if abs(dir.z) < 1e-6 {
-        discard;
-    }
-    let t = -in.near_pt.z / dir.z;
-    if t < 0.0 || t > 1.0 {
-        discard;
-    }
+    let valid_dir = abs(dir.z) >= 1e-6;
+    let safe_dz = select(1.0, dir.z, valid_dir);
+    let t = -in.near_pt.z / safe_dz;
     let world_xy = in.near_pt.xy + t * dir.xy - grid_u.grid_step.zw;
     let step = max(grid_u.grid_step.xy, vec2<f32>(1e-4, 1e-4));
     let coord = world_xy / step;
+    // Compute fwidth in uniform control flow before any discard.
     let deriv = max(fwidth(coord), vec2<f32>(1e-5, 1e-5));
+    if !valid_dir || t < 0.0 || t > 1.0 {
+        discard;
+    }
     let line = abs(fract(coord - 0.5) - 0.5) / deriv;
     let alpha = 1.0 - min(min(line.x, line.y), 1.0);
     if alpha <= 0.02 {
