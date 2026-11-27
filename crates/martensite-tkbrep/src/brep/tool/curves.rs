@@ -201,25 +201,31 @@ impl BRepTool {
         if index < 1 {
             return Ok(EdgeCurveOnSurface::default());
         }
-        let mut rank = 0;
-        for representation in representations(edge, "BRep_Tool::CurveOnSurface")? {
-            let Some(r) = representation.get().filter(|r| r.is_curve_on_surface()) else {
-                continue;
-            };
-            let gcurve = as_gcurve(&representation);
-            let Some(gcurve) = gcurve.get() else { continue };
-            rank += 1;
-            if rank == index {
-                return curve_on_surface_of(edge, gcurve, r.pcurve()?);
-            }
-            if r.is_curve_on_closed_surface() {
+        edge_tshape(edge, "BRep_Tool::CurveOnSurface")?.with_curves(|curves| {
+            let mut rank = 0;
+            for representation in curves {
+                let Some(r) = representation.get().filter(|r| r.is_curve_on_surface()) else {
+                    continue;
+                };
                 rank += 1;
                 if rank == index {
-                    return curve_on_surface_of(edge, gcurve, r.pcurve2()?);
+                    if let Some(gcurve) = project_interface::<dyn BRepGCurve>(r) {
+                        return curve_on_surface_of(edge, gcurve, r.pcurve()?);
+                    }
+                    continue;
+                }
+                if r.is_curve_on_closed_surface() {
+                    rank += 1;
+                    if rank == index {
+                        if let Some(gcurve) = project_interface::<dyn BRepGCurve>(r) {
+                            return curve_on_surface_of(edge, gcurve, r.pcurve2()?);
+                        }
+                        continue;
+                    }
                 }
             }
-        }
-        Ok(EdgeCurveOnSurface::default())
+            Ok(EdgeCurveOnSurface::default())
+        })
     }
 }
 
