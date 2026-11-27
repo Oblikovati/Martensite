@@ -1,9 +1,9 @@
 //! Queried device state is separated from production record-input derivations.
-use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 use super::owned_sample_json::{numeric as n, object, quote};
 use super::owned_sample_readback::OwnedResult;
 use super::{frame::FrameResources, runtime::VulkanRuntime};
 use crate::RenderFrame;
+use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 use ash::vk;
 use std::path::Path;
 

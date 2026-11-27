@@ -33,6 +33,8 @@ mod clipped_depth_reference_empty;
 #[cfg(test)]
 mod clipped_depth_shared_reference;
 #[cfg(test)]
+mod clipping_state_tests;
+#[cfg(test)]
 mod driver_tests;
 #[cfg(test)]
 mod fixed_grid_point_gpu_tests;
@@ -43,6 +45,10 @@ mod hatch_surface;
 #[cfg(test)]
 mod immediate_redraw_fixture;
 #[cfg(test)]
+mod main_layer_notices_tests;
+#[cfg(test)]
+mod mesh_lod_ais_tests;
+#[cfg(test)]
 mod point_surface_texture_tests;
 #[cfg(test)]
 mod point_uv_pixels_tests;
@@ -50,6 +56,8 @@ mod point_uv_pixels_tests;
 mod vertex_output_fixture;
 #[cfg(test)]
 mod view_capture_owned_tests;
+#[cfg(test)]
+mod view_immediate_redraw_tests;
 #[cfg(test)]
 mod window_depth_float64_fixture;
 #[cfg(test)]

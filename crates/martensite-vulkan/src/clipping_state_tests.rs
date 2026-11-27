@@ -2,7 +2,11 @@
 //! GlClipping, no GL context) line by line.
 use super::*;
 use martensite_tkernel::ncollection::Vec4;
-use martensite_tkservice::graphic3d::{Graphic3dClipPlane, Graphic3dSequenceOfHClipPlane};
+use martensite_tkernel::standard::Handle;
+use martensite_tkservice::graphic3d::{
+    Graphic3dClipPlane, Graphic3dClipPlaneSequenceSource, Graphic3dClipPlaneSource,
+    Graphic3dSequenceOfHClipPlane,
+};
 
 const NATIVE: &str = include_str!("../tests/fixtures/clipping_state/native.txt");
 

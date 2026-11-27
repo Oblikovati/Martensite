@@ -1,5 +1,4 @@
 //! Explicit ignored executable adapter: stdin is output-directory, declared row, device index.
-use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 use super::{
     frame::FrameResources,
     owned_sample_readback::{self, OwnedResult, OwnedSampleBuffers},
@@ -8,6 +7,7 @@ use super::{
     runtime::{VulkanOptions, VulkanRuntime},
     submission::CommandSubmission,
 };
+use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 use crate::stencil_context::{StencilCompare, StencilOperation};
 use crate::{RenderFrame, RenderStencilState};
 use ash::vk;

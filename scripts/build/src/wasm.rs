@@ -132,7 +132,9 @@ fn is_time_guarded_source(path: &str) -> bool {
     {
         return false;
     }
-    if path.starts_with("crates/martensite-tkernel/src/osd/timing/") {
+    if path.starts_with("crates/martensite-tkernel/src/osd/timing/")
+        || path == "crates/martensite-tkernel/src/osd/process/native.rs"
+    {
         return false;
     }
     for native_crate in NATIVE_ONLY_CRATES {

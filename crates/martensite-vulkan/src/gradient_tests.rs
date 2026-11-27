@@ -5,3 +5,5 @@ use martensite_tkservice::aspect::AspectGradientFillMethod;
 mod device_tests;
 #[path = "../tests/support/elliptical_gradient_reference.rs"]
 mod elliptical_reference;
+#[path = "gradient_elliptical_reference_tests.rs"]
+mod elliptical_reference_tests;

@@ -37,15 +37,15 @@ fn scene_view() -> NoticeScene {
 #[test]
 fn notices_count_main_layers_and_skip_immediate_ones() {
     let NoticeScene { view, .. } = scene_view();
-    let count = || view.retained.main_notices.count();
+    let count = || view.main_notice_count_for_test();
     let start = count();
-    view.retained.notice_layer(GRAPHIC3D_ZLAYER_ID_TOP);
+    view.notice_layer_for_test(GRAPHIC3D_ZLAYER_ID_TOP);
     assert_eq!(count(), start, "the top layer is immediate");
-    view.retained.notice_layer(GRAPHIC3D_ZLAYER_ID_DEFAULT);
+    view.notice_layer_for_test(GRAPHIC3D_ZLAYER_ID_DEFAULT);
     assert_eq!(count(), start + 1);
-    view.retained.notice_layer(GRAPHIC3D_ZLAYER_ID_UNKNOWN);
+    view.notice_layer_for_test(GRAPHIC3D_ZLAYER_ID_UNKNOWN);
     assert_eq!(count(), start + 2, "a notice for every layer counts");
-    view.retained.notice_layer(12_345);
+    view.notice_layer_for_test(12_345);
     assert_eq!(count(), start + 3, "a layer the view lacks counts");
 }
 
@@ -54,7 +54,7 @@ fn displays_count_and_dynamic_highlights_do_not() {
     let NoticeScene {
         view, v3d, context, ..
     } = scene_view();
-    let count = || view.retained.main_notices.count();
+    let count = || view.main_notice_count_for_test();
     let start = count();
     display_sphere(&context);
     assert!(count() > start, "a displayed main structure is a notice");

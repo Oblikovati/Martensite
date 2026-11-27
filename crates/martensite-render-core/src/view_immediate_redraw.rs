@@ -162,14 +162,23 @@ impl Graphic3dRenderView {
         Ok(Some(frame))
     }
 
-    /// The immediate redraws that kept their main pass without building it;
-    /// `view.elided_redraws()`.
-    #[cfg(test)]
     /// Count of immediate redraws that reused retained main images without rebuilding them.
     #[doc(hidden)]
     pub fn elided_redraws(&self) -> u64 {
         self.elided_redraws
             .load(std::sync::atomic::Ordering::Relaxed)
+    }
+
+    /// Test-only helper exposing retained layer notices across the render-core/backend split.
+    #[doc(hidden)]
+    pub fn notice_layer_for_test(&self, layer_id: i32) {
+        self.retained.notice_layer(layer_id);
+    }
+
+    /// Test-only helper reading the main-layer notice counter across the render-core/backend split.
+    #[doc(hidden)]
+    pub fn main_notice_count_for_test(&self) -> u64 {
+        self.retained.main_notices.count()
     }
 
     #[cfg(all(
