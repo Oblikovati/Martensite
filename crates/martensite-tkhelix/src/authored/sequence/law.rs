@@ -104,10 +104,7 @@ impl HelixSequence {
             axial_rate: 0.,
             positive: self.placement.rotation == HelixRotation::Positive,
         };
-        let (cos, sin) = (
-            martensite_cmath::cos(parameter),
-            martensite_cmath::sin(parameter),
-        );
+        let (sin, cos) = martensite_cmath::sincos(parameter);
         let xy = [
             local.point(parameter, cos, sin),
             local.first(parameter, cos, sin),

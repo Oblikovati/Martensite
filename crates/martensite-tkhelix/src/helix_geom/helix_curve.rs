@@ -229,16 +229,12 @@ impl Adaptor3dCurve for HelixGeomHelixCurve {
     }
     fn eval_d0(&self, u: f64) -> Result<Point3, Failure> {
         let s: HelixCurveState = *self.state.read();
-        Ok(Self::point_at(
-            &s,
-            u,
-            martensite_cmath::cos(u),
-            martensite_cmath::sin(u),
-        ))
+        let (sin_t, cos_t): (f64, f64) = martensite_cmath::sincos(u);
+        Ok(Self::point_at(&s, u, cos_t, sin_t))
     }
     fn eval_d1(&self, u: f64) -> Result<GeomCurveD1, Failure> {
         let s: HelixCurveState = *self.state.read();
-        let (cos_t, sin_t): (f64, f64) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
+        let (sin_t, cos_t): (f64, f64) = martensite_cmath::sincos(u);
         let point: Point3 = Self::point_at(&s, u, cos_t, sin_t);
         let [x, y, z] = Self::local(&s).first(u, cos_t, sin_t);
         let d1 = Vector3::new(x, y, z);
@@ -246,7 +242,7 @@ impl Adaptor3dCurve for HelixGeomHelixCurve {
     }
     fn eval_d2(&self, u: f64) -> Result<GeomCurveD2, Failure> {
         let s: HelixCurveState = *self.state.read();
-        let (cos_t, sin_t): (f64, f64) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
+        let (sin_t, cos_t): (f64, f64) = martensite_cmath::sincos(u);
         let point: Point3 = Self::point_at(&s, u, cos_t, sin_t);
         let local = Self::local(&s);
         let [x, y, z] = local.first(u, cos_t, sin_t);

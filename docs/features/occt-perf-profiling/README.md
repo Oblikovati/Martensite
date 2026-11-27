@@ -18,8 +18,9 @@ Systematic toolkit-by-toolkit p95 profiling and optimization against OCCT 8.0.0 
 | 8 | `martensite-tktopalgo` | prebuilt | **Done** (8 APIs; 1.28x speedup on Gauss-Kronrod VolumeProperties, 1.10x on BRepBndLib) | [tktopalgo.md](tktopalgo.md) |
 | 9 | `martensite-tkprim`, `martensite-tkmesh` | prebuilt | **Done** (11 APIs; up to 1.26x speedup via lock-free MeshLinkKey, batched node reads, zero-copy CellFilter) | [tkprim_tkmesh.md](tkprim_tkmesh.md) |
 | 9 | `martensite-tkshhealing`, `martensite-tkhlr` | prebuilt | **Done** (7 APIs; up to 1.76x speedup via lazy ReShape::empty_copied & single-lock TEdge copy) | [tkshhealing_tkhlr.md](tkshhealing_tkhlr.md) |
-| 9 | `martensite-tkhelix` | prebuilt | Pending | |
+| 9 | `martensite-tkhelix` | prebuilt | **Done** (paired with `tkbool`, `tkfeat`; `sincos` optimization) | [tkbool_tkfeat_tkhelix.md](tkbool_tkfeat_tkhelix.md) |
 | 10 | `martensite-tkbo` | prebuilt | **Done** (8 APIs; up to 1.34x speedup on Fuse/Cut/Common/Section via stack Bernstein/LeastSquare, inlined PLib/VectorBase, zero-alloc empty FailureText) | [tkbo.md](tkbo.md) |
 | 11 | `martensite-tkfillet`, `martensite-tkoffset` | prebuilt | **Done** (6 APIs; **5.49x speedup** on ThruSections loft via zero-clone lazy-projection `curve_on_surface_by_index`, 1.39x on cylinder fillet) | [tkfillet_tkoffset.md](tkfillet_tkoffset.md) |
-| 10+ | `martensite-tkbool`, `martensite-tkfeat`, `martensite-tkv3d`, `martensite-tkxmesh`, `martensite-tkmeshvs` | prebuilt | Pending | |
+| 12 | `martensite-tkbool`, `martensite-tkfeat` | prebuilt | **Done** (5 APIs; 2.56–3.11x M/O across Pipe, NormalProjection, MakePrism boss, Helix) | [tkbool_tkfeat_tkhelix.md](tkbool_tkfeat_tkhelix.md) |
+| 12+ | `martensite-tkexpress`, `martensite-tkservice`, `martensite-tkv3d`, `martensite-tkxmesh`, `martensite-tkmeshvs` | prebuilt | Pending | |
 | AF/DE | `tkcdf`, `tklcaf`, `tktobj`, `tkcaf`, `tkvcaf`, `tkxcaf`, `tkde`, `tkxsbase`, `tkrwmesh`, `tkdestl`, `tkdeiges`, `tkdestep`, `tkdeobj`, `tkdeply` | build from `../OCCT` | Pending | |
