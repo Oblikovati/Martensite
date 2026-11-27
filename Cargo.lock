@@ -616,6 +616,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-render-core"
+version = "0.1.0"
+dependencies = [
+ "martensite-cmath",
+ "martensite-tkernel",
+ "martensite-tkmath",
+ "martensite-tkservice",
+ "num-rational",
+ "num-traits",
+ "serde_json",
+ "sha2 0.11.1",
+]
+
+[[package]]
 name = "martensite-test-support"
 version = "0.3.6"
 dependencies = [
@@ -1372,6 +1386,7 @@ dependencies = [
  "martensite-geometry-raster",
  "martensite-process-policy",
  "martensite-raster-core",
+ "martensite-render-core",
  "martensite-test-support",
  "martensite-tkbo",
  "martensite-tkbool",

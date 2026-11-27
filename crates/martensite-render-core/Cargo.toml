@@ -1,0 +1,36 @@
+[package]
+name = "martensite-render-core"
+version = "0.1.0"
+description = "Backend-agnostic Graphic3d lowering, scene representation, and CPU ray-tracing structures for Martensite."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+# Temporary diagnostic; delete after bug30412 raster ordering is resolved.
+command-state-diagnostics = ["dep:serde_json"]
+# Owned uploaded ray inputs; explicit observation only, never a rendering policy.
+raytrace-input-diagnostics = ["command-state-diagnostics"]
+# Diagnostic-only production-intersection origin intervention, never qualification.
+raytrace-hit-diagnostics = ["raytrace-input-diagnostics", "dep:sha2"]
+# Temporary command omission proof; never selected by default.
+lit-only-command-diagnostics = ["command-state-diagnostics"]
+# Temporary original-draw vertex observation; no default shader or pipeline change.
+vertex-output-diagnostics = ["command-state-diagnostics"]
+# Lowers each recorded group again on replay and panics on any difference (#594); tests only.
+draw-record-verification = []
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.5.1" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.4.1" }
+martensite-tkservice = { path = "../martensite-tkservice", version = "0.5.2" }
+num-rational = "=0.4.2"
+num-traits = "=0.2.19"
+serde_json = { version = "=1.0.154", optional = true }
+sha2 = { version = "=0.11.1", optional = true }

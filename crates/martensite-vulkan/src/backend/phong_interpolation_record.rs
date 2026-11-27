@@ -1,5 +1,6 @@
 //! Window interpolation uses the same viewport as the actual draw.
 use super::{pipeline::DrawPipeline, runtime::VulkanRuntime};
+use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 use ash::vk;
 pub(super) fn push_viewport(
     runtime: &VulkanRuntime,

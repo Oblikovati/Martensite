@@ -42,7 +42,8 @@ pub(super) fn replayed(
     };
     let inputs = upload_inputs(&context, samples, uploads.dynamic_lighting);
     let residency = &uploads.geometry.residency;
-    let Some(kept) = draw.upload_memo.live(&inputs, |kept| {
+    use crate::backend::upload_memo::VulkanUploadMemoExt;
+    let Some(kept) = draw.upload_memo.live_vulkan(&inputs, |kept| {
         residency.is_store(&kept.store) && residency.evictions() == kept.evictions
     }) else {
         return Ok(None);
@@ -82,7 +83,8 @@ pub(super) fn keep(
         store: uploads.geometry.residency.store(),
         evictions: uploads.geometry.residency.evictions(),
     };
-    context.semantic_draw.upload_memo.keep(inputs, kept);
+    use crate::backend::upload_memo::VulkanUploadMemoExt;
+    context.semantic_draw.upload_memo.keep_vulkan(inputs, kept);
 }
 
 /// Whether the draw's own fields leave it a plain surface or glyph run: a sprite, line,

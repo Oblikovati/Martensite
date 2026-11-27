@@ -1,6 +1,7 @@
 //! A one-set descriptor pool that samples one target image for the main restore draw.
 use super::runtime::{VulkanRuntime, vk_error};
 use crate::RenderError;
+use crate::backend::VulkanWorkLedgerExt;
 use ash::vk;
 use std::sync::Arc;
 

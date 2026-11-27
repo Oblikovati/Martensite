@@ -2,48 +2,7 @@
 use super::validation_settings::VALIDATION_LAYER;
 use crate::error::{RenderError, rejected};
 use ash::vk;
-use std::fmt;
-
-/// Khronos validation layer version reported by the Vulkan loader.
-///
-/// Example: `ValidationLayerVersion::from_spec(vk::make_api_version(0, 1, 4, 313))`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ValidationLayerVersion {
-    /// Major version.
-    pub major: u32,
-    /// Minor version.
-    pub minor: u32,
-    /// Patch (SDK header) version.
-    pub patch: u32,
-}
-
-/// The checksum-pinned layer (`the recording tool`) that passed parallel replay.
-///
-/// Ubuntu 24.04's 1.3.275 validates dynamic-rendering depth resolves with color-only ordering
-/// (a false SYNC-HAZARD-READ-AFTER-WRITE against the same instance's depth load) and crashes in
-/// parallel multi-instance tests; see the design notes#linux-validation-dependency.
-pub const VERIFIED_VALIDATION_LAYER: ValidationLayerVersion = ValidationLayerVersion {
-    major: 1,
-    minor: 4,
-    patch: 313,
-};
-
-impl ValidationLayerVersion {
-    /// Decode a layer `specVersion`; `ValidationLayerVersion::from_spec(spec).patch`.
-    pub fn from_spec(spec: u32) -> Self {
-        Self {
-            major: vk::api_version_major(spec),
-            minor: vk::api_version_minor(spec),
-            patch: vk::api_version_patch(spec),
-        }
-    }
-}
-
-impl fmt::Display for ValidationLayerVersion {
-    fn fmt(&self, output: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(output, "{}.{}.{}", self.major, self.minor, self.patch)
-    }
-}
+pub use martensite_render_core::{VERIFIED_VALIDATION_LAYER, ValidationLayerVersion};
 
 /// Read the Khronos validation layer the loader would enable, if any.
 ///
@@ -77,9 +36,5 @@ mod tests {
         assert_eq!((legacy.major, legacy.minor, legacy.patch), (1, 3, 275));
         assert_eq!(pinned, VERIFIED_VALIDATION_LAYER);
         assert!(legacy < VERIFIED_VALIDATION_LAYER);
-    }
-    #[test]
-    fn versions_print_as_dotted_numbers() {
-        assert_eq!(VERIFIED_VALIDATION_LAYER.to_string(), "1.4.313");
     }
 }

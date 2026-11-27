@@ -3,6 +3,7 @@ use super::{
     runtime::{VulkanRuntime, vk_error},
     sampled_surface_image::SampledSurfaceImage,
 };
+use crate::backend::VulkanWorkLedgerExt;
 use crate::{RenderError, surface_texture::SurfaceSamplerPolicy};
 use ash::vk;
 use std::sync::Arc;

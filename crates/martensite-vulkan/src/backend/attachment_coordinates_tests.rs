@@ -1,5 +1,6 @@
 //! Closed forms pin the extracted convention without selecting a new rendering behavior.
 use super::*;
+use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 
 pub(super) fn rectangle(x: i32, y: i32, width: u32, height: u32) -> vk::Rect2D {
     vk::Rect2D {

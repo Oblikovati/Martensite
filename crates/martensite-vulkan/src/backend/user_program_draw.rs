@@ -9,6 +9,7 @@ use super::{
     surface_image_descriptor::SurfaceImageBinding,
     user_program_pipeline::{UserPipelineState, UserProgramPipeline, UserSampler},
 };
+use crate::backend::VulkanWorkLedgerExt;
 use crate::{PrimitiveDraw, RenderError, error::rejected, user_program::UserProgramDraw};
 use ash::vk;
 use std::sync::Arc;

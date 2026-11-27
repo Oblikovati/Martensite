@@ -1,5 +1,6 @@
 //! Existing partial-region recording exercises point expansion and ordinary draw restoration.
 use super::*;
+use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 use crate::fixed_grid_point_gpu_tests::{face_emission, fixed_grid_renderer_with, lit_front_point};
 use crate::{
     RenderCoordinateConvention, RenderLighting, RenderMaterial, RenderShading, identity_clip,

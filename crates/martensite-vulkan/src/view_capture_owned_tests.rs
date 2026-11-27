@@ -96,7 +96,7 @@ fn colour_dumps_read_captures_without_depth_and_depth_dumps_refuse_them() {
 
 #[test]
 fn only_depth_dumps_read_the_depth_attachment() {
-    use crate::backend::CapturePlanes;
+    use crate::CapturePlanes;
     use crate::view_capture::dump_planes;
     assert_eq!(
         dump_planes(&Graphic3dBufferType::Depth),

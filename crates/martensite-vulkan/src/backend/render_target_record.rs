@@ -1,5 +1,6 @@
 //! Dynamic scene attachments preserve resolves through every encoded and linear pass boundary.
 use super::{frame::FrameResources, runtime::VulkanRuntime};
+use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 use ash::vk;
 
 pub(super) fn begin_rendering(

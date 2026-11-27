@@ -1,5 +1,6 @@
 //! Operation-local creation inputs, read while their Vulkan backing descriptions are live.
 use super::*;
+use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 
 pub(crate) struct OwnedPipelineCapture {
     pub specialization: [u8; 4],

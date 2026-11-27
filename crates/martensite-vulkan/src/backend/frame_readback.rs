@@ -6,7 +6,8 @@ use super::{
     VulkanRenderer, WorkPhase, attachment_coordinates::AttachmentCoordinates, buffer::DeviceBuffer,
     image::TargetImage, runtime::VulkanRuntime, submission::CommandSubmission,
 };
-use crate::{FrameCapture, RenderError};
+use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
+use crate::{CapturePlanes, FrameCapture, RenderError};
 use ash::vk;
 use std::sync::Arc;
 
@@ -21,15 +22,6 @@ pub(crate) struct FrameReadback {
     /// The attachment extent the copies read (see `AttachmentCoordinates::leading_rows`).
     attachment_extent: vk::Extent2D,
     coordinates: AttachmentCoordinates,
-}
-
-/// The attachments one readback copies; a colour dump skips the depth copy (#594).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum CapturePlanes {
-    /// Colour and depth, as `capture` returns them.
-    ColorAndDepth,
-    /// Colour only; the capture's depth stays empty.
-    Color,
 }
 
 /// The host buffers one readback copies the colour and, when read, depth attachments into.
