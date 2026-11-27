@@ -25,8 +25,6 @@ impl RwStl {
 }
 use std::fmt::Write as FmtWrite;
 
-const ASCII_CHUNK_BYTES: usize = 16 * 1024;
-
 struct StackFmt {
     buf: [u8; 40],
     len: usize,
@@ -69,37 +67,27 @@ fn write_ascii_facets(
     let mut sink = AsciiFacetSink {
         stream,
         failed: false,
-        chunk: Vec::with_capacity(ASCII_CHUNK_BYTES + 512),
         number: Vec::new(),
     };
     for index in 1..=count {
         sink.facet(facet_coordinates(mesh, index)?);
-        if sink.chunk.len() >= ASCII_CHUNK_BYTES {
-            sink.flush_chunk();
-        }
         if sink.failed || !advance_progress(scope, index) {
             return Ok(false);
         }
     }
     sink.emit(b"endsolid\n");
-    sink.flush_chunk();
     Ok(!sink.failed)
 }
 struct AsciiFacetSink<'a> {
     stream: &'a mut dyn Write,
     failed: bool,
-    chunk: Vec<u8>,
     number: Vec<u8>,
 }
 impl AsciiFacetSink<'_> {
     #[inline]
     fn emit(&mut self, bytes: &[u8]) {
-        self.chunk.extend_from_slice(bytes);
-    }
-    fn flush_chunk(&mut self) {
-        if !self.failed && !self.chunk.is_empty() {
-            self.failed = !write_block(self.stream, &self.chunk);
-            self.chunk.clear();
+        if !self.failed {
+            self.failed = !write_block(self.stream, bytes);
         }
     }
     #[inline]
@@ -113,31 +101,41 @@ impl AsciiFacetSink<'_> {
                 self.failed = true;
                 return;
             };
-            self.chunk.extend_from_slice(&self.number[..length]);
+            self.failed = !write_block(self.stream, &self.number[..length]);
             return;
         }
+        let mut out = [0u8; 40];
+        let mut pos = 0usize;
         if value.is_sign_negative() {
-            self.chunk.push(b'-');
+            out[pos] = b'-';
+            pos += 1;
         }
         let mut tmp = StackFmt::new();
         let _ = write!(&mut tmp, "{:.12e}", value.abs());
         let bytes = tmp.as_bytes();
         if let Some(e_pos) = bytes.iter().position(|&b| b == b'e') {
-            self.chunk.extend_from_slice(&bytes[..=e_pos]);
+            let prefix = &bytes[..=e_pos];
+            out[pos..pos + prefix.len()].copy_from_slice(prefix);
+            pos += prefix.len();
             let exp = &bytes[e_pos + 1..];
             let (sign, digits) = if let Some(rest) = exp.strip_prefix(b"-") {
                 (b'-', rest)
             } else {
                 (b'+', exp.strip_prefix(b"+").unwrap_or(exp))
             };
-            self.chunk.push(sign);
+            out[pos] = sign;
+            pos += 1;
             if digits.len() == 1 {
-                self.chunk.push(b'0');
+                out[pos] = b'0';
+                pos += 1;
             }
-            self.chunk.extend_from_slice(digits);
+            out[pos..pos + digits.len()].copy_from_slice(digits);
+            pos += digits.len();
         } else {
-            self.chunk.extend_from_slice(bytes);
+            out[pos..pos + bytes.len()].copy_from_slice(bytes);
+            pos += bytes.len();
         }
+        self.failed = !write_block(self.stream, &out[..pos]);
     }
     fn triplet(&mut self, coordinates: &[f64]) {
         self.real(coordinates[0]);

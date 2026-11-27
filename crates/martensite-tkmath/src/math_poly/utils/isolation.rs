@@ -142,13 +142,7 @@ fn bisected(
     for _ in 0..DISTINCT_ROOT_BISECTION_ITERATIONS {
         // Scaling by 2^-1 is exact for normal values and avoids software 80-bit division.
         let middle: LongDouble = (left + right).scale(-1);
-        if middle == left || middle == right {
-            return middle;
-        }
         let value: LongDouble = horner_value(c, degree, middle);
-        if value == LongDouble::ZERO {
-            return middle;
-        }
         if (left_value < LongDouble::ZERO) == (value < LongDouble::ZERO) {
             left = middle;
             left_value = value;

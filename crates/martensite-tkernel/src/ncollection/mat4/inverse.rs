@@ -33,12 +33,17 @@ impl<T: MatrixScalar> Mat4<T> {
         let d4 = m[1] * m[10] - m[2] * m[9];
         let d5 = m[1] * m[6] - m[2] * m[5];
 
+        let s0_neg = m[11] * m[14] - m[10] * m[15];
+        let s1_neg = m[7] * m[14] - m[6] * m[15];
+        let s3_neg = m[3] * m[14] - m[2] * m[15];
+
         let inverse: [T; 16] = [
             m[5] * s0 - m[9] * s1 + m[13] * s2,
-            m[9] * s3 - m[1] * s0 - m[13] * s4,
+            // Preserve the signed-zero bits produced by the direct cofactor formula on identity.
+            m[1] * s0_neg - m[9] * s3_neg - m[13] * s4,
             m[1] * s1 - m[5] * s3 + m[13] * s5,
             m[5] * s4 - m[1] * s2 - m[9] * s5,
-            m[8] * s1 - m[4] * s0 - m[12] * s2,
+            m[4] * s0_neg - m[8] * s1_neg - m[12] * s2,
             m[0] * s0 - m[8] * s3 + m[12] * s4,
             m[4] * s3 - m[0] * s1 - m[12] * s5,
             m[0] * s2 - m[4] * s4 + m[8] * s5,

@@ -13,6 +13,9 @@ pub fn kronrod_points_max() -> i32 {
 /// Closed-form table offset `sum_{i=1}^{order-1} ((i + 1) >> 1)` for `order >= 1`.
 #[inline]
 fn gauss_table_start(order: i32) -> usize {
+    if order <= 1 {
+        return 0;
+    }
     let k: usize = (order - 1) as usize;
     let half: usize = k >> 1;
     half * (half + 1) + if k & 1 == 1 { half + 1 } else { 0 }
