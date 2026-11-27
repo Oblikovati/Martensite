@@ -15,6 +15,7 @@ use crate::selection_policy::{MESHVS_SMF_GROUP, MESHVS_SMF_MESH, MESHVS_SMF_NODE
 use crate::sensitive_mesh::MeshVSSensitiveMesh;
 use crate::sensitive_simple::MeshVSDummySensitiveEntity;
 use martensite_tkernel::ncollection::Array1;
+use martensite_tkernel::osd::MonotonicInstant;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::Point3;
 use martensite_tkv3d::prs_mgr::PrsMgrPresentableObjectMembers;
@@ -22,7 +23,6 @@ use martensite_tkv3d::select_mgr::{
     SelectMgrEntityOwnerSource, SelectMgrSelectableObject, SelectMgrSelection,
 };
 use martensite_tkv3d::select3d::{Select3DSensitiveEntity, Select3DSensitivePoint};
-use std::time::Instant;
 
 /// The shared state of one `compute_selection` call.
 pub(super) struct SelectionScope<'a, O: MeshVSMeshSource + ?Sized> {
@@ -72,7 +72,7 @@ pub fn meshvs_mesh_compute_selection<O: MeshVSMeshSource + ?Sized>(
     mode: i32,
 ) -> Result<(), Failure> {
     let show_time = drawer_flag(object, Key::ComputeSelectionTime as i32);
-    let start = Instant::now();
+    let start = MonotonicInstant::now();
     let source = object.get_data_source();
     let (Some(source), Some(max_nodes)) = (source.get(), max_face_nodes(object)) else {
         return Ok(());

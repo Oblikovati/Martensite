@@ -7,7 +7,7 @@ use martensite_tkbrep::toptools::ShapeMapHasher;
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::message::{Message, ProgressRange};
 use martensite_tkernel::ncollection::{DataMap, IndexedDataMap, IndexedMap};
-use martensite_tkernel::osd::CadPath;
+use martensite_tkernel::osd::{CadPath, MonotonicInstant};
 use martensite_tkernel::standard::{Failure, Handle, StandardTransient, Transient};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkg3d::top_abs::ShapeEnum;
@@ -20,7 +20,6 @@ use martensite_tkxcaf::xcaf_doc::{
 };
 use std::fs::File;
 use std::io::{BufReader, Cursor, Read, Seek};
-use std::time::Instant;
 
 /// No extended status; `RWMESH_CAF_READER_STATUS_EX_NONE`.
 pub const RWMESH_CAF_READER_STATUS_EX_NONE: i32 = 0;
@@ -342,7 +341,7 @@ pub trait RwMeshCafReader: Transient {
         to_probe: bool,
     ) -> Result<bool, Failure> {
         let new_roots_lower = self.free_shape_count()? + 1;
-        let started = Instant::now();
+        let started = MonotonicInstant::now();
         let is_done = self.perform_mesh(stream, file, progress, to_probe)?;
         if to_probe || progress.user_break() {
             return Ok(is_done);
@@ -389,7 +388,13 @@ pub trait RwMeshCafReader: Transient {
     }
 }
 
-fn send_read_info(file: &AsciiString, nodes: i64, elements: i64, is_done: bool, started: Instant) {
+fn send_read_info(
+    file: &AsciiString,
+    nodes: i64,
+    elements: i64,
+    is_done: bool,
+    started: MonotonicInstant,
+) {
     let partly = if is_done { "" } else { "PARTIALLY " };
     let text = format!(
         "Mesh {}\n[{nodes} nodes] [{elements} 2d elements]\n[{partly}read in {} s]",

@@ -126,6 +126,18 @@ impl<'a> Launcher<'a> {
             }
         })
     }
+    /// Runs `body(thread_index)` once per locked participant (`0..self.nb_threads()`),
+    /// joining every worker before returning (#631).
+    ///
+    /// ```
+    /// use martensite_tkernel::osd::{Launcher, ThreadPool};
+    /// let pool = ThreadPool::new(2);
+    /// let launcher = Launcher::new(&pool, 2);
+    /// launcher.perform_workers(|_thread_index| {}).unwrap();
+    /// ```
+    pub fn perform_workers(&self, body: impl Fn(i32) + Sync) -> Result<(), Failure> {
+        self.perform_job(&body)
+    }
     /// `perform` = `run` then `wait`; the job must outlive both, which this frame ensures.
     fn perform_job(&self, body: &JobBody<'_>) -> Result<(), Failure> {
         let _guard = self

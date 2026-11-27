@@ -6,6 +6,7 @@ use crate::bvh::build_thread::{BvhBuildThread, BvhBuildTool};
 use crate::bvh::set::BvhSet;
 use crate::bvh::tree::BvhTree;
 use crate::bvh::vector::BvhVector;
+use martensite_tkernel::osd::Parallel;
 use martensite_tkernel::standard::Failure;
 use std::sync::{Mutex, PoisonError};
 
@@ -95,14 +96,22 @@ pub(super) fn run_workers(
     queue: &BvhBuildQueue,
     threads: i32,
 ) -> Result<(), Failure> {
-    let workers: Vec<BvhBuildThread<'_>> = (0..threads)
-        .map(|_| BvhBuildThread::new(tool, queue))
-        .collect();
-    std::thread::scope(|scope| {
-        let handles: Vec<_> = workers.iter().map(|worker| worker.run(scope)).collect();
-        // Join every worker before reporting, so none is left running.
-        let outcomes: Vec<Result<(), Failure>> =
-            handles.into_iter().map(BvhBuildThread::wait).collect();
-        outcomes.into_iter().collect::<Result<(), Failure>>()
-    })
+    let first_error: Mutex<Option<Failure>> = Mutex::new(None);
+    let worker_count: usize = usize::try_from(threads).unwrap_or(1).max(1);
+    Parallel::scope_or_pool(worker_count, |_| {
+        let worker = BvhBuildThread::new(tool, queue);
+        if let Err(error) = worker.execute() {
+            let mut slot = first_error.lock().unwrap_or_else(PoisonError::into_inner);
+            if slot.is_none() {
+                *slot = Some(error);
+            }
+        }
+    })?;
+    match first_error
+        .into_inner()
+        .unwrap_or_else(PoisonError::into_inner)
+    {
+        Some(error) => Err(error),
+        None => Ok(()),
+    }
 }

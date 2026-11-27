@@ -1,13 +1,18 @@
 //! Execute independent certificates with bounded operation-local workers and ordered results.
 use super::*;
+use martensite_tkernel::osd::Parallel;
 use std::cmp::Reverse;
-use std::sync::{
-    atomic::{AtomicBool, AtomicUsize, Ordering::Relaxed},
-    mpsc::{self, Receiver, RecvTimeoutError, Sender},
-};
+#[cfg(target_arch = "wasm32")]
+use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering::Relaxed};
+#[cfg(not(target_arch = "wasm32"))]
+use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
+#[cfg(not(target_arch = "wasm32"))]
 use std::thread;
+#[cfg(not(target_arch = "wasm32"))]
 use std::time::Duration;
 
+#[cfg(not(target_arch = "wasm32"))]
 const CANCEL_POLL: Duration = Duration::from_millis(4);
 
 pub(super) fn ordered<I, O, F>(
@@ -55,7 +60,9 @@ where
     F: Fn(&I, &mut CancelPoll<'_>) -> Checked<O> + Sync,
 {
     let attempt = execution.attempt;
-    let available = thread::available_parallelism().map_or(1, NonZeroUsize::get);
+    let available = usize::try_from(Parallel::nb_logical_processors())
+        .unwrap_or(1)
+        .max(1);
     let workers = available
         .min(execution.worker_limit.get())
         .min(inputs.len().div_ceil(2));
@@ -97,6 +104,7 @@ struct Queue<'a, I, F> {
 type Findings<O> = (usize, Checked<O>);
 
 impl<I: Sync, F: Sync> Queue<'_, I, F> {
+    #[cfg(not(target_arch = "wasm32"))]
     fn run<O>(
         &self,
         attempt: Attempt,
@@ -142,6 +150,66 @@ impl<I: Sync, F: Sync> Queue<'_, I, F> {
         })
     }
 
+    #[cfg(target_arch = "wasm32")]
+    fn run<O>(
+        &self,
+        attempt: Attempt,
+        stage: CylinderFeatureStage,
+        cancelled: &mut CancelPoll<'_>,
+        count: usize,
+    ) -> Checked<Vec<O>>
+    where
+        I: Sync,
+        O: Send,
+        F: Fn(&I, &mut CancelPoll<'_>) -> Checked<O> + Sync,
+    {
+        attempt.poll(cancelled, stage)?;
+        let batches: Mutex<Vec<Vec<Findings<O>>>> = Mutex::new(Vec::new());
+        let pooled = Parallel::scope_or_pool(count, |_| {
+            let mut completed = Vec::new();
+            while !self.stop.load(Relaxed) {
+                let slot = self.next.fetch_add(1, Relaxed);
+                if slot >= self.inputs.len() {
+                    break;
+                }
+                let index = self.dispatch.map_or(slot, |order| order[slot]);
+                let result = (self.check)(&self.inputs[index], &mut || self.stop.load(Relaxed));
+                completed.push((index, result));
+            }
+            if !completed.is_empty() {
+                batches
+                    .lock()
+                    .unwrap_or_else(|poison| poison.into_inner())
+                    .push(completed);
+            }
+        });
+        require(
+            attempt,
+            stage,
+            pooled.is_ok(),
+            "completed operation-local certificate workers",
+        )?;
+        attempt.poll(cancelled, stage)?;
+        let mut ordered: Vec<_> = std::iter::repeat_with(|| None)
+            .take(self.inputs.len())
+            .collect();
+        for batch in batches
+            .into_inner()
+            .unwrap_or_else(|poison| poison.into_inner())
+        {
+            for (index, result) in batch {
+                ordered[index] = Some(result);
+            }
+        }
+        ordered
+            .into_iter()
+            .map(|slot| {
+                slot.ok_or_else(|| missing(attempt, stage, "one result per source task"))?
+            })
+            .collect()
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
     fn worker<O>(&self, send: Sender<Vec<Findings<O>>>)
     where
         F: Fn(&I, &mut CancelPoll<'_>) -> Checked<O>,
@@ -164,6 +232,7 @@ impl<I: Sync, F: Sync> Queue<'_, I, F> {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn receive_ordered<O>(
     attempt: Attempt,
     stage: CylinderFeatureStage,

@@ -14,7 +14,14 @@ fn os_error(error: io::Error) -> i32 {
 
 impl ProcessSource for NativeProcess {
     fn process_id(&self) -> i32 {
-        std::process::id() as i32
+        #[cfg(target_arch = "wasm32")]
+        {
+            0
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            std::process::id() as i32
+        }
     }
     fn is_super_user(&self) -> bool {
         is_super_user().unwrap_or(false)

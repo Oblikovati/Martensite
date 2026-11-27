@@ -1,14 +1,16 @@
 //! A function run on its own thread, with pthread handle semantics:
 //! copies share one thread, and detaching any copy (including by
 //! destroying it) makes the thread unjoinable for all of them.
-use super::event::ManualResetEvent;
+use super::{
+    event::ManualResetEvent,
+    platform_thread::{PlatformJoinHandle, spawn_platform_thread},
+};
 use crate::standard::SharedState;
 use std::{
     sync::{
         Arc, Mutex, MutexGuard,
         atomic::{AtomicI32, AtomicUsize, Ordering},
     },
-    thread::JoinHandle,
     time::Duration,
 };
 
@@ -23,7 +25,7 @@ pub(crate) type ThreadFunction = fn(usize) -> usize;
 
 /// One started thread, shared by the `OsdThread` copies that refer to it.
 struct RunningThread {
-    handle: Mutex<Option<JoinHandle<usize>>>,
+    handle: Mutex<Option<PlatformJoinHandle<usize>>>,
     finished: ManualResetEvent,
 }
 impl RunningThread {
@@ -31,13 +33,13 @@ impl RunningThread {
         function: ThreadEntry,
         argument: usize,
         stack_size: i32,
-    ) -> Option<(Arc<Self>, JoinHandle<usize>)> {
+    ) -> Option<(Arc<Self>, PlatformJoinHandle<usize>)> {
         let running: Arc<RunningThread> = Arc::new(RunningThread {
             handle: Mutex::new(None),
             finished: ManualResetEvent::default(),
         });
         let signal: FinishSignal = FinishSignal(Arc::clone(&running));
-        let spawned = thread_builder(stack_size).spawn(move || {
+        let spawned = spawn_platform_thread(stack_size, move || {
             let _signal: FinishSignal = signal;
             function.invoke(argument)
         });
@@ -47,15 +49,15 @@ impl RunningThread {
         Some((running, handle))
     }
 
-    fn take_joinable(&self) -> Option<JoinHandle<usize>> {
+    fn take_joinable(&self) -> Option<PlatformJoinHandle<usize>> {
         let mut handle = self.handle();
         // pthread_join rejects self-join without consuming the handle.
-        if handle.as_ref()?.thread().id() == std::thread::current().id() {
+        if handle.as_ref()?.is_current_thread() {
             return None;
         }
         handle.take()
     }
-    fn handle(&self) -> MutexGuard<'_, Option<JoinHandle<usize>>> {
+    fn handle(&self) -> MutexGuard<'_, Option<PlatformJoinHandle<usize>>> {
         self.handle
             .lock()
             .unwrap_or_else(|poison| poison.into_inner())
@@ -120,7 +122,7 @@ impl OsdThread {
         if let Some(thread) = self.thread.snapshot()
             && let Some(handle) = thread.handle().as_ref()
         {
-            native::apply_priority(handle, priority);
+            handle.apply_priority(priority);
         }
     }
     /// Detaches the current thread, then stores the function; `thread.set_function(double)`.
@@ -142,8 +144,8 @@ impl OsdThread {
             return false;
         };
         self.thread_id
-            .store(native::thread_id(&handle), Ordering::Release);
-        native::apply_priority(&handle, self.priority.load(Ordering::Acquire));
+            .store(handle.native_thread_id(), Ordering::Release);
+        handle.apply_priority(self.priority.load(Ordering::Acquire));
         *running.handle() = Some(handle);
         *self.thread.write() = Some(running);
         true
@@ -206,7 +208,7 @@ impl OsdThread {
     }
     fn join(&self, thread: &Arc<RunningThread>) -> Option<usize> {
         // A failed join leaves the handle set.
-        let handle: JoinHandle<usize> = thread.take_joinable()?;
+        let handle: PlatformJoinHandle<usize> = thread.take_joinable()?;
         let result: usize = handle.join().ok()?;
         let mut current = self.thread.write();
         if current
@@ -238,20 +240,6 @@ fn join_timeout(milliseconds: i32) -> Duration {
         u64::try_from(milliseconds).unwrap_or(0)
     };
     Duration::from_millis(milliseconds)
-}
-
-#[cfg(windows)]
-fn thread_builder(stack_size: i32) -> std::thread::Builder {
-    let builder: std::thread::Builder = std::thread::Builder::new();
-    match usize::try_from(stack_size) {
-        Ok(size) if size > 0 => builder.stack_size(size),
-        _ => builder,
-    }
-}
-
-#[cfg(not(windows))]
-fn thread_builder(_stack_size: i32) -> std::thread::Builder {
-    std::thread::Builder::new()
 }
 
 impl Clone for OsdThread {

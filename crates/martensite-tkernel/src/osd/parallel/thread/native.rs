@@ -1,6 +1,7 @@
 //! The narrow platform boundary of the thread family: thread identifiers, Windows thread
 //! priority and the online processor count.
 #![allow(unsafe_code)]
+#[cfg(any(unix, windows))]
 use std::thread::JoinHandle;
 
 #[cfg(all(test, unix))]
@@ -93,4 +94,58 @@ mod system_info_tests {
     fn native_processor_query_returns_a_positive_count() {
         assert!(super::online_processors() > 0);
     }
+}
+
+/// WebAssembly thread identity mapped deterministically from `std::thread::ThreadId`
+/// without `thread_local!` (#631).
+#[cfg(not(any(unix, windows)))]
+#[forbid(unsafe_code)]
+pub(crate) fn current_thread_id() -> usize {
+    use std::sync::{Mutex, OnceLock};
+    static IDS: OnceLock<Mutex<Vec<(std::thread::ThreadId, usize)>>> = OnceLock::new();
+    let current = std::thread::current().id();
+    let mut table = IDS
+        .get_or_init(|| Mutex::new(Vec::new()))
+        .lock()
+        .unwrap_or_else(|poison| poison.into_inner());
+    if let Some(&(_, id)) = table.iter().find(|&&(tid, _)| tid == current) {
+        return id;
+    }
+    let next_id = table.len() + 1;
+    table.push((current, next_id));
+    next_id
+}
+
+/// Browser WebAssembly logical processor count from `navigator.hardwareConcurrency`
+/// (falls back to 1 when unavailable) (#631).
+#[cfg(target_arch = "wasm32")]
+#[forbid(unsafe_code)]
+pub(crate) fn online_processors() -> i32 {
+    let pooled = super::super::platform_thread::wasm_worker_pool_size();
+    if pooled > 0 {
+        return i32::try_from(pooled.saturating_add(1)).unwrap_or(i32::MAX);
+    }
+    browser_hardware_concurrency().unwrap_or(1)
+}
+
+#[cfg(target_arch = "wasm32")]
+#[forbid(unsafe_code)]
+fn browser_hardware_concurrency() -> Option<i32> {
+    let global = js_sys::global();
+    let nav = js_sys::Reflect::get(&global, &wasm_bindgen::JsValue::from_str("navigator")).ok()?;
+    let cores = js_sys::Reflect::get(
+        &nav,
+        &wasm_bindgen::JsValue::from_str("hardwareConcurrency"),
+    )
+    .ok()?
+    .as_f64()?;
+    if !cores.is_finite() || cores < 1.0 {
+        return None;
+    }
+    Some((cores.trunc() as u32).clamp(1, i32::MAX as u32) as i32)
+}
+
+#[cfg(not(any(unix, windows, target_arch = "wasm32")))]
+pub(crate) fn online_processors() -> i32 {
+    1
 }

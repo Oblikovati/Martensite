@@ -316,7 +316,11 @@ fn unique_name(template: &[u8]) -> Vec<u8> {
     let mut name: Vec<u8> = temp.to_string_lossy().as_bytes().to_vec();
     name.push(b'/');
     name.extend_from_slice(base);
-    name.extend_from_slice(format!("{:x}{serial:02x}", std::process::id()).as_bytes());
+    #[cfg(target_arch = "wasm32")]
+    let pid: u32 = 0;
+    #[cfg(not(target_arch = "wasm32"))]
+    let pid: u32 = std::process::id();
+    name.extend_from_slice(format!("{pid:x}{serial:02x}").as_bytes());
     name
 }
 

@@ -172,3 +172,15 @@ fn current_thread_handle() -> windows_sys::Win32::Foundation::HANDLE {
 
 #[cfg(all(test, windows))]
 mod pseudo_handle_contracts;
+
+/// Browser WebAssembly and other unsupported targets do not expose OS CPU-time clocks (#631).
+#[cfg(not(any(unix, windows)))]
+pub(super) fn process_cpu() -> (f64, f64) {
+    (0.0, 0.0)
+}
+
+/// Browser WebAssembly and other unsupported targets do not expose per-thread CPU clocks (#631).
+#[cfg(not(any(unix, windows)))]
+pub(super) fn thread_cpu() -> (f64, f64) {
+    (0.0, 0.0)
+}

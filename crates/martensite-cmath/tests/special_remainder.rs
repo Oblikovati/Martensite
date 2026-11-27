@@ -74,3 +74,37 @@ fn remainder_nan_arguments_have_no_payload_or_sign_expectation() {
         }
     }
 }
+
+#[test]
+fn ties_to_even_subnormals_and_extreme_exponents_are_exact() {
+    let min_sub: f64 = f64::from_bits(1);
+    let two_sub: f64 = f64::from_bits(2);
+    let three_sub: f64 = f64::from_bits(3);
+    assert_binary_words(
+        "remainder",
+        remainder,
+        &[
+            // Ties to even across zero, odd, and even quotients.
+            (1.0, 2.0, 1.0f64.to_bits()),
+            (-1.0, 2.0, (-1.0f64).to_bits()),
+            (3.0, 2.0, (-1.0f64).to_bits()),
+            (-3.0, 2.0, 1.0f64.to_bits()),
+            (5.0, 2.0, 1.0f64.to_bits()),
+            (7.0, 2.0, (-1.0f64).to_bits()),
+            // Subnormal ties and exact subnormal outputs.
+            (min_sub, two_sub, min_sub.to_bits()),
+            (three_sub, two_sub, (-min_sub).to_bits()),
+            (-three_sub, two_sub, min_sub.to_bits()),
+            // Maximum binary64 exponent gap (2097 bits).
+            (f64::MAX, min_sub, 0.0f64.to_bits()),
+            (-f64::MAX, min_sub, (-0.0f64).to_bits()),
+            (f64::MAX, f64::MIN_POSITIVE, 0.0f64.to_bits()),
+            // |x| just above |y|/2 at f64::MAX scale.
+            (
+                f64::from_bits(0x7fdf_ffff_ffff_ffff),
+                f64::from_bits(0x7fe0_0000_0000_0000),
+                (-f64::from_bits(1993u64 << 52)).to_bits(),
+            ),
+        ],
+    );
+}

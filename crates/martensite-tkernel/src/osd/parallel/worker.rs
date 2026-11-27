@@ -3,14 +3,12 @@
 use super::{
     event::ManualResetEvent,
     job::{JobRef, standard_program_error},
+    platform_thread::{PlatformJoinHandle, spawn_platform_thread},
 };
 use crate::standard::Failure;
-use std::{
-    sync::{
-        Arc, Mutex, MutexGuard,
-        atomic::{AtomicBool, AtomicI32, Ordering},
-    },
-    thread::JoinHandle,
+use std::sync::{
+    Arc, Mutex, MutexGuard,
+    atomic::{AtomicBool, AtomicI32, Ordering},
 };
 
 /// A pool slot; shared between the pool, the launcher that locked it and its thread.
@@ -22,7 +20,7 @@ pub(super) struct Worker {
     job: Mutex<Option<JobRef>>,
     failure: Mutex<Option<Failure>>,
     shutdown: AtomicBool,
-    handle: Mutex<Option<JoinHandle<()>>>,
+    handle: Mutex<Option<PlatformJoinHandle<()>>>,
     is_self_thread: bool,
 }
 
@@ -100,9 +98,9 @@ impl Worker {
     }
     fn start(self: &Arc<Self>) {
         let worker: Arc<Self> = Arc::clone(self);
-        match std::thread::Builder::new().spawn(move || worker.perform_thread()) {
+        match spawn_platform_thread(0, move || worker.perform_thread()) {
             Ok(handle) => *lock(&self.handle) = Some(handle),
-            Err(error) => self.refuse_job(&error.to_string()),
+            Err(error) => self.refuse_job(&error),
         }
     }
     /// A thread that cannot start would leave the launcher waiting

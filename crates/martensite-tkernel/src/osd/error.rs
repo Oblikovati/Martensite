@@ -89,6 +89,20 @@ impl OsdError {
             self.ext_code = code;
             Err(osd_osd_error(&text))
         }
+        #[cfg(not(any(unix, windows)))]
+        {
+            if self.errno == 0 {
+                return Ok(());
+            }
+            self.ext_code = error_list::ERR_UNKNOWN;
+            let text = format!(
+                "Error ( class={} errno={} ): {}",
+                self.code,
+                self.errno,
+                String::from_utf8_lossy(self.message.as_bytes())
+            );
+            Err(osd_osd_error(&text))
+        }
     }
     /// Returns the recording class, or `None` for a raw code outside `WhoAmI`; `error.who()`.
     pub fn who(&self) -> Option<WhoAmI> {

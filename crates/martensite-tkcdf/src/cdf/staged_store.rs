@@ -11,7 +11,6 @@ use martensite_tkernel::{
 use std::{
     fs, io,
     path::{Path, PathBuf},
-    time::{SystemTime, UNIX_EPOCH},
 };
 
 struct StagedStore {
@@ -134,13 +133,16 @@ fn ensure_destination_writable(destination: &Path) -> io::Result<()> {
 }
 
 fn staging_directory(parent: &Path) -> io::Result<PathBuf> {
-    let timestamp = SystemTime::now().duration_since(UNIX_EPOCH);
-    let nonce = timestamp.map_err(io::Error::other)?.as_nanos();
+    let timestamp = martensite_tkernel::osd::unix_timestamp();
+    let nonce = timestamp
+        .map_err(|error| io::Error::other(error.message().to_string()))?
+        .as_nanos();
+    #[cfg(target_arch = "wasm32")]
+    let pid: u32 = 0;
+    #[cfg(not(target_arch = "wasm32"))]
+    let pid: u32 = std::process::id();
     for attempt in 0..100 {
-        let directory = parent.join(format!(
-            ".martensite-save-{}-{nonce}-{attempt}",
-            std::process::id()
-        ));
+        let directory = parent.join(format!(".martensite-save-{pid}-{nonce}-{attempt}"));
         match private_directory(&directory) {
             Ok(()) => return Ok(directory),
             Err(error) if error.kind() == io::ErrorKind::AlreadyExists => continue,

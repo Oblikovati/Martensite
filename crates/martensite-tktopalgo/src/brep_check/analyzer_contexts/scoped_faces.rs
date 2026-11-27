@@ -2,20 +2,20 @@
 use super::{
     CheckerMap, CylindricalCurveBounds, MapOfShape, Shape, ShapeEnum, check_shape, sub_shapes,
 };
+use martensite_tkernel::osd::Parallel;
 use std::cmp::Reverse;
 use std::num::NonZeroUsize;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering::Relaxed};
-use std::thread::{self, Scope, ScopedJoinHandle};
 
 pub(in super::super) fn run(
     map: &CheckerMap,
     bounds: Option<&CylindricalCurveBounds>,
     worker_limit: NonZeroUsize,
 ) -> Option<()> {
-    let available = thread::available_parallelism()
-        .ok()?
-        .min(worker_limit)
-        .get();
+    let available = usize::try_from(Parallel::nb_logical_processors())
+        .ok()
+        .filter(|&count| count > 0)?
+        .min(worker_limit.get());
     if available < 2 {
         return None;
     }
@@ -102,33 +102,10 @@ struct FaceChecks<'a> {
 
 impl FaceChecks<'_> {
     fn run(&self, worker_limit: usize) -> bool {
-        thread::scope(|scope| {
-            let workers = self.start(scope, worker_limit);
-            for worker in workers {
-                if worker.join().is_err() {
-                    self.failed.store(true, Relaxed);
-                }
-            }
-        });
-        !self.failed.load(Relaxed)
-    }
-
-    fn start<'scope>(
-        &'scope self,
-        scope: &'scope Scope<'scope, '_>,
-        worker_limit: usize,
-    ) -> Vec<ScopedJoinHandle<'scope, ()>> {
-        let mut workers = Vec::with_capacity(worker_limit);
-        for _ in 0..worker_limit {
-            match thread::Builder::new().spawn_scoped(scope, || self.check_faces()) {
-                Ok(worker) => workers.push(worker),
-                Err(_) => {
-                    self.failed.store(true, Relaxed);
-                    break;
-                }
-            }
+        if Parallel::scope_or_pool(worker_limit, |_| self.check_faces()).is_err() {
+            self.failed.store(true, Relaxed);
         }
-        workers
+        !self.failed.load(Relaxed)
     }
 
     fn check_faces(&self) {

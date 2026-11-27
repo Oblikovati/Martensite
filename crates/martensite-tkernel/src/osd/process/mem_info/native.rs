@@ -15,11 +15,18 @@ impl MemInfoSource for NativeMemInfo {
         heap_usage()
     }
     fn proc_status(&self) -> Option<String> {
-        // Reads "/proc/<getpid()>/status"; an unopenable file reads as None.
-        let path: String = format!("/proc/{}/status", std::process::id());
-        std::fs::read(path)
-            .ok()
-            .map(|bytes| String::from_utf8_lossy(&bytes).into_owned())
+        #[cfg(target_arch = "wasm32")]
+        {
+            None
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            // Reads "/proc/<getpid()>/status"; an unopenable file reads as None.
+            let path: String = format!("/proc/{}/status", std::process::id());
+            std::fs::read(path)
+                .ok()
+                .map(|bytes| String::from_utf8_lossy(&bytes).into_owned())
+        }
     }
     fn task_counters(&self) -> Option<(usize, usize, usize)> {
         task_counters()
@@ -35,9 +42,14 @@ fn heap_usage() -> usize {
     // SAFETY: mallinfo2 only reads allocator statistics and returns them by value.
     unsafe { libc::mallinfo2() }.uordblks
 }
-#[cfg(not(all(target_os = "linux", target_env = "gnu")))]
+#[cfg(target_arch = "wasm32")]
 fn heap_usage() -> usize {
-    0 // Without `mallinfo2` the heap counter is 0.
+    // WebAssembly linear memory grows in 64 KiB pages (#631).
+    core::arch::wasm32::memory_size(0).saturating_mul(65_536)
+}
+#[cfg(not(any(all(target_os = "linux", target_env = "gnu"), target_arch = "wasm32")))]
+fn heap_usage() -> usize {
+    0 // Without `mallinfo2` or wasm linear memory query, the heap counter is 0.
 }
 
 #[cfg(target_vendor = "apple")]

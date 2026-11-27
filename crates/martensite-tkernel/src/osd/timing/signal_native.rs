@@ -1,5 +1,6 @@
 //! Narrow platform FFI boundary for the portable parts of signal handling.
 #![allow(unsafe_code)]
+#[cfg(any(unix, windows))]
 use super::SignalState;
 use crate::osd::SignalMode;
 
@@ -231,3 +232,17 @@ pub(super) fn set_signal_handlers(mode: SignalMode) {
     // SAFETY: the handler is a 'static function valid for the process lifetime.
     unsafe { SetConsoleCtrlHandler(Some(console_break_handler), add) };
 }
+
+/// Browser WebAssembly and other non-OS targets have no POSIX signals or FP trap controls (#631).
+#[cfg(not(any(unix, windows)))]
+pub(super) fn set_floating_signal(_enable: bool) {}
+
+/// Browser WebAssembly never catches hardware floating-point traps (#631).
+#[cfg(not(any(unix, windows)))]
+pub(super) fn to_catch_floating_signals() -> bool {
+    false
+}
+
+/// Browser WebAssembly has no OS console or signal handlers (#631).
+#[cfg(not(any(unix, windows)))]
+pub(super) fn set_signal_handlers(_mode: SignalMode) {}

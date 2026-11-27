@@ -9,9 +9,9 @@ use crate::step_basic::{
     StepBasicDateAndTime, StepBasicLocalTime, StepBasicOrganization, StepBasicPerson,
     StepBasicPersonAndOrganization,
 };
+use martensite_tkernel::osd::unix_timestamp;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 /// The identifier, name and first name of the default person and organization.
 const DEFAULT_IDENTITY: &str = "Martensite";
@@ -68,13 +68,7 @@ fn utc_date_time(unix_seconds: u64) -> UtcDateTime {
 
 /// The system clock in UTC.
 fn utc_now() -> Result<UtcDateTime, Failure> {
-    let since_epoch = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_err(|error| {
-            martensite_tkernel::standard::exceptions::program_error(&format!(
-                "the system clock is before 1970-01-01: {error:?}"
-            ))
-        })?;
+    let since_epoch = unix_timestamp()?;
     Ok(utc_date_time(since_epoch.as_secs()))
 }
 

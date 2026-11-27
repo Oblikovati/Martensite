@@ -72,4 +72,27 @@ impl Parallel {
         };
         Launcher::new(pool, nb_threads).perform_iter(items, |_, item| functor(item))
     }
+
+    /// Runs `body(worker_index)` across up to `worker_count` participants on the
+    /// default thread pool, always joining before returning (#631).
+    ///
+    /// When `worker_count <= 1` or the pool is busy, runs `body(0)` on the caller.
+    /// Safe on both native targets and multi-threaded `wasm32` (`+atomics`).
+    ///
+    /// ```
+    /// use martensite_tkernel::osd::Parallel;
+    /// use std::sync::atomic::{AtomicUsize, Ordering};
+    /// let hits = AtomicUsize::new(0);
+    /// Parallel::scope_or_pool(2, |_| { hits.fetch_add(1, Ordering::Relaxed); }).unwrap();
+    /// assert!(hits.load(Ordering::Relaxed) >= 1);
+    /// ```
+    pub fn scope_or_pool(worker_count: usize, body: impl Fn(usize) + Sync) -> Result<(), Failure> {
+        if worker_count <= 1 {
+            body(0);
+            return Ok(());
+        }
+        let max_threads: i32 = i32::try_from(worker_count).unwrap_or(i32::MAX);
+        let launcher: Launcher<'_> = Launcher::new(ThreadPool::default_pool(-1), max_threads);
+        launcher.perform_workers(|thread_index| body(thread_index as usize))
+    }
 }
