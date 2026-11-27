@@ -13,18 +13,18 @@ repository.workspace = true
 workspace = true
 
 [dependencies]
-martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
-martensite-tkernel = { path = "../martensite-tkernel", version = "0.5.0" }
-martensite-tkmath = { path = "../martensite-tkmath", version = "0.4.0" }
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.6" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.5.2" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.4.2" }
 martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.4.0" }
 martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.4.0" }
 martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.4.0" }
 martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.4.0" }
 martensite-tkgeomalgo = { path = "../martensite-tkgeomalgo", version = "0.4.0" }
-martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.5.0" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.5.2" }
 martensite-tkprim = { path = "../martensite-tkprim", version = "0.4.0" }
 martensite-tkshhealing = { path = "../martensite-tkshhealing", version = "0.4.0" }
-martensite-tkbo = { path = "../martensite-tkbo", version = "0.9.0" }
+martensite-tkbo = { path = "../martensite-tkbo", version = "0.9.2" }
 martensite-tkbool = { path = "../martensite-tkbool", version = "0.9.0" }
 
 [dev-dependencies]
@@ -32,9 +32,9 @@ martensite-geometry-raster = { path = "../martensite-geometry-raster", version =
 martensite-process-policy = { path = "../martensite-process-policy", version = "0.4.0", features = ["case-runner"] }
 martensite-raster-core = { path = "../martensite-raster-core", version = "0.7.0" }
 martensite-tkfillet = { path = "../martensite-tkfillet", version = "0.9.0" }
-martensite-tkservice = { path = "../martensite-tkservice", version = "0.5.0" }
+martensite-tkservice = { path = "../martensite-tkservice", version = "0.6.0" }
 martensite-tkv3d = { path = "../martensite-tkv3d", version = "0.8.0" }
-martensite-vulkan = { path = "../martensite-vulkan", version = "0.8.0" }
+martensite-vulkan = { path = "../martensite-vulkan", version = "0.9.0" }
 
 # Test modules share one executable per toolkit to avoid repeated linkage.
 [[test]]

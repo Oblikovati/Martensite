@@ -13,13 +13,13 @@ repository.workspace = true
 workspace = true
 
 [dependencies]
-martensite-tkernel = { path = "../martensite-tkernel", version = "0.5.0" }
-martensite-tkmath = { path = "../martensite-tkmath", version = "0.4.0" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.5.2" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.4.2" }
 martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.4.0" }
 martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.4.0" }
 martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.4.0" }
 martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.4.0" }
-martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.5.0" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.5.2" }
 martensite-tkshhealing = { path = "../martensite-tkshhealing", version = "0.4.0" }
 
 [dev-dependencies]
