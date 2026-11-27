@@ -214,13 +214,6 @@ impl RwPlyPlyWriterContext {
         text.push_str("end_header\n");
         text
     }
-    fn position_text(&self, point: &Point3) -> String {
-        let [x, y, z] = [point.x(), point.y(), point.z()].map(|value| match self.is_double_prec {
-            true => double_precision_text(value),
-            false => single_precision_text(value as f32),
-        });
-        format!("{x} {y} {z}")
-    }
     /// Writes a point with the attributes the header declares; a failure past the declared count;
     /// `writer.write_vertex(&point, &normal, &uv, &color)?`.
     pub fn write_vertex(
@@ -230,26 +223,35 @@ impl RwPlyPlyWriterContext {
         uv: &Vec2<f32>,
         color: &Vec4<u8>,
     ) -> Result<bool, Failure> {
-        if self.output.is_none() {
+        let Some(output) = self.output.as_mut() else {
             return Ok(false);
-        }
-        let mut line = self.position_text(point);
-        if self.has_normals {
+        };
+        let [px, py, pz] =
+            [point.x(), point.y(), point.z()].map(|value| match self.is_double_prec {
+                true => double_precision_text(value),
+                false => single_precision_text(value as f32),
+            });
+        let mut ok = write!(output, "{px} {py} {pz}").is_ok();
+        if ok && self.has_normals {
             let [x, y, z] = [normal.x, normal.y, normal.z].map(single_precision_text);
-            line.push_str(&format!(" {x} {y} {z}"));
+            ok = write!(output, " {x} {y} {z}").is_ok();
         }
-        if self.has_tex_coords {
+        if ok && self.has_tex_coords {
             let [u, v] = [uv.x, uv.y].map(single_precision_text);
-            line.push_str(&format!(" {u} {v}"));
+            ok = write!(output, " {u} {v}").is_ok();
         }
-        if self.has_colors {
-            line.push_str(&format!(" {} {} {}", color.x, color.y, color.z));
+        if ok && self.has_colors {
+            ok = write!(output, " {} {} {}", color.x, color.y, color.z).is_ok();
         }
-        line.push('\n');
-        let is_written = self.write_text(line.as_bytes());
+        if ok {
+            ok = output.write_all(b"\n").is_ok();
+        }
+        if !ok {
+            self.is_good = false;
+        }
         self.nb_verts += 1;
         check_count("vertices", self.nb_verts, self.nb_header_verts)?;
-        Ok(is_written)
+        Ok(ok)
     }
     /// The number of vertices written; `writer.nb_written_vertices()`.
     pub fn nb_written_vertices(&self) -> i32 {
@@ -272,21 +274,28 @@ impl RwPlyPlyWriterContext {
         self.surf_id = surface_id;
     }
     fn write_element(&mut self, indices: &[i32]) -> Result<bool, Failure> {
-        if self.output.is_none() {
+        let Some(output) = self.output.as_mut() else {
             return Ok(false);
+        };
+        let mut ok = write!(output, "{}", indices.len()).is_ok();
+        for &index in indices {
+            if !ok {
+                break;
+            }
+            ok = write!(output, " {}", self.vert_offset + index).is_ok();
         }
-        let mut line = indices.len().to_string();
-        for index in indices {
-            line.push_str(&format!(" {}", self.vert_offset + index));
+        if ok && self.has_surf_id {
+            ok = write!(output, " {}", self.surf_id).is_ok();
         }
-        if self.has_surf_id {
-            line.push_str(&format!(" {}", self.surf_id));
+        if ok {
+            ok = output.write_all(b"\n").is_ok();
         }
-        line.push('\n');
-        let is_written = self.write_text(line.as_bytes());
+        if !ok {
+            self.is_good = false;
+        }
         self.nb_elems += 1;
         check_count("elements", self.nb_elems, self.nb_header_elems)?;
-        Ok(is_written)
+        Ok(ok)
     }
     /// Writes a triangle; a failure past the declared count; `writer.write_triangle(&Vec3::new(0, 1, 2))?`.
     pub fn write_triangle(&mut self, triangle: &Vec3<i32>) -> Result<bool, Failure> {

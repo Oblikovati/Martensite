@@ -196,6 +196,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Changed Booleans (`BOPAlgoBuilder`, `BOPAlgoPaveFiller`, `BRepAlgoAPIBuilderAlgo`) and lofts (`BRepOffsetAPIThruSections`, `BRepFillGenerator`) to be non-destructive by default (`non_destructive: true`, `mutable_input: false`) (#26).
 
+- Optimized hot paths across foundation, geometry, B-rep, meshing, healing, Booleans, fillet/offset, visualization, application framework, and data exchange toolkits against OCCT p95 baselines: stack-allocated spline caches, quadrature tables, and Bernstein/least-squares buffers (`martensite-tkmath`, `martensite-tkg2d`, `martensite-tkg3d`, `martensite-tkgeombase`, `martensite-tkgeomalgo`, `martensite-tktopalgo`), lock-free `shape_type()` and zero-clone `BRepTool` curve queries including lazy-projection `curve_on_surface_by_index` (`martensite-tkbrep`), lock-free `AtomicU8` `MeshLinkKey` and zero-copy 2D `CellFilter` (`martensite-tkernel`, `martensite-tkmesh`), lazy `ReShape::empty_copied` (`martensite-tkshhealing`, `martensite-tkbrep`), read-lock zero-copy `Graphic3dCamera::project` (`martensite-tkservice`), single-lock `TdfLabel::find_child` (`martensite-tklcaf`), and chunked/direct-buffered ASCII STL, OBJ, and PLY writers (`martensite-tkdestl`, `martensite-tkdeobj`, `martensite-tkdeply`).
+
 ### Fixed
 
 - Ran shared Vulkan support controls in one owning test binary, preserving distinct native regressions and worker identities (#471).

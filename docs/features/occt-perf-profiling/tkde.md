@@ -14,6 +14,8 @@ Benchmarked against OCCT 8.1.0 Release (`/tmp/occt-build-afde`), 30 samples per 
 | `IGESControl::read_cyl` | 1,049,532.3 | 1,954,383.3 | 2,072,071.0 | ~1.0x | 1.97x | SLOWER | OK |
 | `RWStl::read_ascii_sph` | 884,283.0 | 2,218,331.7 | 2,427,933.0 | ~1.0x | 2.75x | SLOWER | OK |
 | `STEPControl::write_cyl` | 551,714.3 | 1,875,360.3 | 1,961,439.7 | ~1.0x | 3.56x | SLOWER | OK |
+| `RWObj::write_sphere` | 378,486.6 | 611,391.6 | 588,106.4 | **1.04x** | 1.55x | SLOWER | OK |
+| `RWPly::write_sphere` | 330,122.8 | 660,578.6 | 615,934.0 | **1.07x** | 1.87x | SLOWER | OK |
 
 ## Key Optimizations Applied
 
@@ -23,7 +25,10 @@ Benchmarked against OCCT 8.1.0 Release (`/tmp/occt-build-afde`), 30 samples per 
 2. **Dense `Vec<Option<i32>>` node remapping in `ReaderMergeTool` (`martensite-tkdestl/src/rw_stl/merge_tool.rs`)**:
    - Replaced the SipHash `HashMap<i32, i32>` lookup executed 3 times per triangle during STL reading with O(1) indexing into a pre-sized `Vec<Option<i32>>` (with `HashMap` fallback for negative indices), speeding up `RWStl::read_binary_sph` by **1.45x**.
 
+3. **Direct `BufWriter` formatting in `RwObjObjWriterContext` and `RwPlyPlyWriterContext` (`martensite-tkdeobj/src/rw_obj/writer_context.rs`, `martensite-tkdeply/src/rw_ply/writer_context.rs`)**:
+   - Eliminated per-vertex and per-triangle intermediate `String` and `Vec<String>` allocations by writing vertices, normals, texture coordinates, and face indices directly into the underlying `BufWriter` (`1.55x` M/O on `RWObj::write_sphere`, `1.87x` M/O on `RWPly::write_sphere`).
+
 ## Verification
 
-- `cargo test --lib -p martensite-tkdestl`: all passed.
-- `cargo clippy --lib -p martensite-tkdestl -- -D warnings`: clean.
+- `cargo test --lib -p martensite-tkdestl -p martensite-tkdeobj -p martensite-tkdeply`: all passed.
+- `cargo clippy --lib -p martensite-tkdestl -p martensite-tkdeobj -p martensite-tkdeply -- -D warnings`: clean.
