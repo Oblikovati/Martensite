@@ -154,3 +154,21 @@ fn different_circles_keep_the_generic_route() {
     assert!(certificate.common_carrier().is_none());
     assert_eq!(certificate.contact_count(), 0);
 }
+#[test]
+fn asymmetric_opposite_quarters_certify_disjoint_without_spurious_exceptional_fiber() {
+    let r = 0.2_f64;
+    let r_pos = (2.0_f64 + r) - 2.0_f64;
+    let r_neg = 2.0_f64 - (2.0_f64 - r);
+    // Asymmetric x-axis rounding (origin [2, 0, 2]): quarters 2 and 4 share t=0 in leading terms.
+    let q2 = [[0., r], [-r_neg, r], [-r_neg, 0.]];
+    let q4 = [[0., -r], [r_pos, -r], [r_pos, 0.]];
+    let rep_x = report(curve(&q2, Some(&WEIGHTS)), curve(&q4, Some(&WEIGHTS)), 2);
+    assert!(rep_x.failure().is_none(), "{:?}", rep_x.failure());
+    assert_eq!(rep_x.complete().unwrap().contact_count(), 0);
+    // Asymmetric y-axis rounding (origin [0, 2, 2]): quarters 1 and 3 share t=0 in leading terms.
+    let q1 = [[r, 0.], [r, r_pos], [0., r_pos]];
+    let q3 = [[-r, 0.], [-r, -r_neg], [0., -r_neg]];
+    let rep_y = report(curve(&q1, Some(&WEIGHTS)), curve(&q3, Some(&WEIGHTS)), 2);
+    assert!(rep_y.failure().is_none(), "{:?}", rep_y.failure());
+    assert_eq!(rep_y.complete().unwrap().contact_count(), 0);
+}

@@ -79,12 +79,19 @@ fn externally_touching_circles_refuse() {
     profile.circle(10, [0., 0.], 1., false);
     profile.circle(20, [2., 0.], 1., false);
     profile.select(1, [0., 0.]);
-    // The tangent contact of two distinct circles is not certified by the pair solver:
-    // the proof names the incomplete pair instead of guessing a touching point.
+    // After #619 removed spurious leading-factor common roots in fiber reduction, the pair
+    // solver certifies the exact unauthored tangent contact at (1, 0) instead of failing
+    // with an incomplete pair.
     let failure = refusal(profile);
     assert_eq!(failure.stage, LoopRegionStage::Joins);
     assert!(
-        matches!(failure.cause, LoopRegionCause::PairUnavailable { .. }),
+        matches!(
+            failure.cause,
+            LoopRegionCause::UnexpectedContact {
+                point: [x, y],
+                ..
+            } if (x - 1.0).abs() <= 1e-12 && y.abs() <= 1e-12
+        ),
         "{failure:?}"
     );
 }

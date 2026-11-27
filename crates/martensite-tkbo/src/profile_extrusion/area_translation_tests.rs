@@ -35,3 +35,62 @@ fn translated_decimal_square_uses_exact_represented_width() {
     assert_eq!(result.regions().len(), 1);
     assert!(result.regions()[0].area().encloses(represented_area));
 }
+
+#[test]
+fn translated_circle_certifies_with_analytic_area_across_proof_versions() {
+    let versions = [
+        PlanarProofVersion::CarrierV2,
+        PlanarProofVersion::BernsteinV3,
+        PlanarProofVersion::FilteredBernsteinV4,
+    ];
+    for radius in [0.1, 0.2, 0.3, 0.7] {
+        let diagonal = 2.0_f64.sqrt() * 2.0 * radius;
+        let resolution = Resolution::new(
+            1e-9 * diagonal,
+            1e-4 * diagonal,
+            1e-9,
+            DisplayTolerance {
+                chordal: 0.05,
+                angular: 0.5,
+            },
+            ToleranceCap::Refuse(1e-4 * diagonal),
+        );
+        for origin in [
+            [0., 0., 0.],
+            [2., 0., 2.],
+            [0., 2., 2.],
+            [2., 2., 2.],
+            [-3.7, 5.3, 1.1],
+        ] {
+            let profile = SketchProfile {
+                plane: ProfilePlane {
+                    origin,
+                    ..ProfilePlane::world_xy()
+                },
+                vertices: vec![],
+                curves: vec![ProfileCurve::Circle {
+                    id: ProfileCurveId(6),
+                    center: [0., 0.],
+                    radius,
+                }],
+            };
+            let expected = std::f64::consts::PI * radius * radius;
+            let default = build_planar_regions(&profile, resolution)
+                .unwrap_or_else(|cause| panic!("default r={radius} at {origin:?}: {cause}"));
+            assert_eq!(default.regions().len(), 1);
+            assert!(default.regions()[0].area().encloses(expected));
+            for version in versions {
+                let result = build_planar_regions_with_proof_and_cancel(
+                    &profile,
+                    resolution,
+                    PlanarProofWorkLimit::CurrentDefault,
+                    version,
+                    || false,
+                )
+                .unwrap_or_else(|cause| panic!("{version:?} r={radius} at {origin:?}: {cause}"));
+                assert_eq!(result.regions().len(), 1);
+                assert!(result.regions()[0].area().encloses(expected));
+            }
+        }
+    }
+}
