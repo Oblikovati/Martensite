@@ -294,9 +294,18 @@ impl FontFTFont {
         let width_scale = {
             let mut state = self.state.write();
             state.loaded_glyph = LoadedGlyph::default();
+            state.loaded_rust_glyph = None;
             f64::from(state.width_scaling)
         };
         let font = self.font_for_glyph(glyph)?;
+        if let Some(rust) = font.rust_face(self) {
+            let gid = u16::try_from(glyph.index()).ok()?;
+            if gid >= rust.glyph_count() {
+                return None;
+            }
+            let (single_stroke, _) = font.outline_flags(self);
+            return rust.glyph_outline(gid, width_scale, single_stroke);
+        }
         let face = font.face(self);
         let record = face_rec(face).filter(|f| f.units_per_em != 0)?;
         if i128::from(glyph.index()) >= i128::from(record.num_glyphs) {

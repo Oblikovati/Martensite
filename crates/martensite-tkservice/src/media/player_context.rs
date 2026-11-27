@@ -7,6 +7,7 @@ use martensite_tkernel::standard::{Handle, StandardCondition, StandardTransient}
 use martensite_tkernel::tcollection::AsciiString;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
+#[cfg(not(target_arch = "wasm32"))]
 use std::thread::JoinHandle;
 
 /// `Media_IFrameQueue`: the frames a player fills (implemented by the viewer).
@@ -71,6 +72,7 @@ pub struct MediaPlayerContext {
     /// `myToForceRgb`.
     to_force_rgb: AtomicBool,
     /// `myThread`.
+    #[cfg(not(target_arch = "wasm32"))]
     thread: Mutex<Option<JoinHandle<()>>>,
 }
 martensite_tkernel::impl_transient!(MediaPlayerContext, "Media_PlayerContext", StandardTransient);
@@ -80,14 +82,17 @@ impl Drop for MediaPlayerContext {
     fn drop(&mut self) {
         self.shared.to_shut_down.store(true, Ordering::SeqCst);
         self.shared.wake_event.set();
-        let handle = self
-            .thread
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .take();
-        if let Some(handle) = handle {
-            // A worker panic is already reported by the thread; the player is going away.
-            let _ = handle.join();
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let handle = self
+                .thread
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+                .take();
+            if let Some(handle) = handle {
+                // A worker panic is already reported by the thread; the player is going away.
+                let _ = handle.join();
+            }
         }
     }
 }
@@ -110,12 +115,16 @@ impl MediaPlayerContext {
             next_event: StandardCondition::new(false),
             to_shut_down: AtomicBool::new(false),
         });
-        let worker = shared.clone();
-        let thread = std::thread::spawn(move || do_thread_loop(&worker));
+        #[cfg(not(target_arch = "wasm32"))]
+        let thread = {
+            let worker = shared.clone();
+            Mutex::new(Some(std::thread::spawn(move || do_thread_loop(&worker))))
+        };
         Self {
             shared,
             to_force_rgb: AtomicBool::new(true),
-            thread: Mutex::new(Some(thread)),
+            #[cfg(not(target_arch = "wasm32"))]
+            thread,
         }
     }
     /// `DumpFirstFrame(src, mediaInfo)`: null without FFmpeg (the input does not open);
@@ -145,17 +154,32 @@ impl MediaPlayerContext {
     /// `SetInput`: hands the next input to the worker, waiting for it when asked;
     /// `player.set_input(&path, true)`.
     pub fn set_input(&self, input_path: &AsciiString, to_wait: bool) {
+        #[cfg(target_arch = "wasm32")]
         {
+            let _ = to_wait;
             let mut state = self.shared.lock();
-            if to_wait {
-                self.shared.next_event.reset();
-            }
             state.input_path = input_path.clone();
-            state.play_event = MediaPlayerEvent::Next;
-            self.shared.wake_event.set();
+            state.play_event = MediaPlayerEvent::None;
+            self.shared.next_event.set();
+            Message::send_fail_text(&AsciiString::from(
+                "MediaPlayerContext: native video codecs are unavailable on wasm32",
+            ));
+            return;
         }
-        if to_wait {
-            self.shared.next_event.wait();
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            {
+                let mut state = self.shared.lock();
+                if to_wait {
+                    self.shared.next_event.reset();
+                }
+                state.input_path = input_path.clone();
+                state.play_event = MediaPlayerEvent::Next;
+                self.shared.wake_event.set();
+            }
+            if to_wait {
+                self.shared.next_event.wait();
+            }
         }
     }
     /// `PlaybackState`: (paused, progress, duration); `player.playback_state()`.
@@ -219,6 +243,7 @@ impl MediaPlayerContext {
 
 /// `doThreadLoop`: waits for events; a new input is taken and opened (which fails without
 /// FFmpeg, so no packet is ever decoded); it ends at shut-down.
+#[cfg(not(target_arch = "wasm32"))]
 fn do_thread_loop(shared: &PlayerShared) {
     Osd::set_thread_local_signal(SignalMode::Set, false);
     loop {

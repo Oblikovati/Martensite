@@ -1393,6 +1393,7 @@ martensite-tkernel	Messenger	shareable	immutable value or Send + Sync handle/bui
 martensite-tkernel	MetricType	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkernel	MigrationFile	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkernel	Missing	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkernel	MonotonicInstant	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkernel	Msg	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkernel	MsgFile	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkernel	NamedColor	shareable	immutable value or Send + Sync handle/builder contract
@@ -1544,6 +1545,7 @@ martensite-tkernel	Uuid	shareable	immutable value or Send + Sync handle/builder 
 martensite-tkernel	Vec2	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkernel	Vec3	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkernel	Vec4	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkernel	WasmWorkerPool	thread-confined	owns browser Web Worker handles confined to the Orchestrator Worker realm (#631)
 martensite-tkernel	WeakHandle	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkernel	WeakHandleFieldRef	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkernel	WeakHandleSlotAssignment	shareable	immutable value or Send + Sync handle/builder contract
@@ -4305,8 +4307,21 @@ martensite-tkservice	MediaTimerFields	shareable	immutable value or Send + Sync h
 martensite-tkservice	NullCStructure	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkservice	NullGraphicDriver	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkservice	NullGroup	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	RealmHandle	shareable	checked thread-affinity wrapper via send_wrapper::SendWrapper (#632)
 martensite-tkservice	RevisedState	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkservice	RevisedWriteGuard	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmCanvasTarget	thread-confined	wraps JS OffscreenCanvas or HtmlCanvasElement confined to creating browser realm (#632)
+martensite-tkservice	WasmKeyEvent	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmKeyEventKind	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmKeyModifiers	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmPointerEvent	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmPointerEventKind	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmResizeEvent	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmTouchEvent	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmTouchEventKind	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmTouchPoint	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmWheelDeltaMode	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmWheelEvent	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkservice	WasmWindow	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkservice	WasmWindowFields	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkservice	WlEvent	shareable	immutable value or Send + Sync handle/builder contract

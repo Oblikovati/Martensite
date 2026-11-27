@@ -7,14 +7,16 @@ use super::freetype_ffi::{
 };
 use super::ft_font::{FontFTFont, LoadedGlyph, face_rec};
 use super::ft_font_select::GlyphSelection;
+use super::rust_engine::{LoadedRustGlyph, RustFontFace};
 use crate::image::ImageFormat;
+use std::sync::Arc;
 
 impl GlyphSelection {
     /// The `FT_Face` address and load flags of the font that provides the glyph.
-    fn face_and_flags(&self, this: &FontFTFont) -> (usize, i32) {
+    fn face_and_flags(&self, this: &FontFTFont) -> (usize, Option<Arc<RustFontFace>>, i32) {
         let font = self.provider.as_ref().and_then(|p| p.get()).unwrap_or(this);
         let state = font.state.read();
-        (state.face, state.load_flags)
+        (state.face, state.rust_face.clone(), state.load_flags)
     }
 }
 
@@ -31,16 +33,38 @@ impl FontFTFont {
     pub(crate) fn load_glyph(&self, character: u32) -> bool {
         {
             let state = self.state.read();
-            if state.loaded_glyph.character == character {
+            if let Some(loaded) = state.loaded_rust_glyph {
+                if loaded.character == character {
+                    return true;
+                }
+            } else if state.loaded_glyph.character == character {
                 return state.loaded_glyph.face != 0;
             }
         }
         self.glyph_img.clear();
-        self.state.write().loaded_glyph = LoadedGlyph::default();
+        {
+            let mut state = self.state.write();
+            state.loaded_glyph = LoadedGlyph::default();
+            state.loaded_rust_glyph = None;
+        }
         let Some(selection) = self.select_glyph(character) else {
             return false;
         };
-        let (face, flags) = selection.face_and_flags(self);
+        let (face, rust_face, flags) = selection.face_and_flags(self);
+        if let Some(rust) = rust_face {
+            let Ok(gid) = u16::try_from(selection.index) else {
+                return false;
+            };
+            let advance_x = rust.advance_x_for_glyph(gid);
+            self.state.write().loaded_rust_glyph = Some(LoadedRustGlyph {
+                character,
+                glyph_id: gid,
+                advance_x,
+                has_bitmap: false,
+                ..Default::default()
+            });
+            return true;
+        }
         if !load_glyph_slot(face, selection.index, flags) {
             return false;
         }
@@ -56,11 +80,46 @@ impl FontFTFont {
     /// Example: `font.render_glyph('A' as u32)`.
     pub fn render_glyph(&self, character: u32) -> bool {
         self.glyph_img.clear();
-        self.state.write().loaded_glyph = LoadedGlyph::default();
+        {
+            let mut state = self.state.write();
+            state.loaded_glyph = LoadedGlyph::default();
+            state.loaded_rust_glyph = None;
+        }
         let Some(selection) = self.select_glyph(character) else {
             return false;
         };
-        let (face, flags) = selection.face_and_flags(self);
+        let (face, rust_face, flags) = selection.face_and_flags(self);
+        if let Some(rust) = rust_face {
+            let Ok(gid) = u16::try_from(selection.index) else {
+                return false;
+            };
+            let Some(bmp) = rust.render_glyph(gid) else {
+                return false;
+            };
+            let stored = self.glyph_img.init_wrapper(
+                ImageFormat::Alpha,
+                Some(bmp.data),
+                bmp.width,
+                bmp.height,
+                bmp.width,
+            );
+            if !stored {
+                return false;
+            }
+            self.glyph_img.set_top_down(true);
+            let advance_x = rust.advance_x_for_glyph(gid);
+            self.state.write().loaded_rust_glyph = Some(LoadedRustGlyph {
+                character,
+                glyph_id: gid,
+                advance_x,
+                has_bitmap: true,
+                bitmap_left: bmp.left,
+                bitmap_top: bmp.top,
+                bitmap_width: bmp.width as u32,
+                bitmap_height: bmp.height as u32,
+            });
+            return true;
+        }
         if !load_glyph_slot(face, selection.index, flags | FT_LOAD_RENDER) {
             return false;
         }
