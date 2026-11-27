@@ -98,10 +98,22 @@ pub(crate) fn remainder(numerator: f64, denominator: f64) -> f64 {
 mod differential_tests {
     use super::{FRAC_MASK, remainder};
 
-    fn exact_subnormal_pair_bits(x: f64, y: f64) -> u64 {
+    fn exact_tiny_scaled_int(v: f64) -> u128 {
+        let bits: u64 = v.to_bits() & !super::SIGN_BIT;
+        let exp: u64 = bits >> 52;
+        let frac: u64 = bits & FRAC_MASK;
+        match exp {
+            0 => u128::from(frac),
+            1 => u128::from((1u64 << 52) | frac),
+            2 => u128::from((1u64 << 52) | frac) << 1,
+            _ => unreachable!("exact_tiny_scaled_int only handles |v| < 4 * MIN_POSITIVE"),
+        }
+    }
+
+    fn exact_tiny_pair_bits(x: f64, y: f64) -> u64 {
         let sign_x: u64 = x.to_bits() & super::SIGN_BIT;
-        let a: u128 = u128::from(x.to_bits() & FRAC_MASK);
-        let b: u128 = u128::from(y.to_bits() & FRAC_MASK);
+        let a: u128 = exact_tiny_scaled_int(x);
+        let b: u128 = exact_tiny_scaled_int(y);
         let q: u128 = a / b;
         let r: u128 = a % b;
         let twice_r: u128 = r << 1;
@@ -112,39 +124,41 @@ mod differential_tests {
         };
         if mag == 0 {
             sign_x
-        } else {
+        } else if mag < (1u128 << 52) {
             sign | (mag as u64)
+        } else {
+            sign | (1u64 << 52) | ((mag as u64) & FRAC_MASK)
         }
     }
 
     fn assert_matches_libm(x: f64, y: f64) {
         let actual: f64 = remainder(x, y);
-        // Independently certify all finite subnormal-by-subnormal pairs using exact
-        // integer arithmetic (Windows UCRT `remainder` has a known bug on subnormal
-        // divisors such as `remainder(1e-323, 1.5e-323) == 1e-323` instead of `-5e-324`).
-        if x.is_finite()
-            && y.is_finite()
-            && y != 0.0
-            && x.abs() < f64::MIN_POSITIVE
-            && y.abs() < f64::MIN_POSITIVE
-        {
-            let exact_bits: u64 = exact_subnormal_pair_bits(x, y);
-            assert_eq!(
-                actual.to_bits(),
-                exact_bits,
-                "subnormal oracle remainder({:#018x} ({x:?}), {:#018x} ({y:?})): actual={:#018x}, exact={:#018x}",
-                x.to_bits(),
-                y.to_bits(),
-                actual.to_bits(),
-                exact_bits,
+        let tiny_threshold: f64 = f64::MIN_POSITIVE * 2.0;
+        // Independently certify all finite tiny pairs (subnormals and the lowest normal
+        // binade) using exact `u128` integer arithmetic. Windows UCRT `remainder` has a
+        // known precision bug whenever `0.5 * y` underflows into subnormals
+        // (`|y| < 2 * MIN_POSITIVE`), e.g. `remainder(1e-323, 1.5e-323)` and
+        // `remainder(MIN_POSITIVE, 2 * MIN_POSITIVE - ulp)`.
+        if x.is_finite() && y.is_finite() && y != 0.0 && y.abs() < tiny_threshold {
+            assert!(
+                actual.is_finite() && 2.0 * actual.abs() <= y.abs(),
+                "remainder({x:?}, {y:?}) = {actual:?} violated |r| <= |y|/2"
             );
+            if x.abs() < f64::MIN_POSITIVE * 4.0 {
+                let exact_bits: u64 = exact_tiny_pair_bits(x, y);
+                assert_eq!(
+                    actual.to_bits(),
+                    exact_bits,
+                    "tiny oracle remainder({:#018x} ({x:?}), {:#018x} ({y:?})): actual={:#018x}, exact={:#018x}",
+                    x.to_bits(),
+                    y.to_bits(),
+                    actual.to_bits(),
+                    exact_bits,
+                );
+            }
             if cfg!(windows) {
                 return;
             }
-        }
-        // Windows UCRT also miscomputes `remainder(x, y)` for subnormal `y` when `x` is normal.
-        if cfg!(windows) && y.is_subnormal() {
-            return;
         }
         let expected: f64 = crate::ffi::remainder(x, y);
         if expected.is_nan() {
