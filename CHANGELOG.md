@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-11-27
+
 ### Added
 
 - Added the ASWF OpenPBR Surface v1.1 material model (`OpenPbrMaterial` and its nine parameter groups `OpenPbrBase`, `OpenPbrSpecular`, `OpenPbrTransmission`, `OpenPbrSubsurface`, `OpenPbrCoat`, `OpenPbrFuzz`, `OpenPbrThinFilm`, `OpenPbrEmission`, `OpenPbrGeometry`) with domain validation, 26 calibrated `Graphic3dNameOfMaterial` presets, texture units `Unit5` through `Unit12`, `Graphic3dToneMappingMethod::{AgX, Aces}`, and `Graphic3dRayTracingBackend` in `martensite-tkservice` (#623).

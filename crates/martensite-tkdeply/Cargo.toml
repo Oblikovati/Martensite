@@ -13,19 +13,19 @@ repository.workspace = true
 workspace = true
 
 [dependencies]
-martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
-martensite-tkernel = { path = "../martensite-tkernel", version = "0.5.1" }
-martensite-tkmath = { path = "../martensite-tkmath", version = "0.4.1" }
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.6" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.5.2" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.4.2" }
 martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.4.1" }
 martensite-tklcaf = { path = "../martensite-tklcaf", version = "0.4.1" }
 martensite-tkde = { path = "../martensite-tkde", version = "0.10.0" }
-martensite-tkxcaf = { path = "../martensite-tkxcaf", version = "0.10.0" }
-martensite-tkrwmesh = { path = "../martensite-tkrwmesh", version = "0.14.0" }
+martensite-tkxcaf = { path = "../martensite-tkxcaf", version = "0.11.0" }
+martensite-tkrwmesh = { path = "../martensite-tkrwmesh", version = "0.14.1" }
 
 [dev-dependencies]
 martensite-tkmesh = { path = "../martensite-tkmesh", version = "0.4.1" }
 martensite-tkprim = { path = "../martensite-tkprim", version = "0.4.1" }
-martensite-tkservice = { path = "../martensite-tkservice", version = "0.5.0" }
+martensite-tkservice = { path = "../martensite-tkservice", version = "0.6.0" }
 
 [[test]]
 name = "toolkit"

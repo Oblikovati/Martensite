@@ -13,8 +13,8 @@ repository.workspace = true
 workspace = true
 
 [dependencies]
-martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
-martensite-tkernel = { path = "../martensite-tkernel", version = "0.5.0" }
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.6" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.5.2" }
 
 [[test]]
 name = "toolkit"

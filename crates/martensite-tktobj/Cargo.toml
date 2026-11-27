@@ -13,10 +13,10 @@ repository.workspace = true
 workspace = true
 
 [dependencies]
-martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
-martensite-tkernel = { path = "../martensite-tkernel", version = "0.5.0" }
-martensite-tkmath = { path = "../martensite-tkmath", version = "0.4.0" }
-martensite-tkcdf = { path = "../martensite-tkcdf", version = "0.4.0" }
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.6" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.5.2" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.4.2" }
+martensite-tkcdf = { path = "../martensite-tkcdf", version = "0.4.1" }
 martensite-tklcaf = { path = "../martensite-tklcaf", version = "0.4.0" }
 
 [dev-dependencies]

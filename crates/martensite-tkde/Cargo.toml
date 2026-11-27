@@ -13,7 +13,7 @@ repository.workspace = true
 workspace = true
 
 [dependencies]
-martensite-tkernel = { path = "../martensite-tkernel", version = "0.5.0" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.5.2" }
 martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.4.0" }
 martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.4.0" }
 martensite-tklcaf = { path = "../martensite-tklcaf", version = "0.4.0" }

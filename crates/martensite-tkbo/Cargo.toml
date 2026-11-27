@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-tkbo"
-version = "0.9.1"
+version = "0.9.2"
 description = "Martensite Boolean operations: general fuse, builders, intersection tools, splitting and defeaturing."
 edition.workspace = true
 rust-version.workspace = true
@@ -16,15 +16,15 @@ workspace = true
 x11-integration-tests = ["martensite-raster-core/x11-integration-tests"]
 
 [dependencies]
-martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
-martensite-tkernel = { path = "../martensite-tkernel", version = "0.5.1" }
-martensite-tkmath = { path = "../martensite-tkmath", version = "0.4.1" }
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.6" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.5.2" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.4.2" }
 martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.4.1" }
 martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.4.1" }
 martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.4.1" }
 martensite-tkgeomalgo = { path = "../martensite-tkgeomalgo", version = "0.4.1" }
 martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.4.1" }
-martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.5.1" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.5.2" }
 martensite-tkprim = { path = "../martensite-tkprim", version = "0.4.1" }
 martensite-tkshhealing = { path = "../martensite-tkshhealing", version = "0.4.1" }
 
