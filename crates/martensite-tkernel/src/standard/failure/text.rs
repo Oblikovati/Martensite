@@ -1,4 +1,5 @@
 //! Keep message bytes intact while offering the existing Rust text presentation.
+use std::fmt;
 use std::sync::Arc;
 
 #[derive(Debug, Eq, PartialEq)]
@@ -7,11 +8,25 @@ pub(super) struct NonUtf8Text {
     display: Box<str>,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq)]
 pub(super) enum FailureText {
     /// `None` represents an empty string with zero heap allocation.
     Utf8(Option<Arc<str>>),
     Bytes(Arc<NonUtf8Text>),
+}
+
+impl fmt::Debug for FailureText {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Utf8(None) => f.debug_tuple("Utf8").field(&"").finish(),
+            Self::Utf8(Some(text)) => f.debug_tuple("Utf8").field(text).finish(),
+            Self::Bytes(non_utf8) => f
+                .debug_struct("Bytes")
+                .field("original", &non_utf8.original)
+                .field("display", &non_utf8.display)
+                .finish(),
+        }
+    }
 }
 
 impl FailureText {
