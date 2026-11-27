@@ -99,6 +99,12 @@ pub(in super::super) fn query_caps(
     let mut props2 = vk::PhysicalDeviceProperties2::default().push_next(&mut accel_props);
     // SAFETY: instance and physical device are live; accel_props outlives this query.
     unsafe { instance.get_physical_device_properties2(physical, &mut props2) };
+    // CPU software Vulkan devices (such as Mesa lavapipe) do not offer hardware ray tracing,
+    // and Mesa 26.x lavapipe's emulated LBVH builder faults under CI's SSE2/128-bit LLVMpipe JIT.
+    // Route CPU devices to our deterministic software-BVH compute path tracer (`pathtrace_sw`).
+    if props2.properties.device_type == vk::PhysicalDeviceType::CPU {
+        return HardwareRaytraceCaps::default();
+    }
     HardwareRaytraceCaps {
         supported: true,
         min_as_scratch_alignment: accel_props
