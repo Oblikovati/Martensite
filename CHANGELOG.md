@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed spurious `ExceptionalFiber` refusals during planar-region Bézier pair elimination when the leading `u`-coefficients share a non-constant polynomial factor (such as non-dyadic circles on translated planes where opposite quarter arcs round asymmetrically), allowing `build_planar_regions` to certify translated circles across all proof versions (#619).
+
 ## [0.15.0] - 2026-11-27
 
 ### Added
