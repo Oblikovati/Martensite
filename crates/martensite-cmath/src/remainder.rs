@@ -98,8 +98,54 @@ pub(crate) fn remainder(numerator: f64, denominator: f64) -> f64 {
 mod differential_tests {
     use super::{FRAC_MASK, remainder};
 
+    fn exact_subnormal_pair_bits(x: f64, y: f64) -> u64 {
+        let sign_x: u64 = x.to_bits() & super::SIGN_BIT;
+        let a: u128 = u128::from(x.to_bits() & FRAC_MASK);
+        let b: u128 = u128::from(y.to_bits() & FRAC_MASK);
+        let q: u128 = a / b;
+        let r: u128 = a % b;
+        let twice_r: u128 = r << 1;
+        let (mag, sign) = if twice_r > b || (twice_r == b && (q & 1) == 1) {
+            (b - r, sign_x ^ super::SIGN_BIT)
+        } else {
+            (r, sign_x)
+        };
+        if mag == 0 {
+            sign_x
+        } else {
+            sign | (mag as u64)
+        }
+    }
+
     fn assert_matches_libm(x: f64, y: f64) {
         let actual: f64 = remainder(x, y);
+        // Independently certify all finite subnormal-by-subnormal pairs using exact
+        // integer arithmetic (Windows UCRT `remainder` has a known bug on subnormal
+        // divisors such as `remainder(1e-323, 1.5e-323) == 1e-323` instead of `-5e-324`).
+        if x.is_finite()
+            && y.is_finite()
+            && y != 0.0
+            && x.abs() < f64::MIN_POSITIVE
+            && y.abs() < f64::MIN_POSITIVE
+        {
+            let exact_bits: u64 = exact_subnormal_pair_bits(x, y);
+            assert_eq!(
+                actual.to_bits(),
+                exact_bits,
+                "subnormal oracle remainder({:#018x} ({x:?}), {:#018x} ({y:?})): actual={:#018x}, exact={:#018x}",
+                x.to_bits(),
+                y.to_bits(),
+                actual.to_bits(),
+                exact_bits,
+            );
+            if cfg!(windows) {
+                return;
+            }
+        }
+        // Windows UCRT also miscomputes `remainder(x, y)` for subnormal `y` when `x` is normal.
+        if cfg!(windows) && y.is_subnormal() {
+            return;
+        }
         let expected: f64 = crate::ffi::remainder(x, y);
         if expected.is_nan() {
             assert!(

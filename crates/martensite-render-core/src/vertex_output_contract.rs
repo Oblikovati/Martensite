@@ -87,10 +87,16 @@ impl std::error::Error for VertexOutputFailure {}
 /// Bounded opt-in request tied to original indices and a caller-owned source token.
 pub struct VertexOutputRequest {
     captures: std::sync::Arc<std::sync::atomic::AtomicUsize>,
-    pub(crate) source_token: Option<std::num::NonZeroU64>,
-    pub(crate) indices: Vec<u32>,
+    #[doc(hidden)]
+    #[allow(missing_docs)]
+    pub source_token: Option<std::num::NonZeroU64>,
+    #[doc(hidden)]
+    #[allow(missing_docs)]
+    pub indices: Vec<u32>,
     pub(crate) unique: BTreeSet<u32>,
-    pub(crate) capacity_bytes: usize,
+    #[doc(hidden)]
+    #[allow(missing_docs)]
+    pub capacity_bytes: usize,
     pub(crate) format: VertexOutputFormat,
 }
 impl VertexOutputRequest {
@@ -107,7 +113,9 @@ impl VertexOutputRequest {
             ),
         })
     }
-    pub(crate) fn record_capture(&self) {
+    /// Record one completed backend vertex-output capture; `request.record_capture()`.
+    #[doc(hidden)]
+    pub fn record_capture(&self) {
         self.captures
             .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
@@ -151,7 +159,9 @@ impl VertexOutputRequest {
             format,
         })
     }
-    pub(crate) fn require_actual_indices(&self, bytes: &[u8]) -> Result<(), VertexOutputFailure> {
+    /// Verify uploaded index bytes match the requested index buffer; `request.require_actual_indices(&bytes)?`.
+    #[doc(hidden)]
+    pub fn require_actual_indices(&self, bytes: &[u8]) -> Result<(), VertexOutputFailure> {
         let expected = self
             .indices
             .iter()
