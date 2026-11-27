@@ -23,7 +23,7 @@ martensite-tksolve = { path = "../martensite-tksolve", version = "0.1.0", featur
 [dev-dependencies]
 martensite-tkbo = { path = "../martensite-tkbo", version = "0.9.1" }
 martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.4.1" }
-martensite-tkoffset = { path = "../martensite-tkoffset", version = "0.11.1" }
+martensite-tkoffset = { path = "../martensite-tkoffset" }
 martensite-tkprim = { path = "../martensite-tkprim", version = "0.4.1" }
 martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.5.1" }
 

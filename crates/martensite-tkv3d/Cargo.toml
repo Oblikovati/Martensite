@@ -38,7 +38,7 @@ martensite-tkmesh = { path = "../martensite-tkmesh", version = "0.4.1" }
 martensite-tkhlr = { path = "../martensite-tkhlr", version = "0.4.1" }
 
 [dev-dependencies]
-martensite-tksketch = { path = "../martensite-tksketch", version = "0.1.1" }
+martensite-tksketch = { path = "../martensite-tksketch" }
 martensite-tkbo = { path = "../martensite-tkbo", version = "0.9.1" }
 martensite-test-support = { path = "../martensite-test-support", version = "0.3.6" }
 # Real closed volume fixtures reuse the primitive topology implementation.

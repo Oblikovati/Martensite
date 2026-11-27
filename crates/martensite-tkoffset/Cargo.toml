@@ -29,17 +29,17 @@ martensite-tkbo = { path = "../martensite-tkbo", version = "0.9.1" }
 martensite-tkprim = { path = "../martensite-tkprim", version = "0.4.1" }
 
 [dev-dependencies]
-martensite-tkfeat = { path = "../martensite-tkfeat", version = "0.11.0" }
+martensite-tkfeat = { path = "../martensite-tkfeat" }
 martensite-boolean-cases = { path = "../martensite-boolean-cases", version = "0.9.0" }
 martensite-geometry-raster = { path = "../martensite-geometry-raster", version = "0.8.0" }
 martensite-tkhlr = { path = "../martensite-tkhlr", version = "0.4.1" }
-martensite-tkv3d = { path = "../martensite-tkv3d", version = "0.8.1" }
+martensite-tkv3d = { path = "../martensite-tkv3d" }
 martensite-raster-core = { path = "../martensite-raster-core", version = "0.7.0" }
 martensite-process-policy = { path = "../martensite-process-policy", version = "0.4.0", features = ["case-runner"] }
 martensite-topology-test-support = { path = "../martensite-topology-test-support", version = "0.7.0" }
 martensite-tkmesh = { path = "../martensite-tkmesh", version = "0.4.1" }
 martensite-tkservice = { path = "../martensite-tkservice", version = "0.5.0" }
-martensite-vulkan = { path = "../martensite-vulkan", version = "0.8.0" }
+martensite-vulkan = { path = "../martensite-vulkan" }
 
 # Test modules share one executable per toolkit to avoid repeated linkage.
 [[test]]
