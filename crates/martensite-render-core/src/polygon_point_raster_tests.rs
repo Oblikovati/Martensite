@@ -77,6 +77,7 @@ fn registered_program_draw() -> PrimitiveDraw {
             &martensite_tkservice::graphic3d::Graphic3dShaderProgram::default(),
         ),
         stages: Vec::new(),
+        wgsl: None,
     });
     let mut draw = triangle();
     draw.user_program = Some(std::sync::Arc::new(UserProgramDraw::new(

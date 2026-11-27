@@ -18,7 +18,9 @@ mod uniform_values;
 mod uniform_values_tests;
 pub use frag_color_output::broadcasts_frag_color;
 pub use library::refuse_user_program;
-pub use library::{RenderUserProgramFailure, RenderUserProgramLibrary, UserProgramModules};
+pub use library::{
+    RenderUserProgramFailure, RenderUserProgramLibrary, UserProgramModules, WgslUserProgram,
+};
 pub use program_draw::UserProgramDraw;
 pub use program_variables::program_variables;
 pub use source_key::UserProgramKey;

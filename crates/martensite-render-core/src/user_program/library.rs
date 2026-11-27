@@ -24,6 +24,27 @@ pub enum RenderUserProgramFailure {
         /// The reflected shape that does not fit, with the expected one.
         reason: String,
     },
+    /// A SPIR-V-only user program was submitted to WebGPU, which accepts only WGSL (#635).
+    SpirvUnsupportedOnWebGpu {
+        /// The key of the refused SPIR-V-only program.
+        key: UserProgramKey,
+    },
+    /// A WGSL-only user program was submitted to Vulkan, which expects precompiled SPIR-V (#635).
+    WgslUnsupportedOnVulkan {
+        /// The key of the refused WGSL-only program.
+        key: UserProgramKey,
+    },
+}
+
+/// Registered WGSL source for a WebGPU user shader program (#635).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct WgslUserProgram {
+    /// Complete WGSL shader source module containing vertex and fragment entry points.
+    pub source: Arc<str>,
+    /// Vertex entry-point function name (e.g. `"vs_main"`).
+    pub vertex_entry: Arc<str>,
+    /// Fragment entry-point function name (e.g. `"fs_main"`).
+    pub fragment_entry: Arc<str>,
 }
 
 /// The registered stages of one program and their reflection, in pipeline stage order.
@@ -33,6 +54,8 @@ pub struct UserProgramModules {
     pub key: UserProgramKey,
     /// Reflection and SPIR-V words per stage, vertex first, fragment last.
     pub stages: Vec<(StageReflection, Arc<[u32]>)>,
+    /// Optional WGSL source for WebGPU execution (#635).
+    pub wgsl: Option<WgslUserProgram>,
 }
 
 impl UserProgramModules {
@@ -43,6 +66,10 @@ impl UserProgramModules {
             .iter()
             .find(|(reflection, _)| reflection.stage == stage);
         found.map(|(reflection, _)| reflection)
+    }
+    /// Return the registered WGSL source when present (`#635`).
+    pub fn wgsl(&self) -> Option<&WgslUserProgram> {
+        self.wgsl.as_ref()
     }
 }
 
@@ -67,7 +94,60 @@ impl RenderUserProgramLibrary {
         }
         stages.sort_by_key(|(reflection, _)| reflection.stage);
         validate_stages(key, &stages)?;
-        let entry = Arc::new(UserProgramModules { key, stages });
+        let existing_wgsl = self
+            .programs
+            .read()
+            .unwrap()
+            .get(&key)
+            .and_then(|entry| entry.wgsl.clone());
+        let entry = Arc::new(UserProgramModules {
+            key,
+            stages,
+            wgsl: existing_wgsl,
+        });
+        self.programs.write().unwrap().insert(key, entry);
+        Ok(())
+    }
+
+    /// Register a WGSL shader program for WebGPU under `key` (#635).
+    ///
+    /// Example: `library.insert_wgsl(UserProgramKey::of(&program), wgsl, "vs_main", "fs_main")?`.
+    pub fn insert_wgsl(
+        &self,
+        key: UserProgramKey,
+        source: impl Into<Arc<str>>,
+        vertex_entry: impl Into<Arc<str>>,
+        fragment_entry: impl Into<Arc<str>>,
+    ) -> Result<(), RenderError> {
+        let source = source.into();
+        let vertex_entry = vertex_entry.into();
+        let fragment_entry = fragment_entry.into();
+        if source.trim().is_empty()
+            || vertex_entry.trim().is_empty()
+            || fragment_entry.trim().is_empty()
+        {
+            return Err(invalid(
+                key,
+                "empty WGSL source or entry point; expected non-empty WGSL module with vertex and fragment entry names".into(),
+            ));
+        }
+        let wgsl = WgslUserProgram {
+            source,
+            vertex_entry,
+            fragment_entry,
+        };
+        let existing_stages = self
+            .programs
+            .read()
+            .unwrap()
+            .get(&key)
+            .map(|entry| entry.stages.clone())
+            .unwrap_or_default();
+        let entry = Arc::new(UserProgramModules {
+            key,
+            stages: existing_stages,
+            wgsl: Some(wgsl),
+        });
         self.programs.write().unwrap().insert(key, entry);
         Ok(())
     }
