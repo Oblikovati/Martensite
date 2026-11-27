@@ -15,7 +15,6 @@ mod aspects_style;
 mod attrib_buffer;
 mod bnd_box;
 mod bound_buffer;
-mod bsdf;
 mod buffer;
 mod buffer_members;
 mod bvh_cstructure_set;
@@ -86,7 +85,10 @@ mod material_specs;
 mod material_table;
 mod media_texture;
 mod media_texture_shaders;
-mod pbr_material;
+mod openpbr_material;
+#[cfg(test)]
+mod openpbr_material_tests;
+mod openpbr_validate;
 mod presentation_attributes;
 mod render_enums;
 mod rendering_params;
@@ -149,7 +151,6 @@ pub use aspects_style::{
 pub use attrib_buffer::Graphic3dAttribBuffer;
 pub use bnd_box::{Graphic3dBndBox3d, Graphic3dBndBox4d, Graphic3dBndBox4f};
 pub use bound_buffer::{Graphic3dBoundBuffer, Graphic3dBoundBufferState};
-pub use bsdf::{Graphic3dBsdf, Graphic3dFresnel, Graphic3dFresnelModel};
 pub use buffer::{
     Graphic3dAttribute, Graphic3dBuffer, Graphic3dBufferBase, Graphic3dBufferSource,
     Graphic3dBufferState, Graphic3dTypeOfAttribute, Graphic3dTypeOfData,
@@ -253,7 +254,10 @@ pub use media_texture::{
     Graphic3dMediaFrameLock, Graphic3dMediaFrameSwap, Graphic3dMediaTexture,
     Graphic3dMediaTextureSet, Graphic3dMediaTextureSetCallback, Graphic3dMediaTextureSetFields,
 };
-pub use pbr_material::Graphic3dPbrMaterial;
+pub use openpbr_material::{
+    OpenPbrBase, OpenPbrCoat, OpenPbrEmission, OpenPbrFuzz, OpenPbrGeometry, OpenPbrMaterial,
+    OpenPbrSpecular, OpenPbrSubsurface, OpenPbrThinFilm, OpenPbrTransmission,
+};
 pub use presentation_attributes::{
     Graphic3dPresentationAttributes, Graphic3dPresentationAttributesBase,
     Graphic3dPresentationAttributesFields, Graphic3dPresentationAttributesMembers,

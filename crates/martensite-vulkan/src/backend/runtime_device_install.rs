@@ -7,6 +7,13 @@ impl VulkanRuntime {
         family: u32,
     ) -> Result<(), RenderError> {
         self.device = Some(create_device(self, physical)?);
+        self.hw_raytrace = self.hardware_raytrace_caps.supported.then(|| {
+            super::super::hw_raytrace::device::HardwareRaytraceDevice::new(
+                &self.instance,
+                self.device(),
+                self.hardware_raytrace_caps,
+            )
+        });
         self.depth_bias_command = super::super::depth_bias_device::command(
             &self.instance,
             self.device(),

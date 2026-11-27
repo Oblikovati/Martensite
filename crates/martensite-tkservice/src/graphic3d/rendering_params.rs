@@ -3,9 +3,9 @@
 //! fields like the native one.
 use super::{
     Graphic3dAspectText3d, Graphic3dAspectsEdgeMembers, Graphic3dAspectsMembers,
-    Graphic3dAspectsTextMembers, Graphic3dRenderTransparentMethod, Graphic3dRenderingMode,
-    Graphic3dStereoMode, Graphic3dToneMappingMethod, Graphic3dTransModeFlags,
-    Graphic3dTransformPers, Graphic3dTypeOfShadingModel,
+    Graphic3dAspectsTextMembers, Graphic3dRayTracingBackend, Graphic3dRenderTransparentMethod,
+    Graphic3dRenderingMode, Graphic3dStereoMode, Graphic3dToneMappingMethod,
+    Graphic3dTransModeFlags, Graphic3dTransformPers, Graphic3dTypeOfShadingModel,
 };
 use crate::aspect::{AspectTypeOfDisplayText, AspectTypeOfTriedronPosition};
 use crate::font::{FontFontAspect, FontHinting};
@@ -184,6 +184,20 @@ pub struct Graphic3dRayTracingParams {
     pub exposure: f32,
     /// `WhitePoint`.
     pub white_point: f32,
+    /// Ray tracing compute execution backend (`AutoPreferHardware`, `HardwareRayQuery`, `SoftwareComputeBvh`).
+    pub backend: Graphic3dRayTracingBackend,
+    /// Enables the SVGF / A-trous spatiotemporal denoiser during interactive path tracing.
+    pub denoiser_enabled: bool,
+    /// Number of A-trous wavelet filter iterations (clamped to `[0, 5]` by the renderer).
+    pub denoiser_atrous_iterations: i32,
+    /// Temporal EMA blend factor for SVGF reprojection in `(0, 1]`.
+    pub denoiser_temporal_alpha: f32,
+    /// Enables hardware `rayQueryEXT` shadows during OpenPBR rasterization.
+    pub hybrid_shadows: bool,
+    /// Enables 1-bounce hardware `rayQueryEXT` reflections during OpenPBR rasterization.
+    pub hybrid_reflections: bool,
+    /// Maximum specular roughness that traces hybrid RT reflections before falling back to HDR IBL.
+    pub hybrid_reflection_max_roughness: f32,
 }
 
 impl Default for Graphic3dRayTracingParams {
@@ -213,6 +227,13 @@ impl Default for Graphic3dRayTracingParams {
             tone_mapping_method: Graphic3dToneMappingMethod::Disabled,
             exposure: 0.0,
             white_point: 1.0,
+            backend: Graphic3dRayTracingBackend::AutoPreferHardware,
+            denoiser_enabled: true,
+            denoiser_atrous_iterations: 4,
+            denoiser_temporal_alpha: 0.1,
+            hybrid_shadows: false,
+            hybrid_reflections: false,
+            hybrid_reflection_max_roughness: 0.35,
         }
     }
 }

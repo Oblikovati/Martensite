@@ -15,7 +15,7 @@ use martensite_tklcaf::tdf::{
     TdfAttribute, TdfAttributeBase, TdfAttributeState, TdfRelocationTable,
 };
 use martensite_tkservice::graphic3d::{
-    Graphic3dAlphaMode, Graphic3dPbrMaterial, Graphic3dTypeOfBackfacingModel,
+    Graphic3dAlphaMode, Graphic3dTypeOfBackfacingModel, OpenPbrMaterial,
 };
 use martensite_tkservice::json_dump::{class_begin, field_dumped, field_integer, field_real};
 use std::io;
@@ -253,7 +253,7 @@ impl XCAFDocVisMaterial {
         let mut pbr = XCAFDocVisMaterialPbr {
             base_color_texture: common.diffuse_texture.clone(),
             metallic: metallic_of(common),
-            roughness: Graphic3dPbrMaterial::roughness_from_specular(
+            roughness: OpenPbrMaterial::roughness_from_specular(
                 common.specular_color,
                 f64::from(common.shininess),
             ),
@@ -269,7 +269,7 @@ impl XCAFDocVisMaterial {
 /// The metalness of a common definition: from its specular color when opaque, else 0.
 pub(super) fn metallic_of(common: &XCAFDocVisMaterialCommon) -> f32 {
     if common.transparency <= short_real_epsilon() {
-        Graphic3dPbrMaterial::metallic_from_specular(common.specular_color)
+        OpenPbrMaterial::metallic_from_specular(common.specular_color)
     } else {
         0.0
     }

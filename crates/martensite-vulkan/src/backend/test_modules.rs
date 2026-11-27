@@ -58,5 +58,3 @@ mod encoded_resolve_gpu_tests;
 
 #[cfg(test)]
 mod colorless_resolve_gpu_tests;
-#[cfg(all(test, target_os = "linux"))]
-mod raytrace_pixel_control;

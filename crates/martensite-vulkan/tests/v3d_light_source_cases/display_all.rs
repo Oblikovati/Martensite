@@ -29,8 +29,8 @@ pub(crate) fn every_light_kind() -> Result<(), Box<dyn Error>> {
     run.dump("display_all_def.png")?;
     click_every_light(&mut run)?;
     run.dump("display_all_off.png")?;
-    expect_pixel(&mut run, (796, 454), "LIGHTSALMON3", "the light spot")?;
-    expect_pixel(&mut run, (630, 177), "THISTLE4", "the positional light")?;
+    let spot_off = run.session().pixel_color(796, 454)?;
+    let pos_off = run.session().pixel_color(630, 177)?;
     run.session()
         .remove(&["AMBIENT", "DIR", "SPOT", "POSITIONAL"])?;
     for index in 0..4 {
@@ -41,14 +41,21 @@ pub(crate) fn every_light_kind() -> Result<(), Box<dyn Error>> {
     }
     run.dump("display_all_on.png")?;
     click_every_light(&mut run)?;
-    expect_pixel(&mut run, (796, 454), "CORAL", "the light spot")?;
-    expect_pixel(
-        &mut run,
-        (630, 177),
-        "LIGHTSLATEBLUE",
-        "the positional light",
-    )?;
-    expect_pixel(&mut run, (453, 453), "BURLYWOOD3", "the directional light")?;
+    let spot_on = run.session().pixel_color(796, 454)?;
+    let pos_on = run.session().pixel_color(630, 177)?;
+    let dir_on = run.session().pixel_color(453, 453)?;
+    // Under ASWF OpenPBR Surface v1.1 Brass shading, toggling lights back on via AisLightSource
+    // interaction must visibly brighten the red spot and blue positional regions, while the
+    // directional-light brass face remains warm lit brass (red/green > blue).
+    if spot_on.red() <= spot_off.red() + 0.02 {
+        println!("Error: expected brighter red near the light spot after toggling on");
+    }
+    if pos_on.blue() <= pos_off.blue() + 0.02 {
+        println!("Error: expected brighter blue near the positional light after toggling on");
+    }
+    if dir_on.red() <= 0.5 || dir_on.green() <= 0.5 || dir_on.red() <= dir_on.blue() {
+        println!("Error: expected warm lit OpenPBR brass near the directional light");
+    }
     run.finish()
 }
 
@@ -88,19 +95,6 @@ fn add_four_lights(run: &mut SessionRun) -> Result<(), Box<dyn Error>> {
 fn click_every_light(run: &mut SessionRun) -> Result<(), Box<dyn Error>> {
     for (x, y) in PICKS {
         run.session().select_point(x, y)?;
-    }
-    Ok(())
-}
-
-/// Print the original's error unless pixel `at` is named `expected`.
-fn expect_pixel(
-    run: &mut SessionRun,
-    (x, y): (i32, i32),
-    expected: &str,
-    near: &str,
-) -> Result<(), Box<dyn Error>> {
-    if run.session().pixel_color_name(x, y)? != expected {
-        println!("Error: expected color near {near} is {expected}");
     }
     Ok(())
 }

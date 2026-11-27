@@ -1,17 +1,14 @@
-//! Initial environment contents: the shared EnvLUT texels and GlPBREnvironment::clear.
+//! Initial OpenPBR environment upload: precomputed multi-scatter / sheen / thin-film LUTs and
+//! cleared diffuse SH / HDR specular cube map.
 use super::super::{
     buffer::DeviceBuffer, memory_selection::HostBufferAccess, submission::CommandSubmission,
 };
 use super::image::EnvironmentImage;
 use crate::RenderError;
+use crate::openpbr_luts::cached_openpbr_luts;
 use ash::vk;
 
-/// Textures_EnvLUT (generated ahead of time): 128x128 RG32F
-/// little-endian texels, row 0 first, uploaded unchanged as GlView does.
-const ENV_LUT_TEXELS: &[u8] = include_bytes!("env_lut.bin");
-
-/// `GlPBREnvironment::clear` with colour (1, 1, 1): the diffuse SH map keeps only the
-/// constant coefficient (texel 0 cleared to the colour, texels 1-8 to (0, 0, 0, 1)).
+/// Cleared diffuse SH map: constant term `color`, higher bands `(0, 0, 0, 1)`.
 pub(super) fn cleared_diffuse_sh(color: [f32; 3]) -> Vec<u8> {
     let first = [color[0], color[1], color[2], 1.];
     std::iter::once(first)
@@ -21,34 +18,44 @@ pub(super) fn cleared_diffuse_sh(color: [f32; 3]) -> Vec<u8> {
         .collect()
 }
 
-/// The images to fill and the cleared colour; `EnvironmentUpload { .. }.record(..)`.
 pub(super) struct EnvironmentUpload<'a> {
-    pub lut: &'a EnvironmentImage,
+    pub ggx_lut: &'a EnvironmentImage,
     pub diffuse_sh: &'a EnvironmentImage,
     pub specular: &'a EnvironmentImage,
+    pub dielectric_lut: &'a EnvironmentImage,
+    pub sheen_lut: &'a EnvironmentImage,
+    pub thin_film_lut: &'a EnvironmentImage,
     pub color: [f32; 3],
 }
+
 impl EnvironmentUpload<'_> {
-    /// Stage, copy and clear, then publish every image to fragment sampling; the staging
-    /// buffers are returned so they outlive the submission. Example: `upload.submit(&runtime)?`.
     pub fn submit(
         &self,
         runtime: &std::sync::Arc<super::super::runtime::VulkanRuntime>,
-    ) -> Result<(CommandSubmission, [DeviceBuffer; 2]), RenderError> {
-        let lut = staging(runtime, ENV_LUT_TEXELS)?;
-        let sh = staging(runtime, &cleared_diffuse_sh(self.color))?;
+    ) -> Result<(CommandSubmission, [DeviceBuffer; 5]), RenderError> {
+        let luts = cached_openpbr_luts();
+        let buffers = [
+            staging(runtime, &luts.ggx_rg16f)?,
+            staging(runtime, &cleared_diffuse_sh(self.color))?,
+            staging(runtime, &luts.dielectric_rg16f)?,
+            staging(runtime, &luts.sheen_r16f)?,
+            staging(runtime, &luts.thin_film_rgba16f)?,
+        ];
         let submission = CommandSubmission::new(runtime)?;
-        self.record(runtime.device(), submission.command, lut.handle, sh.handle);
-        Ok((submission, [lut, sh]))
+        let handles = buffers.each_ref().map(|b| b.handle);
+        self.record(runtime.device(), submission.command, handles);
+        Ok((submission, buffers))
     }
-    fn record(
-        &self,
-        device: &ash::Device,
-        command: vk::CommandBuffer,
-        lut: vk::Buffer,
-        sh: vk::Buffer,
-    ) {
-        let images = [self.lut, self.diffuse_sh, self.specular];
+
+    fn record(&self, device: &ash::Device, command: vk::CommandBuffer, staging: [vk::Buffer; 5]) {
+        let images = [
+            self.ggx_lut,
+            self.diffuse_sh,
+            self.specular,
+            self.dielectric_lut,
+            self.sheen_lut,
+            self.thin_film_lut,
+        ];
         barrier(
             device,
             command,
@@ -56,8 +63,11 @@ impl EnvironmentUpload<'_> {
             vk::ImageLayout::UNDEFINED,
             vk::ImageLayout::TRANSFER_DST_OPTIMAL,
         );
-        copy_level0(device, command, lut, self.lut);
-        copy_level0(device, command, sh, self.diffuse_sh);
+        copy_level0(device, command, staging[0], self.ggx_lut);
+        copy_level0(device, command, staging[1], self.diffuse_sh);
+        copy_level0(device, command, staging[2], self.dielectric_lut);
+        copy_level0(device, command, staging[3], self.sheen_lut);
+        copy_level0(device, command, staging[4], self.thin_film_lut);
         let clear = vk::ClearColorValue {
             float32: [self.color[0], self.color[1], self.color[2], 1.],
         };
@@ -81,6 +91,7 @@ impl EnvironmentUpload<'_> {
         );
     }
 }
+
 fn staging(
     runtime: &std::sync::Arc<super::super::runtime::VulkanRuntime>,
     bytes: &[u8],
@@ -94,6 +105,7 @@ fn staging(
     buffer.write(bytes)?;
     Ok(buffer)
 }
+
 fn copy_level0(
     device: &ash::Device,
     command: vk::CommandBuffer,
@@ -109,7 +121,7 @@ fn copy_level0(
         .image_extent(vk::Extent3D {
             width: image.spec.width,
             height: image.spec.height,
-            depth: 1,
+            depth: image.spec.depth,
         });
     // SAFETY: the command buffer is recording on this thread and every handle it names outlives the submission.
     unsafe {
@@ -122,6 +134,7 @@ fn copy_level0(
         );
     }
 }
+
 fn barrier(
     device: &ash::Device,
     command: vk::CommandBuffer,
@@ -137,6 +150,7 @@ fn barrier(
     // SAFETY: the command buffer is recording on this thread and every handle it names outlives the submission.
     unsafe { device.cmd_pipeline_barrier2(command, &dependency) };
 }
+
 fn layout_barrier(
     image: &EnvironmentImage,
     old: vk::ImageLayout,
@@ -156,11 +170,12 @@ fn layout_barrier(
         .dst_stage_mask(destination_stage)
         .dst_access_mask(destination_access)
 }
+
 fn layout_access(layout: vk::ImageLayout) -> (vk::PipelineStageFlags2, vk::AccessFlags2) {
     match layout {
         vk::ImageLayout::UNDEFINED => (vk::PipelineStageFlags2::NONE, vk::AccessFlags2::NONE),
         vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL => (
-            vk::PipelineStageFlags2::FRAGMENT_SHADER,
+            vk::PipelineStageFlags2::FRAGMENT_SHADER | vk::PipelineStageFlags2::COMPUTE_SHADER,
             vk::AccessFlags2::SHADER_SAMPLED_READ,
         ),
         _ => (
@@ -169,9 +184,11 @@ fn layout_access(layout: vk::ImageLayout) -> (vk::PipelineStageFlags2, vk::Acces
         ),
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
     fn cleared_sh_keeps_only_the_constant_coefficient() {
         let bytes = cleared_diffuse_sh([1., 1., 1.]);
@@ -182,16 +199,5 @@ mod tests {
         assert_eq!(texels.len(), 36);
         assert_eq!(&texels[..4], &[1., 1., 1., 1.]);
         assert!(texels[4..].chunks(4).all(|t| t == [0., 0., 0., 1.]));
-    }
-    #[test]
-    fn env_lut_holds_the_native_table() {
-        assert_eq!(ENV_LUT_TEXELS.len(), 128 * 128 * 8);
-        let value =
-            |i: usize| f32::from_le_bytes(ENV_LUT_TEXELS[4 * i..4 * i + 4].try_into().unwrap());
-        // First texels of Textures_EnvLUT: 0, 0, 0.0382714, 0.949235.
-        assert_eq!(
-            [value(0), value(1), value(2), value(3)],
-            [0., 0., 0.0382714, 0.949235]
-        );
     }
 }

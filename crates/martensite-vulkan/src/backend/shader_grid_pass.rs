@@ -172,6 +172,7 @@ impl GridFixedState {
         }
     }
     /// The same state writing depth: the ray-tracing quad stores its hit depth.
+    #[allow(dead_code)]
     pub fn with_depth_write(mut self) -> Self {
         self.depth = self.depth.depth_write_enable(true);
         self

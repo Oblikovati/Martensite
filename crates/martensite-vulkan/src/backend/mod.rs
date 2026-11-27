@@ -29,6 +29,7 @@ mod rgb_readback;
 pub(crate) mod upload_memo;
 pub(crate) use frame_readback::{CapturePlanes, FrameReadback};
 pub(crate) use frame_work_ledger::{FrameWorkLedger, WorkPhase};
+mod hw_raytrace;
 mod image_memory;
 mod layer_depth_policy;
 mod line_clip_device;
@@ -45,28 +46,7 @@ mod owned_frame_submission;
 mod owned_window_submission;
 mod portability_admission;
 mod portability_runtime;
-mod raytrace_adaptive;
-mod raytrace_adaptive_record;
-mod raytrace_environment;
-mod raytrace_fsaa;
-mod raytrace_fsaa_record;
-#[cfg(feature = "raytrace-hit-diagnostics")]
-mod raytrace_hit_control;
-#[cfg(feature = "raytrace-hit-diagnostics")]
-mod raytrace_hit_frame;
-#[cfg(feature = "raytrace-hit-diagnostics")]
-mod raytrace_hit_records;
-#[cfg(feature = "raytrace-hit-diagnostics")]
-mod raytrace_hit_scene;
-#[cfg(feature = "raytrace-hit-diagnostics")]
-mod raytrace_hit_scope;
-mod raytrace_image;
-#[cfg(feature = "raytrace-input-diagnostics")]
-mod raytrace_input_diagnostic;
 mod raytrace_pass;
-mod raytrace_pathtrace;
-mod raytrace_pipeline;
-mod raytrace_resources;
 mod renderer_close;
 mod retained_submission;
 mod retirement_attempt;
@@ -292,6 +272,32 @@ impl VulkanRenderer {
     ) -> Result<Vec<String>, crate::RenderValidationObservationFailure> {
         self.runtime.validation.errors()
     }
+    /// Reports whether the active Vulkan device supports hardware `VK_KHR_ray_query` & BLAS/TLAS.
+    pub fn has_hardware_ray_tracing(&self) -> bool {
+        self.runtime.hw_raytrace.is_some()
+    }
+    /// Runs the GPU HDR tone-mapping compute shader (`tonemap.comp`) on linear `hdr_rgba` pixels
+    /// and returns sRGB-encoded RGBA8 bytes.
+    pub fn tonemap_hdr(
+        &self,
+        width: u32,
+        height: u32,
+        hdr_rgba: &[[f32; 4]],
+        method: martensite_tkservice::graphic3d::Graphic3dToneMappingMethod,
+        exposure: f32,
+        white_point: f32,
+    ) -> Result<Vec<u8>, RenderError> {
+        self.runtime.lifecycle.admit("tonemap hdr image")?;
+        hw_raytrace::run_standalone_tonemap(
+            &self.runtime,
+            &self.raytrace_pipelines,
+            (width, height),
+            hdr_rgba,
+            method,
+            exposure,
+            white_point,
+        )
+    }
 }
 mod attachment_coordinates;
 mod attachment_orientation;
@@ -497,11 +503,6 @@ impl VulkanRenderer {
         pipeline.use_frame_pbr_environment(None)?;
         pipeline.use_frame_shadow_maps(None)?;
         let mut resources = created?;
-        let raytrace_cube = environment
-            .background
-            .as_ref()
-            .map(|(cube, _)| cube.clone())
-            .or_else(|| environment.raytrace_cube.clone());
         resources.background = environment
             .background
             .map(|background| {
@@ -531,19 +532,20 @@ impl VulkanRenderer {
         }
         resources.grid =
             shader_grid_pass::prepare_grid(&self.runtime, &self.grid_pipelines, frame, &resources)?;
-        resources.raytrace = raytrace_pass::prepare_raytrace(
-            &self.runtime,
-            &self.raytrace_pipelines,
-            frame,
-            (
-                &resources,
-                raytrace_pass::RaytraceImageSources {
-                    pipelines: &self.pipeline,
-                    retirements: &self.retirements,
-                    cube: raytrace_cube,
-                },
-            ),
-        )?;
+        resources.raytrace = if frame.raytrace.is_some() {
+            let pbr_env = match environment.pbr.clone() {
+                Some(env) => env,
+                None => self.pipeline.pbr_environment(&self.runtime)?,
+            };
+            raytrace_pass::prepare_raytrace(
+                &self.runtime,
+                &self.raytrace_pipelines,
+                frame,
+                (&resources, raytrace_pass::RaytraceImageSources { pbr_env }),
+            )?
+        } else {
+            None
+        };
         self.runtime
             .image_memory
             .sample_frame(resources.attachment_bytes());
@@ -634,7 +636,6 @@ mod raster_limits;
 mod raster_pipeline_policy;
 mod raster_policy_device;
 mod raster_samples;
-mod raytrace_scene_images;
 mod raytrace_texture_indexing;
 mod render_target_record;
 mod sampled_surface_image;

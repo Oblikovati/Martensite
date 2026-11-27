@@ -165,5 +165,18 @@ fn ray_tracing_numbers(r: &Graphic3dRayTracingParams) -> Vec<(&'static str, Numb
         ("ToneMappingMethod", Int(r.tone_mapping_method as i32)),
         ("Exposure", real(r.exposure)),
         ("WhitePoint", real(r.white_point)),
+        ("RayTracingBackend", Int(r.backend as i32)),
+        ("DenoiserEnabled", flag(r.denoiser_enabled)),
+        (
+            "DenoiserAtrousIterations",
+            Int(r.denoiser_atrous_iterations),
+        ),
+        ("DenoiserTemporalAlpha", real(r.denoiser_temporal_alpha)),
+        ("HybridShadows", flag(r.hybrid_shadows)),
+        ("HybridReflections", flag(r.hybrid_reflections)),
+        (
+            "HybridReflectionMaxRoughness",
+            real(r.hybrid_reflection_max_roughness),
+        ),
     ]
 }

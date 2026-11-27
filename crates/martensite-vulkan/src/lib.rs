@@ -290,8 +290,15 @@ pub use mesh_edges::{RenderMeshEdgePipeline, RenderMeshEdges};
 
 mod material;
 mod material_components;
+pub mod openpbr_env_cdf;
+pub mod openpbr_luts;
+mod openpbr_material;
+pub mod openpbr_math;
 pub use material::{RenderMaterial, RenderMaterialColorSpace};
-pub use material_components::{RenderMaterialCommon, RenderMaterialPbr};
+pub use material_components::RenderMaterialCommon;
+pub use openpbr_material::{
+    OpenPbrGpuMaterial, OpenPbrTextureIndices, lobe_flags as openpbr_lobe_flags,
+};
 
 mod light_snapshot;
 pub use light_snapshot::RenderLightSet;

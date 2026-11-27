@@ -39,7 +39,7 @@ fn emit(key: &str, material: &RenderMaterial) {
     let bits: Vec<u32> = material
         .packed_common()
         .into_iter()
-        .chain(material.packed_pbr())
+        .chain(material.packed_openpbr())
         .flatten()
         .map(f32::to_bits)
         .collect();
@@ -54,8 +54,8 @@ fn initialized(rank: usize, linear: bool, alias: bool, modified: bool) -> Render
         front.set_color(color([0.125, 0.5, 0.875])).unwrap();
     }
     let mut packed = RenderMaterial::default();
-    packed.pbr[0].params = [7., 8., 9., 10.];
-    packed.pbr[1].params = [11., 12., 13., 14.];
+    packed.openpbr[0].base_color_weight = [7., 8., 9., 10.];
+    packed.openpbr[1].base_color_weight = [11., 12., 13., 14.];
     let space = if linear {
         Space::Linear
     } else {

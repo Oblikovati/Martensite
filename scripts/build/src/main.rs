@@ -42,6 +42,7 @@ mod release_scope;
 mod release_sources;
 mod release_test_inputs;
 mod report;
+mod shaders;
 mod source_sdk;
 mod suite_weights;
 mod targets;

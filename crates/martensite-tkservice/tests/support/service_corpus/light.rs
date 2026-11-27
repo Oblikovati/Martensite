@@ -1,6 +1,6 @@
 //! Graphic3d_CLight and Graphic3d_LightSet.
+use super::common::vec4 as vec4f;
 use super::common::{Reader, dir, end, flag, int, pnt, real, text};
-use super::pbr::vec4 as vec4f;
 use super::print::Output;
 use super::print::show;
 use super::tried;

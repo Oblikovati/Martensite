@@ -52,19 +52,35 @@ pub enum Graphic3dTextureUnit {
     PbrIblSpecular = -1,
 }
 impl Graphic3dTextureUnit {
-    /// Obsolete alias `Graphic3d_TextureUnit_BaseColor` of [`Self::Unit0`].
+    /// OpenPBR base color map (`Unit0`).
     pub const BASE_COLOR: Self = Self::Unit0;
-    /// Obsolete alias `Graphic3d_TextureUnit_Emissive` of [`Self::Unit1`].
+    /// OpenPBR emission color map (`Unit1`).
     pub const EMISSIVE: Self = Self::Unit1;
-    /// Obsolete alias `Graphic3d_TextureUnit_Occlusion` of [`Self::Unit2`].
+    /// Ambient occlusion map (`Unit2`).
     pub const OCCLUSION: Self = Self::Unit2;
-    /// Obsolete alias `Graphic3d_TextureUnit_Normal` of [`Self::Unit3`].
+    /// Base normal map (`Unit3`).
     pub const NORMAL: Self = Self::Unit3;
-    /// Obsolete alias `Graphic3d_TextureUnit_MetallicRoughness` of [`Self::Unit4`].
+    /// Packed metallic (B) and roughness (G) map (`Unit4`).
     pub const METALLIC_ROUGHNESS: Self = Self::Unit4;
-    /// Obsolete alias `Graphic3d_TextureUnit_EnvMap` of [`Self::Unit0`].
+    /// OpenPBR specular color / F82 tint map (`Unit5`).
+    pub const SPECULAR_COLOR: Self = Self::Unit5;
+    /// OpenPBR coat weight (R) and coat roughness (G) map (`Unit6`).
+    pub const COAT_WEIGHT_ROUGHNESS: Self = Self::Unit6;
+    /// OpenPBR coat normal map (`Unit7`).
+    pub const COAT_NORMAL: Self = Self::Unit7;
+    /// OpenPBR transmission weight / color map (`Unit8`).
+    pub const TRANSMISSION: Self = Self::Unit8;
+    /// OpenPBR subsurface color map (`Unit9`).
+    pub const SUBSURFACE_COLOR: Self = Self::Unit9;
+    /// OpenPBR fuzz color / weight map (`Unit10`).
+    pub const FUZZ: Self = Self::Unit10;
+    /// OpenPBR thin-film weight (R) and thickness (G) map (`Unit11`).
+    pub const THIN_FILM: Self = Self::Unit11;
+    /// OpenPBR anisotropy strength and tangent direction map (`Unit12`).
+    pub const ANISOTROPY_TANGENT: Self = Self::Unit12;
+    /// Legacy alias `Graphic3d_TextureUnit_EnvMap` of [`Self::Unit0`].
     pub const ENV_MAP: Self = Self::Unit0;
-    /// Obsolete alias `Graphic3d_TextureUnit_PointSprite` of [`Self::Unit1`].
+    /// Legacy alias `Graphic3d_TextureUnit_PointSprite` of [`Self::Unit1`].
     pub const POINT_SPRITE: Self = Self::Unit1;
 }
 /// `Graphic3d_TextureUnit_NB`. (`Graphic3d_TextureUnit_NB`)
@@ -72,22 +88,39 @@ pub const GRAPHIC3D_TEXTURE_UNIT_NB: i32 = 16;
 
 /// Standard texture units combination bits.
 ///
-/// Native enumeration `Graphic3d_TextureSetBits` (`Graphic3d_TextureSetBits.hxx`).
+/// Native enumeration `Graphic3d_TextureSetBits` (`Graphic3d_TextureSetBits.hxx`),
+/// extended for OpenPBR Surface v1.1 texture channels.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Graphic3dTextureSetBits(pub i32);
 impl Graphic3dTextureSetBits {
     /// `Graphic3d_TextureSetBits_NONE`.
     pub const NONE: Self = Self(0);
-    /// `Graphic3d_TextureSetBits_BaseColor`.
+    /// `Graphic3d_TextureSetBits_BaseColor` (`Unit0`).
     pub const BASE_COLOR: Self = Self(1);
-    /// `Graphic3d_TextureSetBits_Emissive`.
+    /// `Graphic3d_TextureSetBits_Emissive` (`Unit1`).
     pub const EMISSIVE: Self = Self(2);
-    /// `Graphic3d_TextureSetBits_Occlusion`.
+    /// `Graphic3d_TextureSetBits_Occlusion` (`Unit2`).
     pub const OCCLUSION: Self = Self(4);
-    /// `Graphic3d_TextureSetBits_Normal`.
+    /// `Graphic3d_TextureSetBits_Normal` (`Unit3`).
     pub const NORMAL: Self = Self(8);
-    /// `Graphic3d_TextureSetBits_MetallicRoughness`.
+    /// `Graphic3d_TextureSetBits_MetallicRoughness` (`Unit4`).
     pub const METALLIC_ROUGHNESS: Self = Self(16);
+    /// OpenPBR specular color / F82 tint (`Unit5`).
+    pub const SPECULAR_COLOR: Self = Self(1 << 5);
+    /// OpenPBR coat weight / roughness (`Unit6`).
+    pub const COAT_WEIGHT_ROUGHNESS: Self = Self(1 << 6);
+    /// OpenPBR coat normal (`Unit7`).
+    pub const COAT_NORMAL: Self = Self(1 << 7);
+    /// OpenPBR transmission (`Unit8`).
+    pub const TRANSMISSION: Self = Self(1 << 8);
+    /// OpenPBR subsurface color (`Unit9`).
+    pub const SUBSURFACE_COLOR: Self = Self(1 << 9);
+    /// OpenPBR fuzz (`Unit10`).
+    pub const FUZZ: Self = Self(1 << 10);
+    /// OpenPBR thin film (`Unit11`).
+    pub const THIN_FILM: Self = Self(1 << 11);
+    /// OpenPBR anisotropy tangent (`Unit12`).
+    pub const ANISOTROPY_TANGENT: Self = Self(1 << 12);
 }
 
 /// Level of anisotropy filter.

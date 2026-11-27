@@ -633,3 +633,7 @@ path = "tests/modeling_view_regressions.rs"
 [[test]]
 name = "fillet_view_cases"
 path = "tests/fillet_view_cases.rs"
+
+[[test]]
+name = "openpbr_and_raytrace"
+path = "tests/openpbr_and_raytrace.rs"

@@ -59,6 +59,7 @@ impl PartialEq for VisualErrorFeedback {
 }
 impl VisualErrorFeedback {
     /// Store the raw errors of a completed frame; `feedback.publish(errors)`.
+    #[allow(dead_code)]
     pub fn publish(&self, errors: Vec<i32>) {
         if let Ok(mut slot) = self.0.lock() {
             *slot = Some(errors);

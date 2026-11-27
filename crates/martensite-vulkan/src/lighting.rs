@@ -149,7 +149,8 @@ impl RenderLighting {
     }
     pub(crate) fn encode_into(&self, bytes: &mut Vec<u8>) {
         bytes.clear();
-        bytes.reserve(304 + 80 * self.lights.source_count());
+        let extra = if self.pbr { 512 } else { 0 };
+        bytes.reserve(304 + 80 * self.lights.source_count() + extra);
         self.encode_coefficients(bytes);
         let settings = [
             self.fixed.map_or(self.shading as u32, |mode| mode as u32),
@@ -161,6 +162,11 @@ impl RenderLighting {
         bytes.extend_from_slice(settings.map(u32::to_ne_bytes).as_flattened());
         for light in self.lights.sources.iter() {
             encode_light_source(bytes, light);
+        }
+        if self.pbr {
+            for record in self.material.packed_openpbr() {
+                append_coefficients(bytes, record);
+            }
         }
     }
     fn encode_coefficients(&self, bytes: &mut Vec<u8>) {
@@ -174,14 +180,10 @@ impl RenderLighting {
     }
 }
 impl RenderLighting {
-    /// The eight material vec4 slots: Phong records, or the front PBR record in slots 0-2 and
-    /// the back one in slots 4-6 (GlMaterialPBR order) for metallic-roughness shading.
+    /// The eight header material vec4 slots (always common coefficients so shared vertex
+    /// shaders keep `settings` at offset 288; full OpenPBR records follow `sources[]`).
     pub(crate) fn packed_material_records(&self) -> [[f32; 4]; 8] {
-        if !self.pbr {
-            return self.material.packed_common();
-        }
-        let [f0, f1, f2, b0, b1, b2] = self.material.packed_pbr();
-        [f0, f1, f2, [0.; 4], b0, b1, b2, [0.; 4]]
+        self.material.packed_common()
     }
 }
 /// The normal matrix of a model matrix, the transposed inverse, with the bits a lowering

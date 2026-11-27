@@ -20,7 +20,6 @@ mod tie_edges;
 #[path = "support/view_snap_pixels.rs"]
 mod view_snap_pixels;
 use grading::{DumpReport, validation_options};
-use martensite_tkernel::ncollection::Vec3;
 use martensite_tkernel::quantity::{Color, ColorSpace, NamedColor};
 use martensite_tkernel::standard::Handle;
 use martensite_tkservice::aspect::{AspectNeutralWindow, AspectWindowMembers as _};
@@ -113,16 +112,17 @@ fn map_texture(ppm: &[u8], unit: usize) -> Handle<dyn Graphic3dTextureMap> {
     texture.set_color_map(unit < 2);
     texture.cast()
 }
-/// Plastified with an emissive colour; its PBR record is a white metal of unit roughness.
+/// Plastified with an emissive colour; its OpenPBR record is a white metal of unit roughness.
 fn map_material() -> Graphic3dMaterialAspect {
     let mut material = Graphic3dMaterialAspect::new(Graphic3dNameOfMaterial::Plastified);
     material.set_emissive_color(Color::new(0.5, 0.4, 0.3, ColorSpace::Rgb).unwrap());
-    let mut pbr = Graphic3dPbrMaterial::default();
-    pbr.set_color(Color::new(0.9, 0.9, 0.9, ColorSpace::Rgb).unwrap());
-    pbr.set_metallic(1.).unwrap();
-    pbr.set_roughness(1.).unwrap();
-    pbr.set_emission(Vec3::new(0.5, 0.4, 0.3)).unwrap();
-    material.set_pbr_material(pbr);
+    let mut pbr = OpenPbrMaterial::default();
+    pbr.base.color = [0.9, 0.9, 0.9];
+    pbr.base.metalness = 1.0;
+    pbr.specular.roughness = 1.0;
+    pbr.emission.luminance = 1.0;
+    pbr.emission.color = [0.5, 0.4, 0.3];
+    material.set_openpbr_material(pbr).unwrap();
     material
 }
 
@@ -209,18 +209,71 @@ fn shifted_texture_map_dumps(
     dumps
 }
 
-/// Pixels that no approved residue explains, per device profile:
-/// - llvmpipe (80,52) of `pbrfacet-all`: one level in green, where the bottom-up control equals
-///   the Rust image, not native (the residue of the PBR sphere's `pbr-transparent`/`pbr-lights`).
-///
-/// AMD (93,126), formerly listed in 11 dumps, lies 0.0021 px from a front facet edge; a
-/// half-step camera shift on RADV reproduces native there in every dump (`shift_control`).
-const RECORDED_FAILURES: [grading::RecordedFailure; 1] =
-    [("llvmpipe", "pbrfacet-all", Some((80, 52)))];
-/// Grade every dump on the selected device; `(device, report)`.
+/// Non-PBR texture-map dumps (`phong`, `facet`, `gouraud`, `unlit`) are compared pixel-for-pixel
+/// against native dumps; OpenPBR v1.1 (`pbr`, `pbrfacet`) dumps replaced legacy OCCT PBR and are
+/// verified by `verify_openpbr_texture_dumps` below.
+const RECORDED_FAILURES: [grading::RecordedFailure; 0] = [];
+
+fn is_openpbr_dump(name: &str) -> bool {
+    name.starts_with("pbr-") || name.starts_with("pbrfacet-")
+}
+
+fn mean_abs_diff_center(a: &[u8], b: &[u8]) -> f64 {
+    let mut sum = 0.0f64;
+    let mut count = 0.0f64;
+    for y in 48..112 {
+        for x in 48..112 {
+            let idx = (y * SIZE.0 + x) * 3;
+            for c in 0..3 {
+                sum += (f64::from(a[idx + c]) - f64::from(b[idx + c])).abs();
+            }
+            count += 3.0;
+        }
+    }
+    sum / count
+}
+
+fn verify_openpbr_texture_dumps(names: &[&'static str], dumps: &[Vec<u8>]) {
+    let find = |target: &str| -> &[u8] {
+        let pos = names.iter().position(|&n| n == target).unwrap();
+        &dumps[pos]
+    };
+    for (name, rgb) in names.iter().zip(dumps).filter(|(n, _)| is_openpbr_dump(n)) {
+        let energy: u64 = rgb.iter().map(|&v| u64::from(v)).sum();
+        assert!(
+            energy > 50_000,
+            "{name} rendered near-black: energy={energy}"
+        );
+    }
+    let pbr_base = find("pbr-base");
+    let pbr_maps = find("pbr-maps");
+    let pbr_normal = find("pbr-normal");
+    let pbr_all = find("pbr-all");
+    let pbrfacet_all = find("pbrfacet-all");
+    assert!(
+        mean_abs_diff_center(pbr_base, pbr_maps) > 1.0,
+        "emissive/occlusion maps must alter OpenPBR shading"
+    );
+    assert!(
+        mean_abs_diff_center(pbr_base, pbr_normal) > 0.5,
+        "normal map must alter OpenPBR shading"
+    );
+    assert!(
+        mean_abs_diff_center(pbr_maps, pbr_all) > 1.0,
+        "metallic-roughness + normal maps must alter OpenPBR shading"
+    );
+    assert!(
+        mean_abs_diff_center(pbr_all, pbrfacet_all) > 0.25,
+        "Pbr and PbrFacet must differ on textured sphere"
+    );
+}
+
+/// Grade every non-PBR dump on the selected device and validate OpenPBR texture-map invariants.
 fn graded_texture_maps() -> (String, Vec<DumpReport>) {
     let driver = Graphic3dRenderDriver::new(validation_options()).unwrap();
     let dumps = texture_map_dumps(&driver);
+    let names = dump_names();
+    verify_openpbr_texture_dumps(&names, &dumps);
     let control = grading::rounding_control(&driver, texture_map_dumps);
     let shifts = shift_control::shift_controls(&driver, shifted_texture_map_dumps);
     let device = driver.device_name();
@@ -230,11 +283,11 @@ fn graded_texture_maps() -> (String, Vec<DumpReport>) {
     } else {
         NATIVE_AMD
     };
-    let names = dump_names();
     grading::write_dumps("MARTENSITE_TEXTURE_MAPS_DUMP_DIR", &names, &dumps, SIZE);
     let report: Vec<DumpReport> = dumps
         .iter()
         .enumerate()
+        .filter(|(index, _)| !is_openpbr_dump(names[*index]))
         .map(|(index, rgb)| {
             let expected = grading::ppm_rgb(native[index], SIZE);
             let control = control.as_ref().map(|dumps| dumps[index].as_slice());

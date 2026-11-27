@@ -6,6 +6,23 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added the ASWF OpenPBR Surface v1.1 material model (`OpenPbrMaterial` and its nine parameter groups `OpenPbrBase`, `OpenPbrSpecular`, `OpenPbrTransmission`, `OpenPbrSubsurface`, `OpenPbrCoat`, `OpenPbrFuzz`, `OpenPbrThinFilm`, `OpenPbrEmission`, `OpenPbrGeometry`) with domain validation, 26 calibrated `Graphic3dNameOfMaterial` presets, texture units `Unit5` through `Unit12`, `Graphic3dToneMappingMethod::{AgX, Aces}`, and `Graphic3dRayTracingBackend` in `martensite-tkservice` (#623).
+- Added the `cargo xtask shaders [--check]` SPIR-V shader build gate, unified 256-byte `OpenPbrGpuMaterial` struct, pure-Rust OpenPBR v1.1 reference equations (`openpbr_math`), deterministic multi-scatter GGX / 3D dielectric / Charlie sheen / Airy thin-film LUT generators (`openpbr_luts`), 2D HDR environment Vose alias importance table (`openpbr_env_cdf`), and `RGBA16F` HDR IBL specular baking in `martensite-vulkan` (#624).
+- Added full ASWF OpenPBR Surface v1.1 real-time rasterization (`shaders/openpbr/openpbr_raster.glsl`) covering EON Oren-Nayar diffuse, F82 conductor tint, Airy thin-film iridescence, anisotropic GGX, clear coat with Beer-Lambert tint, coat darkening (Eq. 64-70), coat roughening (Eq. 73), coat TIR IOR modulation (Eq. 60/74), Charlie microfiber fuzz, thin-walled/solid transmission, subsurface scattering, and `VulkanRenderer::tonemap_hdr` for GPU AgX, ACES, and Filmic tone mapping (#625).
+- Added Vulkan hardware ray tracing (`VK_KHR_deferred_host_operations`, `VK_KHR_acceleration_structure`, `VK_KHR_ray_query`, and Vulkan 1.2 `bufferDeviceAddress`) with compacted BLAS caching (`BlasCache`), per-frame TLAS building, `RenderDeviceLimits::{has_hardware_ray_tracing, has_ray_query, min_as_scratch_alignment}`, explicit `RenderPortabilityFailure::MissingDeviceFeature` refusal when `HardwareRayQuery` is requested on non-RT devices, and automatic software-BVH compute fallback (`pathtrace_sw.comp`) for Mesa lavapipe and non-RT GPUs (#626).
+- Added the unified OpenPBR Surface v1.1 compute path tracer (`pathtrace_hw.comp` / `pathtrace_sw.comp`) with solid and thin-walled glass, Beer-Lambert volume absorption/scattering, Abbe chromatic dispersion, bounded random-walk subsurface scattering, and a 3-pass compute SVGF spatiotemporal denoiser (`svgf_reproject.comp`, `svgf_atrous.comp`, `svgf_compose_tonemap.comp`) (#627).
+- Added physical-oracle, white-furnace, 10-material canonical showcase, hardware-vs-software parity, SVGF variance reduction, GPU HDR tone-mapping, determinism, and Khronos validation tests (`crates/martensite-vulkan/tests/openpbr_and_raytrace.rs`) alongside feature documentation and benchmarks in `docs/features/openpbr-raytracing/` (#628).
+
+### Changed
+
+- Migrated `Graphic3dMaterialAspect`, `XCAFDocVisMaterial`, `RenderMaterial`, and `martensite-tkv3d` shading styles from legacy OCCT metallic-roughness PBR and BSDF structs to `OpenPbrMaterial` and `OpenPbrGpuMaterial` (#623, #624, #625).
+
+### Removed
+
+- Removed legacy OCCT PBR and BSDF types (`Graphic3dPbrMaterial`, `Graphic3dBsdf`, `Graphic3dFresnel`, `RenderMaterialPbr`), legacy PBR GLSL shaders and static `env_lut.bin`, and the legacy fragment-shader raytracer (`raytrace_render.frag`, `raytrace_smooth.frag`, `raytrace_display.frag`, `raytrace_base.glsl`, `pathtrace_base.glsl`, `backend/raytrace_pipeline.rs`, FSAA/adaptive fragment raytrace passes). Callers migrating from `Graphic3dPbrMaterial` or `Graphic3dBsdf` should construct `OpenPbrMaterial` via `Graphic3dMaterialAspect::openpbr_material` / `set_openpbr_material` (#623, #624, #627).
+
 ### Fixed
 
 - Fixed spurious `ExceptionalFiber` refusals during planar-region Bézier pair elimination when the leading `u`-coefficients share a non-constant polynomial factor (such as non-dyadic circles on translated planes where opposite quarter arcs round asymmetrically), allowing `build_planar_regions` to certify translated circles across all proof versions (#619).

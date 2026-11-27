@@ -1,6 +1,6 @@
 //! Graphic3d textures.
+use super::common::vec4;
 use super::common::{Reader, end, flag, int};
-use super::pbr::vec4;
 use super::print::Output;
 use martensite_tkernel::standard::Handle;
 use martensite_tkernel::tcollection::AsciiString;

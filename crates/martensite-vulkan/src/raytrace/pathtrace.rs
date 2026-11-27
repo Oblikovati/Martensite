@@ -137,6 +137,8 @@ pub(crate) struct RaytraceAccumulation {
     /// The eye of the stereo Redraw being drawn (0 left, 1 right) and the stereo camera's
     /// counters before the eye projections, `None` outside one.
     stereo_eye: Option<(usize, Graphic3dWorldViewProjState)>,
+    /// Previous view-projection matrix per eye for SVGF temporal motion vectors.
+    prev_view_proj: [Option<[f32; 16]>; 2],
 }
 
 /// `frame` without the members that change from one accumulated frame to the next.
@@ -153,6 +155,8 @@ fn steady(frame: &RaytraceFrame) -> RaytraceFrame {
     steady.span = 0;
     steady.rebuilt = false;
     steady.camera_state = Graphic3dWorldViewProjState::default();
+    steady.prev_view_proj = [0.0; 16];
+    steady.reset_history = false;
     steady
 }
 
@@ -178,6 +182,15 @@ impl RaytraceAccumulation {
     /// per pass instead and takes its tile maps from the view's tile sampler.
     /// Example: `accumulation.advance(&mut frame)?`.
     pub fn advance(&mut self, frame: &mut RaytraceFrame) -> Result<(), RenderError> {
+        let eye = frame.eye_targets.min(1);
+        let cur_vp = frame.uniforms.camera.view_projection.data();
+        if let Some(prev_vp) = self.prev_view_proj[eye] {
+            frame.prev_view_proj = prev_vp;
+        } else {
+            frame.prev_view_proj = cur_vp;
+            frame.reset_history = true;
+        }
+        self.prev_view_proj[eye] = Some(cur_vp);
         if frame.path_tracing.is_none() {
             self.previous = [None, None];
             self.last_redraw = None;
@@ -185,7 +198,6 @@ impl RaytraceAccumulation {
             return Ok(());
         }
         let key = steady(frame);
-        let eye = frame.eye_targets;
         let unchanged = !frame.rebuilt && self.previous[eye].as_ref() == Some(&key);
         let second_eye = self.stereo_eye.is_some_and(|(eye, _)| eye == 1);
         let camera = self
@@ -227,6 +239,7 @@ impl RaytraceAccumulation {
             }
         }
         self.previous[eye] = Some(key);
+        frame.reset_history = frame.rebuilt || self.frames == 0;
         Ok(())
     }
 }
@@ -250,6 +263,7 @@ mod tests {
             depth_of_field: false,
             textures: false,
             cubemap_background: false,
+            orthographic: false,
         };
         RaytraceFrame {
             span: 1,
@@ -286,6 +300,17 @@ mod tests {
             eye_targets: 0,
             rebuilt: false,
             camera_state: Default::default(),
+            pt_scene: Default::default(),
+            backend:
+                martensite_tkservice::graphic3d::Graphic3dRayTracingBackend::AutoPreferHardware,
+            denoiser_enabled: false,
+            denoiser_atrous_iterations: 3,
+            denoiser_temporal_alpha: 0.1,
+            tone_mapping: Graphic3dToneMappingMethod::Disabled,
+            exposure: 0.0,
+            white_point: 1.0,
+            prev_view_proj: [0.0; 16],
+            reset_history: true,
         }
     }
 

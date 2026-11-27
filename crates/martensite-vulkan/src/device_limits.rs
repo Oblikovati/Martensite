@@ -24,6 +24,9 @@ pub struct RenderDeviceLimits {
     pub(crate) has_ray_tracing_textures: bool,
     pub(crate) has_ray_tracing_adaptive_sampling: bool,
     pub(crate) has_ray_tracing_adaptive_sampling_atomic: bool,
+    pub(crate) has_hardware_ray_tracing: bool,
+    pub(crate) has_ray_query: bool,
+    pub(crate) min_as_scratch_alignment: u32,
 }
 
 impl RenderDeviceLimits {
@@ -117,6 +120,20 @@ impl RenderDeviceLimits {
     /// `limits.has_ray_tracing_adaptive_sampling_atomic()`.
     pub fn has_ray_tracing_adaptive_sampling_atomic(&self) -> bool {
         self.has_ray_tracing_adaptive_sampling_atomic
+    }
+    /// Whether the physical device supports Vulkan hardware acceleration structures
+    /// (`VK_KHR_acceleration_structure` + `VK_KHR_deferred_host_operations` + `bufferDeviceAddress`).
+    pub fn has_hardware_ray_tracing(&self) -> bool {
+        self.has_hardware_ray_tracing
+    }
+    /// Whether the physical device supports inline hardware `VK_KHR_ray_query` in compute and
+    /// fragment shaders.
+    pub fn has_ray_query(&self) -> bool {
+        self.has_ray_query
+    }
+    /// Minimum byte alignment for acceleration structure scratch buffers (0 when hardware RT is absent).
+    pub fn min_as_scratch_alignment(&self) -> u32 {
+        self.min_as_scratch_alignment
     }
     /// Captures are tiled below the texture size, as native `IsWorkaroundFBO`; `limits.is_workaround_fbo()`.
     pub fn is_workaround_fbo(&self) -> bool {

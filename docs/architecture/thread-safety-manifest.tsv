@@ -6082,3 +6082,20 @@ martensite-tkgeomalgo	OrderedContactIndex	shareable	immutable value or Send + Sy
 martensite-tkgeomalgo	OrderedContactRow	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkservice	FontConsumedCoverage	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkservice	FontOperationResult	shareable	immutable value or Send + Sync handle/builder contract
+
+martensite-tkservice	Graphic3dRayTracingBackend	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	OpenPbrBase	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	OpenPbrSpecular	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	OpenPbrTransmission	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	OpenPbrSubsurface	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	OpenPbrCoat	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	OpenPbrFuzz	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	OpenPbrThinFilm	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	OpenPbrEmission	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	OpenPbrGeometry	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	OpenPbrMaterial	shareable	immutable value or Send + Sync handle/builder contract
+martensite-vulkan	OpenPbrTextureIndices	shareable	immutable value or Send + Sync handle/builder contract
+martensite-vulkan	OpenPbrGpuMaterial	shareable	immutable value or Send + Sync handle/builder contract
+martensite-vulkan	OpenPbrLutTables	shareable	immutable value or Send + Sync handle/builder contract
+martensite-vulkan	EnvAliasEntry	shareable	immutable value or Send + Sync handle/builder contract
+martensite-vulkan	EnvImportanceTable	shareable	immutable value or Send + Sync handle/builder contract

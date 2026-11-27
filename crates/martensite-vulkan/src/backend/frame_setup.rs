@@ -427,7 +427,10 @@ impl FrameSetup<'_> {
             plan.dimensions.attachment,
             self.pipeline.stencil,
             plan.raster.samples,
-            [!self.frame.subview_blits.is_empty(), false],
+            [
+                !self.frame.subview_blits.is_empty() || self.frame.raytrace.is_some(),
+                false,
+            ],
             seed.is_some_and(|seed| seed.snapshot_start.is_none()),
         )?;
         Ok((targets, None))

@@ -1,10 +1,10 @@
-//! `Graphic3d_MaterialAspect`: the surface material of a presentation (colors, shininess,
-//! transparency, BSDF for path tracing and the PBR material), built from the predefined
-//! materials or user values. Range checks compare like the native code, so a NaN passes them.
+//! `Graphic3d_MaterialAspect`: the surface material of a presentation (legacy Phong colors,
+//! shininess, transparency, and the ASWF OpenPBR Surface v1.1 material), built from predefined
+//! materials or user values.
 use super::material_table::{MATERIAL_NAMES, RawMaterial, the_materials};
 use super::{
-    Graphic3dBsdf, Graphic3dNameOfMaterial, Graphic3dPbrMaterial, Graphic3dTypeOfMaterial,
-    Graphic3dTypeOfReflection, material_definition_error,
+    Graphic3dNameOfMaterial, Graphic3dTypeOfMaterial, Graphic3dTypeOfReflection, OpenPbrMaterial,
+    material_definition_error,
 };
 use crate::json_dump::{
     class_begin, field_color, field_dumped, field_integer, field_real, field_string,
@@ -19,8 +19,7 @@ use std::io;
 /// A surface material; `Graphic3dMaterialAspect::new(Graphic3dNameOfMaterial::Gold)`.
 #[derive(Clone, Debug)]
 pub struct Graphic3dMaterialAspect {
-    bsdf: Graphic3dBsdf,
-    pbr_material: Graphic3dPbrMaterial,
+    openpbr: OpenPbrMaterial,
     string_name: AsciiString,
     colors: [Color; 4],
     transparency_coef: f32,
@@ -107,8 +106,7 @@ impl Graphic3dMaterialAspect {
     pub fn new(name: Graphic3dNameOfMaterial) -> Self {
         let raw = &the_materials()[name as usize];
         Self {
-            bsdf: raw.bsdf,
-            pbr_material: raw.pbr_material,
+            openpbr: raw.openpbr,
             string_name: AsciiString::from(raw.string_name),
             colors: raw.colors,
             transparency_coef: raw.transparency_coef,
@@ -167,7 +165,7 @@ impl Graphic3dMaterialAspect {
         if self.material_type == Graphic3dTypeOfMaterial::Aspect {
             return Ok(());
         }
-        self.pbr_material.set_color(color);
+        self.openpbr.set_base_color(color);
         let source = &the_materials()[self.requested_material_name as usize];
         let ambient = Color::from_vec3(color.rgb_vec3() * source.ambient_coef)?;
         let diffuse = Color::from_vec3(color.rgb_vec3() * source.diffuse_coef)?;
@@ -259,7 +257,10 @@ impl Graphic3dMaterialAspect {
             )));
         }
         self.transparency_coef = value;
-        self.pbr_material.set_alpha(1.0 - value)
+        if value.is_finite() {
+            self.openpbr.set_opacity(1.0 - value)?;
+        }
+        Ok(())
     }
     /// Sets the opacity; `material.set_alpha(0.25)?`.
     pub fn set_alpha(&mut self, value: f32) -> Result<(), Failure> {
@@ -304,23 +305,26 @@ impl Graphic3dMaterialAspect {
             )));
         }
         self.refraction_index = value;
+        self.openpbr.specular.ior = value;
         Ok(())
     }
-    /// The path-tracing BSDF; `material.bsdf()`.
-    pub fn bsdf(&self) -> &Graphic3dBsdf {
-        &self.bsdf
+    /// The ASWF OpenPBR Surface v1.1 material; `material.openpbr_material()`.
+    pub fn openpbr_material(&self) -> &OpenPbrMaterial {
+        &self.openpbr
     }
-    /// Replaces the BSDF; `material.set_bsdf(bsdf)`.
-    pub fn set_bsdf(&mut self, bsdf: Graphic3dBsdf) {
-        self.bsdf = bsdf;
+    /// Mutable access to the OpenPBR Surface v1.1 material; `material.openpbr_material_mut()`.
+    pub fn openpbr_material_mut(&mut self) -> &mut OpenPbrMaterial {
+        &mut self.openpbr
     }
-    /// The PBR material; `material.pbr_material()`.
-    pub fn pbr_material(&self) -> &Graphic3dPbrMaterial {
-        &self.pbr_material
-    }
-    /// Replaces the PBR material; `material.set_pbr_material(pbr)`.
-    pub fn set_pbr_material(&mut self, pbr_material: Graphic3dPbrMaterial) {
-        self.pbr_material = pbr_material;
+    /// Validates and replaces the OpenPBR Surface v1.1 material; `material.set_openpbr_material(pbr)?`.
+    pub fn set_openpbr_material(&mut self, material: OpenPbrMaterial) -> Result<(), Failure> {
+        material.validate()?;
+        self.openpbr = material;
+        self.transparency_coef = 1.0 - material.geometry.opacity;
+        if material.specular.ior >= 1.0 {
+            self.refraction_index = material.specular.ior;
+        }
+        Ok(())
     }
     /// The material type; `material.material_type()`.
     pub fn material_type(&self) -> Graphic3dTypeOfMaterial {
@@ -335,13 +339,12 @@ impl Graphic3dMaterialAspect {
     pub fn set_material_type(&mut self, kind: Graphic3dTypeOfMaterial) {
         self.material_type = kind;
     }
-    /// `IsEqual`: coefficients, BSDF, PBR material and colors (not names or type);
+    /// `IsEqual`: coefficients, OpenPBR material and colors (not names or type);
     /// `material.is_equal(&other)`.
     pub fn is_equal(&self, other: &Self) -> bool {
         self.transparency_coef == other.transparency_coef
             && self.refraction_index == other.refraction_index
-            && self.bsdf == other.bsdf
-            && self.pbr_material == other.pbr_material
+            && self.openpbr == other.openpbr
             && self.shininess == other.shininess
             && self.colors == other.colors
     }
@@ -352,9 +355,10 @@ impl Graphic3dMaterialAspect {
     /// `DumpJson`; `material.dump_json(&mut stream, -1)?`.
     pub fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         class_begin(stream, "Graphic3d_MaterialAspect")?;
-        let (bsdf, pbr) = (self.bsdf, self.pbr_material);
-        field_dumped(stream, depth, "&myBSDF", &|s, d| bsdf.dump_json(s, d))?;
-        field_dumped(stream, depth, "&myPBRMaterial", &|s, d| pbr.dump_json(s, d))?;
+        let openpbr = self.openpbr;
+        field_dumped(stream, depth, "&myOpenPbrMaterial", &|s, d| {
+            openpbr.dump_json(s, d)
+        })?;
         field_string(stream, "myStringName", self.string_name.as_bytes())?;
         let slots = ["AMBIENT", "DIFFUSE", "SPECULAR", "EMISSION"];
         for (color, slot) in self.colors.iter().zip(slots) {

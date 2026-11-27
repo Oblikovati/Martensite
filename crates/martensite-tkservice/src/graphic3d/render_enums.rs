@@ -191,14 +191,32 @@ pub const GRAPHIC3D_STEREO_MODE_NB: i32 = 9;
 
 /// Enumerates tone mapping methods.
 ///
-/// Native enumeration `Graphic3d_ToneMappingMethod` (`Graphic3d_ToneMappingMethod.hxx`).
+/// Native enumeration `Graphic3d_ToneMappingMethod` (`Graphic3d_ToneMappingMethod.hxx`),
+/// extended with AgX and ACES HDR display transforms.
 #[repr(i32)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Graphic3dToneMappingMethod {
-    /// Don't use tone mapping.
+    /// Don't use tone mapping (linear clamp).
     Disabled = 0,
     /// Use filmic tone mapping.
     Filmic = 1,
+    /// Use Blender-style AgX inset/sigmoid/outset display transform.
+    AgX = 2,
+    /// Use fitted ACES RRT + ODT display transform.
+    Aces = 3,
+}
+
+/// Ray tracing execution backend selection.
+#[repr(i32)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum Graphic3dRayTracingBackend {
+    /// Prefer Vulkan hardware `VK_KHR_ray_query` when offered; fall back to software compute BVH.
+    #[default]
+    AutoPreferHardware = 0,
+    /// Require Vulkan hardware `VK_KHR_ray_query`; fail explicitly if the device lacks it.
+    HardwareRayQuery = 1,
+    /// Force the compute software-BVH path tracer even on RT-capable GPUs.
+    SoftwareComputeBvh = 2,
 }
 
 /// Modes of display of back faces in the view.

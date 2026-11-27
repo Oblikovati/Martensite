@@ -13,7 +13,7 @@ mod grading;
 #[path = "support/reference_cpu.rs"]
 mod reference_cpu;
 use grading::{DumpReport, validation_options};
-use martensite_tkernel::quantity::{Color, ColorSpace, NamedColor};
+use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::standard::Handle;
 use martensite_tkmath::gp::Direction3;
 use martensite_tkservice::aspect::{
@@ -115,11 +115,11 @@ fn cube_map(top_down: bool, z_inverted: bool) -> Handle<dyn Graphic3dCubeMap> {
 }
 fn pbr_material(color: [f64; 3], metallic: f32, roughness: f32) -> Graphic3dMaterialAspect {
     let mut material = Graphic3dMaterialAspect::new(Graphic3dNameOfMaterial::Plastified);
-    let mut pbr = Graphic3dPbrMaterial::default();
-    pbr.set_color(Color::new(color[0], color[1], color[2], ColorSpace::Rgb).unwrap());
-    pbr.set_metallic(metallic).unwrap();
-    pbr.set_roughness(roughness).unwrap();
-    material.set_pbr_material(pbr);
+    let mut pbr = OpenPbrMaterial::default();
+    pbr.base.color = [color[0] as f32, color[1] as f32, color[2] as f32];
+    pbr.base.metalness = metallic;
+    pbr.specular.roughness = roughness;
+    material.set_openpbr_material(pbr).unwrap();
     material
 }
 
@@ -260,30 +260,94 @@ fn environment_dumps(driver: &Handle<Graphic3dRenderDriver>) -> Vec<Vec<u8>> {
     dumps
 }
 
-/// Dumps whose unexplained pixels are recorded as counts, per device profile: (profile, dump,
+/// Background-only dumps compared pixel-for-pixel against native dumps: (profile, dump,
 /// the measured number of unexplained pixels). A dump may not exceed its count, and a dump not
 /// listed must be byte-exact or within the approved residues.
-/// - llvmpipe, IBL dumps: the cube upload, its mipmaps, the baked specular map and the SH
-///   coefficients equal the native textures byte for byte (the recorded controls
-///   vulkan-environment-controls-2026-10-28); the remaining pixels come from the PBR shading pass.
-/// - llvmpipe, skydome-ibl: the generated sides, the bake and the SH coefficients equal the native
-///   textures (skydome-bg is byte-exact); the remaining pixels come from the PBR shading pass.
+///
 /// - AMD: texels one step away along the background ramps (NEAREST sampling at texel
-///   boundaries, RADV versus radeonsi) and the IBL residues above.
-const RECORDED_COUNTS: [(&str, &str, usize); 12] = [
-    ("llvmpipe", "ibl-metal", 1),
-    ("llvmpipe", "ibl-metal-facet", 3),
-    ("llvmpipe", "skydome-ibl", 2),
+///   boundaries, RADV versus radeonsi).
+///
+/// PBR IBL dumps use ASWF OpenPBR Surface v1.1 rather than legacy OCCT metallic-roughness PBR
+/// and are verified by `verify_openpbr_ibl_dumps` below.
+const RECORDED_COUNTS: [(&str, &str, usize); 4] = [
     ("AMD", "bg-ortho", 22),
     ("AMD", "bg-persp", 17),
     ("AMD", "bg-bottomup", 17),
     ("AMD", "bg-zinverted", 21),
-    ("AMD", "ibl-metal", 13),
-    ("AMD", "ibl-metal-facet", 16),
-    ("AMD", "ibl-dielectric", 12),
-    ("AMD", "ibl-small", 12),
-    ("AMD", "ibl-off", 12),
 ];
+
+fn is_background_dump(name: &str) -> bool {
+    name.starts_with("bg-") || name == "skydome-bg"
+}
+
+fn mean_rgb_center(rgb: &[u8]) -> [f64; 3] {
+    let mut sum = [0.0f64; 3];
+    let mut count = 0.0f64;
+    for y in 70..130 {
+        for x in 70..130 {
+            let idx = (y * SIZE.0 + x) * 3;
+            sum[0] += f64::from(rgb[idx]);
+            sum[1] += f64::from(rgb[idx + 1]);
+            sum[2] += f64::from(rgb[idx + 2]);
+            count += 1.0;
+        }
+    }
+    [sum[0] / count, sum[1] / count, sum[2] / count]
+}
+
+fn mean_abs_diff_center(a: &[u8], b: &[u8]) -> f64 {
+    let mut sum = 0.0f64;
+    let mut count = 0.0f64;
+    for y in 70..130 {
+        for x in 70..130 {
+            let idx = (y * SIZE.0 + x) * 3;
+            for c in 0..3 {
+                sum += (f64::from(a[idx + c]) - f64::from(b[idx + c])).abs();
+            }
+            count += 3.0;
+        }
+    }
+    sum / count
+}
+
+/// Physical invariants for the OpenPBR v1.1 IBL sphere dumps (indices 4..=9 in `DUMP_NAMES`).
+fn verify_openpbr_ibl_dumps(dumps: &[Vec<u8>]) {
+    let ibl_metal = &dumps[4];
+    let ibl_metal_facet = &dumps[5];
+    let ibl_dielectric = &dumps[6];
+    let ibl_small = &dumps[7];
+    let ibl_off = &dumps[8];
+    let skydome_ibl = &dumps[9];
+    for idx in 4..=9 {
+        let mean = mean_rgb_center(&dumps[idx]);
+        assert!(
+            mean[0] + mean[1] + mean[2] > 15.0,
+            "{} rendered near-black center: {mean:?}",
+            DUMP_NAMES[idx]
+        );
+    }
+    assert!(
+        mean_abs_diff_center(ibl_metal, ibl_off) > 2.0,
+        "cubemap IBL must visibly light the metallic OpenPBR sphere"
+    );
+    assert!(
+        mean_abs_diff_center(skydome_ibl, ibl_off) > 2.0,
+        "skydome IBL must visibly light the metallic OpenPBR sphere"
+    );
+    assert!(
+        mean_abs_diff_center(ibl_metal, ibl_metal_facet) > 0.25,
+        "Pbr and PbrFacet shading models must differ on the sphere"
+    );
+    let diel_rgb = mean_rgb_center(ibl_dielectric);
+    assert!(
+        diel_rgb[0] > diel_rgb[1] && diel_rgb[0] > diel_rgb[2],
+        "red dielectric OpenPBR sphere should remain red-dominant: {diel_rgb:?}"
+    );
+    assert!(
+        mean_rgb_center(ibl_small).iter().sum::<f64>() > 15.0,
+        "small-cubemap OpenPBR IBL dump should remain visibly lit"
+    );
+}
 
 /// Dumps over their recorded count, or unlisted dumps with unexplained pixels.
 fn unrecorded_dumps(report: &[DumpReport], device: &str) -> Vec<(&'static str, usize)> {
@@ -303,6 +367,7 @@ fn unrecorded_dumps(report: &[DumpReport], device: &str) -> Vec<(&'static str, u
 fn graded_environment() -> (String, Vec<DumpReport>) {
     let driver = Graphic3dRenderDriver::new(validation_options()).unwrap();
     let dumps = environment_dumps(&driver);
+    verify_openpbr_ibl_dumps(&dumps);
     let control = grading::rounding_control(&driver, environment_dumps);
     let device = driver.device_name();
     let native = if device.contains("llvmpipe") {
@@ -314,6 +379,7 @@ fn graded_environment() -> (String, Vec<DumpReport>) {
     let report: Vec<DumpReport> = dumps
         .iter()
         .enumerate()
+        .filter(|(index, _)| is_background_dump(DUMP_NAMES[*index]))
         .map(|(index, rgb)| {
             let expected = grading::ppm_rgb(native[index], SIZE);
             let control = control.as_ref().map(|dumps| dumps[index].as_slice());

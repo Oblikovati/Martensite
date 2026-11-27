@@ -114,7 +114,7 @@ fn out_of_range_coefficients_raise_with_the_value() {
     assert!(m.set_refraction_index(0.5).is_err());
     m.set_alpha(0.25).unwrap();
     assert_eq!(m.transparency(), 0.75);
-    assert_eq!(m.pbr_material().alpha(), 0.25);
+    assert_eq!(m.openpbr_material().opacity(), 0.25);
 }
 
 #[test]

@@ -20,6 +20,9 @@ fn lavapipe_like_device() -> RenderDeviceLimits {
         has_ray_tracing_textures: true,
         has_ray_tracing_adaptive_sampling: true,
         has_ray_tracing_adaptive_sampling_atomic: true,
+        has_hardware_ray_tracing: false,
+        has_ray_query: false,
+        min_as_scratch_alignment: 0,
     }
 }
 #[test]

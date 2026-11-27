@@ -1,7 +1,7 @@
 //! Capture all aspect fields without handle addresses; material floats retain stored f32 bits.
-use martensite_tkernel::ncollection::{Vec3, Vec4};
+use martensite_tkernel::ncollection::Vec4;
 use martensite_tkservice::graphic3d::{
-    Graphic3dAspectsFields, Graphic3dAspectsSource, Graphic3dBsdf, Graphic3dMaterialAspect,
+    Graphic3dAspectsFields, Graphic3dAspectsSource, Graphic3dMaterialAspect, OpenPbrMaterial,
 };
 use martensite_tkv3d::{ais::AisTriangulation, prs_mgr::PrsMgrPresentableObjectMembers as _};
 
@@ -85,8 +85,7 @@ fn material(bytes: &mut Vec<u8>, material: &Graphic3dMaterialAspect) {
     ] {
         bytes.extend(value.to_bits().to_le_bytes());
     }
-    bsdf(bytes, material.bsdf());
-    pbr(bytes, material);
+    openpbr(bytes, material.openpbr_material());
 }
 
 fn material_colors(bytes: &mut Vec<u8>, material: &Graphic3dMaterialAspect) {
@@ -102,38 +101,50 @@ fn material_colors(bytes: &mut Vec<u8>, material: &Graphic3dMaterialAspect) {
     }
 }
 
-fn bsdf(bytes: &mut Vec<u8>, bsdf: &Graphic3dBsdf) {
-    for vector in [
-        bsdf.kc,
-        bsdf.ks,
-        bsdf.absorption,
-        bsdf.fresnel_coat.serialize(),
-        bsdf.fresnel_base.serialize(),
+fn openpbr(bytes: &mut Vec<u8>, m: &OpenPbrMaterial) {
+    for value in [
+        m.base.weight,
+        m.base.metalness,
+        m.base.diffuse_roughness,
+        m.specular.weight,
+        m.specular.roughness,
+        m.specular.roughness_anisotropy,
+        m.specular.ior,
+        m.transmission.weight,
+        m.transmission.depth,
+        m.subsurface.weight,
+        m.coat.weight,
+        m.coat.roughness,
+        m.coat.ior,
+        m.coat.darkening,
+        m.fuzz.weight,
+        m.fuzz.roughness,
+        m.thin_film.weight,
+        m.thin_film.thickness_um,
+        m.thin_film.ior,
+        m.emission.luminance,
+        m.geometry.opacity,
     ] {
-        vector4(bytes, vector);
-    }
-    for vector in [bsdf.kd, bsdf.kt, bsdf.le] {
-        vector3(bytes, vector);
-    }
-}
-
-fn pbr(bytes: &mut Vec<u8>, material: &Graphic3dMaterialAspect) {
-    let pbr = material.pbr_material();
-    for value in [pbr.metallic(), pbr.roughness(), pbr.ior(), pbr.alpha()] {
         bytes.extend(value.to_bits().to_le_bytes());
     }
-    vector4(bytes, pbr.color().to_vec4());
-    vector3(bytes, pbr.emission());
+    bytes.push(u8::from(m.geometry.thin_walled));
+    for rgb in [
+        m.base.color,
+        m.specular.color,
+        m.transmission.color,
+        m.subsurface.color,
+        m.coat.color,
+        m.fuzz.color,
+        m.emission.color,
+    ] {
+        for value in rgb {
+            bytes.extend(value.to_bits().to_le_bytes());
+        }
+    }
 }
 
 fn vector4(bytes: &mut Vec<u8>, vector: Vec4<f32>) {
     for value in [vector.x(), vector.y(), vector.z(), vector.w()] {
-        bytes.extend(value.to_bits().to_le_bytes());
-    }
-}
-
-fn vector3(bytes: &mut Vec<u8>, vector: Vec3<f32>) {
-    for value in [vector.x(), vector.y(), vector.z()] {
         bytes.extend(value.to_bits().to_le_bytes());
     }
 }
