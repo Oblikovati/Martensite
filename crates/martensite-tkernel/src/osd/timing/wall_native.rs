@@ -62,3 +62,15 @@ impl windows_clock::ClockQueries for NativeWindowsClock {
         winsafe::GetTickCount64()
     }
 }
+
+/// WebAssembly: browser `performance.now()` seconds relative to the first call (#631).
+#[cfg(target_arch = "wasm32")]
+pub(super) fn wall_clock_seconds() -> f64 {
+    super::monotonic_clock::wasm_wall_seconds()
+}
+
+/// Other non-Unix, non-Windows, non-WASM targets: no platform wall clock.
+#[cfg(not(any(unix, windows, target_arch = "wasm32")))]
+pub(super) fn wall_clock_seconds() -> f64 {
+    0.0
+}

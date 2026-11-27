@@ -9,9 +9,14 @@ allow = ["MIT", "Apache-2.0 WITH LLVM-exception", "GPL-2.0-only"]
 confidence-threshold = 0.93
 # The build driver uses generated Unicode identifier tables. Keep their notice.
 # The Vulkan loader binding of `ash` opens the system library through libloading (ISC).
+# `wgpu` 30.0.2 (`martensite-webgpu`, #630/#634) pulls `codespan-reporting` and `spirv`
+# through `naga` (Apache-2.0) and `foldhash` through `hashbrown` (Zlib).
 exceptions = [
     { name = "unicode-ident", version = "1.0.27", allow = ["Unicode-3.0"] },
     { name = "libloading", version = "0.8.9", allow = ["ISC"] },
+    { name = "codespan-reporting", version = "0.13.1", allow = ["Apache-2.0"] },
+    { name = "spirv", version = "0.4.0+sdk-1.4.341.0", allow = ["Apache-2.0"] },
+    { name = "foldhash", version = "0.2.0", allow = ["Zlib"] },
 ]
 
 [bans]

@@ -9,6 +9,7 @@ use super::{
     record_draw_bindings::{self, BindingSlots},
     runtime::VulkanRuntime,
 };
+use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 use crate::{
     RenderError, RenderLayerSpan, depth_prepass::RenderDepthPass, draw_instances::DrawInstances,
 };
@@ -22,7 +23,12 @@ pub(super) fn request<'a>(
     head: &UploadedDraw,
     instances: &DrawInstances,
 ) -> Result<Option<HiZRequest<'a>>, RenderError> {
-    let Some(history) = &instances.hiz_history else {
+    let Some(history) = instances.hiz_history.as_ref().and_then(|h| {
+        h.clone()
+            .as_any_arc()
+            .downcast::<super::placement_hiz_history::HiZHistory>()
+            .ok()
+    }) else {
         return Ok(None);
     };
     let Some(layer) = layer else { return Ok(None) };

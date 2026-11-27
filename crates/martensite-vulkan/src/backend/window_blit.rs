@@ -1,5 +1,6 @@
 //! Copy the rendered image entirely on the GPU, preserving sRGB and top-left orientation.
 use super::{frame::FrameResources, runtime::VulkanRuntime, window_chain::WindowChain};
+use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 use ash::vk;
 pub(super) fn record(
     runtime: &VulkanRuntime,
@@ -102,6 +103,7 @@ fn transition(
 #[cfg(test)]
 mod tests {
     use super::super::attachment_coordinates::AttachmentCoordinates;
+    use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
     #[test]
     fn native_rows_flip_once_at_window_presentation() {
         let extent = ash::vk::Extent2D {

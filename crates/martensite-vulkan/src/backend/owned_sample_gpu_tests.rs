@@ -7,6 +7,7 @@ use super::{
     runtime::{VulkanOptions, VulkanRuntime},
     submission::CommandSubmission,
 };
+use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 use crate::stencil_context::{StencilCompare, StencilOperation};
 use crate::{RenderFrame, RenderStencilState};
 use ash::vk;

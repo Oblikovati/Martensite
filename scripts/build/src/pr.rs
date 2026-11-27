@@ -202,6 +202,9 @@ fn lint_changed_files(
     reporter.step("Check global mutable state guard", || {
         crate::global_state_guard::check_global_mutable_state(context.root(), changed)
     })?;
+    reporter.step("Check wasm32 time API guard", || {
+        crate::wasm::check_wasm_time_guard(context.root(), changed)
+    })?;
     let whitespace = reporter.step("Check whitespace in changed files", || {
         check_whitespace(&context.git, merge_base, changed)
     });

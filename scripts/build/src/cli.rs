@@ -53,6 +53,12 @@ pub enum BuildCommand {
         #[arg(long)]
         check: bool,
     },
+    /// Verify multi-threaded `wasm32-unknown-unknown` (`+atomics`) builds across all WASM crates (#636).
+    WasmCheck {
+        /// Run `cargo clippy` instead of `cargo check`.
+        #[arg(long)]
+        clippy: bool,
+    },
     /// Entry points used by `.github/workflows/martensite.yml`.
     #[command(subcommand)]
     Ci(CiCommand),
@@ -203,6 +209,7 @@ fn dispatch(context: &BuildContext<'_>, command: BuildCommand) -> BuildResult<()
             crate::occt_parity::run_occt_parity(context, &args.request())
         }
         BuildCommand::Shaders { check } => crate::shaders::compile_shaders(context, check),
+        BuildCommand::WasmCheck { clippy } => crate::wasm::run_wasm_check(context, clippy),
         BuildCommand::Ci(command) => dispatch_ci(context, command),
     }
 }

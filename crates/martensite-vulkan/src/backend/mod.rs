@@ -19,6 +19,7 @@ pub(crate) mod pipeline_memo;
 mod placement_hiz;
 mod placement_hiz_history;
 mod placement_hiz_raster;
+#[cfg(test)]
 pub(crate) use placement_hiz_history::HiZHistory;
 mod mesh_vertex_codec;
 mod mesh_vertex_pipeline;
@@ -27,8 +28,8 @@ mod readback_buffer_cache;
 mod rgb_pack;
 mod rgb_readback;
 pub(crate) mod upload_memo;
-pub(crate) use frame_readback::{CapturePlanes, FrameReadback};
-pub(crate) use frame_work_ledger::{FrameWorkLedger, WorkPhase};
+pub(crate) use frame_readback::FrameReadback;
+pub(crate) use frame_work_ledger::{VulkanWorkLedgerExt, WorkPhase};
 mod hw_raytrace;
 mod image_memory;
 mod layer_depth_policy;
@@ -47,6 +48,7 @@ mod owned_window_submission;
 mod portability_admission;
 mod portability_runtime;
 mod raytrace_pass;
+mod render_core_bridge;
 mod renderer_close;
 mod retained_submission;
 mod retirement_attempt;
@@ -69,9 +71,7 @@ mod world_clip_shader;
 use crate::{FrameCapture, RenderBackend, RenderError, RenderFrame};
 pub use runtime::VulkanOptions;
 use runtime::VulkanRuntime;
-pub use validation_layer::{
-    VERIFIED_VALIDATION_LAYER, ValidationLayerVersion, active_validation_layer,
-};
+pub use validation_layer::active_validation_layer;
 /// Vulkan 1.3 offscreen renderer; `VulkanRenderer::new(VulkanOptions::default())?`.
 pub struct VulkanRenderer {
     runtime: std::sync::Arc<VulkanRuntime>,
@@ -307,6 +307,7 @@ mod command_state_diagnostic;
 mod directional_phong;
 #[cfg(test)]
 pub(crate) mod directional_phong_fixture;
+#[allow(unused_imports)]
 pub(crate) use directional_phong::{
     MIN_VERTICES as MIN_PHONG_BATCH_VERTICES, directional_lights, directional_phong_draw,
 };

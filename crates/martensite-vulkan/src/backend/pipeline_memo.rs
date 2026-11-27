@@ -1,9 +1,8 @@
-//! The pipeline a draw body selected on an earlier frame (#594). Selection runs a dozen device
-//! admission checks and a locked map lookup for every draw; a recorded body replays with the
-//! same inputs on every frame, so it keeps its last answer with the inputs it was given.
+//! The pipeline a draw body selected on an earlier frame (#594, #633).
+//! Stored inside `DrawBody::pipeline_memo` (`OpaqueMemo`).
 use super::pipeline::DrawPipeline;
-use crate::PrimitiveDraw;
-use std::sync::{Arc, Mutex};
+use crate::{OpaqueMemo, PrimitiveDraw};
+use std::sync::Arc;
 
 /// Everything `RasterPipelines::select` reads besides the body itself.
 #[derive(Clone, Copy, PartialEq)]
@@ -39,56 +38,34 @@ impl SelectionInputs {
                 (
                     lighting.body.identity.0,
                     lighting.eye[3].to_bits(),
-                    super::directional_phong::directional_lights(&lighting.lights),
+                    crate::directional_lights(&lighting.lights),
                 )
             }),
         }
     }
 }
 
-/// A body's last selection. A copied body starts empty, and two memos always compare equal,
-/// so the memo never changes what a draw is.
-#[derive(Default)]
-pub(crate) struct PipelineMemo(Mutex<Option<(SelectionInputs, Arc<DrawPipeline>)>>);
-
-impl PipelineMemo {
-    /// The pipeline selected before with `inputs`; `memo.get(&inputs)`.
-    pub(super) fn get(&self, inputs: &SelectionInputs) -> Option<Arc<DrawPipeline>> {
-        let slot = self.0.lock().ok()?;
-        slot.as_ref()
-            .filter(|(kept, _)| kept == inputs)
-            .map(|(_, pipeline)| pipeline.clone())
-    }
-    /// Keep the pipeline selected with `inputs`; `memo.keep(inputs, pipeline.clone())`.
-    pub(super) fn keep(&self, inputs: SelectionInputs, pipeline: Arc<DrawPipeline>) {
-        if let Ok(mut slot) = self.0.lock() {
-            *slot = Some((inputs, pipeline));
-        }
-    }
+struct KeptPipeline {
+    inputs: SelectionInputs,
+    pipeline: Arc<DrawPipeline>,
 }
 
-impl PipelineMemo {
-    /// Forget the selection: the body is about to change in place.
-    pub(crate) fn clear(&mut self) {
-        if let Ok(slot) = self.0.get_mut() {
-            *slot = None;
-        }
-    }
+/// Extension methods storing Vulkan pipeline memos inside [`OpaqueMemo`].
+pub(super) trait VulkanPipelineMemoExt {
+    fn get_vulkan(&self, inputs: &SelectionInputs) -> Option<Arc<DrawPipeline>>;
+    fn keep_vulkan(&self, inputs: SelectionInputs, pipeline: Arc<DrawPipeline>);
 }
 
-impl Clone for PipelineMemo {
-    fn clone(&self) -> Self {
-        Self::default()
+impl VulkanPipelineMemoExt for OpaqueMemo {
+    fn get_vulkan(&self, inputs: &SelectionInputs) -> Option<Arc<DrawPipeline>> {
+        self.with_ref::<KeptPipeline, Option<Arc<DrawPipeline>>>(|kept| {
+            (kept.inputs == *inputs).then(|| Arc::clone(&kept.pipeline))
+        })
+        .flatten()
     }
-}
-impl PartialEq for PipelineMemo {
-    fn eq(&self, _: &Self) -> bool {
-        true
-    }
-}
-impl std::fmt::Debug for PipelineMemo {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        formatter.write_str("PipelineMemo")
+
+    fn keep_vulkan(&self, inputs: SelectionInputs, pipeline: Arc<DrawPipeline>) {
+        self.store(KeptPipeline { inputs, pipeline });
     }
 }
 

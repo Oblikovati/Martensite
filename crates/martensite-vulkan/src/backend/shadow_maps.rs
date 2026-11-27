@@ -9,6 +9,7 @@ use super::{
     runtime::{VulkanRuntime, vk_error},
     submission::CommandSubmission,
 };
+use crate::backend::VulkanWorkLedgerExt;
 use crate::{RenderError, shadow_maps::RenderShadowMaps};
 use ash::vk;
 use std::sync::Arc;

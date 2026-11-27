@@ -2,6 +2,7 @@
 mod chronometer;
 mod clocks;
 mod cpu_native;
+mod monotonic_clock;
 mod osd_statics;
 mod real_text;
 #[cfg(test)]
@@ -15,6 +16,7 @@ mod wall_native;
 pub use chronometer::Chronometer;
 pub(crate) use clocks::NativeWallClock;
 pub use clocks::{CpuTimes, NativeCpuTimes, WallClock};
+pub use monotonic_clock::{MonotonicInstant, unix_timestamp};
 pub use osd_statics::Osd;
 pub use signals::{NativeSignalHost, SignalHost, SignalState};
 pub use sleep::{

@@ -6,10 +6,10 @@ use super::{MeshVSMeshMembers, MeshVSMeshSource};
 use crate::MeshVSDrawerAttribute as Key;
 use crate::data_source::MeshVSPackedMap;
 use crate::prs_builder::MeshVSPrsBuilderMembers;
+use martensite_tkernel::osd::MonotonicInstant;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkservice::graphic3d::Graphic3dStructureSource;
 use martensite_tkv3d::prs_mgr::PrsMgrPresentationManager;
-use std::time::Instant;
 
 /// The `MeshVSMesh::accept_display_mode` body: a positive mode, accepted by any
 /// builder (or by the mesh without builder). Example: `meshvs_mesh_accept_display_mode(&*mesh, 1)`.
@@ -38,7 +38,7 @@ pub fn meshvs_mesh_compute<O: MeshVSMeshSource + ?Sized>(
     mode: i32,
 ) -> Result<(), Failure> {
     let show_time = drawer_flag(object, Key::ComputeTime as i32);
-    let start = Instant::now();
+    let start = MonotonicInstant::now();
     let source = object.get_data_source();
     let Some(source) = source.get().filter(|_| mode > 0) else {
         return Ok(());
@@ -79,7 +79,7 @@ pub(super) fn drawer_flag<O: MeshVSMeshSource + ?Sized>(object: &O, key: i32) ->
 }
 
 /// The timer report: elapsed seconds and CPU seconds.
-pub(super) fn print_time(mode_label: &str, label: &str, mode: i32, start: Instant) {
+pub(super) fn print_time(mode_label: &str, label: &str, mode: i32, start: MonotonicInstant) {
     let seconds = start.elapsed().as_secs_f64();
     println!("{mode_label} : {mode}");
     println!("{label} : {seconds} sec");

@@ -1,0 +1,36 @@
+[package]
+name = "martensite-webgpu"
+version = "0.1.0"
+description = "Zero-unsafe WebGPU (wgpu) visualization renderer for Martensite on browser WebAssembly and desktop."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-render-core = { path = "../martensite-render-core", version = "0.1.0" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.5.1" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.4.1" }
+martensite-tkservice = { path = "../martensite-tkservice", version = "0.5.2" }
+bytemuck = { version = "=1.25.2", features = ["derive"] }
+send_wrapper = "=0.6.0"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wgpu = { version = "=30.0.2", default-features = false, features = ["webgpu", "wgsl"] }
+wasm-bindgen = "=0.2.130"
+wasm-bindgen-futures = "=0.4.80"
+web-sys = { version = "=0.3.107", features = ["HtmlCanvasElement", "OffscreenCanvas"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+wgpu = { version = "=30.0.2", default-features = false, features = ["vulkan", "metal", "dx12", "wgsl"] }
+
+[dev-dependencies]
+martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.4.1" }
+martensite-tkmesh = { path = "../martensite-tkmesh", version = "0.4.1" }
+martensite-tkprim = { path = "../martensite-tkprim", version = "0.4.1" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.5.1" }
+martensite-tkv3d = { path = "../martensite-tkv3d", version = "0.8.1" }

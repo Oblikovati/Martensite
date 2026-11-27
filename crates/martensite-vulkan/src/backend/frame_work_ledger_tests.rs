@@ -1,5 +1,6 @@
 //! The exclusive phase clock and the counters of `FrameWorkLedger`, at explicit instants.
 use super::{DeviceCount, FrameWorkLedger, PhaseAccounts, WorkPhase};
+use crate::backend::VulkanWorkLedgerExt;
 use ash::vk;
 use std::time::Duration;
 
@@ -76,7 +77,7 @@ fn a_guard_closes_its_phase_when_dropped() {
     drop(ledger.enter(WorkPhase::Submission));
     let _scene = ledger.enter(WorkPhase::Scene);
     assert!(
-        ledger.accounts().open.len() == 1,
+        ledger.open_phase_count() == 1,
         "only the scene phase stays open"
     );
 }

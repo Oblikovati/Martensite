@@ -2,8 +2,7 @@
 //! per-pixel Blinn-Phong GLSL (shaders/user/phong_shading.*.glsl), precompiled by
 //! the recording tool from shaders/user/manifest.json and registered in every
 //! driver's library, so the program of `phong_shading_program` draws without a GLSL compiler.
-use super::library::RenderUserProgramLibrary;
-use super::source_key::UserProgramKey;
+use super::{RenderUserProgramLibrary, UserProgramKey};
 use crate::RenderError;
 use martensite_tkservice::graphic3d::{
     Graphic3dRenderTransparentMethod, Graphic3dShaderObject, Graphic3dShaderProgram,

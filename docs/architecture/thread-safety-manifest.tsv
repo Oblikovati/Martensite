@@ -1393,6 +1393,7 @@ martensite-tkernel	Messenger	shareable	immutable value or Send + Sync handle/bui
 martensite-tkernel	MetricType	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkernel	MigrationFile	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkernel	Missing	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkernel	MonotonicInstant	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkernel	Msg	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkernel	MsgFile	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkernel	NamedColor	shareable	immutable value or Send + Sync handle/builder contract
@@ -1544,6 +1545,7 @@ martensite-tkernel	Uuid	shareable	immutable value or Send + Sync handle/builder 
 martensite-tkernel	Vec2	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkernel	Vec3	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkernel	Vec4	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkernel	WasmWorkerPool	thread-confined	owns browser Web Worker handles confined to the Orchestrator Worker realm (#631)
 martensite-tkernel	WeakHandle	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkernel	WeakHandleFieldRef	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkernel	WeakHandleSlotAssignment	shareable	immutable value or Send + Sync handle/builder contract
@@ -4305,8 +4307,21 @@ martensite-tkservice	MediaTimerFields	shareable	immutable value or Send + Sync h
 martensite-tkservice	NullCStructure	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkservice	NullGraphicDriver	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkservice	NullGroup	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	RealmHandle	shareable	checked thread-affinity wrapper via send_wrapper::SendWrapper (#632)
 martensite-tkservice	RevisedState	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkservice	RevisedWriteGuard	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmCanvasTarget	thread-confined	wraps JS OffscreenCanvas or HtmlCanvasElement confined to creating browser realm (#632)
+martensite-tkservice	WasmKeyEvent	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmKeyEventKind	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmKeyModifiers	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmPointerEvent	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmPointerEventKind	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmResizeEvent	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmTouchEvent	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmTouchEventKind	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmTouchPoint	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmWheelDeltaMode	shareable	immutable value or Send + Sync handle/builder contract
+martensite-tkservice	WasmWheelEvent	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkservice	WasmWindow	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkservice	WasmWindowFields	shareable	immutable value or Send + Sync handle/builder contract
 martensite-tkservice	WlEvent	shareable	immutable value or Send + Sync handle/builder contract
@@ -6099,3 +6114,339 @@ martensite-vulkan	OpenPbrGpuMaterial	shareable	immutable value or Send + Sync ha
 martensite-vulkan	OpenPbrLutTables	shareable	immutable value or Send + Sync handle/builder contract
 martensite-vulkan	EnvAliasEntry	shareable	immutable value or Send + Sync handle/builder contract
 martensite-vulkan	EnvImportanceTable	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	AdaptivePasses	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	AdaptiveSampling	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	AsyncReadbackState	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	CaptureImageError	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	CaptureImageFailure	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	CaptureImageLayout	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	CaptureImageOperation	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	CapturePlanes	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	ClipConstantFailure	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	ColoredQuadBackground	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	CompressedSurfaceSource	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	CubeBackground	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	CubeMapPixels	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	DepthShaderBound	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	DeviceCount	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	DrawBody	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	DrawInstances	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	DrawInstancesRef	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	DrawStream	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	DriverBackend	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	EnvAliasEntry	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	EnvImportanceTable	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	EnvironmentCubeSource	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	EnvironmentUniforms	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	FixedLightingInterpolation	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	FragmentAlphaFeedback	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	FragmentAlphaSnapshot	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	FrameCapture	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	FrameEnvironment	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	FrameMeshLod	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	FramePbrEnvironment	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	FrameWorkLedger	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	FrameWorkScope	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	FreeTypeTextSource	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	GeometryRevisionHint	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	GlyphLayout	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	Graphic3dDrawGroup	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	Graphic3dRenderDriver	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	Graphic3dRenderStructure	thread-confined	holds native window/FFI/raw pointer state confined to owning thread
+martensite-render-core	Graphic3dRenderView	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	GridFrame	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	GuardBandMemo	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	GuardBandSource	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	GuiLayerPacket	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	GuiLayerSlot	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	GuiSurfaceFailure	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	GuiTargetStamp	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	HighlightLineSource	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	HostCaptureSteps	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	ImmediateMainCache	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	ImmediateMainPlan	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	InstanceBounds	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	InstancePlacement	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	InstanceVisibility	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	InvalidTextureDimension	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	LegacyFragmentAlpha	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	LightingBody	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	LightingIdentity	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	LineStyle	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	LitOnlyFailure	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	MainLayerTicket	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	MainSeed	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	MeshAlternates	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	MeshLod	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	MutableGeometry	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	OpaqueMemo	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	OpenPbrGpuMaterial	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	OpenPbrLutTables	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	OpenPbrTextureIndices	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	PackedRenderLight	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	PathtraceAdaptive	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	PathtraceCameraUbo	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	PathtraceFrame	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	PbrBakingSamples	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	PhaseAccounts	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	PhaseGuard	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	PixelTextView	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	PlaneHit	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	PointColorPolicy	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	PointStyle	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	PointVertexOutputRecord	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	PolygonOffsetState	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	PrimitiveDraw	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	PrimitiveTopology	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	PtBvhNode	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	PtLight	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	PtSceneData	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	PtTriangle	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	PtVertex	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	QuadDiagonal	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	QueriedMemoryHeap	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	QueriedMemoryProperties	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RasterFailureFeedback	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RasterImage	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RasterPolicyCapabilities	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RayCommandInputs	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RayDispatchInputs	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RayInputObservation	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RayInputPhase	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RayInputRows	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RayPipelineInputs	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RayUploadInputs	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RaytraceAccumulation	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RaytraceBvhCache	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RaytraceConstants	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RaytraceEnvironment	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RaytraceFrame	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RaytraceFrameInputs	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RaytraceHaltonSampler	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RaytraceLights	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RaytraceMaterial	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RaytraceScene	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RaytraceSceneBuffers	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RaytraceStructureCheck	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RaytraceTexture	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RaytraceTextures	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RaytraceTileSampler	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RaytraceTriangleSet	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	ReadbackArguments	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RedrawCapture	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RenderAssemblyStreaming	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderAssemblyStreamingProgress	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderBehaviorConfiguration	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderCappingPass	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderClipping	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderClippingIterator	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderClippingState	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderContextState	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderCoordinateConvention	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderDepthBiasBehavior	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderDepthBiasFailure	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderDepthPass	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RenderDeviceCloseOutcome	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderDeviceFailure	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderDeviceFailureClass	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderDeviceLimits	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderDeviceMemoryHeap	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderDeviceMemoryReport	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderDeviceState	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderDeviceWork	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderDiagnosticFacts	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RenderDriverIdentity	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderDriverOptions	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderElementContext	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderElementFilter	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderError	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderFaceCulling	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderFrame	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderFrameBuffer	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderFrameStats	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderFrameStep	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderGraduatedTrihedron	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderGridEcho	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderGridPixel	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderGuiFreshPacket	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderGuiSurfaceCause	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderGuiSurfaceChange	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderGuiSurfaceOutcome	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderGuiSurfacePhase	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderGuiSurfacePolicy	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderImageMemory	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderLayer	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderLayerSpan	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderLightDotBehavior	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderLightSet	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderLighting	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderLightingPipeline	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderLightingSelectionChanged	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderLineClippingBehavior	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderLineClippingFailure	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderLineClippingRequirement	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderLineGrid	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderLineOrigin	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderLineWidthPolicy	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderMaterial	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderMaterialColorSpace	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderMaterialCommon	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderMatrixState	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderMemoryBudget	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderMemoryQuantity	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderMemoryQueryError	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderMemorySource	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderMeshEdgePipeline	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderMeshEdges	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderMeshLevel	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderMeshVertexBehavior	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderPhongInterpolationBehavior	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderPhongInterpolationFailure	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderPipelinePolicies	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderPointRasterBehavior	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderPolygonOffset	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderPolygonPointFailure	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderPortabilityFailure	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderPrimitiveArray	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderProjectionBehavior	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderProjectionFactors	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderRasterCapabilityFailure	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderRasterPolicy	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderRasterPolicyFailure	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderRasterSettings	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RenderRedrawCursor	thread-confined	holds native window/FFI/raw pointer state confined to owning thread
+martensite-render-core	RenderRedrawFailure	thread-confined	holds native window/FFI/raw pointer state confined to owning thread
+martensite-render-core	RenderShaderGrid	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderShaderGridBlock	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderShading	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderShadowMap	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderShadowMaps	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderStencilState	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderSubviewBlit	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RenderSurfacePlatform	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderSurfacePlatformFailure	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderText	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderTextInterpolationBehavior	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderTextInterpolationFailure	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderTexture	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderTextureAttachment	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderTextureCoordinatePipeline	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderThinAxisCoverage	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderThinLineCoverage	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderTransparency	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderUnlitFaceColorPolicy	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderUserProgramFailure	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderUserProgramLibrary	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderValidationAdmissionFailure	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderValidationObservationCause	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderValidationObservationFailure	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderVertex	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderViewportGridFailure	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderViewportGridPrecision	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderWindowDepthBehavior	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderWindowDepthBoundary	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderWindowDepthFailure	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderWorkTimes	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderWorldClipInterpolationBehavior	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderWorldClipInterpolationFailure	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderWorldClippingBehavior	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderWorldClippingFailure	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderWorldClippingRequirement	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	RenderedFrame	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RetainedTextureImages	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	RetainedTextureStreams	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	SamplerBinding	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	ShaderGridPass	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	ShadowCameras	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	SkydomeParams	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	SphereMapTransform	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	SphereTexgenInput	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	StageReflection	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	StencilBoundary	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	StencilCommand	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	StencilCompare	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	StencilFeedback	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	StencilOperation	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	StencilPlan	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	StencilProgram	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	StencilSnapshot	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	StereoPairComposite	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	StereoProgram	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	StreamRevision	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	StructureDrawSpan	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	SubmittedMeshLevels	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	SurfaceImageEncoding	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	SurfaceMaterialMap	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	SurfaceMaterialMaps	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	SurfaceSamplerPolicy	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	SurfaceTexgen	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	SurfaceTextureImage	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	SurfaceTextureLifetime	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	SurfaceTextureStyle	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	SurfaceTextureUnavailable	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	SurfaceUvStream	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	TextVertexOutputRecord	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	TextureGenerationBinding	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	TexturedRecord	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	TexturedStyle	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	UniformMember	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	UniformScalar	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	UniformShape	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	UserProgramDraw	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	UserProgramKey	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	UserProgramModules	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	UserStage	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	UserUniformScene	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	UserUniformValues	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	ValidationLayerVersion	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	VertexOutputFailure	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	VertexOutputFormat	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	VertexOutputRecord	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	VertexOutputRequest	shareable	immutable value or Send + Sync handle/builder contract
+martensite-render-core	ViewDiagnostics	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	ViewEnvironmentToken	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	ViewRayInputs	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	VisualErrorFeedback	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	WideLineReplay	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	WindowDepthClosure	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	WindowDepthClosureFailure	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	WindowFrameQueue	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	WorkPhase	shareable	immutable or internally synchronized render-core type (#633)
+martensite-render-core	WgslUserProgram	shareable	immutable WGSL user shader program source (#635)
+martensite-webgpu	GpuBackgroundUniforms	shareable	POD GPU uniform struct (#634)
+martensite-webgpu	GpuCullUniforms	shareable	POD GPU uniform struct (#634)
+martensite-webgpu	GpuDrawIndexedIndirect	shareable	POD GPU indirect command struct (#634)
+martensite-webgpu	GpuDrawUniforms	shareable	POD GPU uniform struct (#634)
+martensite-webgpu	GpuGridUniforms	shareable	POD GPU uniform struct (#634)
+martensite-webgpu	GpuLight	shareable	POD GPU light struct (#634)
+martensite-webgpu	GpuLineSegment	shareable	POD GPU line segment struct (#634)
+martensite-webgpu	GpuLineUniforms	shareable	POD GPU line uniform struct (#634)
+martensite-webgpu	GpuPlacementInput	shareable	POD GPU placement input struct (#634)
+martensite-webgpu	GpuPointInstance	shareable	POD GPU point instance struct (#634)
+martensite-webgpu	GpuPointUniforms	shareable	POD GPU point uniform struct (#634)
+martensite-webgpu	GpuRayBvhNode	shareable	POD GPU raytrace BVH node struct (#635)
+martensite-webgpu	GpuRayMaterial	shareable	POD GPU raytrace OpenPBR material struct (#635)
+martensite-webgpu	GpuRayTriangle	shareable	POD GPU raytrace triangle struct (#635)
+martensite-webgpu	GpuRaytraceUniforms	shareable	POD GPU raytrace uniform struct (#635)
+martensite-webgpu	GpuSceneLightsAndClips	shareable	POD GPU lights and clip planes struct (#634)
+martensite-webgpu	GpuStereoSubviewUniforms	shareable	POD GPU stereo/subview uniform struct (#635)
+martensite-webgpu	GpuSurfaceVertex	shareable	POD GPU surface vertex struct (#634)
+martensite-webgpu	WebGpuContext	shareable	realm-confined Send + Sync WebGPU device context (#634)
+martensite-webgpu	WebGpuDeferredFrame	shareable	realm-confined Send + Sync WebGPU deferred readback handle (#634)
+martensite-webgpu	WebGpuDriverFactory	shareable	Send + Sync Graphic3dGraphicDriverFactory (#634)
+martensite-webgpu	WebGpuOptions	shareable	immutable Copy configuration struct (#634)
+martensite-webgpu	WebGpuPowerPreference	shareable	immutable Copy configuration enum (#634)
+martensite-webgpu	WebGpuRealm	shareable	checked SendWrapper thread-affinity realm container (#634)
+martensite-webgpu	WebGpuRenderDriver	shareable	zero-sized constructor namespace (#634)
+martensite-webgpu	WebGpuRenderer	shareable	realm-confined Send + Sync RenderDeviceBackend (#634)
+martensite-webgpu	WebGpuWindowPresenter	shareable	realm-confined Send + Sync RenderWindowPresenter (#634)
+martensite-render-core	DashBehavior	shareable	immutable render-core geometry/projection value (#633)
+martensite-render-core	FixedGridPointRectangle	shareable	immutable render-core geometry/projection value (#633)
+martensite-render-core	PreparedAxis	shareable	immutable render-core geometry/projection value (#633)
+martensite-render-core	ProjectedFailure	shareable	immutable render-core geometry/projection value (#633)
+martensite-render-core	ProjectedFailureClass	shareable	immutable render-core geometry/projection value (#633)
+martensite-render-core	ProjectedSegments	shareable	immutable render-core geometry/projection value (#633)
+martensite-render-core	RenderTriangleCoverageBehavior	shareable	immutable render-core geometry/projection value (#633)
+martensite-render-core	RenderTriangleCoverageFailure	shareable	immutable render-core geometry/projection value (#633)
+martensite-render-core	RenderTriangleGridOrigin	shareable	immutable render-core geometry/projection value (#633)
+martensite-render-core	SegmentInterval	shareable	immutable render-core geometry/projection value (#633)

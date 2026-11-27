@@ -153,3 +153,46 @@ impl Drop for EventSource {
         }
     }
 }
+
+/// Browser WebAssembly event sink forwarding log messages to `console.*` (#631).
+#[cfg(target_arch = "wasm32")]
+pub(super) struct EventSource {
+    name: String,
+}
+
+#[cfg(target_arch = "wasm32")]
+impl EventSource {
+    pub(super) fn open(name: &AsciiString) -> Self {
+        Self {
+            name: String::from_utf8_lossy(name.as_bytes()).into_owned(),
+        }
+    }
+
+    pub(super) fn write(&self, text: &AsciiString, gravity: Gravity) {
+        let body = String::from_utf8_lossy(text.as_bytes());
+        let formatted = if self.name.is_empty() {
+            body.into_owned()
+        } else {
+            format!("[{}] {body}", self.name)
+        };
+        let value = wasm_bindgen::JsValue::from_str(&formatted);
+        match gravity {
+            Gravity::Trace => web_sys::console::debug_1(&value),
+            Gravity::Info => web_sys::console::info_1(&value),
+            Gravity::Warning => web_sys::console::warn_1(&value),
+            Gravity::Alarm | Gravity::Fail => web_sys::console::error_1(&value),
+        }
+    }
+}
+
+#[cfg(not(any(unix, windows, target_arch = "wasm32")))]
+pub(super) struct EventSource;
+
+#[cfg(not(any(unix, windows, target_arch = "wasm32")))]
+impl EventSource {
+    pub(super) fn open(_name: &AsciiString) -> Self {
+        Self
+    }
+
+    pub(super) fn write(&self, _text: &AsciiString, _gravity: Gravity) {}
+}

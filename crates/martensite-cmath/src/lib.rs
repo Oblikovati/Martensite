@@ -19,9 +19,10 @@
 //! The functions are a thin layer over the pure-Rust `metallic` crate, pinned to an
 //! exact version because its results are part of the kernel's recorded behavior.
 //! `powi` uses a fixed repeated-squaring sequence with separately documented
-//! intermediate rounding. IEEE `remainder`, which Rust lacks, is taken from the
-//! platform libm; its finite valid results are exact. [`quotient`] gives invalid
-//! divisions one NaN word on every target instead of the hardware default NaN.
+//! intermediate rounding. IEEE `remainder` is implemented in pure Rust with exact
+//! binary64 integer reduction (#631); its finite valid results are exact.
+//! [`quotient`] gives invalid divisions one NaN word on every target instead of
+//! the hardware default NaN.
 //!
 //! ```
 //! assert_eq!(martensite_cmath::sin(0.0), 0.0);
@@ -44,7 +45,17 @@
 /// test-only `libm-attribution` feature also evaluates the platform libm for the
 /// same call, records any differing result and returns the selected one, so changed
 /// test outputs can be attributed to individual elementary-function results (#201).
-#[cfg(not(any(feature = "libm-attribution", feature = "host-libm")))]
+#[cfg(all(
+    not(target_arch = "wasm32"),
+    not(any(feature = "libm-attribution", feature = "host-libm"))
+))]
+macro_rules! observed {
+    ($name:ident($($arg:expr),*) => $portable:expr) => {
+        $portable
+    };
+}
+
+#[cfg(target_arch = "wasm32")]
 macro_rules! observed {
     ($name:ident($($arg:expr),*) => $portable:expr) => {
         $portable
@@ -52,14 +63,18 @@ macro_rules! observed {
 }
 
 /// With `host-libm` alone, returns the platform C library result (behavior version 1).
-#[cfg(all(feature = "host-libm", not(feature = "libm-attribution")))]
+#[cfg(all(
+    not(target_arch = "wasm32"),
+    feature = "host-libm",
+    not(feature = "libm-attribution")
+))]
 macro_rules! observed {
     ($name:ident($($arg:expr),*) => $portable:expr) => {
         crate::host_platform::$name($($arg),*)
     };
 }
 
-#[cfg(feature = "libm-attribution")]
+#[cfg(all(not(target_arch = "wasm32"), feature = "libm-attribution"))]
 macro_rules! observed {
     ($name:ident($($arg:expr),*) => $portable:expr) => {
         crate::attribution::select(
@@ -71,14 +86,18 @@ macro_rules! observed {
     };
 }
 
-#[cfg(feature = "libm-attribution")]
+#[cfg(all(not(target_arch = "wasm32"), feature = "libm-attribution"))]
 mod attribution;
 mod exponential;
-#[cfg(any(feature = "libm-attribution", feature = "host-libm"))]
+#[cfg(all(
+    not(target_arch = "wasm32"),
+    any(feature = "libm-attribution", feature = "host-libm")
+))]
 mod host_platform;
 mod hyperbolic;
 mod integer_power;
 mod invalid;
+mod remainder;
 mod trigonometric;
 
 pub use exponential::{cbrt, exp, exp2, expm1, hypot, log, log1p, log2, log10, pow, powf};
@@ -87,14 +106,20 @@ pub use integer_power::powi;
 pub use invalid::{INVALID_OPERATION_NAN, quotient};
 pub use trigonometric::{acos, asin, atan, atan2, cos, sin, sincos, tan};
 
+#[cfg(all(
+    not(target_arch = "wasm32"),
+    any(test, feature = "libm-attribution", feature = "host-libm")
+))]
 #[allow(unsafe_code)]
 mod ffi {
     // SAFETY: these are C99 libm signatures, linked from the platform C library that
     // std already links. Each function reads only its arguments, has no
-    // preconditions and touches no memory, so each is declared `safe`. The
-    // feature-gated entries exist only in attribution and host-libm builds, never in
-    // releases.
+    // preconditions and touches no memory, so each is declared `safe`. These
+    // declarations are compiled only in unit tests (differential verification of
+    // `remainder`) and in opt-in attribution/host-libm builds, never in releases
+    // or on wasm32 (#631).
     unsafe extern "C" {
+        #[cfg(test)]
         pub safe fn remainder(numerator: f64, denominator: f64) -> f64;
         #[cfg(any(feature = "libm-attribution", feature = "host-libm"))]
         pub safe fn asinh(value: f64) -> f64;
@@ -105,7 +130,7 @@ mod ffi {
     }
 }
 
-/// IEEE 754 remainder from the platform libm, the C `remainder(x, y)`:
+/// Pure-Rust IEEE 754 remainder, matching C `remainder(x, y)`:
 /// `x - n*y` with `n` the integer nearest to `x/y` (ties to even).
 ///
 /// A finite result for valid inputs is exactly representable. Invalid inputs
@@ -115,5 +140,5 @@ mod ffi {
 /// assert_eq!(martensite_cmath::remainder(7.0, 2.0), -1.0);
 /// ```
 pub fn remainder(numerator: f64, denominator: f64) -> f64 {
-    ffi::remainder(numerator, denominator)
+    remainder::remainder(numerator, denominator)
 }

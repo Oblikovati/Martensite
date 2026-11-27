@@ -36,6 +36,8 @@ pub(crate) struct FontMgrState {
     pub(crate) fonts: Vec<Handle<FontSystemFont>>,
     pub(crate) aliases: DataMap<AsciiString, FontAliasSequence>,
     pub(crate) fallback_alias: FontAliasSequence,
+    /// In-memory font bytes registered via `register_font_bytes` keyed by synthetic path (#632).
+    pub(crate) memory_fonts: DataMap<AsciiString, Arc<[u8]>>,
     pub(crate) to_trace_aliases: bool,
     pub(crate) to_print_errors: bool,
 }
@@ -64,6 +66,7 @@ impl FontFontMgr {
                 fonts: Vec::new(),
                 aliases: DataMap::default(),
                 fallback_alias: Arc::clone(&sans),
+                memory_fonts: DataMap::default(),
                 to_trace_aliases: false,
                 to_print_errors: true,
             }),
@@ -379,9 +382,59 @@ impl FontFontMgr {
         }
         Ok(registered)
     }
+    /// Registers in-memory WOFF1 or SFNT (TTF/OTF) font bytes under `family` and `aspect` (#632).
+    ///
+    /// Works on every platform without filesystem access or FreeType.
+    /// Example: `manager.register_font_bytes(&"DejaVu Sans".into(), FontFontAspect::Regular, bytes)?`.
+    pub fn register_font_bytes(
+        &self,
+        family: &AsciiString,
+        aspect: FontFontAspect,
+        data: Arc<[u8]>,
+    ) -> Result<(), Failure> {
+        if aspect == FontFontAspect::Undefined {
+            return Err(martensite_tkernel::standard::exceptions::program_error(
+                "FontFontMgr::register_font_bytes: aspect is Undefined; expected Regular, Bold, Italic, or BoldItalic",
+            ));
+        }
+        let inspected = super::rust_engine::RustFontFace::inspect_bytes(&data).map_err(|detail| {
+            martensite_tkernel::standard::exceptions::program_error(&format!(
+                "FontFontMgr::register_font_bytes: invalid font bytes ({detail}); expected valid WOFF1 or SFNT data"
+            ))
+        })?;
+        let resolved_family = if family.is_empty() {
+            AsciiString::from(inspected.family_name.as_str())
+        } else {
+            family.clone()
+        };
+        let mut key = resolved_family.clone();
+        key.lower_case();
+        let path_str = format!(
+            "mem://{}/{}",
+            String::from_utf8_lossy(key.as_bytes()),
+            Self::font_aspect_to_string(aspect)
+        );
+        let path = AsciiString::from(path_str.as_str());
+        {
+            let mut state = self.state.write();
+            state.memory_fonts.bind(path.clone(), inspected.sfnt);
+        }
+        let system_font = Handle::new(FontSystemFont::new(&resolved_family)?);
+        system_font.set_font_path(aspect, &path, 0)?;
+        let _ = self.register_font(&system_font, true)?;
+        Ok(())
+    }
+
+    /// Looks up in-memory font bytes previously stored by [`Self::register_font_bytes`].
+    pub(crate) fn memory_font_bytes(&self, path: &AsciiString) -> Option<Arc<[u8]>> {
+        self.state.read().memory_fonts.find(path).ok().cloned()
+    }
+
     /// `ClearFontDataBase`: forgets every font; `manager.clear_font_data_base()`.
     pub fn clear_font_data_base(&self) {
-        self.state.write().fonts.clear();
+        let mut state = self.state.write();
+        state.fonts.clear();
+        state.memory_fonts.clear(false);
     }
 }
 

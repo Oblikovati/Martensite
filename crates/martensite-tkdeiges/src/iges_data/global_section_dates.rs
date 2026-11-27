@@ -1,14 +1,11 @@
 //! The dates of the global section, as the file writes them and as they read.
 use super::IgesDataGlobalSection;
-use martensite_tkernel::{standard::Handle, tcollection::HAsciiString};
-use std::time::{SystemTime, UNIX_EPOCH};
+use martensite_tkernel::{osd::unix_timestamp, standard::Handle, tcollection::HAsciiString};
 
 /// The system clock in UTC as year, month, day, hour, minute, second, so that a file does not say
 /// where it was written. A clock before 1970 gives zeros, the form of an unknown date.
 pub(crate) fn system_date() -> (i32, i32, i32, i32, i32, i32) {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_or((0, 0, 0, 0, 0, 0), |since| utc_fields(since.as_secs()))
+    unix_timestamp().map_or((0, 0, 0, 0, 0, 0), |since| utc_fields(since.as_secs()))
 }
 
 /// Year, month, day, hour, minute, second of a count of seconds since 1970-01-01, by the civil

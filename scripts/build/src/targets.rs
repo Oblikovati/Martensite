@@ -46,7 +46,7 @@ pub fn is_primary(triple: &str) -> bool {
 
 /// Suites that need Mesa lavapipe and the pinned Vulkan validation layer, which CI and the
 /// installer provision only on Linux; other platforms still build and lint these packages.
-const LINUX_TEST_PACKAGES: [&str; 1] = ["martensite-vulkan"];
+const LINUX_TEST_PACKAGES: [&str; 2] = ["martensite-vulkan", "martensite-webgpu"];
 
 /// Removes the suites a platform cannot run; `triple` is `None` for the host.
 ///

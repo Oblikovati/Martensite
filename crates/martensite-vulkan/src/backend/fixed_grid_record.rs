@@ -1,5 +1,6 @@
 //! Expanded point coverage restores the caller's dynamic viewport and facing state.
 use super::{frame::UploadedDraw, runtime::VulkanRuntime};
+use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 use ash::vk;
 
 pub(super) fn fixed_grid_draw_culling(

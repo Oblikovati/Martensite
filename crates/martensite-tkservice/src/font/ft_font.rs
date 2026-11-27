@@ -9,6 +9,7 @@ use super::freetype_ffi::{
     FT_LOAD_TARGET_LIGHT, FT_LOAD_TARGET_NORMAL, FtFaceRec, FtLong, FtMatrix, freetype,
 };
 use super::glyph_outline::FontGlyphOutlineGlyphIdentity;
+use super::rust_engine::{LoadedRustGlyph, RustFontFace};
 use super::{FontFTLibrary, FontFontAspect, FontFontMgr, FontHinting, FontUnicodeSubset};
 use crate::image::ImagePixMap;
 use martensite_tkernel::message::Message;
@@ -72,6 +73,9 @@ pub(crate) struct FtFontState {
     pub(crate) fallback_faces: [Handle<FontFTFont>; FontUnicodeSubset::Nb as usize],
     /// The `FT_Face` address, 0 for none.
     pub(crate) face: usize,
+    /// Pure-Rust `swash` face used when FreeType is absent or requested explicitly (#632).
+    pub(crate) rust_face: Option<Arc<RustFontFace>>,
+    pub(crate) loaded_rust_glyph: Option<LoadedRustGlyph>,
     pub(crate) font_path: AsciiString,
     pub(crate) params: FontFTFontParams,
     pub(crate) font_aspect: FontFontAspect,
@@ -124,6 +128,8 @@ impl FontFTFont {
             buffer: Handle::default(),
             fallback_faces: Default::default(),
             face: 0,
+            rust_face: None,
+            loaded_rust_glyph: None,
             font_path: AsciiString::default(),
             params: FontFTFontParams::default(),
             font_aspect: FontFontAspect::Regular,
@@ -141,7 +147,8 @@ impl FontFTFont {
     }
     /// Whether a face is open; `font.is_valid()`.
     pub fn is_valid(&self) -> bool {
-        self.state.read().face != 0
+        let state = self.state.read();
+        state.face != 0 || state.rust_face.is_some()
     }
     /// The bitmap of the last rendered glyph; `font.glyph_image()`.
     pub fn glyph_image(&self) -> &Handle<dyn crate::image::ImagePixMapObject> {
@@ -152,6 +159,7 @@ impl FontFTFont {
         state.revision = state.revision.wrapping_add(1);
         self.glyph_img.clear();
         state.loaded_glyph = LoadedGlyph::default();
+        state.loaded_rust_glyph = None;
     }
     /// `Release`: closes the face and forgets the fallbacks, path and memory buffer.
     /// Example: `font.release()`.
@@ -161,6 +169,7 @@ impl FontFTFont {
         state.fallback_faces = Default::default();
         state.font_path.clear();
         done_face(std::mem::replace(&mut state.face, 0));
+        state.rust_face = None;
         state.buffer = Handle::default();
     }
 }
@@ -308,6 +317,7 @@ impl FontFTFont {
     }
     /// `Init(theData, theFileName, theParams, theFaceId)`: opens a font from memory (or the
     /// file when `data` is null); invalid parameters or library fail before anything changes.
+    /// Falls back to the pure-Rust font engine when FreeType is unavailable (#632).
     /// Example: `font.init_from(&data, &"embedded".into(), &params, 0)`.
     pub fn init_from(
         &self,
@@ -316,28 +326,66 @@ impl FontFTFont {
         params: &FontFTFontParams,
         face_id: i32,
     ) -> bool {
+        if !params.is_valid() {
+            return false;
+        }
+        // Memory-registered fonts bypass OS filesystem paths on every target (#632).
+        if data.is_null()
+            && let Some(bytes) = FontFontMgr::get_instance().memory_font_bytes(path)
+        {
+            return self.init_pure_rust_bytes(&bytes, path, params, face_id);
+        }
         let library = self.state.read().ft_lib.clone();
         let library_valid = library.get().is_some_and(FontFTLibrary::is_valid);
-        if !params.is_valid() || !library_valid {
-            if !library_valid {
-                trace(&[b"FreeType library is unavailable"]);
+        if library_valid && freetype().is_some() {
+            let Some(library) = library.get() else {
+                return false;
+            };
+            let Some(face) = open_face(library, data, path, face_id) else {
+                return false;
+            };
+            if !configure_face(face.0, path, params) {
+                return false;
             }
-            return false;
+            self.release();
+            let mut state = self.state.write();
+            (state.buffer, state.font_path, state.params) = (data.clone(), path.clone(), *params);
+            state.load_flags = load_flags(params.font_hinting);
+            state.face = face.take();
+            return true;
         }
-        let Some(library) = library.get() else {
+        // Pure-Rust fallback (always active on wasm32 or hosts without FreeType).
+        if let Some(buffer) = data.get() {
+            return self.init_pure_rust_bytes(buffer.as_slice(), path, params, face_id);
+        }
+        if !path.is_empty()
+            && let Ok(bytes) = std::fs::read(String::from_utf8_lossy(path.as_bytes()).as_ref())
+        {
+            return self.init_pure_rust_bytes(&bytes, path, params, face_id);
+        }
+        trace(&[b"FreeType library is unavailable"]);
+        false
+    }
+
+    /// Initializes this font directly with the pure-Rust WOFF1/SFNT font engine (#632).
+    ///
+    /// Example: `font.init_pure_rust_bytes(woff_bytes, &"fallback".into(), &params, 0)`.
+    pub fn init_pure_rust_bytes(
+        &self,
+        bytes: &[u8],
+        path: &AsciiString,
+        params: &FontFTFontParams,
+        face_id: i32,
+    ) -> bool {
+        let Some(rust_face) = RustFontFace::from_bytes(bytes, params, face_id) else {
             return false;
         };
-        let Some(face) = open_face(library, data, path, face_id) else {
-            return false;
-        };
-        if !configure_face(face.0, path, params) {
-            return false;
-        }
         self.release();
         let mut state = self.state.write();
-        (state.buffer, state.font_path, state.params) = (data.clone(), path.clone(), *params);
+        state.font_path = path.clone();
+        state.params = *params;
         state.load_flags = load_flags(params.font_hinting);
-        state.face = face.take();
+        state.rust_face = Some(Arc::new(rust_face));
         true
     }
 }

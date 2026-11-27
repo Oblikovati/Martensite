@@ -77,6 +77,7 @@ fn assert_native_change(error: &RenderError, phase: RenderGuiSurfacePhase, with_
             assert_eq!(fault, &native_injected_fault());
             change
         }
+        other => panic!("unexpected GUI surface outcome: {other:?}"),
     };
     assert_eq!(change.phase, phase);
     assert_eq!(

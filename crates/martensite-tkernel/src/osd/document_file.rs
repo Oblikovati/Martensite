@@ -10,6 +10,31 @@ mod backend;
 #[cfg(windows)]
 #[path = "document_file/windows.rs"]
 mod backend;
+#[cfg(not(any(target_os = "linux", target_vendor = "apple", windows)))]
+mod backend {
+    use std::{io, path::Path};
+
+    pub(super) fn create_private_directory(directory: &Path) -> io::Result<()> {
+        Err(io::Error::new(
+            io::ErrorKind::Unsupported,
+            format!(
+                "cannot create private staging directory {} on this target; expected a native OS filesystem",
+                directory.display()
+            ),
+        ))
+    }
+
+    pub(super) fn preserve_access(destination: &Path, staged: &Path) -> io::Result<()> {
+        Err(io::Error::new(
+            io::ErrorKind::Unsupported,
+            format!(
+                "cannot preserve filesystem access policy from {} to {} on this target; expected a native OS filesystem",
+                destination.display(),
+                staged.display()
+            ),
+        ))
+    }
+}
 #[cfg(unix)]
 #[path = "document_file/unix.rs"]
 mod unix;

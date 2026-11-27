@@ -5,6 +5,7 @@ use super::{
     runtime::{VulkanRuntime, vk_error},
 };
 use crate::RenderError;
+use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 use ash::vk;
 
 /// Apply one runtime policy to all graphics pipelines; `create_pipeline(runtime, info, raster)?`.

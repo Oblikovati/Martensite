@@ -1,6 +1,7 @@
 //! Independent rectangle and payload controls for the candidate convention.
 use super::tests::rectangle;
 use super::*;
+use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 
 #[test]
 fn top_left_partial_regions_do_not_reuse_bottom_up_offsets() {

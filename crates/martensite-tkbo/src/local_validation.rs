@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Local changed-entity validation with cost measurement alongside full publication checks (#16, #213).
 use martensite_tkbrep::topods::Shape;
+use martensite_tkernel::osd::MonotonicInstant;
 use martensite_tkernel::standard::Failure;
 use martensite_tktopalgo::brep_check::BRepCheckAnalyzer;
-use std::time::Instant;
 
 /// Scope of a B-rep validation pass (#16).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -49,7 +49,7 @@ impl LocalCheckReport {
 
 /// Validates only `changed_entities` and reports check cost (#16).
 pub fn validate_changed_entities(changed_entities: &[Shape]) -> Result<LocalCheckReport, Failure> {
-    let start = Instant::now();
+    let start = MonotonicInstant::now();
     let mut defects = Vec::new();
     let mut all_valid = true;
     for (idx, entity) in changed_entities.iter().enumerate() {
@@ -75,7 +75,7 @@ pub fn validate_changed_entities(changed_entities: &[Shape]) -> Result<LocalChec
 
 /// Runs the full ordered publication check on `shape` and reports check cost (#16, #213).
 pub fn validate_full_publication(shape: &Shape) -> Result<LocalCheckReport, Failure> {
-    let start = Instant::now();
+    let start = MonotonicInstant::now();
     let mut defects = Vec::new();
     let is_valid = if shape.is_null() {
         defects.push("published shape is null".to_string());

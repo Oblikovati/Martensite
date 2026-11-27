@@ -37,6 +37,8 @@ pub enum AspectDisplayBackend {
     X11,
     /// Win32 process module handle (`HINSTANCE`).
     Win32,
+    /// Browser WebAssembly / WebGPU display context (#632).
+    WebBrowser,
     /// Unconnected or platform-neutral display.
     #[default]
     Unknown,
@@ -343,9 +345,29 @@ mod platform {
     }
 }
 
+/// Browser WebAssembly display connection: no X11/Wayland socket exists, so
+/// initialization succeeds with `AspectDisplayBackend::WebBrowser` (#632).
+#[cfg(target_arch = "wasm32")]
+mod platform {
+    use super::{AspectDisplayBackend, ConnectionState, NativeDisplayCalls};
+    use martensite_tkernel::standard::Failure;
+
+    pub(super) fn init(
+        state: &mut ConnectionState,
+        display: usize,
+        _native: &dyn NativeDisplayCalls,
+    ) -> Result<(), Failure> {
+        state.display = if display != 0 { display } else { 1 };
+        state.backend = AspectDisplayBackend::WebBrowser;
+        state.is_own_display = false;
+        state.atoms.clear();
+        Ok(())
+    }
+}
+
 /// The platforms without an implemented window-system backend: initializing raises
 /// `Standard_NotImplemented` and leaves the connection without a display.
-#[cfg(not(any(target_os = "linux", windows)))]
+#[cfg(not(any(target_os = "linux", windows, target_arch = "wasm32")))]
 mod platform {
     use super::{ConnectionState, NativeDisplayCalls};
     use martensite_tkernel::standard::Failure;

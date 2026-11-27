@@ -52,6 +52,7 @@ mod thread_sanitizer_selection;
 #[cfg(test)]
 mod unsafe_inventory;
 mod version;
+mod wasm;
 #[cfg(test)]
 mod workflow_publish_tests;
 mod workspace;

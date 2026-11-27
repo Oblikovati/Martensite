@@ -325,12 +325,13 @@ impl RasterPipelines {
             window_depth.map(|value| value.cache_words()),
             dynamic_lighting,
         );
+        use super::pipeline_memo::VulkanPipelineMemoExt;
         let inputs = super::pipeline_memo::SelectionInputs::of(self.memo_serial, draw, frame);
-        if let Some(pipeline) = draw.pipeline_memo.get(&inputs) {
+        if let Some(pipeline) = draw.pipeline_memo.get_vulkan(&inputs) {
             return Ok(pipeline);
         }
         let pipeline = self.select_unmemoized(draw, factorized, window_depth, dynamic_lighting)?;
-        draw.pipeline_memo.keep(inputs, pipeline.clone());
+        draw.pipeline_memo.keep_vulkan(inputs, pipeline.clone());
         Ok(pipeline)
     }
     /// The serial a pipeline memo keys its selections by; `pipelines.selection_serial()`.

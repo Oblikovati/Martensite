@@ -35,7 +35,7 @@ mod geometry_batch;
 pub(crate) use geometry_batch::GeometryBatch;
 
 struct FrameDrawUploads<'a> {
-    geometry_batch: Option<&'a Arc<GeometryBatch>>,
+    geometry_batch: Option<Arc<GeometryBatch>>,
     geometry: GeometryTransfers,
     storage: FrameUploadPages<'a>,
     dynamic_lighting: bool,

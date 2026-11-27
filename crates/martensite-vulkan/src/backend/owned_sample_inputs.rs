@@ -140,8 +140,8 @@ fn configure_source(light: &Graphic3dCLight, kind: Graphic3dTypeOfLightSource) -
 }
 fn program(material: RenderMaterial) -> OwnedResult<UserProgramDraw> {
     let library = RenderUserProgramLibrary::default();
-    crate::user_program::register_samples(&library)?;
-    let modules = library.modules(&crate::user_program::phong_shading_program())?;
+    crate::vulkan_user_program::register_samples(&library)?;
+    let modules = library.modules(&crate::vulkan_user_program::phong_shading_program())?;
     let scene = UserUniformScene {
         model_world: identity_clip(),
         world_view: identity_clip(),

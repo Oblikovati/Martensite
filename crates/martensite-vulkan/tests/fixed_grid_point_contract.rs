@@ -1,7 +1,4 @@
-//! Pure production rectangle math, with no Vulkan instance or device creation.
-use martensite_vulkan::RenderError;
-#[path = "../src/fixed_grid_point.rs"]
-mod fixed_grid_point;
+//! Pure production point-raster behavior contract, with no Vulkan instance or device creation.
 
 #[test]
 fn hardware_point_replay_remains_default() {

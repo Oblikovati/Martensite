@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Martensite WASM + WebGPU E2E</title></head>
+<body>
+<canvas id="e2e-canvas" width="256" height="192"></canvas>
+<script type="module">
+// Guard: Atomics.wait must never execute on the browser main thread.
+window.__mainThreadBlocked = false;
+const origWait = Atomics.wait;
+Atomics.wait = function(...args) {
+    window.__mainThreadBlocked = true;
+    return origWait.apply(this, args);
+};
+
+window.__e2eResult = null;
+window.__e2eError = null;
+
+async function main() {
+    if (!self.crossOriginIsolated) {
+        throw new Error("crossOriginIsolated is false; expected COOP/COEP headers");
+    }
+    const canvas = document.getElementById("e2e-canvas");
+    const offscreen = canvas.transferControlToOffscreen();
+    const worker = new Worker("./orchestrator.js", { type: "module" });
+    worker.onmessage = (ev) => {
+        if (ev.data.ok) {
+            window.__e2eResult = {
+                ...JSON.parse(ev.data.json),
+                crossOriginIsolated: self.crossOriginIsolated,
+                mainThreadBlocked: window.__mainThreadBlocked,
+                hardwareConcurrency: navigator.hardwareConcurrency || 0,
+            };
+        } else {
+            window.__e2eError = ev.data.error;
+        }
+    };
+    worker.onerror = (err) => {
+        window.__e2eError = String(err.message || err);
+    };
+    worker.postMessage({ canvas: offscreen, maxWorkers: 7 }, [offscreen]);
+}
+
+try {
+    await main();
+} catch (err) {
+    window.__e2eError = String(err?.stack || err);
+}
+</script>
+</body>
+</html>

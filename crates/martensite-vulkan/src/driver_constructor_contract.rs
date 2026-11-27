@@ -17,7 +17,10 @@ fn legacy_vulkan_constructor_preserves_all_default_selections() {
     let driver = Graphic3dRenderDriver::new(constructor_options()).unwrap();
     assert_selection(&driver, Default::default());
     assert!(driver.driver_identity().is_some());
-    assert!(matches!(&*driver.device.read(), DriverBackend::Vulkan(_)));
+    assert!(matches!(
+        &*driver.render_device().read(),
+        DriverBackend::Device(_)
+    ));
 }
 
 #[test]
@@ -33,7 +36,10 @@ fn legacy_vulkan_composition_preserves_each_selected_policy() {
     )
     .unwrap();
     assert_selection(&driver, expected);
-    assert!(matches!(&*driver.device.read(), DriverBackend::Vulkan(_)));
+    assert!(matches!(
+        &*driver.render_device().read(),
+        DriverBackend::Device(_)
+    ));
 }
 
 /// Reuse the frozen device selection; `constructor_options()` enables validation.
@@ -57,13 +63,7 @@ pub(super) fn selected_legacy_policies() -> LegacySelection {
 
 /// Apply the frozen constructor assertions; `assert_selection(&driver, expected)` checks every field.
 pub(super) fn assert_selection(driver: &Graphic3dRenderDriver, expected: LegacySelection) {
-    let actual = (
-        driver.texture_images.coordinate_pipeline,
-        driver.mesh_edge_pipeline,
-        driver.lighting_pipeline(),
-        driver.unlit_face_color_policy,
-        driver.gui_surface,
-    );
+    let actual = driver.policy_selection_for_test();
     assert_eq!(actual, expected);
     println!("{{\"constructor_policies\":{:?}}}", format!("{actual:?}"));
 }
@@ -89,7 +89,10 @@ fn legacy_injected_constructor_keeps_its_backend_and_independent_policies() {
     )
     .unwrap();
     assert_selection(&driver, injected_legacy_selection());
-    assert!(matches!(&*driver.device.read(), DriverBackend::Injected(_)));
+    assert!(matches!(
+        &*driver.render_device().read(),
+        DriverBackend::Injected(_)
+    ));
     assert!(driver.driver_identity().is_none());
 }
 

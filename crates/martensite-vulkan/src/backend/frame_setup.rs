@@ -11,6 +11,7 @@ use super::super::{
 };
 use super::super::{pipeline_variants::RasterPipelines, runtime::VulkanRuntime};
 use super::{FrameDrawUploads, FrameResources, UploadedDraw, check_extent, upload_draw};
+use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 use crate::immediate_main::{ImmediateMainPlan, MainSeed};
 use crate::{RenderError, RenderFrame};
 use ash::vk;
@@ -182,7 +183,13 @@ impl FrameSetup<'_> {
                 .any(|draw| draw.instances.is_some());
         let mut uploads = FrameDrawUploads {
             compact_vertices,
-            geometry_batch: self.frame.geometry_batch.as_ref(),
+            geometry_batch: self.frame.geometry_batch.as_ref().and_then(|batch| {
+                batch
+                    .clone()
+                    .as_any_arc()
+                    .downcast::<super::GeometryBatch>()
+                    .ok()
+            }),
             geometry: GeometryTransfers::new(&self.pipeline.geometry_residency),
             storage: FrameUploadPages::storage(&self.pipeline.frame_storage_pages),
             dynamic_lighting: super::super::storage_descriptor::uses_lighting_pages(

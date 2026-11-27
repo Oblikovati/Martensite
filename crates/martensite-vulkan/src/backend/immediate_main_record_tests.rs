@@ -41,7 +41,7 @@ fn completed_main_images_preserve_color_and_occlusion_for_a_changing_overlay() {
     let cache = Arc::new(ImmediateMainCache::default());
     let main = triangle(0.2, [1., 0., 0., 1.], -0.1);
     let mut base = frame(main.clone(), vec![], false);
-    base.immediate_main = cache.plan(&base, None);
+    base.immediate_main = cache.plan_without_elision(&base);
     assert!(matches!(
         base.immediate_main,
         Some(ImmediateMainPlan::Remember(_))
@@ -57,7 +57,7 @@ fn completed_main_images_preserve_color_and_occlusion_for_a_changing_overlay() {
             full.rgba.as_chunks::<4>().0.contains(&[255, 0, 0, 255]),
             !depth_clear
         );
-        updated.immediate_main = cache.plan(&updated, None);
+        updated.immediate_main = cache.plan_without_elision(&updated);
         assert!(matches!(
             updated.immediate_main,
             Some(ImmediateMainPlan::Restore { start: 1, .. })
@@ -78,10 +78,10 @@ fn main_camera_color_geometry_and_extent_changes_cannot_reuse_the_base() {
     let cache = Arc::new(ImmediateMainCache::default());
     let main = triangle(0.2, [1., 0., 0., 1.], -0.1);
     let mut base = frame(main, vec![], false);
-    base.immediate_main = cache.plan(&base, None);
+    base.immediate_main = cache.plan_without_elision(&base);
     renderer.render(&base).unwrap();
     assert!(matches!(
-        cache.plan(&base, None),
+        cache.plan_without_elision(&base),
         Some(ImmediateMainPlan::Restore { .. })
     ));
     let mutations: [fn(&mut RenderFrame); 4] = [
@@ -94,7 +94,7 @@ fn main_camera_color_geometry_and_extent_changes_cannot_reuse_the_base() {
         let mut changed = base.clone();
         mutate(&mut changed);
         assert!(!matches!(
-            cache.plan(&changed, None),
+            cache.plan_without_elision(&changed),
             Some(ImmediateMainPlan::Restore { .. })
         ));
     }
@@ -106,20 +106,20 @@ fn recycled_main_frame_ticket_falls_back_to_a_complete_redraw() {
     let cache = Arc::new(ImmediateMainCache::default());
     let main = triangle(0.2, [1., 0., 0., 1.], -0.1);
     let mut seed = frame(main.clone(), vec![], false);
-    seed.immediate_main = cache.plan(&seed, None);
+    seed.immediate_main = cache.plan_without_elision(&seed);
     renderer.render(&seed).unwrap();
     let other_views: Vec<_> = (0..4)
         .map(|_| Arc::new(ImmediateMainCache::default()))
         .collect();
     let mut other = frame(triangle(0.5, [0., 0., 1., 1.], 0.9), vec![], false);
     for view in &other_views {
-        other.immediate_main = view.plan(&other, None);
+        other.immediate_main = view.plan_without_elision(&other);
         renderer.render(&other).unwrap();
     }
     let overlay = triangle(0.8, [0., 1., 0., 1.], 0.9);
     let mut changed = frame(main, vec![overlay], false);
     let full = renderer.render(&changed).unwrap();
-    changed.immediate_main = cache.plan(&changed, None);
+    changed.immediate_main = cache.plan_without_elision(&changed);
     assert!(matches!(
         changed.immediate_main,
         Some(ImmediateMainPlan::Restore { .. })
@@ -132,7 +132,7 @@ fn recycled_main_frame_ticket_falls_back_to_a_complete_redraw() {
             .is_none()
     );
     assert_capture(renderer.render(&changed).unwrap(), full);
-    changed.immediate_main = cache.plan(&changed, None);
+    changed.immediate_main = cache.plan_without_elision(&changed);
     assert!(
         renderer
             .frame_resources(&changed)
@@ -151,7 +151,7 @@ fn first_immediate_frame_saves_the_main_prefix_before_drawing_a_visible_overlay(
     let green = triangle(0.1, [0., 1., 0., 1.], 0.9);
     let mut first = frame(main.clone(), vec![green], true);
     let full = renderer.render(&first).unwrap();
-    first.immediate_main = cache.plan(&first, None);
+    first.immediate_main = cache.plan_without_elision(&first);
     assert!(
         matches!(&first.immediate_main, Some(ImmediateMainPlan::Remember(seed)) if seed.snapshot_start == Some(1))
     );
@@ -159,7 +159,7 @@ fn first_immediate_frame_saves_the_main_prefix_before_drawing_a_visible_overlay(
     let blue = triangle(0.7, [0., 0., 1., 1.], 0.9);
     let mut changed = frame(main, vec![blue], false);
     let reference = renderer.render(&changed).unwrap();
-    changed.immediate_main = cache.plan(&changed, None);
+    changed.immediate_main = cache.plan_without_elision(&changed);
     assert!(
         renderer
             .frame_resources(&changed)
@@ -178,11 +178,11 @@ fn an_unobserved_submission_owns_its_source_after_view_invalidation() {
     let mut renderer = resource_lifecycle_test_support::create_resource_renderer();
     let cache = Arc::new(ImmediateMainCache::default());
     let mut frame = frame(triangle(0.2, [1., 0., 0., 1.], -0.1), vec![], false);
-    frame.immediate_main = cache.plan(&frame, None);
+    frame.immediate_main = cache.plan_without_elision(&frame);
     renderer.render(&frame).unwrap();
     // The owner count below concerns this submission, not the earlier frame in flight.
     renderer.finish_frames().unwrap();
-    frame.immediate_main = cache.plan(&frame, None);
+    frame.immediate_main = cache.plan_without_elision(&frame);
     let resources = renderer.frame_resources(&frame).unwrap();
     let (_, source) = resources.immediate_source.as_ref().unwrap();
     let color = Arc::downgrade(&source.color);
@@ -226,12 +226,12 @@ fn an_elided_frame_draws_its_overlay_over_the_retained_main_images() {
     let cache = Arc::new(ImmediateMainCache::default());
     let main = triangle(0.2, [1., 0., 0., 1.], -0.1);
     let mut base = frame(main.clone(), vec![], false);
-    base.immediate_main = cache.plan(&base, None);
+    base.immediate_main = cache.plan_without_elision(&base);
     renderer.render(&base).unwrap();
     let overlay = triangle(0.8, [0., 1., 0., 1.], 0.9);
     let mut updated = frame(main, vec![overlay.clone()], false);
     let full = renderer.render(&updated).unwrap();
-    updated.immediate_main = cache.plan(&updated, None);
+    updated.immediate_main = cache.plan_without_elision(&updated);
     let Some(ImmediateMainPlan::Restore { start, ticket, .. }) = updated.immediate_main else {
         panic!("the unchanged main pass must be restorable");
     };

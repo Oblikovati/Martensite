@@ -24,22 +24,23 @@ undocumented_unsafe_blocks = "warn"
 
 [features]
 # Temporary diagnostic; delete after bug30412 raster ordering is resolved.
-command-state-diagnostics = ["dep:serde_json"]
+command-state-diagnostics = ["dep:serde_json", "martensite-render-core/command-state-diagnostics"]
 # Owned uploaded ray inputs; explicit observation only, never a rendering policy.
-raytrace-input-diagnostics = ["command-state-diagnostics"]
+raytrace-input-diagnostics = ["command-state-diagnostics", "martensite-render-core/raytrace-input-diagnostics"]
 # Diagnostic-only production-intersection origin intervention, never qualification.
-raytrace-hit-diagnostics = ["raytrace-input-diagnostics", "dep:sha2"]
+raytrace-hit-diagnostics = ["raytrace-input-diagnostics", "dep:sha2", "martensite-render-core/raytrace-hit-diagnostics"]
 # Temporary command omission proof; never selected by default.
-lit-only-command-diagnostics = ["command-state-diagnostics"]
+lit-only-command-diagnostics = ["command-state-diagnostics", "martensite-render-core/lit-only-command-diagnostics"]
 # Temporary original-draw vertex observation; no default shader or pipeline change.
-vertex-output-diagnostics = ["command-state-diagnostics"]
+vertex-output-diagnostics = ["command-state-diagnostics", "martensite-render-core/vertex-output-diagnostics"]
 # Selects only the owned manual window proof target; production code is unchanged.
 owned-raster-x11-smoke = []
 # Lowers each recorded group again on replay and panics on any difference (#594); tests only.
-draw-record-verification = []
+draw-record-verification = ["martensite-render-core/draw-record-verification"]
 
 [dependencies]
 martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-render-core = { path = "../martensite-render-core", version = "0.1.0" }
 martensite-tkernel = { path = "../martensite-tkernel", version = "0.5.1" }
 martensite-tkmath = { path = "../martensite-tkmath", version = "0.4.1" }
 martensite-tkservice = { path = "../martensite-tkservice", version = "0.5.2" }

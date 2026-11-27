@@ -88,3 +88,18 @@ fn windows_creation_date_initialization_preserves_zero_fields() {
         [0; 8]
     );
 }
+
+#[cfg(target_arch = "wasm32")]
+fn native_local_date() -> (u32, u32, i32) {
+    let now = js_sys::Date::new_0();
+    (
+        now.get_month() + 1,
+        now.get_date(),
+        now.get_full_year() as i32,
+    )
+}
+
+#[cfg(not(any(unix, windows, target_arch = "wasm32")))]
+fn native_local_date() -> (u32, u32, i32) {
+    (1, 1, 1970)
+}

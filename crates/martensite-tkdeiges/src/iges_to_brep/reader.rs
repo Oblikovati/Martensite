@@ -10,6 +10,7 @@ use crate::iges_solid::IgesSolid;
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{Compound, Shape};
 use martensite_tkernel::message::{Gravity, Msg, ProgressRange, ProgressScope};
+use martensite_tkernel::osd::MonotonicInstant;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkshhealing::shape_extend::ShapeExtendExplorer;
@@ -23,12 +24,11 @@ use martensite_tkxsbase::transfer_brep::TransferBRep;
 use martensite_tkxsbase::xs_algo::{
     DEShapeFixParameters, XSAlgoParameterMap, XSAlgoShapeProcessor,
 };
-use std::time::Instant;
 
 const WHERE: &str = "IgesToBRepReader";
 
 /// The time since a start, as the messages show it.
-fn elapsed_text(start: Instant) -> Vec<u8> {
+fn elapsed_text(start: MonotonicInstant) -> Vec<u8> {
     let total = start.elapsed().as_secs_f64();
     let hours = (total / 3600.0).floor();
     let minutes = ((total - hours * 3600.0) / 60.0).floor();
@@ -144,7 +144,7 @@ impl IgesToBRepReader {
             m.arg_text(file_name.as_bytes())
         })?)?;
         self.send(&with_arg("IGES_2005", |m| m.arg_integer(trace))?)?;
-        let start = Instant::now();
+        let start = MonotonicInstant::now();
         let model = IgesDataIgesModel::new();
         let status = iges_file_read(file_name, &model, &IgesSelectWorkLibrary::define_protocol())?;
         if status != 0 {
@@ -272,7 +272,7 @@ impl IgesToBRepReader {
             return Ok(());
         };
         self.send(&iges_msg("IGES_2030"))?;
-        let start = Instant::now();
+        let start = MonotonicInstant::now();
         self.done = false;
         self.shapes.clear();
         let trace = process.trace_level();
@@ -397,7 +397,7 @@ impl IgesToBRepReader {
             return Ok(false);
         }
         self.send(&iges_msg("IGES_2030"))?;
-        let start = Instant::now();
+        let start = MonotonicInstant::now();
         let entity = model.entity(number);
         let scope = ProgressScope::with_literal(range, "OneEnt", 2.0, false);
         XSAlgoShapeProcessor::prepare_for_transfer();

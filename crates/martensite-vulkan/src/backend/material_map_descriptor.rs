@@ -7,6 +7,7 @@ use super::{
     surface_image_cache::SampledSource,
     surface_image_descriptor::{SurfaceImageBinding, SurfaceImageLayout},
 };
+use crate::backend::VulkanWorkLedgerExt;
 use crate::{
     RenderError,
     surface_material_maps::SurfaceMaterialMaps,

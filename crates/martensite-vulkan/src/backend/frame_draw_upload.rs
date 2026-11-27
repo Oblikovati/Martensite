@@ -236,7 +236,7 @@ impl<'a> DrawUploadContext<'a> {
             self.draw,
         )?;
         self.validate_styles()?;
-        let geometry = match uploads.geometry_batch {
+        let geometry = match uploads.geometry_batch.as_ref() {
             Some(batch) => self.upload_geometry_batch(batch, &mut uploads.geometry)?,
             None => self.upload_geometry(&mut uploads.geometry, uploads.dynamic_lighting)?,
         };

@@ -72,4 +72,43 @@ impl Parallel {
         };
         Launcher::new(pool, nb_threads).perform_iter(items, |_, item| functor(item))
     }
+
+    /// Runs `body(worker_index)` across `worker_count` participants, always
+    /// joining before returning (#631).
+    ///
+    /// On native targets, uses `std::thread::scope` so callers get dedicated
+    /// parallel workers without contending on the shared global pool. On
+    /// multi-threaded `wasm32` (`+atomics`), dispatches onto the pre-warmed
+    /// default Web Worker pool.
+    ///
+    /// ```
+    /// use martensite_tkernel::osd::Parallel;
+    /// use std::sync::atomic::{AtomicUsize, Ordering};
+    /// let hits = AtomicUsize::new(0);
+    /// Parallel::scope_or_pool(2, |_| { hits.fetch_add(1, Ordering::Relaxed); }).unwrap();
+    /// assert_eq!(hits.load(Ordering::Relaxed), 2);
+    /// ```
+    pub fn scope_or_pool(worker_count: usize, body: impl Fn(usize) + Sync) -> Result<(), Failure> {
+        if worker_count <= 1 {
+            body(0);
+            return Ok(());
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let body_ref = &body;
+            std::thread::scope(|scope| {
+                for worker_index in 1..worker_count {
+                    scope.spawn(move || body_ref(worker_index));
+                }
+                body_ref(0);
+            });
+            Ok(())
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            let max_threads: i32 = i32::try_from(worker_count).unwrap_or(i32::MAX);
+            let launcher: Launcher<'_> = Launcher::new(ThreadPool::default_pool(-1), max_threads);
+            launcher.perform_workers(|thread_index| body(thread_index as usize))
+        }
+    }
 }

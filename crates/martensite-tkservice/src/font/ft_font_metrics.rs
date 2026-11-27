@@ -37,35 +37,45 @@ impl FontFTFont {
     /// `GlyphMaxSizeX`: the face box width in pixels (rounded), with the fallbacks' maximum
     /// when asked. Example: `font.glyph_max_size_x(false)`.
     pub fn glyph_max_size_x(&self, include_fallback: bool) -> u32 {
-        let own = self.sized_face(|face, metrics| {
-            let width = if face.face_flags & FT_FACE_FLAG_SCALABLE != 0 && face.units_per_em != 0 {
-                scaled(
-                    (face.bbox.x_max - face.bbox.x_min) as f32,
-                    metrics.x_ppem,
-                    face.units_per_em,
-                )
-            } else {
-                from_ft_points(metrics.max_advance)
-            };
-            (width + 0.5) as u32
-        });
+        let own = if let Some(rust) = self.state.read().rust_face.clone() {
+            Some(rust.glyph_max_size_x())
+        } else {
+            self.sized_face(|face, metrics| {
+                let width =
+                    if face.face_flags & FT_FACE_FLAG_SCALABLE != 0 && face.units_per_em != 0 {
+                        scaled(
+                            (face.bbox.x_max - face.bbox.x_min) as f32,
+                            metrics.x_ppem,
+                            face.units_per_em,
+                        )
+                    } else {
+                        from_ft_points(metrics.max_advance)
+                    };
+                (width + 0.5) as u32
+            })
+        };
         self.with_fallback_max(own, include_fallback, |f| f.glyph_max_size_x(false))
     }
     /// `GlyphMaxSizeY`: the face box height in pixels (rounded), with the fallbacks' maximum
     /// when asked. Example: `font.glyph_max_size_y(false)`.
     pub fn glyph_max_size_y(&self, include_fallback: bool) -> u32 {
-        let own = self.sized_face(|face, metrics| {
-            let height = if face.face_flags & FT_FACE_FLAG_SCALABLE != 0 && face.units_per_em != 0 {
-                scaled(
-                    (face.bbox.y_max - face.bbox.y_min) as f32,
-                    metrics.y_ppem,
-                    face.units_per_em,
-                )
-            } else {
-                from_ft_points(metrics.height)
-            };
-            (height + 0.5) as u32
-        });
+        let own = if let Some(rust) = self.state.read().rust_face.clone() {
+            Some(rust.glyph_max_size_y())
+        } else {
+            self.sized_face(|face, metrics| {
+                let height =
+                    if face.face_flags & FT_FACE_FLAG_SCALABLE != 0 && face.units_per_em != 0 {
+                        scaled(
+                            (face.bbox.y_max - face.bbox.y_min) as f32,
+                            metrics.y_ppem,
+                            face.units_per_em,
+                        )
+                    } else {
+                        from_ft_points(metrics.height)
+                    };
+                (height + 0.5) as u32
+            })
+        };
         self.with_fallback_max(own, include_fallback, |f| f.glyph_max_size_y(false))
     }
     fn with_fallback_max(
@@ -106,19 +116,31 @@ impl FontFTFont {
     }
     /// `Ascender` in pixels; `font.ascender()`.
     pub fn ascender(&self) -> f32 {
+        if let Some(ref rust) = self.state.read().rust_face {
+            return rust.ascender();
+        }
         self.vertical_metric(|f| f.ascender, |m| m.ascender)
     }
     /// `Descender` in pixels (negative); `font.descender()`.
     pub fn descender(&self) -> f32 {
+        if let Some(ref rust) = self.state.read().rust_face {
+            return rust.descender();
+        }
         self.vertical_metric(|f| f.descender, |m| m.descender)
     }
     /// `LineSpacing` in pixels; `font.line_spacing()`.
     pub fn line_spacing(&self) -> f32 {
+        if let Some(ref rust) = self.state.read().rust_face {
+            return rust.line_spacing();
+        }
         self.vertical_metric(|f| f.height, |m| m.height)
     }
     /// Scaled underline offset from the baseline in pixels (negative below baseline, #578);
     /// `font.underline_position()`.
     pub fn underline_position(&self) -> f32 {
+        if let Some(ref rust) = self.state.read().rust_face {
+            return rust.underline_position();
+        }
         self.sized_face(|face, metrics| {
             if face.units_per_em == 0 {
                 return 0.0;
@@ -133,6 +155,9 @@ impl FontFTFont {
     }
     /// Scaled underline stroke thickness in pixels (#578); `font.underline_thickness()`.
     pub fn underline_thickness(&self) -> f32 {
+        if let Some(ref rust) = self.state.read().rust_face {
+            return rust.underline_thickness();
+        }
         self.sized_face(|face, metrics| {
             if face.units_per_em == 0 {
                 return 0.0;
@@ -230,6 +255,20 @@ impl FontFTFont {
     /// `AdvanceX(next)`: the X advance of the loaded glyph with kerning and side-bearing
     /// deltas, times the width scaling. Example: `font.advance_x('B' as u32)`.
     pub fn advance_x(&self, next: u32) -> f32 {
+        if let Some((loaded, rust)) = {
+            let state = self.state.read();
+            state
+                .loaded_rust_glyph
+                .and_then(|g| state.rust_face.clone().map(|f| (g, f)))
+        } {
+            let next_gid = if next == 0 {
+                0
+            } else {
+                u16::try_from(rust.char_index(next)).unwrap_or(0)
+            };
+            let kern = rust.kerning_x(loaded.glyph_id, next_gid);
+            return self.width_scaling() * (loaded.advance_x + kern);
+        }
         let Some((advance, lsb, rsb, current)) = self.loaded_advance() else {
             return 0.0;
         };
@@ -258,12 +297,18 @@ impl FontFTFont {
     /// `GlyphsNumber`: the glyphs of the face, plus the valid fallbacks' when asked.
     /// Example: `font.glyphs_number(false)`.
     pub fn glyphs_number(&self, include_fallback: bool) -> i32 {
-        let Some(face) = face_rec(self.state.read().face) else {
-            return 0;
+        let own = if let Some(ref rust) = self.state.read().rust_face {
+            i32::from(rust.glyph_count())
+        } else {
+            let Some(face) = face_rec(self.state.read().face) else {
+                return 0;
+            };
+            // FreeType uses C long, which is 32-bit on Windows and 64-bit on LP64 hosts.
+            #[allow(clippy::unnecessary_cast)]
+            {
+                face.num_glyphs as i32
+            }
         };
-        // FreeType uses C long, which is 32-bit on Windows and 64-bit on LP64 hosts.
-        #[allow(clippy::unnecessary_cast)]
-        let own = face.num_glyphs as i32;
         if !include_fallback {
             return own;
         }
@@ -295,6 +340,16 @@ impl FontFTFont {
     /// Example: `font.glyph_rect(&mut rect)`.
     pub fn glyph_rect(&self, rect: &mut FontRect) {
         (rect.left, rect.right, rect.top, rect.bottom) = (0.0, 0.0, 0.0, 0.0);
+        if let Some(loaded) = self.state.read().loaded_rust_glyph {
+            if !loaded.has_bitmap {
+                return;
+            }
+            rect.left = loaded.bitmap_left as f32;
+            rect.top = loaded.bitmap_top as f32;
+            rect.right = (loaded.bitmap_left + loaded.bitmap_width as i32) as f32;
+            rect.bottom = (loaded.bitmap_top - loaded.bitmap_height as i32) as f32;
+            return;
+        }
         let loaded = self.state.read().loaded_glyph;
         if !loaded.has_bitmap {
             return;

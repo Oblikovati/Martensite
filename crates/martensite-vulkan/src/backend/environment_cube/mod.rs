@@ -2,6 +2,7 @@
 //! InitCubeMap with generated mipmaps, as GlView::SetBackgroundImage requests) or the
 //! skydome texture of GlView::updateSkydomeBg, each with the sampler of its native texture
 //! and one descriptor set (set 0, binding 0) for the background and baking stages.
+use crate::backend::VulkanWorkLedgerExt;
 pub(super) mod background;
 pub(super) mod skydome;
 pub(super) mod upload;

@@ -124,7 +124,7 @@ impl FontFTFont {
             self.state.write().font_aspect = found_aspect;
             return true;
         }
-        if strict != FontStrictLevel::Any || freetype().is_none() {
+        if strict != FontStrictLevel::Any {
             return false;
         }
         self.init_embedded(aspect, params)
@@ -163,9 +163,6 @@ impl FontFTFont {
         };
         if let Some(existing) = existing.get() {
             return existing.is_valid();
-        }
-        if freetype().is_none() {
-            return false;
         }
         let fallback = FontFTFont::new(library);
         fallback.state.write().to_use_unicode_subset_fallback = false;
@@ -215,6 +212,11 @@ impl FontFTFont {
     /// The family name of the face, else the font path.
     fn primary_name(&self) -> Vec<u8> {
         let state = self.state.read();
+        if let Some(ref rust) = state.rust_face
+            && !rust.family_name().is_empty()
+        {
+            return rust.family_name().as_bytes().to_vec();
+        }
         match face_rec(state.face).filter(|f| !f.family_name.is_null()) {
             // SAFETY: an open face keeps its family name NUL-terminated.
             Some(face) => unsafe { CStr::from_ptr(face.family_name) }
@@ -228,19 +230,34 @@ impl FontFTFont {
 impl FontFTFont {
     /// `HasSymbol`: whether the face maps the character; `font.has_symbol('A' as u32)`.
     pub fn has_symbol(&self, character: u32) -> bool {
-        char_index(self.state.read().face, character) != 0
+        let state = self.state.read();
+        if let Some(ref rust) = state.rust_face {
+            return rust.char_index(character) != 0;
+        }
+        char_index(state.face, character) != 0
     }
     /// `selectGlyph`: this face's glyph, else the fallback face's, else the missing glyph of
     /// this face; `None` without a face or for the NUL character.
     pub(crate) fn select_glyph(&self, character: u32) -> Option<GlyphSelection> {
-        let (face, to_fallback) = {
+        let (face, rust_face, to_fallback) = {
             let state = self.state.read();
-            (state.face, state.to_use_unicode_subset_fallback)
+            (
+                state.face,
+                state.rust_face.clone(),
+                state.to_use_unicode_subset_fallback,
+            )
         };
-        if face == 0 || character == 0 || freetype().is_none() {
+        if character == 0 {
             return None;
         }
-        let primary = char_index(face, character);
+        let primary = if let Some(ref rust) = rust_face {
+            rust.char_index(character)
+        } else {
+            if face == 0 || freetype().is_none() {
+                return None;
+            }
+            char_index(face, character)
+        };
         if primary != 0 {
             return Some(GlyphSelection {
                 provider: None,
@@ -267,7 +284,12 @@ impl FontFTFont {
         }
         let fallback = self.state.read().fallback_faces[subset as usize].clone();
         let font = fallback.get().filter(|f| f.has_symbol(character))?;
-        let index = char_index(font.state.read().face, character);
+        let state = font.state.read();
+        let index = if let Some(ref rust) = state.rust_face {
+            rust.char_index(character)
+        } else {
+            char_index(state.face, character)
+        };
         Some(GlyphSelection {
             provider: Some(fallback.clone()),
             face: subset as u32 + 1,
@@ -308,6 +330,9 @@ impl FontFTFont {
         let Some(font) = self.font_for_glyph(glyph) else {
             return false;
         };
+        if let Some(rust) = font.rust_face(self) {
+            return u32::from(rust.glyph_count()) > glyph.index();
+        }
         let face = font.face(self);
         face_rec(face).is_some_and(|f| i128::from(glyph.index()) < i128::from(f.num_glyphs))
     }
@@ -325,6 +350,16 @@ impl FontForGlyph {
         match self {
             Self::This => this.state.read().face,
             Self::Fallback(font) => font.get().map_or(0, |f| f.state.read().face),
+        }
+    }
+    /// The pure-Rust face of the font, when active (#632).
+    pub(crate) fn rust_face(
+        &self,
+        this: &FontFTFont,
+    ) -> Option<std::sync::Arc<super::rust_engine::RustFontFace>> {
+        match self {
+            Self::This => this.state.read().rust_face.clone(),
+            Self::Fallback(font) => font.get().and_then(|f| f.state.read().rust_face.clone()),
         }
     }
     /// The single-stroke flag and load flags of the font.

@@ -2,8 +2,8 @@
 mod scope;
 #[cfg(test)]
 mod tests;
-use crate::{RenderError, RenderFrame, RenderStencilState};
-use std::{ffi::OsStr, fmt};
+use crate::{LitOnlyFailure, RenderError, RenderFrame, RenderStencilState};
+use std::ffi::OsStr;
 
 pub(super) const FLAG: &str = "MARTENSITE_LIT_ONLY_COMMAND_CONTROL";
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -11,33 +11,6 @@ pub(super) enum LitOnlyCommands {
     #[default]
     Normal,
     PhongTriangles,
-}
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum LitOnlyFailure {
-    Setting(String),
-    Frame {
-        route: &'static str,
-        actual: String,
-    },
-    Draw {
-        ordinal: usize,
-        route: &'static str,
-        actual: String,
-    },
-}
-impl fmt::Display for LitOnlyFailure {
-    fn fmt(&self, output: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            output,
-            "lit-only command control received {self:?}; expected single-sample opaque built-in Phong triangles and side-effect-free unlit lines/binary AlphaSprite points"
-        )
-    }
-}
-impl std::error::Error for LitOnlyFailure {}
-impl From<LitOnlyFailure> for RenderError {
-    fn from(value: LitOnlyFailure) -> Self {
-        Self::lit_only_commands(value)
-    }
 }
 
 impl LitOnlyCommands {

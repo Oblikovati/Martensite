@@ -1,6 +1,7 @@
 //! OpenPBR environment and precomputed LUT descriptor set (set 4):
 //! binding 0 GGX multi-scatter LUT, 1 diffuse SH, 2 HDR specular cube map,
 //! 3 3D dielectric LUT, 4 Charlie sheen LUT, 5 thin-film CIE XYZ sensitivity LUT.
+use crate::backend::VulkanWorkLedgerExt;
 pub(super) mod bake;
 pub(super) mod image;
 mod layout;

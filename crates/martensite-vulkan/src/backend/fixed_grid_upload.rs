@@ -119,6 +119,7 @@ mod tests {
     #[test]
     fn registered_point_program_refuses_before_instance_publication() {
         use crate::user_program::*;
+        use crate::vulkan_user_program::{phong_shading_program, register_samples};
         let library = RenderUserProgramLibrary::default();
         register_samples(&library).unwrap();
         let modules = library.modules(&phong_shading_program()).unwrap();

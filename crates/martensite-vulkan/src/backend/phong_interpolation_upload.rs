@@ -1,4 +1,5 @@
 //! Selected-domain refusals happen before encoding, allocating or recording a draw.
+use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 use crate::{
     PrimitiveDraw, PrimitiveTopology, RenderError, RenderPhongInterpolationBehavior as Behavior,
     RenderPhongInterpolationFailure as Failure, RenderShading,

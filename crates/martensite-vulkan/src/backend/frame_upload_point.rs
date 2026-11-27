@@ -1,5 +1,6 @@
 //! Point admission stays separate from upload ordering and encoded geometry.
 use super::super::{point_sprite, runtime::VulkanRuntime};
+use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 use crate::{PrimitiveDraw, RenderError};
 use ash::vk;
 

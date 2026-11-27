@@ -26,6 +26,18 @@ pub(super) fn os_page_size() -> usize {
     info.dwPageSize as usize
 }
 
+/// WebAssembly linear memory uses a fixed 64 KiB page size (#631).
+#[cfg(target_arch = "wasm32")]
+pub(super) fn os_page_size() -> usize {
+    65_536
+}
+
+/// Conservative 4 KiB fallback for other non-Unix, non-Windows targets.
+#[cfg(not(any(unix, windows, target_arch = "wasm32")))]
+pub(super) fn os_page_size() -> usize {
+    4096
+}
+
 #[cfg(all(test, windows))]
 mod windows_contracts;
 

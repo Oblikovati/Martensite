@@ -7,6 +7,7 @@ use super::runtime::{VulkanRuntime, vk_error};
 use super::sampled_surface_image::SampledSurfaceImage;
 use super::{frame::FrameResources, shader_grid_pass::GridTarget};
 use crate::RenderError;
+use crate::backend::VulkanWorkLedgerExt;
 use crate::stereo_pair::{StereoPairComposite, StereoProgram};
 use crate::surface_texture::SurfaceSamplerPolicy;
 use ash::vk;

@@ -1,6 +1,7 @@
 //! Cap masks reset stencil inside the active render area and temporarily suppress layer depth.
 use super::{frame::UploadedDraw, runtime::VulkanRuntime};
 use crate::RenderLayerSpan;
+use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 use ash::vk;
 pub(super) fn depth_policy(draw: &UploadedDraw, layer: &RenderLayerSpan) -> (bool, bool) {
     draw_depth_flags(

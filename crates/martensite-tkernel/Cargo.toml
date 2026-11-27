@@ -49,6 +49,29 @@ libc = "=0.2.190"
 winsafe = { version = "=0.0.29", default-features = false, features = ["kernel", "advapi", "psapi"] }
 windows-sys = { version = "=0.61.2", features = ["Win32_Security_Authorization", "Win32_Storage_FileSystem", "Win32_System_SystemServices", "Win32_Foundation", "Win32_Globalization", "Win32_System_Console", "Win32_System_Diagnostics_Debug", "Win32_System_LibraryLoader", "Win32_System_Kernel", "Win32_System_Performance", "Win32_System_SystemInformation", "Win32_System_Threading"] }
 
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+js-sys = "=0.3.107"
+wasm-bindgen = "=0.2.130"
+wasm-bindgen-futures = "=0.4.80"
+web-sys = { version = "=0.3.107", features = [
+    "Blob",
+    "BlobPropertyBag",
+    "DedicatedWorkerGlobalScope",
+    "ErrorEvent",
+    "EventTarget",
+    "MessageEvent",
+    "Navigator",
+    "Performance",
+    "Url",
+    "Window",
+    "Worker",
+    "WorkerGlobalScope",
+    "WorkerNavigator",
+    "WorkerOptions",
+    "WorkerType",
+    "console",
+] }
+
 # Test modules share one executable per toolkit to avoid repeated linkage.
 [[test]]
 name = "map_traversal_order"

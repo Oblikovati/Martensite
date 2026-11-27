@@ -7,7 +7,7 @@ use super::tools::{c_string, strtol};
 use super::{RwObjReader, RwObjSubMesh, RwObjSubMeshReason, RwObjTools};
 use martensite_tkernel::message::{Message, ProgressRange, ProgressScope};
 use martensite_tkernel::ncollection::{Vec2, Vec3};
-use martensite_tkernel::osd::CadPath;
+use martensite_tkernel::osd::{CadPath, MonotonicInstant};
 use martensite_tkernel::standard::character::is_space;
 use martensite_tkernel::standard::{Failure, ReadLineBuffer, strtod_bytes};
 use martensite_tkernel::tcollection::AsciiString;
@@ -15,7 +15,6 @@ use martensite_tkmath::gp::{Point3, Xyz};
 use martensite_tkrwmesh::rw_mesh::RwMeshInputStream;
 use std::io::SeekFrom;
 use std::mem::size_of;
-use std::time::Instant;
 
 const BUFFER_SIZE: usize = 4 * 1024;
 const MIB: i64 = 1024 * 1024;
@@ -88,7 +87,7 @@ pub(super) fn read_all<R: RwObjReader + ?Sized>(
         is_start: true,
         position: 0,
         passed_mib: 0,
-        timer: Instant::now(),
+        timer: MonotonicInstant::now(),
     };
     loop {
         let mut read_bytes = 0;
@@ -120,7 +119,7 @@ struct LineLoop {
     is_start: bool,
     position: i64,
     passed_mib: i64,
-    timer: Instant,
+    timer: MonotonicInstant,
 }
 
 impl LineLoop {
@@ -136,7 +135,7 @@ impl LineLoop {
         let read_mib = self.position / MIB;
         scope.next((read_mib - self.passed_mib) as f64);
         self.passed_mib = read_mib;
-        self.timer = Instant::now();
+        self.timer = MonotonicInstant::now();
         true
     }
     /// Consumes a comment or an empty line, keeping the head comments of the file.

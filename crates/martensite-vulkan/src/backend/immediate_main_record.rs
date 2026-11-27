@@ -5,26 +5,9 @@ use super::{
 };
 use crate::{RenderError, RenderFrame, immediate_main::ImmediateMainPlan};
 use ash::vk::{self, AccessFlags2 as Access, ImageLayout as Layout, PipelineStageFlags2 as Stage};
-use std::sync::{Arc, Weak};
+use std::sync::Arc;
 
-/// View-side proof of identity only. The frame target pool owns the published images.
-#[derive(Clone, Default)]
-pub(crate) struct MainLayerTicket(Arc<()>);
-
-impl MainLayerTicket {
-    pub(super) fn witness(&self) -> Weak<()> {
-        Arc::downgrade(&self.0)
-    }
-
-    pub(super) fn identifies(&self, witness: &Weak<()>) -> bool {
-        Arc::as_ptr(&self.0) == witness.as_ptr()
-    }
-
-    /// Whether both tickets name the same published images.
-    pub(crate) fn same(&self, other: &Self) -> bool {
-        Arc::ptr_eq(&self.0, &other.0)
-    }
-}
+pub(crate) use crate::immediate_main::MainLayerTicket;
 
 #[derive(Clone)]
 pub(crate) struct MainLayerImages {

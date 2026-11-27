@@ -6,6 +6,7 @@
 //! read-back copy and before the window blit; the bytes are the subview's captured sRGB texels,
 //! so the copy is exact, like `glBlitFramebuffer` between equal formats.
 use super::{buffer::DeviceBuffer, memory_selection::HostBufferAccess, runtime::VulkanRuntime};
+use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 use crate::{RenderError, RenderFrame, subview_composition::RenderSubviewBlit};
 use ash::vk;
 use std::sync::Arc;
@@ -150,6 +151,7 @@ fn dependency<'a>(barrier: &'a vk::ImageMemoryBarrier2<'a>) -> vk::DependencyInf
 #[cfg(test)]
 mod tests {
     use super::super::attachment_coordinates::AttachmentCoordinates;
+    use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
     use ash::vk;
     fn rect(x: i32, y: i32, width: u32, height: u32) -> vk::Rect2D {
         vk::Rect2D {

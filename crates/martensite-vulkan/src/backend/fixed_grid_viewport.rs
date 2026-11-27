@@ -1,5 +1,6 @@
 //! Original projection and expanded raster viewports share the attachment coordinate policy.
 use super::{attachment_coordinates::AttachmentCoordinates, runtime::VulkanRuntime};
+use crate::backend::attachment_coordinates::AttachmentCoordinatesExt;
 use ash::vk;
 
 pub(super) fn viewport_pair(
