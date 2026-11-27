@@ -1,0 +1,84 @@
+#version 460
+// SVGF Pass 1: Temporal Reprojection, Moment Accumulation & Variance Estimation.
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba16f) readonly uniform image2D curRadiance;
+layout(set = 0, binding = 1, rgba32f) readonly uniform image2D curNormalDepth;
+layout(set = 0, binding = 2, rgba32f) readonly uniform image2D curMotionId;
+layout(set = 0, binding = 3, rgba16f) readonly uniform image2D prevRadiance;
+layout(set = 0, binding = 4, rgba32f) readonly uniform image2D prevNormalDepth;
+layout(set = 0, binding = 5, rgba32f) readonly uniform image2D prevMomentsHist; // x=mu1, y=mu2, z=histLen, w=meshId
+layout(set = 0, binding = 6, rgba16f) writeonly uniform image2D outColorVar;    // rgb=blended, a=variance
+layout(set = 0, binding = 7, rgba32f) writeonly uniform image2D outMomentsHist;
+
+layout(push_constant) uniform ReprojectPush {
+    uint width;
+    uint height;
+    float alpha;
+    uint resetHistory;
+} pc;
+
+float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
+
+void main() {
+    ivec2 px = ivec2(gl_GlobalInvocationID.xy);
+    if (px.x >= int(pc.width) || px.y >= int(pc.height)) {
+        return;
+    }
+
+    vec4 curCol = imageLoad(curRadiance, px);
+    vec4 curND = imageLoad(curNormalDepth, px);
+    vec4 curMI = imageLoad(curMotionId, px);
+    float curL = luma(curCol.rgb);
+    vec2 curMom = vec2(curL, curL * curL);
+
+    bool valid = (pc.resetHistory == 0u) && (curCol.a > 0.5);
+    vec3 blended = curCol.rgb;
+    vec2 moments = curMom;
+    float histLen = 1.0;
+
+    if (valid) {
+        vec2 prevUv = (vec2(px) + 0.5) / vec2(pc.width, pc.height) + curMI.xy;
+        ivec2 prevPx = ivec2(floor(prevUv * vec2(pc.width, pc.height)));
+        if (prevPx.x >= 0 && prevPx.y >= 0 && prevPx.x < int(pc.width) && prevPx.y < int(pc.height)) {
+            vec4 prevND = imageLoad(prevNormalDepth, prevPx);
+            vec4 prevMH = imageLoad(prevMomentsHist, prevPx);
+            bool sameId = abs(prevMH.w - curMI.z) < 0.5;
+            bool sameNormal = dot(curND.xyz, prevND.xyz) > 0.9;
+            bool sameDepth = abs(curND.w - prevND.w) < 0.02 * max(curND.w, 0.01);
+            if (sameId && sameNormal && sameDepth && prevMH.z > 0.5) {
+                vec4 prevCol = imageLoad(prevRadiance, prevPx);
+                histLen = min(prevMH.z + 1.0, 64.0);
+                float a = max(pc.alpha, 1.0 / histLen);
+                blended = mix(prevCol.rgb, curCol.rgb, a);
+                moments = mix(prevMH.xy, curMom, a);
+            }
+        }
+    }
+
+    // Spatial 3x3 variance fallback when history is short (< 4 frames).
+    float variance = max(0.0, moments.y - moments.x * moments.x);
+    if (histLen < 4.0) {
+        vec2 sumM = vec2(0.0);
+        float wSum = 0.0;
+        for (int dy = -1; dy <= 1; ++dy) {
+            for (int dx = -1; dx <= 1; ++dx) {
+                ivec2 q = clamp(px + ivec2(dx, dy), ivec2(0), ivec2(pc.width - 1u, pc.height - 1u));
+                vec4 qND = imageLoad(curNormalDepth, q);
+                float wn = pow(max(0.0, dot(curND.xyz, qND.xyz)), 16.0);
+                float wd = exp(-abs(curND.w - qND.w) * 100.0);
+                float w = wn * wd;
+                float ql = luma(imageLoad(curRadiance, q).rgb);
+                sumM += vec2(ql, ql * ql) * w;
+                wSum += w;
+            }
+        }
+        if (wSum > 1e-5) {
+            sumM /= wSum;
+            variance = max(0.0, sumM.y - sumM.x * sumM.x);
+        }
+    }
+
+    imageStore(outColorVar, px, vec4(blended, variance));
+    imageStore(outMomentsHist, px, vec4(moments, histLen, curMI.z));
+}

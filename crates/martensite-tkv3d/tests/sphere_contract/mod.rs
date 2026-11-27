@@ -53,7 +53,8 @@ fn identity(case: SphereCase) -> String {
 }
 
 fn fixture_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/sphere-factory-linux-x86_64-v1")
+    // v2 baseline reflects ASWF OpenPBR Surface v1.1 on Graphic3dMaterialAspect (#623).
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/sphere-factory-linux-x86_64-v2")
 }
 
 pub(super) fn capture(case: SphereCase) -> SphereSnapshot {

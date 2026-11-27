@@ -2773,6 +2773,41 @@
       "block": 3
     }
   },
+  "crates/martensite-vulkan/src/backend/hw_raytrace/accel.rs": {
+    "unsafe_keywords": 25,
+    "unsafe_code_mentions": 0,
+    "kinds": {
+      "block": 25
+    }
+  },
+  "crates/martensite-vulkan/src/backend/hw_raytrace/device.rs": {
+    "unsafe_keywords": 4,
+    "unsafe_code_mentions": 0,
+    "kinds": {
+      "block": 4
+    }
+  },
+  "crates/martensite-vulkan/src/backend/hw_raytrace/mod.rs": {
+    "unsafe_keywords": 17,
+    "unsafe_code_mentions": 0,
+    "kinds": {
+      "block": 17
+    }
+  },
+  "crates/martensite-vulkan/src/backend/hw_raytrace/pipeline.rs": {
+    "unsafe_keywords": 9,
+    "unsafe_code_mentions": 0,
+    "kinds": {
+      "block": 9
+    }
+  },
+  "crates/martensite-vulkan/src/backend/hw_raytrace/targets.rs": {
+    "unsafe_keywords": 11,
+    "unsafe_code_mentions": 0,
+    "kinds": {
+      "block": 11
+    }
+  },
   "crates/martensite-vulkan/src/backend/image.rs": {
     "unsafe_keywords": 5,
     "unsafe_code_mentions": 0,
@@ -3130,111 +3165,6 @@
     "unsafe_code_mentions": 0,
     "kinds": {
       "block": 3
-    }
-  },
-  "crates/martensite-vulkan/src/backend/raytrace_adaptive.rs": {
-    "unsafe_keywords": 5,
-    "unsafe_code_mentions": 0,
-    "kinds": {
-      "block": 5
-    }
-  },
-  "crates/martensite-vulkan/src/backend/raytrace_adaptive_record.rs": {
-    "unsafe_keywords": 8,
-    "unsafe_code_mentions": 0,
-    "kinds": {
-      "block": 8
-    }
-  },
-  "crates/martensite-vulkan/src/backend/raytrace_environment.rs": {
-    "unsafe_keywords": 3,
-    "unsafe_code_mentions": 0,
-    "kinds": {
-      "block": 3
-    }
-  },
-  "crates/martensite-vulkan/src/backend/raytrace_fsaa.rs": {
-    "unsafe_keywords": 5,
-    "unsafe_code_mentions": 0,
-    "kinds": {
-      "block": 5
-    }
-  },
-  "crates/martensite-vulkan/src/backend/raytrace_fsaa_record.rs": {
-    "unsafe_keywords": 3,
-    "unsafe_code_mentions": 0,
-    "kinds": {
-      "block": 3
-    }
-  },
-  "crates/martensite-vulkan/src/backend/raytrace_generate_ray_control.rs": {
-    "unsafe_keywords": 1,
-    "unsafe_code_mentions": 0,
-    "kinds": {
-      "block": 1
-    }
-  },
-  "crates/martensite-vulkan/src/backend/raytrace_generate_ray_uniforms.rs": {
-    "unsafe_keywords": 5,
-    "unsafe_code_mentions": 0,
-    "kinds": {
-      "block": 5
-    }
-  },
-  "crates/martensite-vulkan/src/backend/raytrace_hit_frame.rs": {
-    "unsafe_keywords": 2,
-    "unsafe_code_mentions": 0,
-    "kinds": {
-      "block": 2
-    }
-  },
-  "crates/martensite-vulkan/src/backend/raytrace_image.rs": {
-    "unsafe_keywords": 3,
-    "unsafe_code_mentions": 0,
-    "kinds": {
-      "block": 3
-    }
-  },
-  "crates/martensite-vulkan/src/backend/raytrace_pass.rs": {
-    "unsafe_keywords": 3,
-    "unsafe_code_mentions": 0,
-    "kinds": {
-      "block": 3
-    }
-  },
-  "crates/martensite-vulkan/src/backend/raytrace_pathtrace.rs": {
-    "unsafe_keywords": 3,
-    "unsafe_code_mentions": 0,
-    "kinds": {
-      "block": 3
-    }
-  },
-  "crates/martensite-vulkan/src/backend/raytrace_pipeline.rs": {
-    "unsafe_keywords": 2,
-    "unsafe_code_mentions": 0,
-    "kinds": {
-      "block": 2
-    }
-  },
-  "crates/martensite-vulkan/src/backend/raytrace_pixel_control.rs": {
-    "unsafe_keywords": 3,
-    "unsafe_code_mentions": 0,
-    "kinds": {
-      "block": 3
-    }
-  },
-  "crates/martensite-vulkan/src/backend/raytrace_pixel_pipeline.rs": {
-    "unsafe_keywords": 3,
-    "unsafe_code_mentions": 0,
-    "kinds": {
-      "block": 3
-    }
-  },
-  "crates/martensite-vulkan/src/backend/raytrace_resources.rs": {
-    "unsafe_keywords": 7,
-    "unsafe_code_mentions": 0,
-    "kinds": {
-      "block": 7
     }
   },
   "crates/martensite-vulkan/src/backend/raytrace_texture_indexing.rs": {

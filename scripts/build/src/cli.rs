@@ -47,6 +47,12 @@ pub enum BuildCommand {
     },
     /// Compare a toolkit's paired performance cases with OCCT on this machine (#583).
     OcctParity(OcctParityArgs),
+    /// Compile or check OpenPBR GLSL shaders into Vulkan 1.3 SPIR-V binaries (#624).
+    Shaders {
+        /// Fail if committed `.spv` binaries differ from freshly compiled output.
+        #[arg(long)]
+        check: bool,
+    },
     /// Entry points used by `.github/workflows/martensite.yml`.
     #[command(subcommand)]
     Ci(CiCommand),
@@ -196,6 +202,7 @@ fn dispatch(context: &BuildContext<'_>, command: BuildCommand) -> BuildResult<()
         BuildCommand::OcctParity(args) => {
             crate::occt_parity::run_occt_parity(context, &args.request())
         }
+        BuildCommand::Shaders { check } => crate::shaders::compile_shaders(context, check),
         BuildCommand::Ci(command) => dispatch_ci(context, command),
     }
 }

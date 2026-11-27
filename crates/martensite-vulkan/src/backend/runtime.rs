@@ -52,8 +52,10 @@ pub(super) struct VulkanRuntime {
     pub(crate) raytrace_textures: bool,
     /// `fragmentStoresAndAtomics`: adaptive sampling writes storage images from fragments.
     pub(crate) fragment_stores: bool,
-    #[cfg(feature = "raytrace-hit-diagnostics")]
-    pub(super) ray_hit_control: Option<super::raytrace_hit_control::RayHitControl>,
+    /// Hardware ray tracing capabilities (`VK_KHR_acceleration_structure` + `VK_KHR_ray_query`).
+    pub(super) hardware_raytrace_caps: super::hw_raytrace::device::HardwareRaytraceCaps,
+    /// Loaded logical-device hardware ray tracing commands when `hardware_raytrace_caps.supported`.
+    pub(super) hw_raytrace: Option<super::hw_raytrace::device::HardwareRaytraceDevice>,
     /// Test control: keep the standard positions although the device could mirror them.
     #[cfg(test)]
     pub(super) standard_samples: bool,
@@ -284,8 +286,6 @@ impl VulkanRuntime {
         Ok(Arc::new(runtime))
     }
     fn load(enable_validation: bool) -> Result<Self, RenderError> {
-        #[cfg(feature = "raytrace-hit-diagnostics")]
-        let ray_hit_control = super::raytrace_hit_control::RayHitControl::from_environment()?;
         #[cfg(feature = "lit-only-command-diagnostics")]
         let lit_only_commands = super::lit_only_commands::LitOnlyCommands::from_environment()?;
         let entry =
@@ -319,8 +319,8 @@ impl VulkanRuntime {
             image_float_atomic_add: false,
             raytrace_textures: false,
             fragment_stores: false,
-            #[cfg(feature = "raytrace-hit-diagnostics")]
-            ray_hit_control,
+            hardware_raytrace_caps: Default::default(),
+            hw_raytrace: None,
             #[cfg(test)]
             standard_samples: false,
             logic_op: false,
@@ -530,6 +530,8 @@ impl VulkanRuntime {
             &self.instance,
             physical,
         );
+        self.hardware_raytrace_caps =
+            super::hw_raytrace::device::query_caps(&self.instance, physical);
         self.mirrored_samples = super::mirrored_sample_locations::frame_counts(
             self.attachment_coordinates,
             super::mirrored_sample_locations::probe(&self.entry, &self.instance, physical),

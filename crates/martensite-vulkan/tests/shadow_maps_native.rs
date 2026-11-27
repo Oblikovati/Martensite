@@ -416,9 +416,52 @@ fn shadow_dumps(
     dumps
 }
 
+fn is_openpbr_shadow_dump(name: &str) -> bool {
+    name.ends_with("-pbr")
+}
+
+/// Validates physical OpenPBR v1.1 shadow-map invariants for `sm-dir1-pbr`, `sm-dirhead-pbr`,
+/// and `sm-spot-pbr` (which replaced legacy OCCT PBR).
+fn verify_openpbr_shadow_dumps(dumps: &[Vec<u8>]) {
+    let dir1_pbr = &dumps[4];
+    let dirhead_pbr = &dumps[8];
+    let spot_pbr = &dumps[11];
+    for (label, rgb) in [
+        ("sm-dir1-pbr", dir1_pbr),
+        ("sm-dirhead-pbr", dirhead_pbr),
+        ("sm-spot-pbr", spot_pbr),
+    ] {
+        let non_bg: Vec<u16> = rgb
+            .as_chunks::<3>()
+            .0
+            .iter()
+            .map(|px| u16::from(px[0]) + u16::from(px[1]) + u16::from(px[2]))
+            .filter(|&lum| lum > 0)
+            .collect();
+        let min_lum = non_bg.iter().copied().min().unwrap_or(0);
+        let max_lum = non_bg.iter().copied().max().unwrap_or(0);
+        assert!(
+            non_bg.len() > 1000 && max_lum.saturating_sub(min_lum) > 100,
+            "{label}: expected lit and shadowed contrast (count={}, min={min_lum}, max={max_lum})",
+            non_bg.len()
+        );
+    }
+    let dir_diff: f64 = dir1_pbr
+        .iter()
+        .zip(dirhead_pbr)
+        .map(|(&a, &b)| (f64::from(a) - f64::from(b)).abs())
+        .sum::<f64>()
+        / dir1_pbr.len() as f64;
+    assert!(
+        dir_diff > 1.0,
+        "headlight vs world directional shadow map must differ in OpenPBR: diff={dir_diff:.3}"
+    );
+}
+
 fn graded_shadows() -> (String, Vec<DumpReport>) {
     let driver = Graphic3dRenderDriver::new(validation_options()).unwrap();
     let (dumps, scenes): (Vec<_>, Vec<_>) = shadow_dumps(&driver, [0., 0.]).into_iter().unzip();
+    verify_openpbr_shadow_dumps(&dumps);
     let device = driver.device_name();
     let llvmpipe = device.contains("llvmpipe");
     let controls = if llvmpipe {
@@ -437,6 +480,7 @@ fn graded_shadows() -> (String, Vec<DumpReport>) {
     let report: Vec<DumpReport> = dumps
         .iter()
         .enumerate()
+        .filter(|(index, _)| !is_openpbr_shadow_dump(DUMP_NAMES[*index]))
         .map(|(index, rgb)| {
             let expected = grading::ppm_rgb(native[index], SIZE);
             let report =

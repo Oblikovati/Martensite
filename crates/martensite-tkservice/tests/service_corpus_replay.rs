@@ -67,15 +67,18 @@ macro_rules! service_families {
         fn $operation() { replay_family(stringify!($operation), $count); }
     )* };
 }
+// Legacy OCCT PBR/BSDF/DumpJson families (`sv_pbr_lut`, `sv_pbr_bsdf`, `sv_pbr_factor`,
+// `sv_fresnel`, `sv_material`, `sv_material_edit`, `sv_aspects_dump`, `sv_params`, `sv_scene`)
+// were retired by Milestone M9 (#623) when `Graphic3dBsdf` and `Graphic3dPbrMaterial` were
+// replaced by ASWF OpenPBR Surface v1.1 (`OpenPbrMaterial`) and extended ray-tracing params.
 service_families! {
     sv_rgrid:136, sv_cgrid:136, sv_hid:131, sv_pixel:320, sv_rawpixel:100,
-    sv_half:77, sv_pbr_lut:7, sv_pbr_bsdf:41, sv_pbr_factor:52, sv_fresnel:32,
-    sv_material:26, sv_material_rank:28, sv_material_edit:32, sv_shader_decl:97,
-    sv_cubemap:320, sv_segment:28, sv_marker:172, sv_aspects_dump:120, sv_array:165,
+    sv_half:77, sv_material_rank:28, sv_shader_decl:97,
+    sv_cubemap:320, sv_segment:28, sv_marker:172, sv_array:165,
     sv_camera:61, sv_camera_fit:40, sv_camera_interp:30, sv_clip:81, sv_clip_capping:40,
-    sv_light:84, sv_light_set:41, sv_tpers:120, sv_tutils:60, sv_params:54,
+    sv_light:84, sv_light_set:41, sv_tpers:120, sv_tutils:60,
     sv_culling:60, sv_stats:120,
-    sv_scene:180, sv_media:40, sv_mtex:6,
+    sv_media:40, sv_mtex:6,
 }
 // The font families describe the host font database and its faces, recorded on the
 // reference Linux machine; they run only with the `host-font-corpus` feature there.

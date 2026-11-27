@@ -16,7 +16,6 @@ pub mod material;
 pub mod media;
 pub mod mtex;
 pub mod params;
-pub mod pbr;
 pub mod pixel;
 #[allow(dead_code)]
 pub mod print;

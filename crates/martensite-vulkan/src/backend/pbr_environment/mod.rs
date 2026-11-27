@@ -1,5 +1,6 @@
-//! GlPBREnvironment plus the shared "EnvLUT" texture of GlView:
-//! descriptor set 4 of PBR pipelines (binding 0 EnvLUT, 1 diffuse SH, 2 specular cube map).
+//! OpenPBR environment and precomputed LUT descriptor set (set 4):
+//! binding 0 GGX multi-scatter LUT, 1 diffuse SH, 2 HDR specular cube map,
+//! 3 3D dielectric LUT, 4 Charlie sheen LUT, 5 thin-film CIE XYZ sensitivity LUT.
 pub(super) mod bake;
 pub(super) mod image;
 mod layout;
@@ -8,21 +9,17 @@ use super::runtime::{VulkanRuntime, vk_error};
 use crate::RenderError;
 use ash::vk;
 use image::{EnvironmentImage, EnvironmentImageSpec};
+use layout::ENVIRONMENT_BINDING_COUNT;
 pub(super) use layout::PbrEnvironmentLayout;
 use std::sync::Arc;
 
-/// Textures_EnvLUTSize.
-const ENV_LUT_SIZE: u32 = 128;
-
-/// Size parameters of the specular map (Graphic3dRenderingParams PbrEnvPow2Size and
-/// PbrEnvSpecMapNbLevels), clamped as the GlPBREnvironment constructor does.
+/// Size parameters of the specular cube map (`PbrEnvPow2Size` and `PbrEnvSpecMapNbLevels`).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) struct PbrEnvironmentSize {
     pub pow2_size: u32,
     pub spec_levels: u32,
 }
 impl PbrEnvironmentSize {
-    /// `PbrEnvironmentSize::new(9, 6)` keeps the native defaults; zero sizes clamp to one.
     pub fn new(pow2_size: u32, spec_levels: u32) -> Self {
         let pow2_size = pow2_size.max(1);
         Self {
@@ -32,45 +29,45 @@ impl PbrEnvironmentSize {
     }
 }
 impl Default for PbrEnvironmentSize {
-    /// Graphic3dRenderingParams defaults: 2^9 texels, six specular levels.
     fn default() -> Self {
         Self::new(9, 6)
     }
 }
 
-/// The environment images, samplers and their bound descriptor set.
+/// The OpenPBR environment images, samplers, and bound descriptor set.
 pub(super) struct PbrEnvironment {
     runtime: Arc<VulkanRuntime>,
-    images: [EnvironmentImage; 3],
-    samplers: [vk::Sampler; 3],
+    images: [EnvironmentImage; ENVIRONMENT_BINDING_COUNT],
+    samplers: [vk::Sampler; ENVIRONMENT_BINDING_COUNT],
     pool: vk::DescriptorPool,
     pub set: vk::DescriptorSet,
     _layout: PbrEnvironmentLayout,
 }
+
 impl PbrEnvironment {
-    /// `GlPBREnvironment::Clear(ctx, (1, 1, 1))`, the state of a view without an IBL cube
-    /// map: unit irradiance and unit prefiltered radiance. Example:
-    /// `PbrEnvironment::cleared(&runtime, PbrEnvironmentSize::default)?`.
+    /// Cleared unit-radiance environment with all precomputed OpenPBR LUTs uploaded.
     pub fn cleared(
         runtime: &Arc<VulkanRuntime>,
         size: PbrEnvironmentSize,
     ) -> Result<Arc<Self>, RenderError> {
         let images = [
-            EnvironmentImage::new(runtime, EnvironmentImageSpec::lut())?,
+            EnvironmentImage::new(runtime, EnvironmentImageSpec::ggx_lut())?,
             EnvironmentImage::new(runtime, EnvironmentImageSpec::diffuse_sh())?,
             EnvironmentImage::new(
                 runtime,
                 EnvironmentImageSpec::specular(size.pow2_size, size.spec_levels),
             )?,
+            EnvironmentImage::new(runtime, EnvironmentImageSpec::dielectric_lut())?,
+            EnvironmentImage::new(runtime, EnvironmentImageSpec::sheen_lut())?,
+            EnvironmentImage::new(runtime, EnvironmentImageSpec::thin_film_lut())?,
         ];
         if let Err(error) = submit_cleared(runtime, &images) {
-            // A failed submission may still be writing the images: never free them.
             std::mem::forget(images);
             return Err(error);
         }
         let mut environment = Self {
             runtime: runtime.clone(),
-            samplers: [vk::Sampler::null(); 3],
+            samplers: [vk::Sampler::null(); ENVIRONMENT_BINDING_COUNT],
             pool: vk::DescriptorPool::null(),
             set: vk::DescriptorSet::null(),
             _layout: PbrEnvironmentLayout::new(runtime)?,
@@ -81,8 +78,8 @@ impl PbrEnvironment {
         environment.set = environment.allocate_set()?;
         Ok(Arc::new(environment))
     }
-    /// `GlPBREnvironment::Bake`: a new environment of `size` baked from `source`.
-    /// Example: `PbrEnvironment::baked(&runtime, size, &pipelines, &cube, coefficients, samples)?`.
+
+    /// Bakes HDR specular prefiltered levels and diffuse SH irradiance from `source`.
     pub fn baked(
         runtime: &Arc<VulkanRuntime>,
         size: PbrEnvironmentSize,
@@ -110,13 +107,14 @@ impl PbrEnvironment {
             super::environment_cube::upload::finish_owned(submission, (environment, faces))?;
         Ok(environment)
     }
-    /// Specular map levels (GlPBREnvironment::SpecMapLevelsNumber).
+
     pub fn size(&self) -> PbrEnvironmentSize {
         PbrEnvironmentSize {
             pow2_size: self.images[2].spec.width.trailing_zeros(),
             spec_levels: self.images[2].spec.levels,
         }
     }
+
     fn allocate_set(&self) -> Result<vk::DescriptorSet, RenderError> {
         let layouts = [self._layout.handle];
         let info = vk::DescriptorSetAllocateInfo::default()
@@ -131,6 +129,7 @@ impl PbrEnvironment {
         Ok(set)
     }
 }
+
 impl Drop for PbrEnvironment {
     fn drop(&mut self) {
         // SAFETY: the handle belongs to this device and its owner releases it only after the GPU work that used it has completed.
@@ -147,20 +146,23 @@ impl Drop for PbrEnvironment {
         }
     }
 }
+
 fn submit_cleared(
     runtime: &Arc<VulkanRuntime>,
-    images: &[EnvironmentImage; 3],
+    images: &[EnvironmentImage; ENVIRONMENT_BINDING_COUNT],
 ) -> Result<(), RenderError> {
     let upload = upload::EnvironmentUpload {
-        lut: &images[0],
+        ggx_lut: &images[0],
         diffuse_sh: &images[1],
         specular: &images[2],
+        dielectric_lut: &images[3],
+        sheen_lut: &images[4],
+        thin_film_lut: &images[5],
         color: [1., 1., 1.],
     };
     let (submission, staging) = upload.submit(runtime)?;
     let outcome = submission.finish();
     if submission.retirement_incomplete() {
-        // The device may still read the staging buffers and write the images: never free them.
         std::mem::forget(staging);
         std::mem::forget(submission);
     }

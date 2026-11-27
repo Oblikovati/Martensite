@@ -1,0 +1,37 @@
+#version 460
+#extension GL_GOOGLE_include_directive : require
+// Standalone HDR tone-mapping compute pass (AgX, ACES, Filmic, Disabled).
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba16f) readonly uniform image2D hdrInput;
+layout(set = 0, binding = 1, rgba8) writeonly uniform image2D ldrOutput;
+
+layout(push_constant) uniform TonemapPush {
+    uint width;
+    uint height;
+    uint method;
+    float exposure;
+    float whitePoint;
+    uint encodeSrgb;
+} params;
+
+#include "openpbr_common.glsl"
+
+vec3 linearToSrgb(vec3 c) {
+    vec3 lo = c * 12.92;
+    vec3 hi = 1.055 * pow(max(c, vec3(0.0)), vec3(1.0 / 2.4)) - 0.055;
+    return mix(lo, hi, greaterThan(c, vec3(0.0031308)));
+}
+
+void main() {
+    uvec2 px = gl_GlobalInvocationID.xy;
+    if (px.x >= params.width || px.y >= params.height) {
+        return;
+    }
+    vec4 src = imageLoad(hdrInput, ivec2(px));
+    vec3 mapped = openpbrApplyToneMapping(src.rgb, params.method, params.exposure, params.whitePoint);
+    if (params.encodeSrgb != 0u) {
+        mapped = linearToSrgb(mapped);
+    }
+    imageStore(ldrOutput, ivec2(px), vec4(mapped, clamp(src.a, 0.0, 1.0)));
+}

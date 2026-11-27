@@ -14,15 +14,8 @@ const PROBE_CASES: &[(&str, ProbeCase)] = &[
     ("sv_pixel", pixel::pixel_case),
     ("sv_rawpixel", pixel::raw_pixel_case),
     ("sv_half", pixel::half_case),
-    // Graphic3d_PBRMaterial and Graphic3d_BSDF (sv_probe/pbr.rs)
-    ("sv_pbr_lut", pbr::lut_case),
-    ("sv_pbr_factor", pbr::factor_case),
-    ("sv_pbr_bsdf", pbr::bsdf_case),
-    ("sv_fresnel", pbr::fresnel_case),
-    // Graphic3d_MaterialAspect (sv_probe/material.rs)
-    ("sv_material", material::material_case),
+    // Graphic3d_MaterialAspect rank catalogue (sv_probe/material.rs; legacy BSDF/PBR retired by #623)
     ("sv_material_rank", material::rank_case),
-    ("sv_material_edit", material::edit_case),
     // Graphic3d_ShaderObject declarations (sv_probe/shader.rs)
     ("sv_shader_decl", shader::decl_case),
     // Graphic3d_ShaderManager programs (sv_probe/shader_manager.rs)

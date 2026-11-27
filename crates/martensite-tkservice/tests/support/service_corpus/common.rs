@@ -1,8 +1,15 @@
 //! Owned reader extensions and token printers of the corpus requests.
 use super::print::Output;
 pub use super::print::{Reader, attempt, end, flag, int, real, show};
+use martensite_tkernel::ncollection::Vec4;
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::gp::{Direction2, Direction3, Point2, Point3, Xy, Xyz};
+
+pub fn vec4(output: &Output, v: Vec4<f32>) {
+    [v.x, v.y, v.z, v.w]
+        .into_iter()
+        .for_each(|c| real(output, f64::from(c)));
+}
 
 pub fn xyz(output: &Output, value: Xyz) {
     real(output, value.x());

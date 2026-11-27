@@ -73,8 +73,6 @@ fn record_frame_impl(
     );
     #[cfg(feature = "vertex-output-diagnostics")]
     super::vertex_output::reset(runtime, command, resources);
-    #[cfg(feature = "raytrace-input-diagnostics")]
-    super::raytrace_input_diagnostic::frame(command, resources, frame);
     let start = match &resources.immediate_source {
         Some((start, images)) => {
             images.restore(runtime, command, resources);

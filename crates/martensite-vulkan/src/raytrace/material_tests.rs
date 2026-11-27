@@ -1,7 +1,9 @@
 use super::*;
 use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::standard::Handle;
-use martensite_tkservice::graphic3d::{Graphic3dAspects, Graphic3dNameOfMaterial};
+use martensite_tkservice::graphic3d::{
+    Graphic3dAspects, Graphic3dMaterialAspect, Graphic3dNameOfMaterial,
+};
 
 fn plastic_green() -> Handle<Graphic3dAspects> {
     let aspects = Graphic3dAspects::default();
@@ -13,37 +15,23 @@ fn plastic_green() -> Handle<Graphic3dAspects> {
 }
 
 #[test]
-fn aspect_materials_scale_ambient_diffuse_and_emission_by_the_interior_colour() {
+fn aspect_materials_scale_openpbr_base_color_by_interior_colour() {
     let aspects = plastic_green();
     let material = RaytraceMaterial::of_aspects(&*aspects, RenderMaterialColorSpace::Linear);
     let source = aspects.front_material();
     let green = Color::named(NamedColor::GREEN).rgb();
-    let diffuse = source.diffuse_color().rgb();
-    assert_eq!(material.records[DIFFUSE], scaled(diffuse, green, -1.));
-    assert_eq!(material.records[SPECULAR][3], 128. * source.shininess());
-    assert_eq!(material.records[TRANSPARENCY][2..], [1., 1.]);
-    assert_eq!(material.records[TEXTURE_TRANSFORM + 3], [0., 0., 0., 1.]);
-    assert_eq!(material.records[BSDF + 1][3], -1.);
+    let base = source.openpbr_material().base.color;
+    assert_eq!(material.gpu.base_color_weight[0], base[0] * green[0]);
+    assert_eq!(material.gpu.base_color_weight[1], base[1] * green[1]);
+    assert_eq!(material.gpu.base_color_weight[2], base[2] * green[2]);
+    assert_eq!(material.tex.slots[0], -1);
 }
 
 #[test]
-fn reflection_scales_the_specular_colour_to_three_quarters_of_the_brightest_channel() {
-    let aspects = plastic_green();
-    let material = RaytraceMaterial::of_aspects(&*aspects, RenderMaterialColorSpace::Linear);
-    let [d, s] = [material.records[DIFFUSE], material.records[SPECULAR]];
-    let brightest = (0..3).map(|i| d[i] + s[i]).fold(f32::MIN, f32::max);
-    let expected = s[0] * (0.75 / brightest);
-    assert_eq!(material.records[REFLECTION][0], expected);
-}
-
-#[test]
-fn gamma_encoded_targets_convert_colours_but_not_the_reflection() {
-    let aspects = plastic_green();
-    let linear = RaytraceMaterial::of_aspects(&*aspects, RenderMaterialColorSpace::Linear);
-    let encoded = RaytraceMaterial::of_aspects(&*aspects, RenderMaterialColorSpace::GammaEncoded);
-    assert_eq!(
-        encoded.records[DIFFUSE],
-        ColorRgba::linear_to_srgb_vec4(linear.records[DIFFUSE])
-    );
-    assert_eq!(encoded.records[REFLECTION], linear.records[REFLECTION]);
+fn physic_materials_preserve_physical_openpbr_base_color() {
+    let aspects = Graphic3dAspects::default();
+    aspects.set_front_material(Graphic3dMaterialAspect::new(Graphic3dNameOfMaterial::Gold));
+    let material = RaytraceMaterial::of_aspects(&aspects, RenderMaterialColorSpace::Linear);
+    assert!((material.gpu.base_spec_params[0] - 1.0).abs() < 1e-5);
+    assert!(material.gpu.base_color_weight[0] > 0.8);
 }

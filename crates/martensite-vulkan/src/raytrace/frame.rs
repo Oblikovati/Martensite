@@ -42,6 +42,22 @@ pub(crate) struct RaytraceFrame {
     /// The camera's change counters (Graphic3dWorldViewProjState): GlView::render restarts
     /// the accumulation when they differ from the last frame's, even for equal matrices.
     pub camera_state: Graphic3dWorldViewProjState,
+    /// Flattened world-space scene and binary BVH shared by HW ray-query & SW compute BVH.
+    pub pt_scene: super::pt_scene::PtSceneData,
+    /// Requested ray-tracing execution backend (`AutoPreferHardware`, `HardwareRayQuery`, `SoftwareComputeBvh`).
+    pub backend: Graphic3dRayTracingBackend,
+    /// Whether the 3-pass SVGF spatiotemporal denoiser runs after path tracing.
+    pub denoiser_enabled: bool,
+    pub denoiser_atrous_iterations: u32,
+    pub denoiser_temporal_alpha: f32,
+    /// HDR display tone-mapping operator, exposure, and white point.
+    pub tone_mapping: Graphic3dToneMappingMethod,
+    pub exposure: f32,
+    pub white_point: f32,
+    /// Previous frame's view-projection matrix for SVGF temporal motion vectors.
+    pub prev_view_proj: [f32; 16],
+    /// Whether SVGF temporal history should reset on this frame.
+    pub reset_history: bool,
 }
 
 /// `STACK_SIZE`, `NB_BOUNCES` and the boolean prefix defines.
@@ -65,6 +81,8 @@ pub(crate) struct RaytraceConstants {
     /// BACKGROUND_CUBEMAP: the view has a cubemap background (`CubemapForBack`); the
     /// environment is the cube map at binding 13 instead of the 2D map.
     pub cubemap_background: bool,
+    /// True when the active camera uses an orthographic projection (parallel rays).
+    pub orthographic: bool,
 }
 
 /// What the frame takes from the device and the view's frame environment.
@@ -98,24 +116,24 @@ pub(crate) fn prepare_raytrace(
         RenderMaterialColorSpace::Linear,
         inputs.textured,
     )?;
+    let camera = crate::view_render_camera::owned_render_camera(view);
+    let orientation = camera.orientation_matrix_f();
+    let inverse = orientation.inverted().unwrap_or(orientation);
+    let lights_handle = view.lights();
+    let lights = raytrace_lights(lights_handle.get(), params.shading_model, &inverse);
+    let pt_materials: Vec<_> = scene.materials.iter().map(|m| m.gpu).collect();
+    let pt_scene = super::pt_scene::PtSceneData::build(&scene.sets, pt_materials, &lights);
     let buffers = build(scene.sets, bvh)?;
     if buffers.transforms.is_empty() {
         return Ok(None);
     }
-    let camera = crate::view_render_camera::owned_render_camera(view);
-    let orientation = camera.orientation_matrix_f();
-    let inverse = orientation.inverted().unwrap_or(orientation);
-    let lights = view.lights();
-    let lights = raytrace_lights(lights.get(), params.shading_model, &inverse);
     let environment = super::environment::raytrace_environment(view, inputs.cube)?;
     let mut uniforms = frame_uniforms(view, &params, (&camera, extent), (&buffers, &lights));
     uniforms.environment = environment.uniforms;
-    // updateRaytraceUniforms: an orthographic or ray-traced view still takes the eye frame of
-    // updatePerspCameraPT for an environment shown as the background or a cubemap background.
-    if params.ray_tracing.use_environment_map_background || environment.cube {
-        let window = [extent[0] as i32, extent[1] as i32];
-        uniforms.eye = super::pathtrace::perspective_eye(&camera, window);
-    }
+    let window = [extent[0] as i32, extent[1] as i32];
+    // Always populate the eye ray frame so the compute path tracer can generate primary rays
+    // for both perspective and orthographic views.
+    uniforms.eye = super::pathtrace::perspective_eye(&camera, window);
     let constants = RaytraceConstants {
         stack_size: DEFAULT_STACK_SIZE.max(buffers.tree_depth),
         bounces: params.ray_tracing.raytracing_depth,
@@ -128,8 +146,10 @@ pub(crate) fn prepare_raytrace(
             && !camera.is_orthographic(),
         textures: scene.textures.has_textures(),
         cubemap_background: environment.cube,
+        orthographic: camera.is_orthographic(),
     };
     let materials = scene.materials;
+    let prev_view_proj = uniforms.camera.view_projection.data();
     Ok(Some(RaytraceFrame {
         span: 0,
         buffers,
@@ -144,6 +164,16 @@ pub(crate) fn prepare_raytrace(
         eye_targets: super::pathtrace::eye_targets(camera.projection_type()),
         rebuilt,
         camera_state: camera.world_view_proj_state(),
+        pt_scene,
+        backend: params.ray_tracing.backend,
+        denoiser_enabled: params.ray_tracing.denoiser_enabled,
+        denoiser_atrous_iterations: params.ray_tracing.denoiser_atrous_iterations.max(0) as u32,
+        denoiser_temporal_alpha: params.ray_tracing.denoiser_temporal_alpha,
+        tone_mapping: params.ray_tracing.tone_mapping_method,
+        exposure: params.ray_tracing.exposure,
+        white_point: params.ray_tracing.white_point,
+        prev_view_proj,
+        reset_history: rebuilt,
     }))
 }
 

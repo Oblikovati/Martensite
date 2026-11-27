@@ -1,0 +1,61 @@
+#version 460
+#extension GL_GOOGLE_include_directive : require
+// SVGF Pass 3: Albedo Remodulation, Emission/Background Composition, Progressive Bypass,
+// and HDR Display Tone Mapping (AgX, ACES, Filmic, Disabled).
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba16f) readonly uniform image2D denoisedRadiance;
+layout(set = 0, binding = 1, rgba16f) readonly uniform image2D albedoRoughness;
+layout(set = 0, binding = 2, rgba16f) readonly uniform image2D emissionBg;
+layout(set = 0, binding = 3, rgba32f) uniform image2D accumHdr;      // Progressive HDR accumulator
+layout(set = 0, binding = 4, rgba8) writeonly uniform image2D outLdr;
+
+layout(push_constant) uniform ComposePush {
+    uint width;
+    uint height;
+    uint tonemapMethod;
+    float exposure;
+    float whitePoint;
+    uint denoiserEnabled;
+    uint accumFrames;
+    uint encodeSrgb;
+} pc;
+
+#include "openpbr_common.glsl"
+
+vec3 linearToSrgb(vec3 c) {
+    vec3 lo = c * 12.92;
+    vec3 hi = 1.055 * pow(max(c, vec3(0.0)), vec3(1.0 / 2.4)) - 0.055;
+    return mix(lo, hi, greaterThan(c, vec3(0.0031308)));
+}
+
+void main() {
+    ivec2 px = ivec2(gl_GlobalInvocationID.xy);
+    if (px.x >= int(pc.width) || px.y >= int(pc.height)) {
+        return;
+    }
+
+    vec4 rad = imageLoad(denoisedRadiance, px);
+    vec4 alb = imageLoad(albedoRoughness, px);
+    vec4 em = imageLoad(emissionBg, px);
+    bool hit = em.a > 0.5;
+    vec3 hdr = hit ? (rad.rgb * alb.rgb + em.rgb) : em.rgb;
+
+    // Unbiased progressive Monte Carlo accumulation when denoiser is disabled.
+    if (pc.denoiserEnabled == 0u) {
+        if (pc.accumFrames == 0u) {
+            imageStore(accumHdr, px, vec4(hdr, 1.0));
+        } else {
+            vec3 prev = imageLoad(accumHdr, px).rgb;
+            float n = float(pc.accumFrames + 1u);
+            hdr = mix(prev, hdr, 1.0 / n);
+            imageStore(accumHdr, px, vec4(hdr, 1.0));
+        }
+    }
+
+    vec3 mapped = openpbrApplyToneMapping(hdr, pc.tonemapMethod, pc.exposure, pc.whitePoint);
+    if (pc.encodeSrgb != 0u) {
+        mapped = linearToSrgb(mapped);
+    }
+    imageStore(outLdr, px, vec4(mapped, 1.0));
+}

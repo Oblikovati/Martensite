@@ -1,0 +1,56 @@
+#version 460
+// SVGF Pass 2: Variance-Guided 5x5 B3-Spline A-trous Wavelet Filter.
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba16f) readonly uniform image2D inColorVar;
+layout(set = 0, binding = 1, rgba32f) readonly uniform image2D normalDepth;
+layout(set = 0, binding = 2, rgba16f) writeonly uniform image2D outColorVar;
+
+layout(push_constant) uniform AtrousPush {
+    uint width;
+    uint height;
+    int stepSize;
+    float phiColor;
+    float phiNormal;
+    float phiDepth;
+} pc;
+
+float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
+
+const float KERNEL[3] = float[3](1.0, 2.0 / 3.0, 1.0 / 6.0);
+
+void main() {
+    ivec2 px = ivec2(gl_GlobalInvocationID.xy);
+    if (px.x >= int(pc.width) || px.y >= int(pc.height)) {
+        return;
+    }
+
+    vec4 center = imageLoad(inColorVar, px);
+    vec4 centerND = imageLoad(normalDepth, px);
+    float centerL = luma(center.rgb);
+    float sigmaL = sqrt(max(center.a, 1e-6)) * pc.phiColor + 1e-4;
+
+    vec3 sumC = center.rgb;
+    float sumV = center.a;
+    float sumW = 1.0;
+
+    for (int dy = -2; dy <= 2; ++dy) {
+        for (int dx = -2; dx <= 2; ++dx) {
+            if (dx == 0 && dy == 0) continue;
+            ivec2 q = px + ivec2(dx, dy) * pc.stepSize;
+            if (q.x < 0 || q.y < 0 || q.x >= int(pc.width) || q.y >= int(pc.height)) continue;
+            vec4 qCV = imageLoad(inColorVar, q);
+            vec4 qND = imageLoad(normalDepth, q);
+            float wN = pow(max(0.0, dot(centerND.xyz, qND.xyz)), pc.phiNormal);
+            float wZ = exp(-abs(centerND.w - qND.w) / max(pc.phiDepth, 1e-4));
+            float wL = exp(-abs(centerL - luma(qCV.rgb)) / sigmaL);
+            float k = KERNEL[abs(dx)] * KERNEL[abs(dy)];
+            float w = k * wN * wZ * wL;
+            sumC += qCV.rgb * w;
+            sumV += qCV.a * w * w;
+            sumW += w;
+        }
+    }
+
+    imageStore(outColorVar, px, vec4(sumC / sumW, sumV / (sumW * sumW)));
+}

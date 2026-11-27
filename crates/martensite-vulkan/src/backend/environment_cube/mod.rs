@@ -131,6 +131,7 @@ impl EnvironmentCube {
         Ok(set)
     }
     /// The combined image sampler of the cube; `cube.image_info()`.
+    #[allow(dead_code)]
     pub fn image_info(&self) -> vk::DescriptorImageInfo {
         vk::DescriptorImageInfo::default()
             .sampler(self.sampler)

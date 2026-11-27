@@ -7,9 +7,9 @@ use martensite_tkernel::ncollection::Vec3;
 use martensite_tkernel::quantity::Color;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkservice::graphic3d::{
-    Graphic3dAspectsMembers, Graphic3dAspectsRenderMembers, Graphic3dAspectsSource, Graphic3dBsdf,
-    Graphic3dMaterialAspect, Graphic3dNameOfMaterial, Graphic3dPbrMaterial, Graphic3dTextureMap,
-    Graphic3dTextureSet, Graphic3dTextureUnit,
+    Graphic3dAspectsMembers, Graphic3dAspectsRenderMembers, Graphic3dAspectsSource,
+    Graphic3dMaterialAspect, Graphic3dNameOfMaterial, Graphic3dTextureMap, Graphic3dTextureSet,
+    Graphic3dTextureUnit, OpenPbrMaterial,
 };
 use martensite_tkservice::image::ImageTextureSource;
 
@@ -25,17 +25,22 @@ fn common_aspect(common: &XCAFDocVisMaterialCommon) -> Result<Graphic3dMaterialA
     Ok(aspect)
 }
 
-/// The PBR material converted from a common definition.
-fn common_pbr(common: &XCAFDocVisMaterialCommon) -> Result<Graphic3dPbrMaterial, Failure> {
-    let mut pbr = Graphic3dPbrMaterial::default();
-    pbr.set_color(common.diffuse_color);
-    pbr.set_metallic(metallic_of(common))?;
-    pbr.set_roughness(Graphic3dPbrMaterial::roughness_from_specular(
-        common.specular_color,
-        f64::from(common.shininess),
-    ))?;
-    pbr.set_emission(common.emissive_color.rgb_vec3())?;
-    Ok(pbr)
+/// The OpenPBR material converted from a common definition.
+fn common_openpbr(common: &XCAFDocVisMaterialCommon) -> Result<OpenPbrMaterial, Failure> {
+    let base = martensite_tkernel::quantity::ColorRgba::from_rgb(
+        common.diffuse_color,
+        (1.0 - common.transparency).clamp(0.0, 1.0),
+    );
+    OpenPbrMaterial::metallic_roughness(
+        base,
+        metallic_of(common),
+        OpenPbrMaterial::roughness_from_specular(
+            common.specular_color,
+            f64::from(common.shininess),
+        ),
+        1.5,
+        common.emissive_color.rgb_vec3(),
+    )
 }
 
 /// The PBR definition as the colors of a user-defined material aspect.
@@ -56,25 +61,19 @@ fn pbr_aspect(pbr: &XCAFDocVisMaterialPbr) -> Result<Graphic3dMaterialAspect, Fa
     Ok(aspect)
 }
 
-/// The PBR material of a PBR definition.
-fn pbr_material(pbr: &XCAFDocVisMaterialPbr) -> Result<Graphic3dPbrMaterial, Failure> {
-    let mut material = Graphic3dPbrMaterial::default();
-    material.set_color_rgba(&pbr.base_color)?;
-    material.set_metallic(pbr.metallic)?;
-    material.set_roughness(pbr.roughness)?;
-    material.set_emission(pbr.emissive_factor)?;
-    material.set_ior(pbr.refraction_index)?;
-    Ok(material)
-}
-
-/// Sets the PBR material and its metal-roughness BSDF.
-fn set_pbr(aspect: &mut Graphic3dMaterialAspect, pbr: Graphic3dPbrMaterial) {
-    aspect.set_bsdf(Graphic3dBsdf::create_metallic_roughness(&pbr));
-    aspect.set_pbr_material(pbr);
+/// The OpenPBR material of a PBR definition.
+fn openpbr_material(pbr: &XCAFDocVisMaterialPbr) -> Result<OpenPbrMaterial, Failure> {
+    OpenPbrMaterial::metallic_roughness(
+        pbr.base_color,
+        pbr.metallic,
+        pbr.roughness,
+        pbr.refraction_index,
+        pbr.emissive_factor,
+    )
 }
 
 impl XCAFDocVisMaterial {
-    /// `FillMaterialAspect(theAspect)`: the aspect of the common definition (with a PBR
+    /// `FillMaterialAspect(theAspect)`: the aspect of the common definition (with an OpenPBR
     /// material converted from it when there is no PBR definition), then the PBR definition.
     pub fn fill_material_aspect(
         &self,
@@ -84,7 +83,7 @@ impl XCAFDocVisMaterial {
         if fields.common.is_defined {
             *aspect = common_aspect(&fields.common)?;
             if !fields.pbr.is_defined {
-                set_pbr(aspect, common_pbr(&fields.common)?);
+                aspect.set_openpbr_material(common_openpbr(&fields.common)?)?;
             }
         }
         if fields.pbr.is_defined {
@@ -92,7 +91,7 @@ impl XCAFDocVisMaterial {
                 *aspect = pbr_aspect(&fields.pbr)?;
             }
             aspect.set_refraction_index(fields.pbr.refraction_index)?;
-            set_pbr(aspect, pbr_material(&fields.pbr)?);
+            aspect.set_openpbr_material(openpbr_material(&fields.pbr)?)?;
         }
         Ok(())
     }

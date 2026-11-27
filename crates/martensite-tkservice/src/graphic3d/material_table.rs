@@ -1,14 +1,7 @@
-//! The predefined materials of `Graphic3d_MaterialAspect.cxx` (`RawMaterial`, `THE_MATERIALS`).
-//!
-//! The native constructor is one `switch` over the material; here each case is one
-//! `MaterialSpec` row of `MATERIAL_SPECS` (material_specs.rs) and `raw_material` builds the `RawMaterial` from it
-//! in the native statement order (BSDF, then the PBR material from the BSDF).
-use super::material_specs::{BLACK, BsdfSpec, MATERIAL_SPECS, MaterialSpec};
-use super::{
-    Graphic3dBsdf, Graphic3dFresnel, Graphic3dNameOfMaterial, Graphic3dPbrMaterial,
-    Graphic3dTypeOfMaterial,
-};
-use martensite_tkernel::ncollection::{Vec3, Vec4};
+//! Predefined materials catalogue (`RawMaterial`, `the_materials`).
+use super::material_specs::{MATERIAL_SPECS, MaterialSpec, OpenPbrPreset};
+use super::{Graphic3dNameOfMaterial, Graphic3dTypeOfMaterial, OpenPbrMaterial};
+use martensite_tkernel::ncollection::Vec3;
 use martensite_tkernel::quantity::Color;
 use std::sync::OnceLock;
 
@@ -16,20 +9,19 @@ use std::sync::OnceLock;
 #[derive(Clone, Debug)]
 pub(crate) struct RawMaterial {
     pub(crate) string_name: &'static str,
-    pub(crate) bsdf: Graphic3dBsdf,
-    pub(crate) pbr_material: Graphic3dPbrMaterial,
+    pub(crate) openpbr: OpenPbrMaterial,
     /// Ambient, diffuse, specular and emission colors (`Colors[Graphic3d_TOR_*]`).
     pub(crate) colors: [Color; 4],
     pub(crate) transparency_coef: f32,
     pub(crate) refraction_index: f32,
     pub(crate) shininess: f32,
-    /// Coefficients of `Graphic3d_MaterialAspect::SetColor`.
+    /// Coefficients of `Graphic3dMaterialAspect::set_color`.
     pub(crate) ambient_coef: f32,
     pub(crate) diffuse_coef: f32,
     pub(crate) material_type: Graphic3dTypeOfMaterial,
 }
 
-/// The materials in `Graphic3d_NameOfMaterial` order.
+/// The materials in `Graphic3dNameOfMaterial` order.
 pub(crate) const MATERIAL_NAMES: [(Graphic3dNameOfMaterial, &str); 26] = {
     use Graphic3dNameOfMaterial as N;
     [
@@ -62,75 +54,115 @@ pub(crate) const MATERIAL_NAMES: [(Graphic3dNameOfMaterial, &str); 26] = {
     ]
 };
 
-fn vec3(value: [f32; 3]) -> Vec3<f32> {
-    Vec3::new(value[0], value[1], value[2])
-}
-
-/// `CreateMetallic(Vec3(0.985), fresnel, 0.045)` of the metals.
-fn metal(fresnel: Graphic3dFresnel) -> Graphic3dBsdf {
-    Graphic3dBsdf::create_metallic(Vec3::new(0.985, 0.985, 0.985), fresnel, 0.045)
-}
-
-/// `BSDF.Kd`, `BSDF.Ks`, `FresnelBase` and `Normalize()` over `CreateDiffuse(0)`.
-fn layered(kd: [f32; 3], ks: Option<[f32; 4]>, normalize: bool, dielectric: bool) -> Graphic3dBsdf {
-    let mut bsdf = Graphic3dBsdf::create_diffuse(vec3(kd));
-    if let Some([x, y, z, w]) = ks {
-        bsdf.ks = Vec4::new(x, y, z, w);
-    }
-    if dielectric {
-        bsdf.fresnel_base = Graphic3dFresnel::create_dielectric(1.5);
-    }
-    if normalize {
-        bsdf.normalize();
-    }
-    bsdf
-}
-
-/// The BSDF of one case; `index` is the case's refraction index.
-fn build_bsdf(spec: BsdfSpec, index: f32) -> Graphic3dBsdf {
-    match spec {
-        BsdfSpec::Black => Graphic3dBsdf::create_diffuse(Vec3::new(0.0, 0.0, 0.0)),
-        BsdfSpec::Layers {
-            kd,
-            ks,
-            normalize,
-            dielectric,
-        } => layered(kd, ks, normalize, dielectric),
-        BsdfSpec::Glow(le) => Graphic3dBsdf {
-            le: vec3(le),
-            ..layered(BLACK, Some([0.5, 0.5, 0.5, 0.0]), false, true)
-        },
-        BsdfSpec::MetalSchlick(color) => metal(Graphic3dFresnel::create_schlick(vec3(color))),
-        BsdfSpec::MetalConductor(n, k) => metal(Graphic3dFresnel::create_conductor(n, k)),
-        BsdfSpec::MetalConductorRgb(n, k) => {
-            metal(Graphic3dFresnel::create_conductor_rgb(vec3(n), vec3(k)))
+fn build_openpbr(preset: OpenPbrPreset, refraction_index: f32) -> OpenPbrMaterial {
+    let mut m = OpenPbrMaterial::default();
+    match preset {
+        OpenPbrPreset::Dielectric {
+            color,
+            diffuse_roughness,
+            roughness,
+            ior,
+            coat_weight,
+            coat_roughness,
+        } => {
+            m.base.color = color;
+            m.base.diffuse_roughness = diffuse_roughness;
+            m.specular.roughness = roughness;
+            m.specular.ior = ior;
+            m.coat.weight = coat_weight;
+            m.coat.roughness = coat_roughness;
         }
-        BsdfSpec::Glass(absorption) => {
-            Graphic3dBsdf::create_glass(Vec3::new(1.0, 1.0, 1.0), vec3(absorption), 0.05, index)
+        OpenPbrPreset::Metal {
+            f0,
+            f82,
+            roughness,
+            anisotropy,
+        } => {
+            m.base.color = f0;
+            m.base.metalness = 1.0;
+            m.specular.color = f82;
+            m.specular.roughness = roughness;
+            m.specular.roughness_anisotropy = anisotropy;
         }
-        BsdfSpec::Transparent => Graphic3dBsdf {
-            kt: Vec3::new(0.9, 0.9, 0.9),
-            fresnel_base: Graphic3dFresnel::create_constant(0.0),
-            ..Graphic3dBsdf::create_diffuse(Vec3::new(0.1, 0.1, 0.1))
-        },
+        OpenPbrPreset::Satin {
+            color,
+            roughness,
+            anisotropy,
+            fuzz_weight,
+            fuzz_roughness,
+        } => {
+            m.base.color = color;
+            m.specular.roughness = roughness;
+            m.specular.roughness_anisotropy = anisotropy;
+            m.fuzz.weight = fuzz_weight;
+            m.fuzz.color = color;
+            m.fuzz.roughness = fuzz_roughness;
+        }
+        OpenPbrPreset::Subsurface {
+            color,
+            sss_color,
+            weight,
+            radius,
+            radius_scale,
+            roughness,
+            ior,
+        } => {
+            m.base.color = color;
+            m.specular.roughness = roughness;
+            m.specular.ior = ior;
+            m.subsurface.weight = weight;
+            m.subsurface.color = sss_color;
+            m.subsurface.radius = radius;
+            m.subsurface.radius_scale = radius_scale;
+        }
+        OpenPbrPreset::Emissive {
+            base_color,
+            emission_color,
+            luminance,
+            roughness,
+        } => {
+            m.base.color = base_color;
+            m.specular.roughness = roughness;
+            m.emission.color = emission_color;
+            m.emission.luminance = luminance;
+        }
+        OpenPbrPreset::Glass {
+            tint,
+            depth,
+            roughness,
+            dispersion_scale,
+            abbe_number,
+        } => {
+            m.base.color = tint;
+            m.specular.ior = refraction_index;
+            m.specular.roughness = roughness;
+            m.transmission.weight = 1.0;
+            m.transmission.color = tint;
+            m.transmission.depth = depth;
+            m.transmission.dispersion_scale = dispersion_scale;
+            m.transmission.dispersion_abbe_number = abbe_number;
+        }
+        OpenPbrPreset::Transparent { color, opacity } => {
+            m.base.color = color;
+            m.specular.ior = 1.0;
+            m.specular.roughness = 0.05;
+            m.geometry.opacity = opacity;
+            m.geometry.thin_walled = true;
+        }
     }
+    debug_assert!(m.validate().is_ok());
+    m
 }
 
-/// `Quantity_Color(NCollection_Vec3<float>)`: the linear RGB values as stored. The table
-/// values are all in [0, 1]; the unit tests build every material.
 fn color(rgb: [f32; 3]) -> Color {
-    Color::from_vec3(vec3(rgb)).expect("predefined material colors are in [0, 1]")
+    Color::from_vec3(Vec3::new(rgb[0], rgb[1], rgb[2]))
+        .expect("predefined material colors are in [0, 1]")
 }
 
-/// `RawMaterial(theName, theStringName)`: the case values, then the PBR equivalent.
 fn raw_material(spec: &MaterialSpec, string_name: &'static str) -> RawMaterial {
     let (refraction_index, transparency_coef) = spec.optics.unwrap_or((1.0, 0.0));
     let (ambient_coef, diffuse_coef) = spec.coefs.unwrap_or((0.25, 1.0));
-    let bsdf = build_bsdf(spec.bsdf, refraction_index);
-    let mut pbr_material = Graphic3dPbrMaterial::default();
-    pbr_material
-        .set_bsdf(&bsdf)
-        .expect("predefined BSDFs convert to PBR materials");
+    let openpbr = build_openpbr(spec.openpbr, refraction_index);
     let material_type = if spec.physic {
         Graphic3dTypeOfMaterial::Physic
     } else {
@@ -138,8 +170,7 @@ fn raw_material(spec: &MaterialSpec, string_name: &'static str) -> RawMaterial {
     };
     RawMaterial {
         string_name,
-        bsdf,
-        pbr_material,
+        openpbr,
         colors: spec.colors.map(color),
         transparency_coef,
         refraction_index,
@@ -150,12 +181,14 @@ fn raw_material(spec: &MaterialSpec, string_name: &'static str) -> RawMaterial {
     }
 }
 
-/// `THE_MATERIALS`, built once.
+/// Predefined material catalogue, built once.
 pub(crate) fn the_materials() -> &'static [RawMaterial] {
     static MATERIALS: OnceLock<Vec<RawMaterial>> = OnceLock::new();
     MATERIALS.get_or_init(|| {
-        let rows = MATERIAL_SPECS.iter().zip(MATERIAL_NAMES);
-        rows.map(|(spec, (_, text))| raw_material(spec, text))
+        MATERIAL_SPECS
+            .iter()
+            .zip(MATERIAL_NAMES)
+            .map(|(spec, (_, text))| raw_material(spec, text))
             .collect()
     })
 }

@@ -32,6 +32,9 @@ impl super::VulkanRenderer {
             has_ray_tracing_textures: self.runtime.raytrace_textures,
             has_ray_tracing_adaptive_sampling: self.runtime.fragment_stores,
             has_ray_tracing_adaptive_sampling_atomic: self.runtime.image_float_atomic_add,
+            has_hardware_ray_tracing: self.runtime.hardware_raytrace_caps.supported,
+            has_ray_query: self.runtime.hardware_raytrace_caps.supported,
+            min_as_scratch_alignment: self.runtime.hardware_raytrace_caps.min_as_scratch_alignment,
         }
     }
     /// Native HasSRGB needs sRGB textures and sRGB framebuffers: sample, filter and render.

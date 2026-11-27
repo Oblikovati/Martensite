@@ -124,6 +124,9 @@ fn device_extension_names(
     if runtime.triangle_coverage != crate::RenderTriangleCoverageBehavior::HardwareV1 {
         extensions.push(ash::ext::conservative_rasterization::NAME.as_ptr());
     }
+    if runtime.hardware_raytrace_caps.supported {
+        extensions.extend(super::hw_raytrace::device::required_extension_names());
+    }
     extensions
 }
 struct DeviceExtensionChain {
@@ -136,6 +139,8 @@ struct DeviceExtensionChain {
     mesh_shader: vk::PhysicalDeviceMeshShaderFeaturesEXT<'static>,
     core13: vk::PhysicalDeviceVulkan13Features<'static>,
     core12: vk::PhysicalDeviceVulkan12Features<'static>,
+    accel_struct: vk::PhysicalDeviceAccelerationStructureFeaturesKHR<'static>,
+    ray_query: vk::PhysicalDeviceRayQueryFeaturesKHR<'static>,
     window: vk::PhysicalDeviceSwapchainMaintenance1FeaturesEXT<'static>,
     lines: vk::PhysicalDeviceLineRasterizationFeaturesKHR<'static>,
     provoking: vk::PhysicalDeviceProvokingVertexFeaturesEXT<'static>,
@@ -171,7 +176,12 @@ impl DeviceExtensionChain {
             core12: super::raytrace_texture_indexing::ray_tracing_textures_feature(
                 runtime.raytrace_textures,
             )
-            .draw_indirect_count(runtime.placement_visibility),
+            .draw_indirect_count(runtime.placement_visibility)
+            .buffer_device_address(runtime.hardware_raytrace_caps.supported),
+            accel_struct: vk::PhysicalDeviceAccelerationStructureFeaturesKHR::default()
+                .acceleration_structure(runtime.hardware_raytrace_caps.supported),
+            ray_query: vk::PhysicalDeviceRayQueryFeaturesKHR::default()
+                .ray_query(runtime.hardware_raytrace_caps.supported),
             window: vk::PhysicalDeviceSwapchainMaintenance1FeaturesEXT::default()
                 .swapchain_maintenance1(runtime.window_support),
             lines: vk::PhysicalDeviceLineRasterizationFeaturesKHR::default()
@@ -200,8 +210,15 @@ impl DeviceExtensionChain {
             device_create_description(queues, core, extensions).push_next(&mut self.core13);
         if self.core12.shader_sampled_image_array_non_uniform_indexing == vk::TRUE
             || self.core12.draw_indirect_count == vk::TRUE
+            || self.core12.buffer_device_address == vk::TRUE
         {
             info = info.push_next(&mut self.core12);
+        }
+        if self.accel_struct.acceleration_structure == vk::TRUE {
+            info = info.push_next(&mut self.accel_struct);
+        }
+        if self.ray_query.ray_query == vk::TRUE {
+            info = info.push_next(&mut self.ray_query);
         }
         if self.mesh_shader.mesh_shader == vk::TRUE {
             info = info.push_next(&mut self.mesh_shader);

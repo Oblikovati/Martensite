@@ -11,7 +11,6 @@ use super::image::{EnvironmentImage, FaceView};
 use crate::RenderError;
 use crate::environment_frame::PbrBakingSamples;
 use ash::vk;
-use martensite_tkservice::graphic3d::Graphic3dPbrMaterial;
 use std::sync::Arc;
 
 const BAKING_VERTEX: &[u8] = include_bytes!("../../../shaders/pbr_env_baking.vert.spv");
@@ -53,7 +52,7 @@ impl BakingPipelines {
             )?,
             specular: EnvironmentPipeline::new(
                 runtime,
-                spec(BAKING_SPECULAR, vk::Format::R8G8B8A8_UNORM),
+                spec(BAKING_SPECULAR, vk::Format::R16G16B16A16_SFLOAT),
             )?,
         })
     }
@@ -92,11 +91,23 @@ pub(super) fn solid_angle_source(env_map_size: u32) -> f32 {
     (4.0 * std::f64::consts::PI / (6.0 * f64::from(texels))) as f32
 }
 
-/// `int(SpecIBLMapSamplesFactor(Probability, level / float(levels - 1)) * NbSpecSamples)`.
+/// GGX importance-sampling cone fraction used to scale specular IBL bake samples per mip level.
+pub(super) fn spec_ibl_samples_factor(probability: f32, roughness: f32) -> f32 {
+    let r2 = roughness * roughness;
+    let quad = r2 * r2;
+    let denom = 1.0 + (quad - 1.0) * probability;
+    let cos_theta = if denom != 0.0 {
+        ((1.0 - probability) / denom).max(0.0).sqrt()
+    } else {
+        0.0
+    };
+    (martensite_cmath::acos(f64::from(cos_theta)) * 2.0 / std::f64::consts::PI) as f32
+}
+
+/// `int(spec_ibl_samples_factor(Probability, level / float(levels - 1)) * NbSpecSamples)`.
 pub(super) fn specular_samples(samples: &PbrBakingSamples, level: u32, levels: u32) -> i32 {
     let roughness = level as f32 / (levels - 1) as f32;
-    (Graphic3dPbrMaterial::spec_ibl_map_samples_factor(samples.probability, roughness)
-        * samples.specular as f32) as i32
+    (spec_ibl_samples_factor(samples.probability, roughness) * samples.specular as f32) as i32
 }
 
 /// Inputs of one bake recording.
@@ -232,7 +243,7 @@ mod tests {
             probability: 0.99,
         };
         let top = specular_samples(&samples, 5, 6);
-        let factor = Graphic3dPbrMaterial::spec_ibl_map_samples_factor(0.99, 1.0);
+        let factor = spec_ibl_samples_factor(0.99, 1.0);
         assert_eq!(top, (factor * 256.0) as i32);
         assert!(specular_samples(&samples, 1, 6) <= top);
     }

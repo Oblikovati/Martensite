@@ -101,17 +101,16 @@ fn material_textures_index_each_unit_record_and_skip_untextured_aspects() {
     let mut textures = RaytraceTextures::default();
     apply_material_textures(&mut material, &*aspects, &images, &mut textures).unwrap();
     assert_eq!(textures.textures.len(), 3);
-    let w = |record: usize| material.records[record][3];
-    assert_eq!((w(1), w(12)), (0., 0.)); // Diffuse and BSDF Kd
-    assert_eq!(w(14), 1.); // BSDF Kt
-    assert_eq!(w(15), -1.); // BSDF Le: no emissive map
-    assert_eq!(w(17), 2.); // BSDF FresnelBase
+    assert_eq!(material.tex.slots[0], 0);
+    assert_eq!(material.tex.slots[4], 1);
+    assert_eq!(material.tex.slots[1], -1);
+    assert_eq!(material.tex.slots[3], 2);
     aspects.set_texture_map_on(false);
     let mut plain = RaytraceMaterial::of_aspects(&*aspects, space);
     let mut none = RaytraceTextures::default();
     apply_material_textures(&mut plain, &*aspects, &images, &mut none).unwrap();
     assert!(!none.has_textures());
-    assert_eq!(plain.records[1][3], -1.);
+    assert_eq!(plain.tex.slots[0], -1);
 }
 
 #[test]

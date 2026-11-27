@@ -2,7 +2,8 @@
 //! shaders/raytrace_uniforms.glsl, packed at its std140 offsets.
 use martensite_tkernel::ncollection::{Mat4, Vec4};
 
-/// Bytes of the std140 block (the last member ends at 416).
+/// Bytes of the legacy std140 block (retained for unit tests in `uniforms_tests.rs`).
+#[cfg(test)]
 pub(crate) const UNIFORM_BYTES: usize = 416;
 
 /// The view rays of the four window corners and the matrices they come from.
@@ -99,7 +100,9 @@ pub(crate) struct RaytraceEye {
     pub size: [f32; 2],
 }
 
+#[cfg(test)]
 struct Block([u8; UNIFORM_BYTES]);
+#[cfg(test)]
 impl Block {
     fn floats(&mut self, offset: usize, values: &[f32]) {
         for (index, value) in values.iter().enumerate() {
@@ -111,6 +114,7 @@ impl Block {
     }
 }
 
+#[cfg(test)]
 impl RaytraceUniforms {
     /// The std140 bytes; the depth-of-field members stay zero without a perspective
     /// path-traced eye. Example: `uniforms.bytes().len() == UNIFORM_BYTES`.

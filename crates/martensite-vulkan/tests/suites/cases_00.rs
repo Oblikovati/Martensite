@@ -115,22 +115,8 @@ pub mod ordered_stencil;
 pub mod ordered_stencil_lifecycle;
 #[path = "../ordered_stencil_native_replay.rs"]
 pub mod ordered_stencil_native_replay;
-#[path = "../pathtrace_adaptive_native.rs"]
-pub mod pathtrace_adaptive_native;
-#[path = "../pathtrace_extras_native.rs"]
-pub mod pathtrace_extras_native;
-#[path = "../pathtrace_native.rs"]
-pub mod pathtrace_native;
-#[path = "../pathtrace_stereo_native.rs"]
-pub mod pathtrace_stereo_native;
-#[path = "../pbr_facet_variants_native.rs"]
-pub mod pbr_facet_variants_native;
-#[path = "../pbr_primitives_native.rs"]
-pub mod pbr_primitives_native;
-#[path = "../pbr_shading_native.rs"]
-pub mod pbr_shading_native;
-#[path = "../pbr_variants_native.rs"]
-pub mod pbr_variants_native;
+// Legacy OCCT PBR & fragment-raytracer pixel-replay tests retired in M9 (#623-#628):
+// replaced by ASWF OpenPBR Surface v1.1 + hardware/software compute ray tracing (`tests/openpbr_and_raytrace.rs`).
 #[path = "../point_alpha.rs"]
 pub mod point_alpha;
 #[path = "../point_alpha_context.rs"]
@@ -143,12 +129,6 @@ pub mod point_primitives;
 pub mod polygon_primitives;
 #[path = "../quadrangle_primitives.rs"]
 pub mod quadrangle_primitives;
-#[path = "../raytrace_native.rs"]
-pub mod raytrace_native;
-#[path = "../raytrace_render_scale_native.rs"]
-pub mod raytrace_render_scale_native;
-#[path = "../raytrace_textures_native.rs"]
-pub mod raytrace_textures_native;
 #[path = "../sampled_xor_boundary.rs"]
 pub mod sampled_xor_boundary;
 #[path = "../scene_inputs.rs"]

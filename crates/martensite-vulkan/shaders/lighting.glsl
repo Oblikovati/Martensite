@@ -4,6 +4,49 @@
 #include "numeric_light_dot.glsl"
 #endif
 struct RenderLight { uvec4 kind; vec4 color; vec4 position; vec4 direction; vec4 params; };
+#ifdef MARTENSITE_PBR
+#include "openpbr/openpbr_types.glsl"
+layout(set=0,binding=0,std430) readonly buffer SurfaceLighting {
+    mat4 worldFromObject;
+    mat4 normalFromObject;
+    vec4 eye;
+    vec4 ambient;
+    vec4 materials[8];
+    uvec4 settings;
+    vec4 tail[];
+} lighting;
+RenderLight loadRenderLight(uint index) {
+    uint base = index * 5u;
+    RenderLight l;
+    l.kind = floatBitsToUint(lighting.tail[base]);
+    l.color = lighting.tail[base + 1u];
+    l.position = lighting.tail[base + 2u];
+    l.direction = lighting.tail[base + 3u];
+    l.params = lighting.tail[base + 4u];
+    return l;
+}
+OpenPbrGpuMaterial loadOpenPbrMaterial(uint face) {
+    uint base = lighting.settings.y * 5u + face * 16u;
+    OpenPbrGpuMaterial m;
+    m.base_color_weight = lighting.tail[base + 0u];
+    m.base_spec_params = lighting.tail[base + 1u];
+    m.specular_color_aniso = lighting.tail[base + 2u];
+    m.specular_ior_trans = lighting.tail[base + 3u];
+    m.transmission_color_disp = lighting.tail[base + 4u];
+    m.transmission_scatter_abbe = lighting.tail[base + 5u];
+    m.subsurface_color_weight = lighting.tail[base + 6u];
+    m.subsurface_radius_scale = lighting.tail[base + 7u];
+    m.coat_color_weight = lighting.tail[base + 8u];
+    m.coat_params = lighting.tail[base + 9u];
+    m.fuzz_color_weight = lighting.tail[base + 10u];
+    m.fuzz_thin_film = lighting.tail[base + 11u];
+    m.emission_color_lum = lighting.tail[base + 12u];
+    m.geometry_meta = lighting.tail[base + 13u];
+    m.uv_transform = lighting.tail[base + 14u];
+    m.tex_indices = lighting.tail[base + 15u];
+    return m;
+}
+#else
 layout(set=0,binding=0,std430) readonly buffer SurfaceLighting {
     mat4 worldFromObject;
     mat4 normalFromObject;
@@ -13,6 +56,7 @@ layout(set=0,binding=0,std430) readonly buffer SurfaceLighting {
     uvec4 settings;
     RenderLight sources[];
 } lighting;
+#endif
 #ifdef MARTENSITE_INDEXED_DRAW_MATERIALS
 #include "draw_material_table.glsl"
 #else
@@ -49,7 +93,7 @@ float lightShadow(uint theId, RenderLight theLight, vec3 theNormal, vec4 thePosi
 #include "fixed_lighting.glsl"
 #endif
 #ifdef MARTENSITE_PBR
-#include "pbr_lighting.glsl"
+#include "openpbr/openpbr_raster.glsl"
 #endif
 vec4 computeLighting(vec3 normal, vec3 view, vec4 world, bool front, vec4 vertexColor) {
 #if defined(MARTENSITE_PBR)

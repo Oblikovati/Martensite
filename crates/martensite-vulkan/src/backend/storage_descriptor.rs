@@ -273,12 +273,6 @@ impl UploadedStorage {
         );
         Ok(bytes)
     }
-    #[cfg(test)]
-    #[cfg_attr(not(target_os = "linux"), allow(dead_code))] // Its users are Linux window tests.
-    pub(super) fn test_readback(&self, size: usize) -> Result<Vec<u8>, RenderError> {
-        // Caller records shader-to-host dependency and waits for its completed fence.
-        self.buffer.read(size)
-    }
     fn bind(&self, bytes: u64, descriptor: vk::DescriptorType) {
         let mut buffer = [self.buffer.info(bytes)];
         if descriptor == vk::DescriptorType::STORAGE_BUFFER_DYNAMIC {
