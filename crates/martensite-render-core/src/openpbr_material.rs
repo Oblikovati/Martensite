@@ -65,8 +65,8 @@ fn pack_i16_pair(lo: i16, hi: i16) -> u32 {
 /// Layout matches `OpenPbrGpuMaterial` in `shaders/openpbr/openpbr_types.glsl` word-for-word.
 ///
 /// ```
+/// use martensite_render_core::OpenPbrGpuMaterial;
 /// use martensite_tkservice::graphic3d::OpenPbrMaterial;
-/// use martensite_vulkan::OpenPbrGpuMaterial;
 /// let gpu = OpenPbrGpuMaterial::from_openpbr(&OpenPbrMaterial::default());
 /// assert_eq!(std::mem::size_of::<OpenPbrGpuMaterial>(), 256);
 /// assert_eq!(gpu.specular_ior(), 1.5);
