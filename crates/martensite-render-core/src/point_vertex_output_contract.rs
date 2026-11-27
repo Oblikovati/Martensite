@@ -72,7 +72,9 @@ impl VertexOutputRequest {
         self.require_identity(&records)?;
         Ok(records)
     }
-    pub(crate) fn validate_records(&self, bytes: &[u8]) -> Result<(), VertexOutputFailure> {
+    /// Validate captured diagnostic bytes under the request's declared format; `request.validate_records(&bytes)?`.
+    #[doc(hidden)]
+    pub fn validate_records(&self, bytes: &[u8]) -> Result<(), VertexOutputFailure> {
         match self.format {
             VertexOutputFormat::TrianglesClipNormalId32 => self.decode(bytes).map(|_| ()),
             VertexOutputFormat::PointsClipId20 => self.decode_points(bytes).map(|_| ()),
