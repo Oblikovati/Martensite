@@ -114,5 +114,9 @@ fn certified_cylinder_selector_names_an_existing_nonignored_control() {
     let (_, name) = CERTIFIED_CYLINDER_ATTACHMENT_TEST
         .rsplit_once("::")
         .unwrap();
-    assert!(tests.contains(&format!("#[test]\nfn {name}()")));
+    assert!(
+        tests
+            .replace("\r\n", "\n")
+            .contains(&format!("#[test]\nfn {name}()"))
+    );
 }

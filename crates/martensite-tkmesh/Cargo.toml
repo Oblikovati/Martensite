@@ -26,7 +26,8 @@ martensite-tkshhealing = { path = "../martensite-tkshhealing", version = "0.4.1"
 allocator-api2 = "0.4"
 
 [dev-dependencies]
-martensite-tkbo = { path = "../martensite-tkbo", version = "0.9.1" }
+# Path-only dev-dep breaks the tkmesh -> tkbo -> geometry-raster -> tkmesh cycle during `cargo package`.
+martensite-tkbo = { path = "../martensite-tkbo" }
 martensite-tkprim = { path = "../martensite-tkprim", version = "0.4.1" }
 martensite-test-support = { path = "../martensite-test-support", version = "0.3.6" }
 martensite-process-policy = { path = "../martensite-process-policy", version = "0.4.0", features = ["case-runner"] }

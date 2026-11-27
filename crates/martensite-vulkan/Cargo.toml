@@ -62,7 +62,7 @@ martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.5.1" }
 martensite-tkmesh = { path = "../martensite-tkmesh", version = "0.4.1" }
 martensite-tkhlr = { path = "../martensite-tkhlr", version = "0.4.1" }
 martensite-tkshhealing = { path = "../martensite-tkshhealing", version = "0.4.1" }
-martensite-tkv3d = { path = "../martensite-tkv3d", version = "0.8.1" }
+martensite-tkv3d = { path = "../martensite-tkv3d" }
 martensite-tkbo = { path = "../martensite-tkbo", version = "0.9.1" }
 martensite-tkbool = { path = "../martensite-tkbool", version = "0.9.0" }
 martensite-tkfillet = { path = "../martensite-tkfillet", version = "0.9.1" }
