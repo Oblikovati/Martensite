@@ -23,4 +23,5 @@ Systematic toolkit-by-toolkit p95 profiling and optimization against OCCT 8.0.0 
 | 11 | `martensite-tkfillet`, `martensite-tkoffset` | prebuilt | **Done** (6 APIs; **5.49x speedup** on ThruSections loft via zero-clone lazy-projection `curve_on_surface_by_index`, 1.39x on cylinder fillet) | [tkfillet_tkoffset.md](tkfillet_tkoffset.md) |
 | 12 | `martensite-tkbool`, `martensite-tkfeat` | prebuilt | **Done** (5 APIs; 2.56–3.11x M/O across Pipe, NormalProjection, MakePrism boss, Helix) | [tkbool_tkfeat_tkhelix.md](tkbool_tkfeat_tkhelix.md) |
 | 12+ | `martensite-tkexpress`, `martensite-tkservice`, `martensite-tkv3d`, `martensite-tkxmesh`, `martensite-tkmeshvs` | prebuilt | Pending | |
-| AF/DE | `tkcdf`, `tklcaf`, `tktobj`, `tkcaf`, `tkvcaf`, `tkxcaf`, `tkde`, `tkxsbase`, `tkrwmesh`, `tkdestl`, `tkdeiges`, `tkdestep`, `tkdeobj`, `tkdeply` | build from `../OCCT` | Pending | |
+| DE | `martensite-tkde`, `martensite-tkxsbase`, `martensite-tkdestl`, `martensite-tkdestep`, `martensite-tkdeiges` | built from `../OCCT` | **Done** (8 APIs; **5.32x speedup** on ASCII STL write → **0.66x M/O FASTER than OCCT**, 1.45x on binary STL read) | [tkde.md](tkde.md) |
+| AF/DE/Vis | `tkcdf`, `tklcaf`, `tktobj`, `tkcaf`, `tkvcaf`, `tkxcaf`, `tkrwmesh`, `tkdeobj`, `tkdeply`, `tkservice`, `tkv3d`, `tkxmesh`, `tkmeshvs`, `tkexpress` | built/prebuilt | Pending | |

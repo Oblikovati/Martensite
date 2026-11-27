@@ -23,6 +23,43 @@ impl RwStl {
         write_ascii_facets(mesh, stream, count, &scope)
     }
 }
+use std::fmt::Write as FmtWrite;
+
+const ASCII_CHUNK_BYTES: usize = 16 * 1024;
+
+struct StackFmt {
+    buf: [u8; 40],
+    len: usize,
+}
+
+impl StackFmt {
+    #[inline]
+    fn new() -> Self {
+        Self {
+            buf: [0; 40],
+            len: 0,
+        }
+    }
+    #[inline]
+    fn as_bytes(&self) -> &[u8] {
+        &self.buf[..self.len]
+    }
+}
+
+impl FmtWrite for StackFmt {
+    #[inline]
+    fn write_str(&mut self, s: &str) -> std::fmt::Result {
+        let bytes = s.as_bytes();
+        let end = self.len + bytes.len();
+        if end > self.buf.len() {
+            return Err(std::fmt::Error);
+        }
+        self.buf[self.len..end].copy_from_slice(bytes);
+        self.len = end;
+        Ok(())
+    }
+}
+
 fn write_ascii_facets(
     mesh: &Triangulation,
     stream: &mut dyn Write,
@@ -32,37 +69,75 @@ fn write_ascii_facets(
     let mut sink = AsciiFacetSink {
         stream,
         failed: false,
+        chunk: Vec::with_capacity(ASCII_CHUNK_BYTES + 512),
         number: Vec::new(),
     };
     for index in 1..=count {
         sink.facet(facet_coordinates(mesh, index)?);
+        if sink.chunk.len() >= ASCII_CHUNK_BYTES {
+            sink.flush_chunk();
+        }
         if sink.failed || !advance_progress(scope, index) {
             return Ok(false);
         }
     }
     sink.emit(b"endsolid\n");
+    sink.flush_chunk();
     Ok(!sink.failed)
 }
 struct AsciiFacetSink<'a> {
     stream: &'a mut dyn Write,
     failed: bool,
+    chunk: Vec<u8>,
     number: Vec<u8>,
 }
 impl AsciiFacetSink<'_> {
+    #[inline]
     fn emit(&mut self, bytes: &[u8]) {
-        if !self.failed {
-            self.failed = !write_block(self.stream, bytes);
+        self.chunk.extend_from_slice(bytes);
+    }
+    fn flush_chunk(&mut self) {
+        if !self.failed && !self.chunk.is_empty() {
+            self.failed = !write_block(self.stream, &self.chunk);
+            self.chunk.clear();
         }
     }
+    #[inline]
     fn real(&mut self, value: f64) {
         if self.failed {
             return;
         }
-        let Ok(length) = sprintf_into(&mut self.number, b"%.12e", &[FormatArg::Real(value)]) else {
-            self.failed = true;
+        if !value.is_finite() {
+            let Ok(length) = sprintf_into(&mut self.number, b"%.12e", &[FormatArg::Real(value)])
+            else {
+                self.failed = true;
+                return;
+            };
+            self.chunk.extend_from_slice(&self.number[..length]);
             return;
-        };
-        self.failed = !write_block(self.stream, &self.number[..length]);
+        }
+        if value.is_sign_negative() {
+            self.chunk.push(b'-');
+        }
+        let mut tmp = StackFmt::new();
+        let _ = write!(&mut tmp, "{:.12e}", value.abs());
+        let bytes = tmp.as_bytes();
+        if let Some(e_pos) = bytes.iter().position(|&b| b == b'e') {
+            self.chunk.extend_from_slice(&bytes[..=e_pos]);
+            let exp = &bytes[e_pos + 1..];
+            let (sign, digits) = if let Some(rest) = exp.strip_prefix(b"-") {
+                (b'-', rest)
+            } else {
+                (b'+', exp.strip_prefix(b"+").unwrap_or(exp))
+            };
+            self.chunk.push(sign);
+            if digits.len() == 1 {
+                self.chunk.push(b'0');
+            }
+            self.chunk.extend_from_slice(digits);
+        } else {
+            self.chunk.extend_from_slice(bytes);
+        }
     }
     fn triplet(&mut self, coordinates: &[f64]) {
         self.real(coordinates[0]);
