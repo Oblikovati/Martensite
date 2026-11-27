@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-11-27
+
 ### Added
 
 - Added Wave 4 polish, micro-optimization, and extension contracts: origin-based stream seeking (`SeekOrigin`, `seek_from_origin`), `CheckedBorrowedInput`, `OwnedDynamicRootView`, multi-level `ExceptionAncestry`, and `GapCleanupPolicy` in `martensite-tkernel` (#96, #115, #116, #145, #373); `FontConsumedCoverage` and `FontOperationResult<T>` in `martensite-tkservice` (#341); `ConicalSourceReceipt`, O(log N) `OrderedContactIndex`, and `NormalizedPolynomialCache` in `martensite-tkgeomalgo` (#497, #511, #512, #527, #564, #565); `VendorShapeAdapter` for named external B-rep imports in `martensite-tkdestep` (#545); and Wave 4 optimization/hygiene notes (`docs/architecture/wave-4-optimizations-and-hygiene.md`).
