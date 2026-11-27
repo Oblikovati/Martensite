@@ -85,17 +85,6 @@ fn windows_processor_count(count: u32) -> i32 {
     count as i32
 }
 
-#[cfg(all(test, windows))]
-mod windows_query_contracts;
-
-#[cfg(all(test, windows))]
-mod system_info_tests {
-    #[test]
-    fn native_processor_query_returns_a_positive_count() {
-        assert!(super::online_processors() > 0);
-    }
-}
-
 /// WebAssembly thread identity mapped deterministically from `std::thread::ThreadId`
 /// without `thread_local!` (#631).
 #[cfg(not(any(unix, windows)))]
@@ -145,4 +134,15 @@ fn browser_hardware_concurrency() -> Option<i32> {
 #[cfg(not(any(unix, windows, target_arch = "wasm32")))]
 pub(crate) fn online_processors() -> i32 {
     1
+}
+
+#[cfg(all(test, windows))]
+mod windows_query_contracts;
+
+#[cfg(all(test, windows))]
+mod system_info_tests {
+    #[test]
+    fn native_processor_query_returns_a_positive_count() {
+        assert!(super::online_processors() > 0);
+    }
 }

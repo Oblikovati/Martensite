@@ -35,7 +35,8 @@ class CoopCoepHandler(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
 
     def log_message(self, format, *args):
-        pass
+        # Intentionally silent so stderr only reports E2E progress and failures.
+        return
 
 
 def build_wasm():

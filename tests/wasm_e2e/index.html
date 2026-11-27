@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head><meta charset="utf-8"><title>Martensite WASM + WebGPU E2E</title></head>
 <body>
 <canvas id="e2e-canvas" width="256" height="192"></canvas>
@@ -40,9 +40,11 @@ async function main() {
     worker.postMessage({ canvas: offscreen, maxWorkers: 7 }, [offscreen]);
 }
 
-main().catch((err) => {
-    window.__e2eError = String(err && err.stack || err);
-});
+try {
+    await main();
+} catch (err) {
+    window.__e2eError = String(err?.stack || err);
+}
 </script>
 </body>
 </html>

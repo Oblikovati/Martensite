@@ -27,3 +27,6 @@ rustc-ice-*.txt
 Experiments/
 tests/wasm_e2e/pkg/
 tests/wasm_e2e/Cargo.lock
+
+__pycache__/
+*.pyc

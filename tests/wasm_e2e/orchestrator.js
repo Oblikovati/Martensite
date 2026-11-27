@@ -8,6 +8,6 @@ self.onmessage = async (ev) => {
         const json = await run_all_e2e_checks(canvas, maxWorkers, glueUrl);
         self.postMessage({ ok: true, json });
     } catch (err) {
-        self.postMessage({ ok: false, error: String(err && err.stack || err) });
+        self.postMessage({ ok: false, error: String(err?.stack || err) });
     }
 };

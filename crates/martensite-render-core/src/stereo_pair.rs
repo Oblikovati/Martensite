@@ -198,14 +198,11 @@ fn matrix_of_rows(rows: &FilterRows) -> [f32; 16] {
     matrix.data()
 }
 
-#[cfg(test)]
-#[path = "stereo_pair_tests.rs"]
-mod tests;
-
 /// Composites for backend unit tests.
 #[doc(hidden)]
 pub mod tests_support {
-    use super::*;
+    use super::{Arc, StereoPairComposite, StereoProgram, SurfaceTextureImage};
+
     /// A 1x1 black pair composed by `program`; `tests_support::composite(StereoProgram::RedCyan)`.
     pub fn composite(program: StereoProgram) -> StereoPairComposite {
         let eye = Arc::new(SurfaceTextureImage {
@@ -232,3 +229,7 @@ pub mod tests_support {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "stereo_pair_tests.rs"]
+mod tests;
