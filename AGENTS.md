@@ -191,7 +191,11 @@ replace the workspace lint table:
   `libxkbcommon`), Xlib, FreeType, fontconfig and the Windows font registry, the X event union,
   the raw pixel storage views and the clip-plane allocator replays. Approved on the same terms
   as `martensite-tkernel` by the 2026-10-20 coordinator decision under the user's
-  delegation.
+  delegation. On macOS it also calls AppKit through `objc2`/`objc2-app-kit`
+  (`src/cocoa/appkit_native.rs`: the retained `NSWindow`/`NSView`/`CAMetalLayer`
+  addresses, `NSApp`, main-queue dispatch) and the Objective-C autorelease pool
+  (`src/cocoa/local_pool.rs`); approved by the maintainer on 2026-11-28 when the macOS
+  backend replaced the `Standard_NotImplemented` stubs.
 - `martensite-vulkan`: the Vulkan API calls through `ash`, the mapped-memory views
   and the structures with raw `p_next` chains, and in its tests the process allocator
   statistics and the X11 calls of the native window fixtures. Approved on the same

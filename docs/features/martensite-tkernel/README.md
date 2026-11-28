@@ -92,9 +92,20 @@ not shipped as stubs.
 
 ### Other targets
 
-- `long double` formatting (`src/c_format/long_double.rs`): AArch64 and other
-  non-x86 Unix targets store `long double` as IEEE binary128. Only the x86
+- `long double` formatting (`src/c_format/long_double.rs`): Linux AArch64 and
+  other non-x86 Unix targets store `long double` as IEEE binary128. Only the x86
   glibc spelling of `%La` is implemented; those targets use the binary64 spelling.
+  macOS needs nothing more: Apple Silicon's `long double` is binary64, and Apple's
+  libc on Intel spells `%La` like glibc's x87 form (checked on the host).
+
+### macOS
+
+Every kernel test passes on an Intel Mac. Floating-point trap control
+(`src/osd/timing/signal_native/fenv_darwin.rs`) edits the `fenv_t` image through
+`fegetenv`/`fesetenv`. Intel Macs honor the x87 and MXCSR masks. Apple Silicon
+cores read the FPCR trap-enable bits as zero, so there a request is accepted,
+`to_catch_floating_signals` reads `false`, and the signal capabilities report no
+trap control.
 - Process CPU time (`src/osd/process/native.rs`): a host with neither the Unix
   nor the Windows clock API has no implementation.
 

@@ -6,6 +6,17 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added the macOS AppKit backend of `martensite-tkservice`: `CocoaWindow` now creates, wraps, maps, resizes, titles and invalidates real `NSWindow`/`NSView` objects (top-left screen coordinates, Retina backing-pixel sizes, OCCT's 2-pixel `DoResize` border rule), `CocoaLocalPool` pushes and drains real autorelease pools (safely when dropped out of order), and `CocoaWindow::metal_layer` installs the `CAMetalLayer` Vulkan presents to. Every AppKit call goes through the new `CocoaAppKitCalls` seam (`CocoaWindow::create_with`, `CocoaWindow::wrap_view_with`), which answers queries only on the main thread and queues mutations made elsewhere to it. The native checks run with `--features appkit-integration-tests --test appkit_window`.
+- Added `AspectDisplayBackend::AppKit`; on macOS `AspectDisplayConnection` now connects (as OCCT's native macOS build, it stores the display without a socket) instead of raising `Standard_NotImplemented`.
+- Added Vulkan presentation on macOS: the Metal surface factory creates `VK_EXT_metal_surface` surfaces from a `CocoaWindow`'s `CAMetalLayer` on MoltenVK, and the surface lease keeps that layer alive until the surface is destroyed. The `metal_window_presentation` example opens a Cocoa window with a shaded B-rep viewport, checks the presented frame for lit geometry and turns the camera (`cargo run -p martensite-vulkan --example metal_window_presentation`).
+- Added floating-point trap control on macOS (`Osd::set_floating_signal`, `Osd::to_catch_floating_signals`) through `fegetenv`/`fesetenv`: the x87 control word and MXCSR on Intel Macs; on Apple Silicon the FPCR trap-enable bits read back as zero, so the request is accepted and the capability is reported as absent.
+
+### Fixed
+
+- Fixed `install-macos.sh` stopping before the Rust toolchain when a Homebrew upgrade fails (such as `vulkan-tools`, whose source build needs full Xcode's `ibtool` on Intel Macs); the installed version is kept and the final verification still checks every tool.
+
 ## [0.16.1] - 2026-11-28
 
 ### Fixed
