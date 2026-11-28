@@ -1,6 +1,6 @@
 [package]
 name = "martensite-webgpu"
-version = "0.1.0"
+version = "0.1.1"
 description = "Zero-unsafe WebGPU (wgpu) visualization renderer for Martensite on browser WebAssembly and desktop."
 edition.workspace = true
 rust-version.workspace = true
