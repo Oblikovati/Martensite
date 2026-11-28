@@ -28,7 +28,9 @@ pub(super) fn format(spec: &Spec, magnitude: f64, prefix: Vec<u8>) -> Vec<u8> {
     super::hexadecimal::format(spec, magnitude, prefix)
 }
 
-// TODO(platform): AArch64 and other non-x86 Unix targets store `long double` as IEEE
+// Apple Silicon's `long double` is binary64, so `%La` is `%a` there (as on Windows); Intel
+// Macs take the x87 branch above, whose spelling Apple's libc shares (`0x8p-3` for 1.0).
+// TODO(platform): Linux AArch64 and other non-x86 Unix targets store `long double` as IEEE
 // binary128 (leading digit 1, 28 fraction digits); only the x86 glibc spelling is implemented.
 // Until it is, the binary64 spelling is used there.
 #[cfg(not(any(windows, target_arch = "x86", target_arch = "x86_64")))]

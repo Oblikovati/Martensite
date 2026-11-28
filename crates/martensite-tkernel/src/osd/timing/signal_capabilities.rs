@@ -1,7 +1,10 @@
 //! Signal support describes available mechanisms, not installed handlers or trap masks.
 
+// Apple Silicon is left out: its cores read the FPCR trap-enable bits as zero, so the
+// mask can be requested but never takes effect (see signal_native/fenv_darwin.rs).
 pub(super) const FLOATING_POINT_TRAP_CONTROL: bool = cfg!(any(
     windows,
+    all(target_os = "macos", target_arch = "x86_64"),
     all(
         target_os = "linux",
         target_env = "gnu",
