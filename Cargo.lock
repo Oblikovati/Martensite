@@ -1030,7 +1030,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkernel"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "allocator-api2 0.4.0",
  "bytemuck",
@@ -1308,7 +1308,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkservice"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "dispatch2",
  "flate2",
@@ -1536,7 +1536,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-vulkan"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "ash",
  "flate2",
