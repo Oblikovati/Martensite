@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.16.2] - 2026-11-28
+
 ### Added
 
 - Added the macOS AppKit backend of `martensite-tkservice`: `CocoaWindow` now creates, wraps, maps, resizes, titles and invalidates real `NSWindow`/`NSView` objects (top-left screen coordinates, Retina backing-pixel sizes, OCCT's 2-pixel `DoResize` border rule), `CocoaLocalPool` pushes and drains real autorelease pools (safely when dropped out of order), and `CocoaWindow::metal_layer` installs the `CAMetalLayer` Vulkan presents to. Every AppKit call goes through the new `CocoaAppKitCalls` seam (`CocoaWindow::create_with`, `CocoaWindow::wrap_view_with`), which answers queries only on the main thread and queues mutations made elsewhere to it. The native checks run with `--features appkit-integration-tests --test appkit_window`.
