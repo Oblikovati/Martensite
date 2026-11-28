@@ -132,17 +132,25 @@ fn live_unimplemented_platforms_refuse_with_a_typed_cause_before_any_surface_exi
     let neutral = Handle::new(AspectNeutralWindow::default());
     neutral.set_native_handle(91);
     let window: Handle<dyn AspectWindow> = neutral.cast();
-    for platform in [RenderSurfacePlatform::Win32, RenderSurfacePlatform::Metal] {
-        let error = super::super::window_surface_lease::WindowSurfaceLease::acquire(
+    let acquire = |platform| {
+        super::super::window_surface_lease::WindowSurfaceLease::acquire(
             &runtime,
             &window,
             factory_for(platform),
         )
         .err()
-        .unwrap();
-        let expected = RenderSurfacePlatformFailure::Unsupported { platform };
-        assert_eq!(error.surface_platform_failure(), Some(&expected));
-    }
+        .unwrap()
+    };
+    let platform = RenderSurfacePlatform::Win32;
+    let expected = RenderSurfacePlatformFailure::Unsupported { platform };
+    assert_eq!(
+        acquire(platform).surface_platform_failure(),
+        Some(&expected)
+    );
+    // Metal is implemented: a window that is not a Cocoa_Window has no CAMetalLayer to offer.
+    let refusal = acquire(RenderSurfacePlatform::Metal);
+    assert_eq!(refusal.surface_platform_failure(), None);
+    assert!(refusal.to_string().contains("Cocoa_Window"), "{refusal}");
     // Only the runtime, the test handle and no leaked lease keep owners alive.
     assert_eq!(std::sync::Arc::strong_count(&runtime), 1);
     let errors = runtime.validation.errors().unwrap();

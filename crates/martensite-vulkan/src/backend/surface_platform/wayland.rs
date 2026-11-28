@@ -1,5 +1,5 @@
 //! Linux presentation surfaces through `VK_KHR_wayland_surface`.
-use super::{PlatformSurfaceFactory, retain_runtime_display};
+use super::{PlatformSurface, PlatformSurfaceFactory, retain_runtime_display};
 use crate::{
     RenderError, RenderSurfacePlatform,
     backend::runtime::{VulkanRuntime, vk_error},
@@ -24,7 +24,7 @@ impl PlatformSurfaceFactory for WaylandSurfaceFactory {
         &self,
         runtime: &VulkanRuntime,
         window: &Handle<dyn AspectWindow>,
-    ) -> Result<vk::SurfaceKHR, RenderError> {
+    ) -> Result<PlatformSurface, RenderError> {
         let display_address = checked_native_display(runtime, window)?;
         // AspectDrawable is usize on Windows and c_ulong on Unix.
         #[allow(clippy::useless_conversion)]
@@ -36,6 +36,7 @@ impl PlatformSurfaceFactory for WaylandSurfaceFactory {
             .surface(surface_address as *mut c_void);
         // SAFETY: `display` and `surface` are live Wayland handles pinned by the display lease and window handle.
         unsafe { wayland.create_wayland_surface(&info, None) }
+            .map(PlatformSurface::bare)
             .map_err(|e| vk_error("create Wayland Vulkan surface", e))
     }
 }

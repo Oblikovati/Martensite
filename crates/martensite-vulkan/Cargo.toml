@@ -79,6 +79,19 @@ sha2 = "=0.11.1"
 [target.'cfg(target_os = "linux")'.dev-dependencies]
 x11-dl = "=2.21.0"
 
+# The Metal viewport example creates the NSApplication its Cocoa window needs and pumps
+# its events.
+[target.'cfg(target_os = "macos")'.dev-dependencies]
+objc2 = "=0.6.5"
+objc2-app-kit = { version = "=0.3.2", default-features = false, features = [
+    "std",
+    "NSApplication",
+    "NSEvent",
+    "NSResponder",
+    "NSRunningApplication",
+] }
+objc2-foundation = { version = "=0.3.2", default-features = false, features = ["std", "NSDate", "NSObjCRuntime", "NSRunLoop", "NSString"] }
+
 # Test modules share one executable per toolkit to avoid repeated linkage.
 [[test]]
 name = "toolkit"

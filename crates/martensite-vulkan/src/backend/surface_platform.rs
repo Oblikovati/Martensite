@@ -23,7 +23,29 @@ pub(super) trait PlatformSurfaceFactory: Sync {
         &self,
         runtime: &VulkanRuntime,
         window: &Handle<dyn AspectWindow>,
-    ) -> Result<vk::SurfaceKHR, RenderError>;
+    ) -> Result<PlatformSurface, RenderError>;
+}
+
+/// The native presentation target a surface needs beyond its window, kept alive with it.
+pub(super) type SurfaceKeepAlive = Box<dyn std::any::Any + Send + Sync>;
+
+/// A raw surface and the native object it presents to; `PlatformSurface::bare(handle)`.
+pub(super) struct PlatformSurface {
+    /// The raw surface the lease destroys.
+    pub handle: vk::SurfaceKHR,
+    /// What must outlive the surface besides the window, such as the `CAMetalLayer`
+    /// lease on macOS, which a view replacement could otherwise release under it.
+    pub keep_alive: Option<SurfaceKeepAlive>,
+}
+
+impl PlatformSurface {
+    /// A surface whose target the window handle alone keeps alive; `PlatformSurface::bare(handle)`.
+    pub fn bare(handle: vk::SurfaceKHR) -> Self {
+        Self {
+            handle,
+            keep_alive: None,
+        }
+    }
 }
 
 /// The primary factory for this build's window system; `host_factory().platform()`.
