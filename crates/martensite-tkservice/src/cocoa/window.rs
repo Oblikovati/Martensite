@@ -1,12 +1,16 @@
 //! `Cocoa_Window`: an AppKit window (NSWindow with its NSView) or a wrapper of an NSView.
+use super::appkit::{CocoaAppKitCalls, native_appkit};
+use super::metal_layer::CocoaMetalLayerLease;
+use super::resize::appkit_frame;
 use super::virtual_keys;
-use crate::aspect::{
-    AspectDisplayConnection, AspectDrawable, AspectFbConfig, AspectTypeOfResize, AspectVKey,
-    AspectWindow, AspectWindowBase,
-};
+use crate::aspect::exceptions::{window_definition_error, window_error};
+use crate::aspect::{AspectVKey, AspectWindow, AspectWindowBase};
 use crate::platform::unsupported;
-use martensite_tkernel::standard::{Failure, Handle, SharedState};
-use martensite_tkernel::tcollection::AsciiString;
+use martensite_tkernel::standard::{Failure, SharedState};
+use std::sync::Arc;
+
+#[path = "window_aspect.rs"]
+mod window_aspect;
 
 /// The AppKit backend named by the unsupported errors.
 const BACKEND: &str = "AppKit (macOS)";
@@ -28,14 +32,25 @@ pub struct CocoaWindowFields {
     pub y_bottom: i32,
 }
 
-/// An AppKit window. The backend is not implemented: both constructors raise
-/// `Standard_NotImplemented`; `CocoaWindow::new("Viewer", 0, 0, 640, 480)`.
+/// An AppKit window; `CocoaWindow::new("Viewer", 0, 0, 640, 480)?` on the main thread.
+///
+/// AppKit objects live on the main thread: create the window there. Queries made on other
+/// threads answer from the stored frame, and changes made there are queued to the main
+/// thread (see [`CocoaAppKitCalls`]).
 pub struct CocoaWindow {
     base: AspectWindowBase,
     /// The fields, shared by every handle.
     pub fields: SharedState<CocoaWindowFields>,
+    calls: Arc<dyn CocoaAppKitCalls>,
+    /// The retained `CAMetalLayer*` installed for Vulkan presentation, 0 before the first request.
+    metal_layer: SharedState<usize>,
 }
 martensite_tkernel::impl_transient!(CocoaWindow, "Cocoa_Window", dyn AspectWindow, interfaces: [dyn AspectWindow]);
+
+/// The host AppKit, or `Standard_NotImplemented` where there is none.
+fn host_appkit(interface: &str) -> Result<Arc<dyn CocoaAppKitCalls>, Failure> {
+    native_appkit().ok_or_else(|| unsupported(interface, BACKEND))
+}
 
 impl CocoaWindow {
     /// `VirtualKeyFromNative`: the Aspect key of a Carbon virtual key code (unknown outside
@@ -43,108 +58,154 @@ impl CocoaWindow {
     pub fn virtual_key_from_native(key: i32) -> AspectVKey {
         virtual_keys::virtual_key_from_native(key)
     }
-    /// `Cocoa_Window(title, left, top, width, height)`: a new NSWindow with its NSView;
-    /// raises `Standard_NotImplemented` until the AppKit backend is implemented.
+    /// `Cocoa_Window(title, left, top, width, height)`: a new NSWindow with its NSView at
+    /// the top-left based screen position; see [`CocoaWindow::create_with`] for the errors.
+    /// Raises `Standard_NotImplemented` without AppKit.
     /// Example: `CocoaWindow::new("Viewer", 0, 0, 640, 480)`.
     pub fn new(title: &str, left: i32, top: i32, width: i32, height: i32) -> Result<Self, Failure> {
-        // TODO(platform): macOS — create the NSWindow and its NSView at the given frame.
-        let _ = (title, left, top, width, height);
-        Err(unsupported("Cocoa_Window", BACKEND))
+        Self::create_with(
+            host_appkit("Cocoa_Window")?,
+            title,
+            left,
+            top,
+            width,
+            height,
+        )
     }
-    /// `Cocoa_Window(NSView*)`: a wrapper of an existing NSView (an address); raises
-    /// `Standard_NotImplemented` until the AppKit backend is implemented.
-    /// Example: `CocoaWindow::from_view(view_address)`.
+    /// The constructor of [`CocoaWindow::new`] over an explicit AppKit. A non-positive
+    /// size, a call off the main thread, a missing `NSApplication` or a refused creation
+    /// raise `Aspect_WindowDefinitionError`.
+    /// Example: `CocoaWindow::create_with(native_appkit().unwrap(), "Viewer", 0, 0, 640, 480)`.
+    pub fn create_with(
+        calls: Arc<dyn CocoaAppKitCalls>,
+        title: &str,
+        left: i32,
+        top: i32,
+        width: i32,
+        height: i32,
+    ) -> Result<Self, Failure> {
+        check_creation(calls.as_ref(), width, height)?;
+        let screen_height = calls.main_screen_height().unwrap_or(0.0);
+        let frame = appkit_frame(left, top, width, height, screen_height);
+        let created = calls.create_window(title, frame).ok_or_else(|| {
+            window_definition_error(&format!(
+                "Cocoa_Window, Unable to create window {title:?} at {frame:?}; expected AppKit to create an NSWindow"
+            ))
+        })?;
+        let fields = CocoaWindowFields {
+            h_window: created.window,
+            h_view: created.view,
+            x_left: left,
+            y_top: top,
+            x_right: left.wrapping_add(width),
+            y_bottom: top.wrapping_add(height),
+        };
+        Ok(Self::with_fields(calls, fields))
+    }
+    /// `Cocoa_Window(NSView*)`: retains the NSView at `view` and reads its frame; raises
+    /// `Standard_NotImplemented` without AppKit. Example: `CocoaWindow::from_view(view_address)`.
     pub fn from_view(view: usize) -> Result<Self, Failure> {
-        // TODO(platform): macOS — retain the NSView and read its frame.
-        let _ = view;
-        Err(unsupported("Cocoa_Window", BACKEND))
+        Ok(Self::wrap_view_with(host_appkit("Cocoa_Window")?, view))
+    }
+    /// The constructor of [`CocoaWindow::from_view`] over an explicit AppKit; the frame
+    /// starts at 512x512 until the view reports its bounds.
+    /// Example: `CocoaWindow::wrap_view_with(native_appkit().unwrap(), view_address)`.
+    pub fn wrap_view_with(calls: Arc<dyn CocoaAppKitCalls>, view: usize) -> Self {
+        let fields = CocoaWindowFields {
+            x_right: 512,
+            y_bottom: 512,
+            ..CocoaWindowFields::default()
+        };
+        let window = Self::with_fields(calls, fields);
+        window.replace_view(view);
+        let _ = window.do_resize();
+        window
+    }
+    fn with_fields(calls: Arc<dyn CocoaAppKitCalls>, fields: CocoaWindowFields) -> Self {
+        Self {
+            base: AspectWindowBase::default(),
+            fields: SharedState::new(fields),
+            calls,
+            metal_layer: SharedState::new(0),
+        }
     }
     /// `HView`: the NSView address; `window.h_view()`.
     pub fn h_view(&self) -> usize {
         self.fields.read().h_view
     }
-    /// `SetHView`: replaces the NSView; raises `Standard_NotImplemented` until the AppKit
-    /// backend is implemented. Example: `window.set_h_view(view_address)?`.
+    /// `SetHView`: retains the NSView at `view` and releases the previous one; a Metal
+    /// layer installed on the previous view is released too. Never fails; the `Result` is
+    /// kept for the interface. Example: `window.set_h_view(view_address)?`.
     pub fn set_h_view(&self, view: usize) -> Result<(), Failure> {
-        // TODO(platform): macOS — release the old view, retain the new one.
-        let _ = view;
-        Err(unsupported("Cocoa_Window::SetHView", BACKEND))
+        self.replace_view(view);
+        Ok(())
     }
+    fn replace_view(&self, view: usize) {
+        if view != 0 {
+            self.calls.retain_object(view);
+        }
+        let previous = std::mem::replace(&mut self.fields.write().h_view, view);
+        self.release_if_set(previous);
+        let layer = std::mem::take(&mut *self.metal_layer.write());
+        self.release_if_set(layer);
+    }
+    fn release_if_set(&self, object: usize) {
+        if object != 0 {
+            self.calls.release_object(object);
+        }
+    }
+    /// The `CAMetalLayer` that Vulkan presents to, installed on the view by the first
+    /// request, which must run on the main thread; later requests may run on any thread.
+    /// Raises `Aspect_WindowError` without a view or when the first request runs elsewhere.
+    /// Example: `let lease = window.metal_layer()?; lease.layer_address()`.
+    pub fn metal_layer(&self) -> Result<CocoaMetalLayerLease, Failure> {
+        let mut cached = self.metal_layer.write();
+        if *cached == 0 {
+            *cached = self.install_metal_layer()?;
+        }
+        self.calls.retain_object(*cached);
+        Ok(CocoaMetalLayerLease::adopt(self.calls.clone(), *cached))
+    }
+    fn install_metal_layer(&self) -> Result<usize, Failure> {
+        let view = self.h_view();
+        if view == 0 {
+            return Err(window_error(
+                "Cocoa_Window::MetalLayer: no NSView (address 0); expected a window with a view",
+            ));
+        }
+        self.calls.metal_layer(view).ok_or_else(|| {
+            window_error(&format!(
+                "Cocoa_Window::MetalLayer: NSView {view:#x} has no CAMetalLayer yet; expected the first request on the main thread"
+            ))
+        })
+    }
+}
+
+/// The `Cocoa_Window` constructor preconditions, in OCCT's order plus the main thread.
+fn check_creation(calls: &dyn CocoaAppKitCalls, width: i32, height: i32) -> Result<(), Failure> {
+    let refusal = if width <= 0 || height <= 0 {
+        format!("Coordinate(s) out of range: {width}x{height}; expected a positive size")
+    } else if !calls.is_main_thread() {
+        "called off the main thread; expected AppKit windows to be created on the main thread"
+            .to_owned()
+    } else if !calls.has_application() {
+        "Cocoa application should be instantiated before window; expected NSApp to exist".to_owned()
+    } else {
+        return Ok(());
+    };
+    Err(window_definition_error(&format!("Cocoa_Window, {refusal}")))
 }
 
 impl Drop for CocoaWindow {
-    /// `~Cocoa_Window`: releases the NSView and the NSWindow created here.
+    /// `~Cocoa_Window`: closes and releases a window created here, then releases the view
+    /// and the Metal layer; AppKit runs the releases on the main thread.
     fn drop(&mut self) {
-        // TODO(platform): macOS — release myHView and close myHWindow; no window exists
-        // before the port.
-        let _ = self.fields.read().h_window;
-    }
-}
-
-/// The window interface over the stored frame; no window exists until the backend is
-/// implemented, so these members only read the fields.
-impl AspectWindow for CocoaWindow {
-    fn window_base(&self) -> &AspectWindowBase {
-        &self.base
-    }
-    /// Unmapped without a window.
-    fn is_mapped(&self) -> bool {
-        // TODO(platform): macOS — `[myHView window] isVisible`.
-        false
-    }
-    fn map(&self) {
-        // TODO(platform): macOS — show the window or view.
-    }
-    fn unmap(&self) {
-        // TODO(platform): macOS — hide the window or view.
-    }
-    /// Unknown without a window.
-    fn do_resize(&self) -> AspectTypeOfResize {
-        // TODO(platform): macOS — compare the NSView frame with the stored corners.
-        AspectTypeOfResize::Unknown
-    }
-    fn do_mapping(&self) -> bool {
-        true
-    }
-    /// The width over the height of the stored frame, 1 for an empty frame.
-    fn ratio(&self) -> f64 {
-        let (width, height) = self.size();
-        if width != 0 && height != 0 {
-            f64::from(width) / f64::from(height)
-        } else {
-            1.0
+        let fields = *self.fields.read();
+        if fields.h_window != 0 {
+            self.calls.close_window(fields.h_window);
+            self.calls.release_object(fields.h_window);
         }
-    }
-    /// The stored corners.
-    fn position(&self) -> (i32, i32, i32, i32) {
-        let fields = *self.fields.read();
-        (fields.x_left, fields.y_top, fields.x_right, fields.y_bottom)
-    }
-    /// The stored frame size.
-    fn size(&self) -> (i32, i32) {
-        let fields = *self.fields.read();
-        (
-            fields.x_right.wrapping_sub(fields.x_left),
-            fields.y_bottom.wrapping_sub(fields.y_top),
-        )
-    }
-    /// The NSView address.
-    fn native_handle(&self) -> AspectDrawable {
-        self.h_view() as AspectDrawable
-    }
-    fn native_parent_handle(&self) -> AspectDrawable {
-        0
-    }
-    /// Nothing on macOS.
-    fn native_fb_config(&self) -> AspectFbConfig {
-        AspectFbConfig::default()
-    }
-    fn set_title(&self, title: &AsciiString) {
-        // TODO(platform): macOS — `[myHWindow setTitle:]`.
-        let _ = title;
-    }
-    fn invalidate_content(&self, display: &Handle<AspectDisplayConnection>) {
-        // TODO(platform): macOS — `setNeedsDisplay` on the main thread.
-        let _ = display;
+        self.release_if_set(fields.h_view);
+        self.release_if_set(*self.metal_layer.read());
     }
 }

@@ -33,6 +33,9 @@ wayland-integration-tests = []
 host-font-corpus = []
 # Browser WebAssembly canvas and DOM input surface (#632).
 wasm-browser = []
+# Native AppKit window assertions need a macOS login session (a window server); enable
+# explicitly there. They run on the process main thread, so their binary has no harness.
+appkit-integration-tests = []
 
 [dependencies]
 flate2 = { version = "=1.1.10", default-features = false, features = ["rust_backend"] }
@@ -67,11 +70,53 @@ x11-dl = "=2.21.0"
 [target.'cfg(unix)'.dependencies]
 libc = "=0.2.190"
 
+# The AppKit backend of Cocoa_Window, Cocoa_LocalPool and the CAMetalLayer that Vulkan
+# presents to. The objc2 family matches the versions wgpu already locks.
+[target.'cfg(target_os = "macos")'.dependencies]
+dispatch2 = { version = "=0.3.1", default-features = false, features = ["std", "objc2"] }
+objc2 = "=0.6.5"
+objc2-app-kit = { version = "=0.3.2", default-features = false, features = [
+    "std",
+    "objc2-core-foundation",
+    "objc2-quartz-core",
+    "NSApplication",
+    "NSColorSpace",
+    "NSGraphics",
+    "NSResponder",
+    "NSScreen",
+    "NSView",
+    "NSWindow",
+] }
+objc2-foundation = { version = "=0.3.2", default-features = false, features = [
+    "std",
+    "NSGeometry",
+    "NSObject",
+    "NSString",
+] }
+objc2-quartz-core = { version = "=0.3.2", default-features = false, features = [
+    "std",
+    "objc2-core-foundation",
+    "CALayer",
+    "CAMetalLayer",
+] }
+
 [target.'cfg(windows)'.dependencies]
 winsafe = { version = "=0.0.29", default-features = false, features = ["kernel", "user"] }
 windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_System_LibraryLoader", "Win32_System_Registry", "Win32_System_SystemInformation", "Win32_UI_Input"] }
+
+# The AppKit integration binary creates the NSApplication it tests against.
+[target.'cfg(target_os = "macos")'.dev-dependencies]
+objc2 = "=0.6.5"
+objc2-app-kit = { version = "=0.3.2", default-features = false, features = ["std", "NSApplication", "NSResponder"] }
 
 # Test modules share one executable per toolkit to avoid repeated linkage.
 [[test]]
 name = "toolkit"
 path = "tests/toolkit.rs"
+
+# AppKit requires the process main thread, which libtest never runs tests on.
+[[test]]
+name = "appkit_window"
+path = "tests/appkit_window.rs"
+harness = false
+required-features = ["appkit-integration-tests"]
