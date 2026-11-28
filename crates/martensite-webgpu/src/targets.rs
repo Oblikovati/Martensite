@@ -56,7 +56,7 @@ impl WebGpuTargets {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT
                 | wgpu::TextureUsages::COPY_SRC
                 | wgpu::TextureUsages::TEXTURE_BINDING,
-            view_formats: &[],
+            view_formats: &[wgpu::TextureFormat::Rgba8Unorm],
         });
         let color_view = color_tex.create_view(&wgpu::TextureViewDescriptor::default());
 

@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed `WebGpuWindowPresenter::present_texture` in `martensite-webgpu` skipping browser canvas presentation when the WebGPU surface format (`Bgra8Unorm` / `Rgba8Unorm` / `Bgra8UnormSrgb`) differs from the offscreen `Rgba8UnormSrgb` color target, adding a format-preserving fullscreen blit pass (#642).
+
 ## [0.16.0] - 2026-11-27
 
 ### Added
