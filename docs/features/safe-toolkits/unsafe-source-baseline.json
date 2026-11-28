@@ -1356,6 +1356,14 @@
       "block": 1
     }
   },
+  "crates/martensite-tkernel/src/osd/timing/signal_native/fenv_darwin.rs": {
+    "unsafe_keywords": 3,
+    "unsafe_code_mentions": 1,
+    "kinds": {
+      "block": 2,
+      "extern": 1
+    }
+  },
   "crates/martensite-tkernel/src/osd/timing/sleep/native.rs": {
     "unsafe_keywords": 2,
     "unsafe_code_mentions": 2,
@@ -2289,6 +2297,21 @@
       "block": 1
     }
   },
+  "crates/martensite-tkservice/src/cocoa/appkit_native.rs": {
+    "unsafe_keywords": 9,
+    "unsafe_code_mentions": 1,
+    "kinds": {
+      "block": 8,
+      "extern": 1
+    }
+  },
+  "crates/martensite-tkservice/src/cocoa/local_pool.rs": {
+    "unsafe_keywords": 2,
+    "unsafe_code_mentions": 1,
+    "kinds": {
+      "block": 2
+    }
+  },
   "crates/martensite-tkservice/src/dynlib.rs": {
     "unsafe_keywords": 7,
     "unsafe_code_mentions": 1,
@@ -2561,6 +2584,13 @@
     "unsafe_code_mentions": 1,
     "kinds": {
       "block": 3
+    }
+  },
+  "crates/martensite-vulkan/examples/support/metal_window_events.rs": {
+    "unsafe_keywords": 1,
+    "unsafe_code_mentions": 1,
+    "kinds": {
+      "block": 1
     }
   },
   "crates/martensite-vulkan/examples/support/native_lifecycle_events.rs": {
@@ -3383,6 +3413,13 @@
     "unsafe_code_mentions": 0,
     "kinds": {
       "block": 6
+    }
+  },
+  "crates/martensite-vulkan/src/backend/surface_platform/metal.rs": {
+    "unsafe_keywords": 1,
+    "unsafe_code_mentions": 0,
+    "kinds": {
+      "block": 1
     }
   },
   "crates/martensite-vulkan/src/backend/surface_platform/wayland.rs": {
