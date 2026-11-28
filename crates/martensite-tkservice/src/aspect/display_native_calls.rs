@@ -71,9 +71,9 @@ impl NativeDisplayCalls for WaylandDisplayCalls {
         AspectDisplayBackend::Wayland
     }
 }
-/// Without Xlib no display is ever opened (initialization raises first), so these calls have
-/// nothing to release.
-// TODO(platform): macOS — route to an implemented window-system connection.
+/// Without Xlib no display is ever opened (macOS stores a marker, other platforms raise
+/// first), so these calls have nothing to release. On macOS they name AppKit, the window
+/// system the connection's windows use.
 #[cfg(not(any(target_os = "linux", windows)))]
 impl NativeDisplayCalls for XlibDisplayCalls {
     fn open(&self, _name: &AsciiString) -> usize {
@@ -85,7 +85,11 @@ impl NativeDisplayCalls for XlibDisplayCalls {
         None
     }
     fn backend(&self) -> AspectDisplayBackend {
-        AspectDisplayBackend::Unknown
+        if cfg!(target_os = "macos") {
+            AspectDisplayBackend::AppKit
+        } else {
+            AspectDisplayBackend::Unknown
+        }
     }
 }
 

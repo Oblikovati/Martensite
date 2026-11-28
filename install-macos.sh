@@ -76,7 +76,16 @@ sync_formulae() {
     done < <(wanted_formulae)
     log "Homebrew formulae: ${#missing[@]} to install, ${#present[@]} to upgrade"
     if ((${#missing[@]})); then brew install "${missing[@]}"; fi
-    if ((${#present[@]})); then brew upgrade "${present[@]}"; fi
+    if ((${#present[@]})); then upgrade_formulae "${present[@]}"; fi
+}
+
+# A failed upgrade keeps the installed version, which still works, so it must
+# not stop the run; verify_installation still checks every required command.
+# On Tier 3 Macs (Intel) upgrades build from source, and vulkan-tools then
+# needs Xcode's ibtool for its vkcube demo, which Command Line Tools lack.
+upgrade_formulae() {
+    if brew upgrade "$@"; then return; fi
+    log "warning: brew upgrade failed for at least one of: $*; the failed ones keep their installed versions (see the brew output above)"
 }
 
 # Homebrew's rustup is keg-only, and the validation layers need

@@ -39,6 +39,8 @@ pub enum AspectDisplayBackend {
     Win32,
     /// Browser WebAssembly / WebGPU display context (#632).
     WebBrowser,
+    /// macOS AppKit: windows reach the window server through AppKit, not a display socket.
+    AppKit,
     /// Unconnected or platform-neutral display.
     #[default]
     Unknown,
@@ -365,9 +367,18 @@ mod platform {
     }
 }
 
+#[cfg(target_os = "macos")]
+#[path = "display_appkit_platform.rs"]
+mod platform;
+
 /// The platforms without an implemented window-system backend: initializing raises
 /// `Standard_NotImplemented` and leaves the connection without a display.
-#[cfg(not(any(target_os = "linux", windows, target_arch = "wasm32")))]
+#[cfg(not(any(
+    target_os = "linux",
+    target_os = "macos",
+    windows,
+    target_arch = "wasm32"
+)))]
 mod platform {
     use super::{ConnectionState, NativeDisplayCalls};
     use martensite_tkernel::standard::Failure;
@@ -377,8 +388,6 @@ mod platform {
         display: usize,
         _native: &dyn NativeDisplayCalls,
     ) -> Result<(), Failure> {
-        // TODO(platform): macOS — the native build without Xlib only stores the
-        // given display; port the window-system connection the drivers of those platforms use.
         let _ = (state, display);
         Err(crate::platform::unsupported(
             "Aspect_DisplayConnection",

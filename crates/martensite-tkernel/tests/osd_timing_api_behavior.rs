@@ -276,7 +276,8 @@ fn global_statics_round_trip_on_the_native_host() {
 
 #[cfg(any(
     windows,
-    all(target_os = "linux", target_env = "gnu", target_arch = "x86_64")
+    all(target_os = "linux", target_env = "gnu", target_arch = "x86_64"),
+    all(target_os = "macos", target_arch = "x86_64")
 ))]
 #[test]
 fn native_floating_traps_toggle_for_the_calling_thread() {

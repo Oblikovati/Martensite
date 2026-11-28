@@ -55,13 +55,29 @@ pub(super) fn to_catch_floating_signals() -> bool {
     (unsafe { fenv::fegetexcept() } & fenv::OSD_FPX) != 0
 }
 
-// Other targets (macOS, musl, ...): no trap control, never catching.
+// Darwin has no feenableexcept; the trap bits are edited in its fenv_t image.
+#[cfg(all(
+    target_os = "macos",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
+mod fenv_darwin;
+#[cfg(all(
+    target_os = "macos",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
+pub(super) use fenv_darwin::{set_floating_signal, to_catch_floating_signals};
+
+// Other targets (musl, the BSDs, ...): no trap control, never catching.
 #[cfg(all(
     unix,
     not(all(
         target_os = "linux",
         target_env = "gnu",
         any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64")
+    )),
+    not(all(
+        target_os = "macos",
+        any(target_arch = "x86_64", target_arch = "aarch64")
     ))
 ))]
 pub(super) fn set_floating_signal(_enable: bool) {}
@@ -72,6 +88,10 @@ pub(super) fn set_floating_signal(_enable: bool) {}
         target_os = "linux",
         target_env = "gnu",
         any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64")
+    )),
+    not(all(
+        target_os = "macos",
+        any(target_arch = "x86_64", target_arch = "aarch64")
     ))
 ))]
 pub(super) fn to_catch_floating_signals() -> bool {

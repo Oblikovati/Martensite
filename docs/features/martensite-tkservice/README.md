@@ -59,8 +59,18 @@ it). Platform coverage and remaining work:
   errors and queue overflow alongside owned HID reports.
   `ImageAlienPixMap` has portable PNG, JPEG, BMP, GIF and SGI
   decoders; a separate WinCodec backend remains unevaluated.
-- macOS: drive NSWindow, NSView and NSAutoreleasePool for `cocoa::CocoaWindow` and
-  `cocoa::CocoaLocalPool`; optionally Xlib through XQuartz for `xw`.
+- macOS: `cocoa::CocoaWindow` creates or wraps AppKit windows and views and
+  `cocoa::CocoaLocalPool` pushes real autorelease pools; display connections use
+  `AspectDisplayBackend::AppKit`. Every AppKit call goes through
+  `cocoa::CocoaAppKitCalls`: queries answer only on the main thread (elsewhere the
+  window reports its stored frame), and mutations from other threads are queued to
+  the main dispatch queue, so a process without a running main run loop never
+  deadlocks. Sizes are backing pixels, as a Vulkan swapchain needs them on Retina
+  screens. `CocoaWindow::metal_layer` installs the `CAMetalLayer` Vulkan presents
+  to; the first request must run on the main thread. The window logic is tested
+  against a fake on every platform; the native checks run in a login session with
+  `cargo test -p martensite-tkservice --features appkit-integration-tests --test appkit_window`.
+  Remaining: optionally Xlib through XQuartz for `xw`.
 - Targets without `dlopen` or `LoadLibrary` (such as WebAssembly): link FreeType and
   fontconfig statically instead of loading them at run time.
 - The media player and the video recorder need a codec backend; without it the

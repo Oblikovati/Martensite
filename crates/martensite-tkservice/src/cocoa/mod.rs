@@ -1,16 +1,21 @@
 //! Cocoa: the AppKit window and the autorelease pool of macOS.
 //!
-//! The AppKit backend is not implemented yet: the window and pool constructors raise
-//! `Standard_NotImplemented` on every platform (see [`crate::platform`]). The key code table
-//! of the window is platform-neutral and implemented.
-// TODO(platform): macOS — create and drive NSWindow/NSView and NSAutoreleasePool through
-// AppKit in the constructors, Map/Unmap/DoResize/DoMapping, SetHView, SetTitle and
-// InvalidateContent.
+//! On macOS the window and the pool drive AppKit through objc2; every AppKit call goes
+//! through [`CocoaAppKitCalls`], so the window logic also runs against a fake. Elsewhere
+//! the native constructors raise `Standard_NotImplemented` (see [`crate::platform`]). The
+//! key code table of the window is platform-neutral.
+mod appkit;
+#[cfg(target_os = "macos")]
+mod appkit_native;
 mod local_pool;
+mod metal_layer;
+mod resize;
 mod virtual_keys;
 mod window;
 
+pub use appkit::{CocoaAppKitCalls, CocoaCreatedWindow, CocoaRect, native_appkit};
 pub use local_pool::CocoaLocalPool;
+pub use metal_layer::CocoaMetalLayerLease;
 pub use window::{CocoaWindow, CocoaWindowFields};
 
 /// Declares the opaque AppKit object types, held as addresses (`usize`).
@@ -33,6 +38,8 @@ appkit_objects! {
     CocoaNsAutoreleasePool;
 }
 
+#[cfg(test)]
+mod fake_appkit;
 #[cfg(test)]
 #[path = "tests.rs"]
 mod tests;
